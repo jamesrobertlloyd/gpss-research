@@ -104,23 +104,36 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
              
         # Add random restarts to kernels
         current_kernels = fk.add_random_restarts(current_kernels, exp.n_rand, exp.sd, data_shape=data_shape)
+        #print 'Trying these kernels'
+        #for result in current_kernels:
+        #    print result.pretty_print()
         # Score the kernels
         new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
                                           zip_files=False, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed)
+                                          
+        #print 'Raw results'
+        #for result in new_results:
+        #    print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+            
         # Enforce the period heuristic
         #### TODO - Concept of parameter constraints is more general than this - make it so
         if exp.use_min_period:
             new_results = [sk for sk in new_results if not sk.k_opt.out_of_bounds(data_shape)]
+            
+        #print 'Removing out of bounds'
+        #for result in new_results:
+        #    print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+        
         # Some of the scores may have failed - remove nans to prevent sorting algorithms messing up
         new_results = remove_nan_scored_kernels(new_results)
         assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens 
         # Sort the new all_results
         new_results = sorted(new_results, key=ScoredKernel.score, reverse=True)
         
-        print 'All new results:'
-        for result in new_results:
-            #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-            print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+        #print 'All new results:'
+        #for result in new_results:
+        #    #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
+        #    print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
             
         # Remove near duplicates from these all_results (top m all_results only for efficiency)
         if exp.k > 1:

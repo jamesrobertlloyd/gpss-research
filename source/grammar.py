@@ -33,6 +33,10 @@ MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ('A', 'B', {'A': 'base', 'B': 'base'}),
                  ]
+                 
+#MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
+#                 ('A', 'B', {'A': 'base', 'B': 'base'}),
+#                 ]
     
 class MultiDGrammar:
     def __init__(self, ndim, debug=False, base_kernels='SE'):

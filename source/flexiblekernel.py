@@ -307,7 +307,250 @@ class SqExpPeriodicKernel(BaseKernel):
             
     def out_of_bounds(self, constraints):
         return (self.period < constraints['min_period']) or (self.lengthscale < constraints['min_lengthscale'])
+        
+class CosineKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        period, output_variance = params
+        return CosineKernel(period, output_variance)
     
+    def num_params(self):
+        return 2
+    
+    def pretty_print(self):
+        return colored('Cos', self.depth())
+    
+    # FIXME - Caution - magic numbers!
+    def default(self):
+        return CosineKernel(-2.0, 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'Cos'
+    
+    @staticmethod    
+    def description():
+        return "Cosine"
+
+    @staticmethod    
+    def params_description():
+        return "period"  
+    
+class CosineKernel(BaseKernel):
+    def __init__(self, period, output_variance):
+        self.period = period
+        self.output_variance = output_variance
+        
+    def family(self):
+        return CosineKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covCos}'
+    
+    def english_name(self):
+        return 'Cosine'
+    
+    def id_name(self):
+        return 'Cos'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.period, self.output_variance])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        '''Overwrites base method, using min period to prevent Nyquist errors'''
+        result = self.param_vector()
+        if result[0] == -2:
+            #### FIXME - Caution, magic numbers
+            # Min period represents a minimum sensible scale
+            # Scale with data_scale
+            if data_shape['min_period'] is None:
+                if np.random.rand() < 0.5:
+                    result[0] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+                else:
+                    result[0] = np.random.normal(loc=-2, scale=sd)
+            else:
+                if np.random.rand() < 0.5:
+                    result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
+                else:
+                    result[0] = utils.misc.sample_truncated_normal(loc=-2, scale=sd, min_value=data_shape['min_period'])
+        if result[1] == 0:
+            # Set scale factor with output scale
+            if np.random.rand() < 0.5:
+                result[1] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            else:
+                result[1] = np.random.normal(loc=0, scale=sd)
+        return result
+
+    def copy(self):
+        return CosineKernel(self.period, self.output_variance)
+    
+    def __repr__(self):
+        return 'CosineKernel(period=%f, output_variance=%f)' % \
+            (self.period, self.output_variance)
+    
+    def pretty_print(self):
+        return colored('Cos(p=%1.1f, sf=%1.1f)' % (self.period, self.output_variance),
+                       self.depth())
+        
+    def latex_print(self):
+        # return 'PE(\\ell=%1.1f, p=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.period, self.output_variance)
+        #return 'PE(p=%1.1f)' % self.period          
+        return 'Cos'
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.period - other.period, self.output_variance - other.output_variance]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.period, self.output_variance), 
+#                   (other.lengthscale, other.period, other.output_variance))
+        
+    def depth(self):
+        return 0
+            
+    def out_of_bounds(self, constraints):
+        return (self.period < constraints['min_period']) 
+        
+class SpectralKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        lengthscale, output_variance, period = params
+        return SpectralKernel(lengthscale, period, output_variance)
+    
+    def num_params(self):
+        return 3
+    
+    def pretty_print(self):
+        return colored('SP', self.depth())
+    
+    # FIXME - Caution - magic numbers!
+    def default(self):
+        return SpectralKernel(0., -2.0, 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'SP'
+    
+    @staticmethod    
+    def description():
+        return "Spectral"
+
+    @staticmethod    
+    def params_description():
+        return "lengthscale, period"  
+    
+class SpectralKernel(BaseKernel):
+    def __init__(self, lengthscale, period, output_variance):
+        self.lengthscale = lengthscale
+        self.period = period
+        self.output_variance = output_variance
+        
+    def family(self):
+        return SpectralKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covProd, {@covSEiso, @covCosUnit}}'
+    
+    def english_name(self):
+        return 'Spectral'
+    
+    def id_name(self):
+        return 'SP'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.lengthscale, self.output_variance, self.period])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        '''Overwrites base method, using min period to prevent Nyquist errors'''
+        result = self.param_vector()
+        if result[0] == 0:
+            # Min period represents a minimum sensible scale - use it for lengthscale as well
+            # Scale with data_scale though
+            if data_shape['min_period'] is None:
+                if np.random.rand() < 0.5:
+                    result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
+                else:
+                    result[0] = np.random.normal(loc=0, scale=sd)
+            else:
+                if np.random.rand() < 0.5:
+                    result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
+                else:
+                    result[0] = utils.misc.sample_truncated_normal(loc=0, scale=sd, min_value=data_shape['min_period'])
+        if result[2] == -2:
+            #### FIXME - Caution, magic numbers
+            # Min period represents a minimum sensible scale
+            # Scale with data_scale
+            if data_shape['min_period'] is None:
+                if np.random.rand() < 0.5:
+                    result[2] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+                else:
+                    result[2] = np.random.normal(loc=-2, scale=sd)
+            else:
+                if np.random.rand() < 0.5:
+                    result[2] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
+                else:
+                    result[2] = utils.misc.sample_truncated_normal(loc=-2, scale=sd, min_value=data_shape['min_period'])
+        if result[1] == 0:
+            # Set scale factor with output scale
+            if np.random.rand() < 0.5:
+                result[1] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            else:
+                result[1] = np.random.normal(loc=0, scale=sd)
+        return result
+
+    def copy(self):
+        return SpectralKernel(self.lengthscale, self.period, self.output_variance)
+    
+    def __repr__(self):
+        return 'SpectralKernel(lengthscale=%f, period=%f, output_variance=%f)' % \
+            (self.lengthscale, self.period, self.output_variance)
+    
+    def pretty_print(self):
+        return colored('SP(ell=%1.1f, p=%1.1f, sf=%1.1f)' % (self.lengthscale, self.period, self.output_variance),
+                       self.depth())
+        
+    def latex_print(self):
+        # return 'PE(\\ell=%1.1f, p=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.period, self.output_variance)
+        #return 'PE(p=%1.1f)' % self.period          
+        return 'Spec'
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.period, self.output_variance), 
+#                   (other.lengthscale, other.period, other.output_variance))
+        
+    def depth(self):
+        return 0
+            
+    def out_of_bounds(self, constraints):
+        return (self.period < constraints['min_period']) or (self.lengthscale < constraints['min_lengthscale'])
 
 class RQKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1927,7 +2170,9 @@ def base_kernel_families(base_kernel_names):
                    PP3KernelFamily(), \
                    Matern1KernelFamily(), \
                    Matern3KernelFamily(), \
-                   Matern5KernelFamily()]:
+                   Matern5KernelFamily(), \
+                   CosineKernelFamily(), \
+                   SpectralKernelFamily()]:
         if family.id_name() in base_kernel_names.split(','):
             yield family
     #if ndim == 1:

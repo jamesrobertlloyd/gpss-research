@@ -233,10 +233,10 @@ plot(x, y);
 
 %% Quick step draw
 
-x = linspace(-10, 10, 1000)';
+x = linspace(-100, 100, 1000)';
 
-cov_func = {@covQuickStep, {@covPeriodic}};
-hyp.cov = [0, 0, 0];
+cov_func = {@covQuickStep, {@covSEiso}};
+hyp.cov = [-0, -2];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));
@@ -244,3 +244,64 @@ K = K + 1e-9*max(max(K))*eye(size(K));
 y = chol(K)' * randn(size(x));
 
 plot(x, y);
+
+%% Change point draw
+
+x = linspace(-10, 10, 1000)';
+
+cov_func = {@covChangePoint, {@covSEiso, @covSEiso}};
+hyp.cov = [0, 0, -2, 0, 2, 0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% Check CP grad
+
+x = linspace(-10, 10, 100)';
+
+delta = 0.00001;
+i = 2;
+
+cov_func = {@covChangePoint, {@covSEiso, @covSEiso}};
+hyp1.cov = [-1, 0, 1, 2, 3, 4];
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
+%% ChangePoint fit
+
+%%%% Check the derivative w.r.t location - might just be v. tricky to
+%%%% optimise
+
+%load 01-airline
+
+x = linspace(-5, 5, 100)';
+y = cos(1*pi*x) .* (1- (max(0,x)>0)) + cos(3*pi*x) .* ((max(0,x)>0)) + 0.1*randn(size(x)) + max(0,x);
+
+cov_func = {@covChangePoint, {{@covProd, {@covPeriodic, @covSEiso}}, {@covProd, {@covPeriodic, @covSEiso}}}};
+hyp.cov = [-2, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y-mean(y)) / 10);
+
+hyp = minimize(hyp, @gp, -1000, @infExact, mean_func, cov_func, lik_func, x, y);
+
+xrange = linspace(min(x)-5, max(x)+5, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
+hold off;

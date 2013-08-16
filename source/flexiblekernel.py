@@ -818,6 +818,7 @@ class LinKernel(BaseKernel):
         result = self.param_vector()
         if result[0] == -2:
             #### Caution - magic numbers - Offset assumed to be near zero since non zero means covered by constant kernel
+            #### FIXME - is this really what I want to do?
             result[0] = np.random.normal(loc=-10, scale=sd)
         if result[1] == 0:
             # Lengthscale scales with ratio of y std and x std (gradient = delta y / delta x)
@@ -853,6 +854,209 @@ class LinKernel(BaseKernel):
         if cmp(self.__class__, other.__class__):
             return cmp(self.__class__, other.__class__)
         differences = [self.offset - other.offset, self.lengthscale - other.lengthscale, self.location - other.location]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
+#                   (other.lengthscale, other.output_variance, other.alpha))
+        
+    def depth(self):
+        return 0 
+        
+class IBMKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        rate, location = params
+        return IBMKernel(rate=rate, location=location)
+    
+    def num_params(self):
+        return 2
+    
+    def pretty_print(self):
+        return colored('IBM', self.depth())
+    
+    def default(self):
+        return IBMKernel(0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'IBM'
+
+    @staticmethod    
+    def description():
+        return "Integrated Brownian Motion"
+
+    @staticmethod    
+    def params_description():
+        return "rate, location"
+    
+class IBMKernel(BaseKernel):
+    def __init__(self, rate=0, location=0):
+        self.rate = rate
+        self.location = location
+        
+    def family(self):
+        return IBMKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covIBM}'
+    
+    def english_name(self):
+        return 'IBM'
+    
+    def id_name(self):
+        return 'IBM'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.rate, self.location])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            result[0] = np.random.normal(loc=0, scale=sd)
+        if result[1] == 0:
+            # Location moves with input location, and variance scales in input variance
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+        return result
+        
+    def effective_params(self):  
+        return 2
+
+    def copy(self):
+        return IBMKernel(rate=self.rate, location=self.location)
+    
+    def __repr__(self):
+        return 'IBMKernel(rate=%f, location=%f)' % \
+            (self.rate, self.location)
+    
+    def pretty_print(self):
+        return colored('IBM(rate=%1.1f, loc=%1.1f)' % (self.rate, self.location),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'IBM'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.rate - other.rate, self.location - other.location]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
+#                   (other.lengthscale, other.output_variance, other.alpha))
+        
+    def depth(self):
+        return 0 
+        
+class IBMLinKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        rate, location, offset, scale = params
+        return IBMLinKernel(rate=rate, location=location, offset=offset, scale=scale)
+    
+    def num_params(self):
+        return 4
+    
+    def pretty_print(self):
+        return colored('IBMLin', self.depth())
+    
+    def default(self):
+        return IBMLinKernel(0., 0., 0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'IBMLin'
+
+    @staticmethod    
+    def description():
+        return "Integrated Brownian Motion + Linear"
+
+    @staticmethod    
+    def params_description():
+        return "rate, location, offset, scale"
+    
+class IBMLinKernel(BaseKernel):
+    def __init__(self, rate=0, location=0, offset=0, scale=0):
+        self.rate = rate
+        self.location = location
+        self.offset = offset
+        self.scale = scale
+        
+    def family(self):
+        return IBMLinKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covIBMLin}'
+    
+    def english_name(self):
+        return 'IBMLin'
+    
+    def id_name(self):
+        return 'IBMLin'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.rate, self.location, self.offset, self.scale])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            result[0] = np.random.normal(loc=0, scale=sd)
+        if result[1] == 0:
+            # Location moves with input location, and variance scales in input variance
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+        if result[2] == 0:
+            result[2] = np.random.normal(loc=0, scale=sd)
+        if result[3] == 0:
+            # Lengthscale scales with ratio of y std and x std (gradient = delta y / delta x)
+            if np.random.rand() < 0.5:
+                result[3] = np.random.normal(loc=data_shape['output_scale'] - data_shape['input_scale'], scale=sd)
+            else:
+                result[3] = np.random.normal(loc=0, scale=sd)
+        return result
+        
+    def effective_params(self):  
+        #### FIXME - is this sensible?
+        return 3
+
+    def copy(self):
+        return IBMLinKernel(rate=self.rate, location=self.location, offset=self.offset, scale=self.scale)
+    
+    def __repr__(self):
+        return 'IBMLinKernel(rate=%f, location=%f, offset=%f, scale=%f)' % \
+            (self.rate, self.location, self.offset, self.scale)
+    
+    def pretty_print(self):
+        return colored('IBMLin(rate=%1.1f, loc=%1.1f, off=%1.1f, scale=%1.1f)' % (self.rate, self.location, self.offset, self.scale),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'IBMLin'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.rate - other.rate, self.location - other.location, self.offset - other.offset, self.scale - other.scale]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
 #        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
@@ -2172,7 +2376,9 @@ def base_kernel_families(base_kernel_names):
                    Matern3KernelFamily(), \
                    Matern5KernelFamily(), \
                    CosineKernelFamily(), \
-                   SpectralKernelFamily()]:
+                   SpectralKernelFamily(), \
+                   IBMKernelFamily(), \
+                   IBMLinKernelFamily()]:
         if family.id_name() in base_kernel_names.split(','):
             yield family
     #if ndim == 1:
@@ -2346,7 +2552,11 @@ class ScoredKernel:
     def from_matlab_output(output, kernel_family, ndata):
         '''Computes Laplace marginal lik approx and BIC - returns scored Kernel'''
         #laplace_nle, problems = psd_matrices.laplace_approx_stable(output.nll, output.kernel_hypers, output.hessian)
-        laplace_nle = psd_matrices.laplace_approx_no_prior(output.nll, np.concatenate((output.kernel_hypers, output.noise_hyp)), output.hessian)
+        #### TODO - this check should be within the psd_matrices code
+        if np.any(np.isnan(output.hessian)):
+            laplace_nle = np.nan
+        else:
+            laplace_nle = psd_matrices.laplace_approx_no_prior(output.nll, np.concatenate((output.kernel_hypers, output.noise_hyp)), output.hessian)
         k_opt = kernel_family.from_param_vector(output.kernel_hypers)
         BIC = 2 * output.nll + k_opt.effective_params() * np.log(ndata)
         PIC = 2 * output.npll + k_opt.effective_params() * np.log(ndata)

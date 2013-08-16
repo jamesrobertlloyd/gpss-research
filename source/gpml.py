@@ -144,7 +144,7 @@ end
 try
     std_ratio = std_ratio(hyp_opt, meanfunc, covfunc, likfunc, X, y);
 catch
-    std_ratio = Nan
+    std_ratio = NaN
 end
 
 save( '%(writefile)s', 'hyp_opt', 'best_nll', 'nlls', 'hessian' , 'npll', 'mae', 'std_ratio');
@@ -224,7 +224,7 @@ end
 try
     std_ratio = std_ratio(hyp_opt, meanfunc, covfunc, likfunc, X, y);
 catch
-    std_ratio = Nan
+    std_ratio = NaN
 end
 
 save( '%(writefile)s', 'hyp_opt', 'best_nll', 'nlls', 'hessian' , 'npll', 'mae', 'std_ratio');

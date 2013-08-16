@@ -1,0 +1,46 @@
+Experiment all_results for
+ datafile = ../data/temp/monthly-average-daily-calls-to-d.mat
+
+ Running experiment:
+description = Trying out the change point kernel,
+data_dir = ../data/temp/,
+max_depth = 8,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = True,
+n_rand = 5,
+sd = 4,
+max_jobs = 400,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2013-08-16-CP/,
+iters = 500,
+base_kernels = SE,
+zero_mean = True,
+verbose_results = False,
+random_seed = 0,
+use_min_period = True,
+period_heuristic = 10,
+use_constraints = False,
+alpha_heuristic = -2,
+lengthscale_heuristic = -4.5,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+ScoredKernel(k_opt=MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-0.118959, output_variance=5.931529)), nll=966.931896, laplace_nle=nan, bic_nle=1944.249705, npll=946.692990, pic_nle=1903.771893, mae=92.237889, std_ratio=0.937076, noise=[ 3.61612329])
+
+%%%%% Level 1 %%%%%
+
+ScoredKernel(k_opt=ChangePointKernel(location=1974.563475, steepness=-1.103841, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-1.760957, output_variance=5.505181)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=0.885739, output_variance=6.298284)) ]), nll=902.131765, laplace_nle=nan, bic_nle=1835.421270, npll=884.084400, pic_nle=1799.326542, mae=88.156625, std_ratio=0.816686, noise=[ 2.9868753])
+
+%%%%% Level 2 %%%%%
+
+ScoredKernel(k_opt=ChangePointKernel(location=1967.529667, steepness=0.807062, operands=[ ChangePointKernel(location=1973.804187, steepness=-4.708202, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-0.911882, output_variance=5.164797)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.007894, output_variance=7.055288)) ]), ChangePointKernel(location=1973.831548, steepness=2.474128, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.675248, output_variance=19.553000)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=2.249520, output_variance=5.963208)) ]) ]), nll=859.676322, laplace_nle=nan, bic_nle=1792.054039, npll=838.679948, pic_nle=1750.061291, mae=74.785369, std_ratio=0.873404, noise=[ 2.87753037])
+
+%%%%% Level 3 %%%%%
+
+ScoredKernel(k_opt=ChangePointKernel(location=1967.215405, steepness=1.054258, operands=[ ChangePointKernel(location=1973.792098, steepness=-3.658004, operands=[ ChangePointKernel(location=1974.104522, steepness=4.114427, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=2.493829, output_variance=7.402866)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-1.871719, output_variance=4.485816)) ]), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.499489, output_variance=7.346119)) ]), ChangePointKernel(location=1973.694801, steepness=2.564416, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-3.379158, output_variance=23.099422)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=2.563534, output_variance=6.137115)) ]) ]), nll=834.523780, laplace_nle=nan, bic_nle=1762.520783, npll=810.221514, pic_nle=1713.916252, mae=23.691276, std_ratio=0.818332, noise=[ 2.79848575])

@@ -32,6 +32,10 @@ class OneDGrammar:
 MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ('A', 'B', {'A': 'base', 'B': 'base'}),
+                 ('A', ('CP', 'A'), {'A': 'multi'}),
+                 ]
+        
+MULTI_D_RULES = [('A', ('CP', 'A'), {'A': 'multi'}),
                  ]
                  
 #MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
@@ -54,6 +58,8 @@ class MultiDGrammar:
                 return False
             elif isinstance(kernel, fk.MaskKernel):
                 return True
+            elif isinstance(kernel, fk.ChangePointKernel):
+                return True
             elif isinstance(kernel, fk.SumKernel):
                 return all([self.type_matches(op, 'multi') for op in kernel.operands])
             elif isinstance(kernel, fk.ProductKernel):
@@ -64,6 +70,8 @@ class MultiDGrammar:
             if isinstance(kernel, fk.BaseKernel):
                 return True
             elif isinstance(kernel, fk.MaskKernel):
+                return False
+            elif isinstance(kernel, fk.ChangePointKernel):
                 return False
             elif isinstance(kernel, fk.SumKernel):
                 return all([self.type_matches(op, '1d') for op in kernel.operands])
@@ -108,6 +116,10 @@ def polish_to_kernel(polish_expr):
         elif polish_expr[0] == '*':
             operands = [polish_to_kernel(e) for e in polish_expr[1:]]
             return fk.ProductKernel(operands)
+        elif polish_expr[0] == 'CP':
+            base_kernel = polish_to_kernel(polish_expr[1])
+            #### FIXME - there should not be constants here!
+            return fk.ChangePointKernel(0, 0, [base_kernel, base_kernel.copy()])
         else:
             raise RuntimeError('Unknown operator: %s' % polish_expr[0])
     else:
@@ -139,6 +151,12 @@ def expand(kernel, grammar):
     elif isinstance(kernel, fk.MaskKernel):
         result += [fk.MaskKernel(kernel.ndim, kernel.active_dimension, e)
                    for e in expand(kernel.base_kernel, grammar)]
+    elif isinstance(kernel, fk.ChangePointKernel):
+        for i, op in enumerate(kernel.operands):
+            for e in expand(op, grammar):
+                new_ops = kernel.operands[:i] + [e] + kernel.operands[i+1:]
+                new_ops = [op.copy() for op in new_ops]
+                result.append(fk.ChangePointKernel(kernel.location, kernel.steepness, new_ops))
     elif isinstance(kernel, fk.SumKernel):
         for i, op in enumerate(kernel.operands):
             for e in expand(op, grammar):
@@ -161,6 +179,8 @@ def canonical(kernel):
         return kernel.copy()
     elif isinstance(kernel, fk.MaskKernel):
         return fk.MaskKernel(kernel.ndim, kernel.active_dimension, canonical(kernel.base_kernel))
+    elif isinstance(kernel, fk.ChangePointKernel):
+        return fk.ChangePointKernel(kernel.location, kernel.steepness, [canonical(o) for o in kernel.operands])
     elif isinstance(kernel, fk.SumKernel):
         new_ops = []
         for op in kernel.operands:

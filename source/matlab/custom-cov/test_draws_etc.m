@@ -216,3 +216,31 @@ diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / de
 deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
 
 max(max(abs(diff - deriv)))
+
+%% Burst draw
+
+x = linspace(-20, 20, 1000)';
+
+cov_func = {@covBurst, {@covSEiso}};
+hyp.cov = [-2, 0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% Quick step draw
+
+x = linspace(-10, 10, 1000)';
+
+cov_func = {@covQuickStep, {@covPeriodic}};
+hyp.cov = [0, 0, 0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);

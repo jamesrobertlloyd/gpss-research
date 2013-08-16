@@ -98,7 +98,7 @@ def evaluate_kernels(kernels, X, y, verbose=True, noise=None, iters=300, local_c
         
     # Set default noise using a heuristic.    
     if noise is None:
-        noise = np.log(np.var(y)/10)
+        noise = np.log(np.var(y-np.mean(y))/10)
     
     # Create data file
     if verbose:

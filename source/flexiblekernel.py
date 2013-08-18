@@ -755,6 +755,83 @@ class ConstKernel(BaseKernel):
         
     def depth(self):
         return 0    
+        
+class ZeroKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        #### Note - expects list input
+        assert params == []
+        return ZeroKernel()
+    
+    def num_params(self):
+        return 0
+    
+    def pretty_print(self):
+        return colored('NIL', self.depth())
+    
+    def default(self):
+        return ZeroKernel()
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'Zero'
+    
+    @staticmethod    
+    def description():
+        return "Zero"
+
+    @staticmethod    
+    def params_description():
+        return "None"        
+    
+class ZeroKernel(BaseKernel):
+    def __init__(self):
+        pass
+        
+    def family(self):
+        return ZeroKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covZero}'
+    
+    def english_name(self):
+        return 'NIL'
+    
+    def id_name(self):
+        return 'Zero'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([])
+
+    def copy(self):
+        return ZeroKernel()
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        return self.param_vector()
+    
+    def __repr__(self):
+        return 'ZeroKernel()'
+    
+    def pretty_print(self):
+        return colored('NIL', self.depth())
+        
+    def latex_print(self):
+        return 'NIL'       
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        return cmp(self.__class__, other.__class__)
+        
+    def depth(self):
+        return 0   
 
 class LinKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -2599,6 +2676,9 @@ def distribute_products(k):
     elif isinstance(k, SumKernel):
         # Recursively distribute each the operands to be summed, then combine them back into a new SumKernel.
         return SumKernel([subop for op in k.operands for subop in break_kernel_into_summands(op)])
+    elif isinstance(k, ChangePointKernel):
+        return SumKernel([ChangePointKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
+                         [ChangePointKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
     else:
         # Base case: A kernel that's just, like, a kernel, man.
         return k

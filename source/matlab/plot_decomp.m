@@ -31,7 +31,7 @@ xrange = linspace(x_left, x_right, num_interpolation_points)';
 
 noise_var = exp(2*log_noise);
 complete_sigma = feval(complete_covfunc{:}, complete_hypers, X, X) + eye(length(y)).*noise_var;
-complete_sigma = complete_sigma + 1e-5*max(max(complete_sigma))*eye(size(complete_sigma));
+%complete_sigma = complete_sigma + 1e-5*max(max(complete_sigma))*eye(size(complete_sigma));
 complete_sigmastar = feval(complete_covfunc{:}, complete_hypers, X, xrange);
 %complete_sigmastar2 = feval(complete_covfunc{:}, complete_hypers, X, xrange2);
 complete_sigmastarstart = feval(complete_covfunc{:}, complete_hypers, xrange, xrange);

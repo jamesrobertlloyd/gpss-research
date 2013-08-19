@@ -941,6 +941,117 @@ class LinKernel(BaseKernel):
     def depth(self):
         return 0 
         
+class StepKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        location, steepness, sf1, sf2 = params
+        return StepKernel(location=location, steepness=steepness, sf1=sf1, sf2=sf2)
+    
+    def num_params(self):
+        return 4
+    
+    def pretty_print(self):
+        return colored('ST', self.depth())
+    
+    def default(self):
+        return StepKernel(0., 0., 0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'Step'
+
+    @staticmethod    
+    def description():
+        return "Step"
+
+    @staticmethod    
+    def params_description():
+        return "location, steepness, sf1, sf2"
+    
+class StepKernel(BaseKernel):
+    def __init__(self, location=0, steepness=0, sf1=0, sf2=0):
+        self.location = location
+        self.steepness = steepness
+        self.sf1 = sf1
+        self.sf2 = sf2
+        
+    def family(self):
+        return StepKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covChangePoint, {@covConst, @covConst}}'
+    
+    def english_name(self):
+        return 'Step'
+    
+    def id_name(self):
+        return 'Step'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.location, self.steepness, self.sf1, self.sf2])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            # Location moves with input location, and variance scales in input variance
+            result[0] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+        if result[1] == 0:
+            # Set steepness with inverse input scale
+            #### TODO - is this correct scaling?
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=0.5*sd)
+        if result[2] == 0:
+            # Set scale factor with output scale
+            result[2] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+        if result[3] == 0:
+            # Set scale factor with output scale
+            result[3] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+        return result
+        
+    def effective_params(self):
+        return 4
+
+    def copy(self):
+        return StepKernel(location=self.location, steepness=self.steepness, sf1=self.sf1, sf2=self.sf2)
+    
+    def __repr__(self):
+        return 'StepKernel(location=%f, steepness=%f, sf1=%f, sf2=%f)' % \
+            (self.location, self.steepness, self.sf1, self.sf2)
+    
+    def pretty_print(self):
+        return colored('ST(loc=%1.1f, steep=%1.1f, sf1=%1.1f, sf2=%1.1f)' % (self.location, self.steepness, self.sf1, self.sf2),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'Step'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.location - other.location, self.steepness - other.steepness, self.sf1 - other.sf1, self.sf2 - other.sf2]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
+#                   (other.lengthscale, other.output_variance, other.alpha))
+        
+    def depth(self):
+        return 0 
+            
+    def out_of_bounds(self, constraints): #### TODO - check me!
+        return (self.location < constraints['input_min'] + 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.location > constraints['input_max'] - 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3)
+        
 class IBMKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
         rate, location = params
@@ -2229,6 +2340,10 @@ class MaskKernel(Kernel):
         else:
             # min_period either one dimensional or None - do nothing
             pass
+        if isinstance(constraints['input_min'], (list, tuple, np.ndarray)):
+            constraints['input_min'] = constraints['input_min'][self.active_dimension]
+        if isinstance(constraints['input_max'], (list, tuple, np.ndarray)):
+            constraints['input_max'] = constraints['input_max'][self.active_dimension]
         return self.base_kernel.out_of_bounds(constraints)
     
 
@@ -2259,7 +2374,7 @@ class ChangePointKernelFamily(KernelFamily):
             colored(')', self.depth())
     
     def default(self):
-        return ChangePointKernel(0, 0, [op.default() for op in self.operands])
+        return ChangePointKernel(0., 0., [op.default() for op in self.operands])
     
     def __cmp__(self, other):
         assert isinstance(other, KernelFamily)
@@ -2316,7 +2431,7 @@ class ChangePointKernel(Kernel):
         if result[1] == 0:
             # Set steepness with inverse input scale
             #### TODO - is this correct scaling?
-            result[1] = np.random.normal(loc=-data_shape['input_scale'], scale=sd)
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=0.5*sd)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
     
     def __cmp__(self, other):
@@ -2329,8 +2444,127 @@ class ChangePointKernel(Kernel):
     def depth(self):
         return max([op.depth() for op in self.operands]) + 1
             
-    def out_of_bounds(self, constraints):
-        return any([o.out_of_bounds(constraints) for o in self.operands]) 
+    def out_of_bounds(self, constraints): #### TODO - check me!
+        return (self.location < constraints['input_min'] + 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.location > constraints['input_max'] - 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
+               (any([o.out_of_bounds(constraints) for o in self.operands])) 
+        
+class BurstSEKernelFamily(KernelFamily):
+    def __init__(self):
+        pass
+    
+    def default(self):
+        return BurstKernel(0., 0., 0., [SqExpKernelFamily().default()])
+        
+    def id_name(self):
+        return 'BurstSE'
+        
+class BurstKernelFamily(KernelFamily):
+    def __init__(self, operands):
+        self.operands = operands
+        assert len(operands) == 1
+        
+    def from_param_vector(self, params):
+        location = params[0]
+        steepness = params[1]
+        width = params[2]
+        start = 3
+        ops = []
+        for e in self.operands:
+            end = start + e.num_params()
+            ops.append(e.from_param_vector(params[start:end]))
+            start = end
+        return BurstKernel(location, steepness, width, ops)
+    
+    def num_params(self):
+        return 3 + sum([e.num_params() for e in self.operands])
+    
+    def pretty_print(self):        
+        return colored('B(', self.depth()) + \
+            self.operands[0].pretty_print() + \
+            colored(')', self.depth())
+    
+    def default(self):
+        return BurstKernel(0., 0., 0., [op.default() for op in self.operands])
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return cmp(self.operands, other.operands)
+    
+    def depth(self):
+        return max([op.depth() for op in self.operands]) + 1
+
+class BurstKernel(Kernel):
+    def __init__(self, location, steepness, width, operands):
+        self.location = location
+        self.steepness = steepness
+        self.width = width
+        self.operands = operands
+        
+    def family(self):
+        return BurstKernelFamily([e.family() for e in self.operands])
+        
+    def pretty_print(self): 
+        return colored('B(loc=%1.1f, steep=%1.1f, width=%1.1f, ' % (self.location, self.steepness, self.width), self.depth()) + \
+            self.operands[0].pretty_print() + \
+            colored(')', self.depth())
+            
+    def latex_print(self):
+        return 'B\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
+            
+    def __repr__(self):
+        return 'BurstKernel(location=%f, steepness=%f, width=%f, operands=%s)' % \
+            (self.location, self.steepness, self.width, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
+    
+    def gpml_kernel_expression(self):
+        return '{@covBurst, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
+    
+    def copy(self):
+        return BurstKernel(self.location, self.steepness, self.width, [e.copy() for e in self.operands])
+
+    def param_vector(self):
+        return np.concatenate([np.array([self.location, self.steepness, self.width])] + [e.param_vector() for e in self.operands])
+        
+    def effective_params(self):
+        return 3 + sum([o.effective_params() for o in self.operands])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        '''Returns the parameter vector with any default values replaced with random Gaussian'''
+        result = self.param_vector()[:3]
+        if result[0] == 0: #### TODO - Make sure this default matches that in self.default() - should do when on log scale
+            # Location moves with input location, and variance scales in input variance
+            # Expect change points to occur with the data
+            #### TODO - check us for sensibleness!
+            result[0] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
+        if result[1] == 0:
+            # Set steepness with inverse input scale
+            #### TODO - is this correct scaling?
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=0.5*sd)
+        if result[2] == 0:
+            # Set width with input scale
+            #### TODO - is this correct scaling?
+            result[2] = np.random.normal(loc=0.5*data_shape['input_scale'], scale=sd)
+        return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return cmp((self.location, self.steepness, self.width, self.operands),
+                   (other.location, other.steepness, other.width, other.operands))
+    
+    def depth(self):
+        return max([op.depth() for op in self.operands]) + 1
+            
+    def out_of_bounds(self, constraints):#### TODO - check me!
+        return (self.location < constraints['input_min'] + 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.location > constraints['input_max'] - 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.width > np.log(0.25*(constraints['input_max'] -constraints['input_min']))) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
+               (any([o.out_of_bounds(constraints) for o in self.operands])) 
         
 class SumKernelFamily(KernelFamily):
     def __init__(self, operands):
@@ -2522,6 +2756,12 @@ def base_kernels(ndim=1, base_kernel_names='SE'):
     '''
     Generator of all base kernels for a certain dimensionality of data
     '''
+    
+    #### FIXME - special behaviour
+    if 'BurstSE' in base_kernel_names:
+        for dim in range(ndim):
+            yield BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default()
+    
     for dim in range(ndim):
         for fam in base_kernel_families(base_kernel_names):
             yield MaskKernel(ndim, dim, fam.default())
@@ -2556,7 +2796,8 @@ def base_kernel_families(base_kernel_names):
                    CosineKernelFamily(), \
                    SpectralKernelFamily(), \
                    IBMKernelFamily(), \
-                   IBMLinKernelFamily()]:
+                   IBMLinKernelFamily(), \
+                   StepKernelFamily()]:
         if family.id_name() in base_kernel_names.split(','):
             yield family
     #if ndim == 1:
@@ -2679,6 +2920,8 @@ def distribute_products(k):
     elif isinstance(k, ChangePointKernel):
         return SumKernel([ChangePointKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
                          [ChangePointKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
+    elif isinstance(k, BurstKernel):
+        return SumKernel([BurstKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op]) for op in break_kernel_into_summands(k.operands[0])])
     else:
         # Base case: A kernel that's just, like, a kernel, man.
         return k

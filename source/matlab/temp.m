@@ -1,53 +1,8 @@
-x = linspace(0, 10, 50)';
-y = 0 * x + sin(x*3);
-y = y + randn(size(y))*0.2;
-plot (x, y, '+');
+load '/tmp/tmp1AI_3V.mat'  % Load the data, it should contain X and y.
+X = double(X);
+y = double(y);
 
-scale = 0;
-x = x * exp(scale);
-y = y * exp(scale);
+addpath(genpath('gpml/'));
+addpath(genpath('/scratch/home/Research/GPs/gpss-research/source/matlab'));
 
-covfunc = {@covSEiso};
-hyp.cov = [scale, scale];
-
-likfunc = @likGauss;
-hyp.lik = std(y) / 10;
-
-meanfunc = {@meanZero};
-hyp.mean = [];
-
-[hyp_opt, nlls] = minimize(hyp, @gp, -100, @infExact, ...
-                   meanfunc, covfunc, likfunc, x, y);
-
-cov_hyp = hyp_opt.cov
-mean_hyp = hyp_opt.mean
-lik_hyp = hyp_opt.lik
-
-nll = nlls(end)
-
-
-scale = 5;
-x = x * exp(scale);
-y = y * exp(scale);
-
-covfunc = {@covSEiso};
-hyp.cov = [scale, scale];
-
-likfunc = @likGauss;
-hyp.lik = std(y) / 10;
-
-meanfunc = {@meanZero};
-hyp.mean = [];
-
-[hyp_opt, nlls] = minimize(hyp, @gp, -100, @infExact, ...
-                   meanfunc, covfunc, likfunc, x, y);
-
-cov_hyp2 = hyp_opt.cov;
-mean_hyp2 = hyp_opt.mean;
-lik_hyp2 = hyp_opt.lik;
-
-cov_hyp2 - cov_hyp
-lik_hyp2 - lik_hyp
-
-nll2 = nlls(end);
-nll - nll2
+plot_decomp(X, y, {@covChangePoint, {{@covChangePoint, {{@covMask, {[1], {@covSEiso}}}, {@covMask, {[1], {@covSEiso}}}}}, {@covChangePoint, {{@covMask, {[1], {@covSEiso}}}, {@covChangePoint, {{@covMask, {[1], {@covSEiso}}}, {@covMask, {[1], {@covSEiso}}}}}}}}}, [ 1967.35717 1.137674 1973.874042 2.492426 2.324922 6.28759 -2.738815 25.931122 1973.802291 -5.154808 1.195264 7.019621 1973.140653 1.801933 -1.984919 4.09075 -0.344285 6.112856 ], { {@covChangePoint, {{@covChangePoint, {{@covMask, {[1], {@covSEiso}}}, {@covZero}}}, {@covZero}}},{@covChangePoint, {{@covChangePoint, {{@covZero}, {@covMask, {[1], {@covSEiso}}}}}, {@covZero}}},{@covChangePoint, {{@covZero}, {@covChangePoint, {{@covMask, {[1], {@covSEiso}}}, {@covZero}}}}},{@covChangePoint, {{@covZero}, {@covChangePoint, {{@covZero}, {@covChangePoint, {{@covMask, {[1], {@covSEiso}}}, {@covZero}}}}}}},{@covChangePoint, {{@covZero}, {@covChangePoint, {{@covZero}, {@covChangePoint, {{@covZero}, {@covMask, {[1], {@covSEiso}}}}}}}}} }, { [ 1967.35717 1.137674 1973.874042 2.492426 2.324922 6.28759 ],[ 1967.35717 1.137674 1973.874042 2.492426 -2.738815 25.931122 ],[ 1967.35717 1.137674 1973.802291 -5.154808 1.195264 7.019621 ],[ 1967.35717 1.137674 1973.802291 -5.154808 1973.140653 1.801933 -1.984919 4.09075 ],[ 1967.35717 1.137674 1973.802291 -5.154808 1973.140653 1.801933 -0.344285 6.112856 ] }, [2.75824128], '/scratch/home/Research/GPs/gpss-research/analyses/2013-08-16-CP/figures/monthly-average-daily-calls-to-d/monthly-average-daily-calls-to-d', { ' CP\left( CP\left( SE_{0} , NIL \right) , NIL \right)','CP\left( CP\left( NIL , SE_{0} \right) , NIL \right)','CP\left( NIL , CP\left( SE_{0} , NIL \right) \right)','CP\left( NIL , CP\left( NIL , CP\left( SE_{0} , NIL \right) \right) \right)','CP\left( NIL , CP\left( NIL , CP\left( NIL , SE_{0} \right) \right) \right) ' }, { 'CP\left( CP\left( SE_{0} , SE_{0} \right) , CP\left( SE_{0} , CP\left( SE_{0} , SE_{0} \right) \right) \right)' }, 0.000000, 1.000000, 0.000000, 1.000000)

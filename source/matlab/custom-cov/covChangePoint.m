@@ -32,6 +32,7 @@ for ii = 1:length(cov), v = [v repmat(ii, 1, eval(char(j(ii))))]; end
 
 location = hyp(1);
 steepness = exp(hyp(2));
+
 ax = 1 ./ (1 + exp(-(x-location)*steepness));
 if ~dg
     ax = repmat(ax, 1, length(z));

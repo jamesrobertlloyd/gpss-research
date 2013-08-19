@@ -78,6 +78,9 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     data_shape['output_location'] = np.mean(y)
     data_shape['input_scale'] = np.log([np.std(X[:,dim]) for dim in range(X.shape[1])])
     data_shape['output_scale'] = np.log(np.std(y)) 
+    ##### FIXME - only works in one dimension
+    data_shape['input_min'] = [np.min(X[:,dim]) for dim in range(X.shape[1])][0]
+    data_shape['input_max'] = [np.max(X[:,dim]) for dim in range(X.shape[1])][0]
     # Initialise period at a multiple of the shortest / average distance between points, to prevent Nyquist problems.
     if exp.use_min_period:
         data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
@@ -104,9 +107,9 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
              
         # Add random restarts to kernels
         current_kernels = fk.add_random_restarts(current_kernels, exp.n_rand, exp.sd, data_shape=data_shape)
-        #print 'Trying these kernels'
-        #for result in current_kernels:
-        #    print result.pretty_print()
+        print 'Trying these kernels'
+        for result in current_kernels:
+            print result.pretty_print()
         # Score the kernels
         new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
                                           zip_files=False, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed)

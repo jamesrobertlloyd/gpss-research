@@ -1,3 +1,17 @@
+%% MT1 draw
+
+x = linspace(-5, 5, 1000)';
+
+cov_func = {@covMaterniso, 1};
+hyp.cov = [0,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-5*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
 %% Cosine draw
 
 x = linspace(-5, 5, 100)';
@@ -219,10 +233,10 @@ max(max(abs(diff - deriv)))
 
 %% Burst draw
 
-x = linspace(-20, 20, 1000)';
+x = linspace(-10, 10, 100)';
 
 cov_func = {@covBurst, {@covSEiso}};
-hyp.cov = [-2, 0];
+hyp.cov = [0, 1, 2, -2, 2];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));
@@ -230,6 +244,45 @@ K = K + 1e-9*max(max(K))*eye(size(K));
 y = chol(K)' * randn(size(x));
 
 plot(x, y);
+
+%% Check Burst grad
+
+delta = 0.0000001;
+i = 4;
+
+cov_func = {@covBurst, {@covSEiso}};
+hyp1.cov = [0, 0, 0, 0, 0];
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x, x) - feval(cov_func{:}, hyp2.cov, x, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
+%% Burst fit
+
+%y = y + 0.05 * randn(size(y));
+
+cov_func = {@covBurst, {@covSEiso}};
+hyp.cov = [-2, 0, 0, -3, 0];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y-mean(y)) / 10);
+
+hyp = minimize(hyp, @gp, -1000, @infExact, mean_func, cov_func, lik_func, x, y);
+
+xrange = linspace(min(x)-5, max(x)+5, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
+hold off;
 
 %% Quick step draw
 
@@ -263,11 +316,11 @@ plot(x, y);
 
 x = linspace(-10, 10, 100)';
 
-delta = 0.00001;
-i = 2;
+delta = 0.00000001;
+i = 1;
 
 cov_func = {@covChangePoint, {@covSEiso, @covSEiso}};
-hyp1.cov = [-1, 0, 1, 2, 3, 4];
+hyp1.cov = [-1, -2, 1, 2, 3, 4] + 3;
 hyp2.cov = hyp1.cov;
 hyp2.cov(i) = hyp2.cov(i) + delta;
 
@@ -283,11 +336,11 @@ max(max(abs(diff - deriv)))
 
 %load 01-airline
 
-x = linspace(-5, 5, 100)';
+x = linspace(-15, 15, 250)';
 y = cos(1*pi*x) .* (1- (max(0,x)>0)) + cos(3*pi*x) .* ((max(0,x)>0)) + 0.1*randn(size(x)) + max(0,x);
 
 cov_func = {@covChangePoint, {{@covProd, {@covPeriodic, @covSEiso}}, {@covProd, {@covPeriodic, @covSEiso}}}};
-hyp.cov = [-2, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+hyp.cov = [-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -305,3 +358,23 @@ plot(x, y, 'o');
 hold on;
 plot(xrange, fit);
 hold off;
+
+%% Burst and step draw
+
+x = linspace(-10, 10, 250)';
+
+cov_func = {@covSum, {{@covChangePoint, {@covConst, @covConst}}, {@covBurst, {@covSEiso}}}};
+hyp.cov = [-5, 2, 2, 2, 5, 1, 1, -2, 2];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+y = y + 0.5*randn(size(y));
+
+plot(x, y, 'o');
+
+X = x;
+
+save('step_and_burst', 'X', 'y');

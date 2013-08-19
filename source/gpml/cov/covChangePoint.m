@@ -43,6 +43,9 @@ else
     az = ax;
 end
 
+ax = 1 - ax; % Switching the order of base kernels to match intuition
+az = 1 - az;
+
 if nargin<5                                                        % covariances
   K = 0; if nargin==3, z = x; end                                 % set default
   for ii = 1:length(cov)                              % iteration over functions
@@ -57,6 +60,8 @@ else                                                               % derivatives
   if i==1
     dx = -steepness * repmat(exp(-(x-location)*steepness), 1, length(z)) .* (ax .^ 2);
     dz = -steepness * repmat((exp(-(z-location)*steepness))', length(x), 1) .* (az .^ 2);
+    dx = -dx; % Switching the order of base kernels to match intuition 
+    dz = -dz;
     K = 0;
     for ii = 1:length(cov)                              % iteration over functions
         f = cov(ii); if iscell(f{:}), f = f{:}; end % expand cell array if necessary
@@ -71,6 +76,8 @@ else                                                               % derivatives
   elseif i==2
     dx = steepness * repmat(exp(-(x-location)*steepness) .* (x - location), 1, length(z)) .* (ax .^ 2);
     dz = steepness * repmat((exp(-(z-location)*steepness) .* (z - location))', length(x), 1) .* (az .^ 2);
+    dx = -dx; % Switching the order of base kernels to match intuition 
+    dz = -dz;
     K = 0;
     for ii = 1:length(cov)                              % iteration over functions
         f = cov(ii); if iscell(f{:}), f = f{:}; end % expand cell array if necessary

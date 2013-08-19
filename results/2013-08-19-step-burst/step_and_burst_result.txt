@@ -1,0 +1,46 @@
+Experiment all_results for
+ datafile = ../data/temp/step_and_burst.mat
+
+ Running experiment:
+description = Trying out the step and burst kernels,
+data_dir = ../data/temp/,
+max_depth = 8,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 5,
+sd = 4,
+max_jobs = 400,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2013-08-19-step-burst/,
+iters = 500,
+base_kernels = SE,Step,BurstSE,
+zero_mean = True,
+verbose_results = False,
+random_seed = 0,
+use_min_period = True,
+period_heuristic = 10,
+use_constraints = False,
+alpha_heuristic = -2,
+lengthscale_heuristic = -4.5,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+ScoredKernel(k_opt=MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-1.572817, output_variance=1.753348)), nll=451.890218, laplace_nle=nan, bic_nle=914.823358, npll=433.803106, pic_nle=878.649133, mae=5.256480, std_ratio=0.742952, noise=[-0.64893793])
+
+%%%%% Level 1 %%%%%
+
+ScoredKernel(k_opt=ChangePointKernel(location=3.187241, steepness=1.722157, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=0.012589, output_variance=1.553274)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-1.642869, output_variance=2.026340)) ]), nll=348.265625, laplace_nle=nan, bic_nle=729.660015, npll=327.733905, pic_nle=688.596576, mae=2.950303, std_ratio=0.868915, noise=[-0.63571648])
+
+%%%%% Level 2 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=StepKernel(location=-4.973584, steepness=1.901264, sf1=-0.004987, sf2=2.098858)), ChangePointKernel(location=3.120587, steepness=2.110139, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.083180, output_variance=-2.973570)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-1.903257, output_variance=1.229439)) ]) ]), nll=284.257933, laplace_nle=nan, bic_nle=623.730475, npll=273.264025, pic_nle=601.742659, mae=0.960829, std_ratio=0.893508, noise=[-0.68020531])
+
+%%%%% Level 3 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=StepKernel(location=-4.974563, steepness=1.910522, sf1=-0.016579, sf2=2.101543)), ChangePointKernel(location=6.662949, steepness=1.104383, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.845756, output_variance=-2.411568)), BurstKernel(location=3.130267, steepness=1.166115, width=-0.293210, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-1.943267, output_variance=11.531250)) ]) ]) ]), nll=250.673329, laplace_nle=nan, bic_nle=573.125649, npll=241.448049, pic_nle=554.675091, mae=0.962017, std_ratio=0.928455, noise=[-0.68821221])

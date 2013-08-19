@@ -58,8 +58,10 @@ if nargin<5                                                        % covariances
   end
 else                                                               % derivatives
   if i==1
-    dx = -steepness * repmat(exp(-(x-location)*steepness), 1, length(z)) .* (ax .^ 2);
-    dz = -steepness * repmat((exp(-(z-location)*steepness))', length(x), 1) .* (az .^ 2);
+    dx = -steepness * repmat(exp(+(x-location)*steepness), 1, length(z)) .* ...
+         (1 + repmat(exp(+(x-location)*steepness), 1, length(z))).^(-2);
+    dz = -steepness * repmat(exp(+(z-location)*steepness)', length(x), 1) .* ...
+         (1 + repmat(exp(+(z-location)*steepness)', length(x), 1)).^(-2);
     dx = -dx; % Switching the order of base kernels to match intuition 
     dz = -dz;
     K = 0;
@@ -74,8 +76,10 @@ else                                                               % derivatives
         end
     end
   elseif i==2
-    dx = steepness * repmat(exp(-(x-location)*steepness) .* (x - location), 1, length(z)) .* (ax .^ 2);
-    dz = steepness * repmat((exp(-(z-location)*steepness) .* (z - location))', length(x), 1) .* (az .^ 2);
+    dx = steepness * repmat(exp(+(x-location)*steepness).*(x-location), 1, length(z)) .* ...
+         (1 + repmat(exp(+(x-location)*steepness), 1, length(z))).^(-2);
+    dz = steepness * repmat((exp(+(z-location)*steepness).*(z-location))', length(x), 1) .* ...
+         (1 + repmat(exp(+(z-location)*steepness)', length(x), 1)).^(-2);
     dx = -dx; % Switching the order of base kernels to match intuition 
     dz = -dz;
     K = 0;

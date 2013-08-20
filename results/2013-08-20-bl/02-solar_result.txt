@@ -1,0 +1,38 @@
+Experiment all_results for
+ datafile = ../data/solar/02-solar.mat
+
+ Running experiment:
+description = Trying to get blackout to work,
+data_dir = ../data/solar/,
+max_depth = 8,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = True,
+n_rand = 9,
+sd = 4,
+max_jobs = 500,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2013-08-20-bl/,
+iters = 500,
+base_kernels = SE,
+zero_mean = True,
+verbose_results = False,
+random_seed = 0,
+use_min_period = True,
+period_heuristic = 5,
+use_constraints = False,
+alpha_heuristic = -2,
+lengthscale_heuristic = -4.5,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+ScoredKernel(k_opt=MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=6.083799, output_variance=6.924682)), nll=20.811442, laplace_nle=nan, bic_nle=53.615788, npll=-12.004239, pic_nle=-12.015573, mae=0.198483, std_ratio=0.993511, noise=[-1.4711369])
+
+%%%%% Level 1 %%%%%
+
+ScoredKernel(k_opt=BlackoutKernel(location=1883.127878, steepness=-9.302040, width=1.791294, sf=8.600655, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.179135, output_variance=-0.880324)) ]), nll=-26.189725, laplace_nle=nan, bic_nle=-16.400738, npll=-43.047427, pic_nle=-50.116142, mae=0.200095, std_ratio=0.979458, noise=[-1.58223124])

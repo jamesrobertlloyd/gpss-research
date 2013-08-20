@@ -2,7 +2,7 @@ function K = covCos(hyp, x, z, i)
 
 % Stationary covariance function for a sinusoid with period p:
 %
-% k(x,y) = sf2 * cos(pi * (x - x') / p)
+% k(x,y) = sf2 * cos(2 * pi * (x - x') / p)
 %
 % where the hyperparameters are:
 %
@@ -32,7 +32,7 @@ else
   end
 end
 
-K = pi*K/p;
+K = 2*pi*K/p;
 if nargin<4                                                        % covariances
     K = sf2*cos(K);
 else                                                               % derivatives

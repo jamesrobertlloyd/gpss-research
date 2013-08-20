@@ -26,6 +26,23 @@ y = chol(K)' * randn(size(x));
 
 plot(x, y);
 
+%% Check Cos grad
+
+x = linspace(-10, 10, 100)';
+
+delta = 0.000000001;
+i = 2;
+
+cov_func = {@covCos};
+hyp1.cov = [-2, -2];
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
 %% Cosine fit
 
 x = linspace(-5, 5, 100)';
@@ -422,6 +439,37 @@ lik_func = @likGauss;
 hyp.lik = log(std(y-mean(y)) / 10);
 
 hyp = minimize(hyp, @gp, -1000, @infExact, mean_func, cov_func, lik_func, x, y);
+
+xrange = linspace(min(x)-5, max(x)+5, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
+hold off;
+
+%% Blackout fit
+
+load '02-solar.mat'
+
+%X = X - mean(X);
+%X = X / std(X);
+y = y - min(y);
+y = y / std(y);
+
+x = X;
+
+cov_func = {@covBlackout, {@covSEiso}};
+hyp.cov = [1695, -2.5, 4.8, -2, 4, 1];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y-mean(y)) / 10);
+
+hyp = minimize(hyp, @gp, -500, @infExact, mean_func, cov_func, lik_func, x, y);
 
 xrange = linspace(min(x)-5, max(x)+5, 1000)';
 

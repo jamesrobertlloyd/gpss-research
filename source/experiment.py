@@ -112,6 +112,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #print 'Trying these kernels'
         #for result in current_kernels:
         #    print result.pretty_print()
+        
         # Score the kernels
         new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
                                           zip_files=False, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed)

@@ -29,15 +29,22 @@ class OneDGrammar:
         else:
             raise RuntimeError('Unknown type: %s' % tp)
         
+#MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
+#                 ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
+#                 ('A', 'B', {'A': 'base', 'B': 'base'}),
+#                 ('A', ('CP', 'A'), {'A': 'multi'}),
+#                 ('A', ('B', 'A'), {'A': 'multi'}),
+#                 ('A', ('BL', 'A'), {'A': 'multi'}),
+#                 ]
+                 
 MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ('A', 'B', {'A': 'base', 'B': 'base'}),
                  ('A', ('CP', 'A'), {'A': 'multi'}),
-                 ('A', ('B', 'A'), {'A': 'multi'}),
                  ]
         
-MULTI_D_RULES = [('A', ('BL', 'A'), {'A': 'multi'}),
-                 ]
+#MULTI_D_RULES = [('A', ('BL', 'A'), {'A': 'multi'}),
+#                 ]
                  
 #MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
 #                 ('A', 'B', {'A': 'base', 'B': 'base'}),

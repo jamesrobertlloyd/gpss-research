@@ -687,8 +687,8 @@ class ConstKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # Set scale factor with output scale
-            result[0] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            # Set scale factor with output location
+            result[0] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
         return result
     
     def __repr__(self):
@@ -857,9 +857,9 @@ class LinKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # Set scale factor with output scale
+            # Set scale factor with output location
             if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+                result[0] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
             else:
                 result[0] = np.random.normal(loc=0, scale=sd)
         if result[1] == 0:
@@ -972,13 +972,13 @@ class StepKernel(BaseKernel):
         if result[1] == 0:
             # Set steepness with inverse input scale
             #### TODO - Check me more thoroughly
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=0.5*sd)
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=sd)
         if result[2] == 0:
             # Set scale factor with output scale
-            result[2] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
         if result[3] == 0:
             # Set scale factor with output scale
-            result[3] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
         return result
         
     def effective_params(self):
@@ -1016,7 +1016,7 @@ class StepKernel(BaseKernel):
     def out_of_bounds(self, constraints): #### TODO - check me!
         return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3)
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2)
         
 class IBMKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1180,7 +1180,7 @@ class IBMLinKernel(BaseKernel):
             # Location moves with input location, and variance scales in input variance
             result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
         if result[2] == 0:
-            result[2] = np.random.normal(loc=0, scale=sd)
+            result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
         if result[3] == 0:
             # Lengthscale scales with ratio of y std and x std (gradient = delta y / delta x)
             if np.random.rand() < 0.5:
@@ -2286,7 +2286,7 @@ class ChangePointKernel(Kernel):
         if result[1] == 0:
             # Set steepness with inverse input scale
             #### TODO - is this correct scaling?
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=0.5*sd)
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=sd)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
     
     def __cmp__(self, other):
@@ -2302,7 +2302,7 @@ class ChangePointKernel(Kernel):
     def out_of_bounds(self, constraints): #### TODO - check me!
         return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
         
 class BurstSEKernelFamily(KernelFamily):
@@ -2397,11 +2397,11 @@ class BurstKernel(Kernel):
         if result[1] == 0:
             # Set steepness with inverse input scale
             #### TODO - is this correct scaling?
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=0.5*sd)
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=sd)
         if result[2] == 0:
             # Set width with input scale
             #### TODO - is this correct scaling?
-            result[2] = np.random.normal(loc=np.log(0.1)+data_shape['input_scale'], scale=0.5*sd)
+            result[2] = np.random.normal(loc=np.log(0.1)+data_shape['input_scale'], scale=sd)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
     
     def __cmp__(self, other):
@@ -2418,8 +2418,8 @@ class BurstKernel(Kernel):
         return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.width > np.log(0.25*(constraints['input_max'] -constraints['input_min']))) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
+               #(self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or 
                
 class BlackoutKernelFamily(KernelFamily):
     def __init__(self, operands):
@@ -2459,7 +2459,7 @@ class BlackoutKernelFamily(KernelFamily):
     def depth(self):
         return max([op.depth() for op in self.operands]) + 1
 
-class BurstKernel(Kernel):
+class BlackoutKernel(Kernel):
     def __init__(self, location, steepness, width, sf, operands):
         self.location = location
         self.steepness = steepness
@@ -2486,7 +2486,7 @@ class BurstKernel(Kernel):
         return '{@covBlackout, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
     
     def copy(self):
-        return BlackoutKernel(self.location, self.steepness, self.width, self.sf [e.copy() for e in self.operands])
+        return BlackoutKernel(self.location, self.steepness, self.width, self.sf, [e.copy() for e in self.operands])
 
     def param_vector(self):
         return np.concatenate([np.array([self.location, self.steepness, self.width, self.sf])] + [e.param_vector() for e in self.operands])
@@ -2511,8 +2511,11 @@ class BurstKernel(Kernel):
             #### TODO - is this correct scaling?
             result[2] = np.random.normal(loc=np.log(0.1)+data_shape['input_scale'], scale=0.5*sd)
         if result[3] == 0:
-            # Set sf with output scale
-            result[3] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            # Set sf with output location or small
+            if np.random.rand() < 0.5:
+                result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            else:
+                result[3] = np.random.normal(loc=0, scale=sd)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
     
     def __cmp__(self, other):
@@ -2528,9 +2531,9 @@ class BurstKernel(Kernel):
     def out_of_bounds(self, constraints):#### TODO - check me!
         return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.width > np.log(0.25*(constraints['input_max'] -constraints['input_min']))) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
+               (self.width > np.log(0.5*(constraints['input_max'] -constraints['input_min']))) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
+               #(self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or 
         
 class SumKernelFamily(KernelFamily):
     def __init__(self, operands):
@@ -2749,7 +2752,6 @@ def base_kernel_families(base_kernel_names):
                    RQKernelFamily(), \
                    ConstKernelFamily(), \
                    LinKernelFamily(), \
-                   ChangeKernelFamily(), \
                    QuadraticKernelFamily(), \
                    CubicKernelFamily(), \
                    PP0KernelFamily(), \

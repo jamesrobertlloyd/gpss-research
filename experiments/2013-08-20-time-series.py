@@ -1,7 +1,7 @@
-Experiment(description='More kernels and operators',
+Experiment(description='No MT and PP',
            data_dir='../data/tsdl/',
-           max_depth=8, 
-           random_order=False,
+           max_depth=10, 
+           random_order=True,
            k=1,
            debug=False, 
            local_computation=False, 
@@ -11,12 +11,9 @@ Experiment(description='More kernels and operators',
            verbose=False,
            make_predictions=False,
            skip_complete=True,
-           results_dir='../results/2013-08-19-time-series/',
+           results_dir='../results/2013-08-20-time-series/',
            iters=500,
-           base_kernels='IBMLin,Step,BurstSE,Per,Cos,Lin,PP2,PP3,MT3,MT5,SE,Const',
+           base_kernels='IBMLin,Step,BurstSE,Per,Cos,Lin,SE,Const',
            zero_mean=True,
            random_seed=0,
            period_heuristic=5)
-           
-
-           

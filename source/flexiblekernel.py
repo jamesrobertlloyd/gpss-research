@@ -306,7 +306,7 @@ class SqExpPeriodicKernel(BaseKernel):
         return 0
             
     def out_of_bounds(self, constraints):
-        return (self.period < constraints['min_period']) or (self.lengthscale < constraints['min_lengthscale'])
+        return (self.period < constraints['min_period']) or (self.lengthscale < constraints['min_lengthscale']) or (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min'])))
         
 class CosineKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -421,7 +421,7 @@ class CosineKernel(BaseKernel):
         return 0
             
     def out_of_bounds(self, constraints):
-        return (self.period < constraints['min_period']) 
+        return (self.period < constraints['min_period']) or (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min'])))
         
 class SpectralKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -550,7 +550,7 @@ class SpectralKernel(BaseKernel):
         return 0
             
     def out_of_bounds(self, constraints):
-        return (self.period < constraints['min_period']) or (self.lengthscale < constraints['min_lengthscale'])
+        return (self.period < constraints['min_period']) or (self.lengthscale < constraints['min_lengthscale']) or (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min'])))
 
 class RQKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1048,8 +1048,8 @@ class StepKernel(BaseKernel):
         return 0 
             
     def out_of_bounds(self, constraints): #### TODO - check me!
-        return (self.location < constraints['input_min'] + 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location > constraints['input_max'] - 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
+        return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3)
         
 class IBMKernelFamily(BaseKernelFamily):
@@ -2445,8 +2445,8 @@ class ChangePointKernel(Kernel):
         return max([op.depth() for op in self.operands]) + 1
             
     def out_of_bounds(self, constraints): #### TODO - check me!
-        return (self.location < constraints['input_min'] + 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location > constraints['input_max'] - 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
+        return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
         
@@ -2560,8 +2560,8 @@ class BurstKernel(Kernel):
         return max([op.depth() for op in self.operands]) + 1
             
     def out_of_bounds(self, constraints):#### TODO - check me!
-        return (self.location < constraints['input_min'] + 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location > constraints['input_max'] - 0.1 * (constraints['input_max'] -constraints['input_min'])) or \
+        return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.width > np.log(0.25*(constraints['input_max'] -constraints['input_min']))) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 

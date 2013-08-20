@@ -99,6 +99,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     
     noise = None # Initially have no guess at noise
     
+    best_mae = np.Inf
+    
     # Perform search
     for depth in range(exp.max_depth):
         
@@ -120,7 +122,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             
         # Enforce the period heuristic
         #### TODO - Concept of parameter constraints is more general than this - make it so
-        if exp.use_min_period:
+        if True:#exp.use_min_period:
             new_results = [sk for sk in new_results if not sk.k_opt.out_of_bounds(data_shape)]
             
         #print 'Removing out of bounds'
@@ -157,8 +159,15 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #    print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
             
         # Remove bad predictors
+        #old_best_mae = best_mae
         #best_mae = min(result.mae for result in new_results)
-        #new_results = [result for result in new_results if (result.mae < best_mae * 1000000)]
+        #if old_best_mae == np.Inf:
+        #    cut_off = best_mae * 2
+        #elif best_mae > old_best_mae:
+        #    cut_off = np.Inf
+        #else:
+        #    cut_off = best_mae + 0.5 * (old_best_mae - best_mae)
+        #new_results = [result for result in new_results if (result.mae < cut_off)]
 
         #print 'All new results after removing bad predictors:'
         #for result in new_results:

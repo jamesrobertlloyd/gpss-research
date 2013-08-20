@@ -1,6 +1,6 @@
-function K = covBurst(cov, hyp, x, z, i)
+function K = covBlackout(cov, hyp, x, z, i)
 
-% covBurst - OMG another kernel.
+% covBurst - Where did the kernel go.
 %
 % Copyright (c) by James Robert Lloyd 2013-08-16.
 
@@ -11,7 +11,7 @@ for ii = 1:numel(cov)                        % iterate over covariance functions
 end
 
 if nargin<3                                        % report number of parameters
-  K = ['3' '+' char(j(1))]; for ii=2:length(cov), K = [K, '+', char(j(ii))]; end, return
+  K = ['4' '+' char(j(1))]; for ii=2:length(cov), K = [K, '+', char(j(ii))]; end, return
 end
 if nargin<4, z = []; end                                   % make sure, z exists
 [n,D] = size(x);
@@ -26,6 +26,7 @@ for ii = 1:length(cov), v = [v repmat(ii, 1, eval(char(j(ii))))]; end
 location = hyp(1);
 steepness = exp(hyp(2));
 width = exp(hyp(3));
+sf = exp(2*hyp(4));
 ax = (1 ./ (1 + exp(-(x-(location-0.5*width))*steepness))) .* ...
      (1 ./ (1 + exp(+(x-(location+0.5*width))*steepness)));
 if ~dg
@@ -44,7 +45,8 @@ if nargin<5                                                        % covariances
   for ii = 1:length(cov)                              % iteration over functions
     f = cov(ii); if iscell(f{:}), f = f{:}; end % expand cell array if necessary
     if ii == 1
-        K = K + ax .* feval(f{:}, hyp([false false false (v==ii)]), x, z) .* az;
+        K = K + (1 - ax) .* feval(f{:}, hyp([false false false false (v==ii)]), x, z) .* (1 - az) + ...
+                (ax) .* sf .* (az);
     end
   end
 else                                                               % derivatives
@@ -61,8 +63,10 @@ else                                                               % derivatives
     for ii = 1:length(cov)                              % iteration over functions
         f = cov(ii); if iscell(f{:}), f = f{:}; end % expand cell array if necessary
         if ii == 1
-            K = K + dx .* feval(f{:}, hyp([false false false (v==ii)]), x, z) .* az;
-            K = K + ax .* feval(f{:}, hyp([false false false (v==ii)]), x, z) .* dz;
+            K = K + -dx .* feval(f{:}, hyp([false false false false (v==ii)]), x, z) .* (1-az);
+            K = K + (1-ax) .* feval(f{:}, hyp([false false false false (v==ii)]), x, z) .* -dz;
+            K = K + dx .* sf .* az;
+            K = K + ax .* sf .* dz;
         end
     end
   elseif i==2
@@ -102,8 +106,10 @@ else                                                               % derivatives
     for ii = 1:length(cov)                              % iteration over functions
         f = cov(ii); if iscell(f{:}), f = f{:}; end % expand cell array if necessary
         if ii == 1
-            K = K + dx .* feval(f{:}, hyp([false false false (v==ii)]), x, z) .* az;
-            K = K + ax .* feval(f{:}, hyp([false false false (v==ii)]), x, z) .* dz;
+            K = K + -dx .* feval(f{:}, hyp([false false false false (v==ii)]), x, z) .* (1-az);
+            K = K + (1-ax) .* feval(f{:}, hyp([false false false false (v==ii)]), x, z) .* -dz;
+            K = K + dx .* sf .* az;
+            K = K + ax .* sf .* dz;
         end
     end
   elseif i==3
@@ -119,19 +125,23 @@ else                                                               % derivatives
     for ii = 1:length(cov)                              % iteration over functions
         f = cov(ii); if iscell(f{:}), f = f{:}; end % expand cell array if necessary
         if ii == 1
-            K = K + dx .* feval(f{:}, hyp([false false false (v==ii)]), x, z) .* az;
-            K = K + ax .* feval(f{:}, hyp([false false false (v==ii)]), x, z) .* dz;
+            K = K + -dx .* feval(f{:}, hyp([false false false false (v==ii)]), x, z) .* (1-az);
+            K = K + (1-ax) .* feval(f{:}, hyp([false false false false (v==ii)]), x, z) .* -dz;
+            K = K + dx .* sf .* az;
+            K = K + ax .* sf .* dz;
         end
     end
-  elseif i<=length(v)+3
-    i = i - 3;
+  elseif i ==4
+    K = 2 * sf * ax .* ones(size(ax)) .* az;  
+  elseif i<=length(v)+4
+    i = i - 4;
     vi = v(i);                                       % which covariance function
     j = sum(v(1:i)==vi);                    % which parameter in that covariance
     f  = cov(vi);
     if iscell(f{:}), f = f{:}; end         % dereference cell array if necessary
-    K = feval(f{:}, hyp([false false false (v==vi)]), x, z, j);                   % compute derivative
+    K = feval(f{:}, hyp([false false false false (v==vi)]), x, z, j);                   % compute derivative
     if vi == 1
-        K = ax .* K .* az;
+        K = (1-ax) .* K .* (1-az);
     end
   else
     error('Unknown hyperparameter')

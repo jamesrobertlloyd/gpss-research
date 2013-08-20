@@ -137,13 +137,10 @@ class SqExpKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # Set lengthscale with input scale or neutrally
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = np.random.normal(loc=0, scale=sd)
+            # Set lengthscale with input scale
+            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
-            # Set scale factor with output scale
+            # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
                 result[1] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
             else:
@@ -243,31 +240,19 @@ class SqExpPeriodicKernel(BaseKernel):
             # Min period represents a minimum sensible scale - use it for lengthscale as well
             # Scale with data_scale though
             if data_shape['min_period'] is None:
-                if np.random.rand() < 0.5:
-                    result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-                else:
-                    result[0] = np.random.normal(loc=0, scale=sd)
+                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
             else:
-                if np.random.rand() < 0.5:
-                    result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
-                else:
-                    result[0] = utils.misc.sample_truncated_normal(loc=0, scale=sd, min_value=data_shape['min_period'])
+                result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
         if result[1] == -2:
             #### FIXME - Caution, magic numbers
             # Min period represents a minimum sensible scale
             # Scale with data_scale
             if data_shape['min_period'] is None:
-                if np.random.rand() < 0.5:
-                    result[1] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
-                else:
-                    result[1] = np.random.normal(loc=-2, scale=sd)
+                result[1] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
             else:
-                if np.random.rand() < 0.5:
-                    result[1] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
-                else:
-                    result[1] = utils.misc.sample_truncated_normal(loc=-2, scale=sd, min_value=data_shape['min_period'])
+                result[1] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
         if result[2] == 0:
-            # Set scale factor with output scale
+            # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
                 result[2] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
             else:
@@ -372,15 +357,9 @@ class CosineKernel(BaseKernel):
             # Min period represents a minimum sensible scale
             # Scale with data_scale
             if data_shape['min_period'] is None:
-                if np.random.rand() < 0.5:
-                    result[0] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
-                else:
-                    result[0] = np.random.normal(loc=-2, scale=sd)
+                result[0] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
             else:
-                if np.random.rand() < 0.5:
-                    result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
-                else:
-                    result[0] = utils.misc.sample_truncated_normal(loc=-2, scale=sd, min_value=data_shape['min_period'])
+                result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -487,29 +466,17 @@ class SpectralKernel(BaseKernel):
             # Min period represents a minimum sensible scale - use it for lengthscale as well
             # Scale with data_scale though
             if data_shape['min_period'] is None:
-                if np.random.rand() < 0.5:
-                    result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-                else:
-                    result[0] = np.random.normal(loc=0, scale=sd)
+                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
             else:
-                if np.random.rand() < 0.5:
-                    result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
-                else:
-                    result[0] = utils.misc.sample_truncated_normal(loc=0, scale=sd, min_value=data_shape['min_period'])
+                result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
         if result[2] == -2:
             #### FIXME - Caution, magic numbers
             # Min period represents a minimum sensible scale
             # Scale with data_scale
             if data_shape['min_period'] is None:
-                if np.random.rand() < 0.5:
-                    result[2] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
-                else:
-                    result[2] = np.random.normal(loc=-2, scale=sd)
+                result[2] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
             else:
-                if np.random.rand() < 0.5:
-                    result[2] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
-                else:
-                    result[2] = utils.misc.sample_truncated_normal(loc=-2, scale=sd, min_value=data_shape['min_period'])
+                result[2] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -613,10 +580,7 @@ class RQKernel(BaseKernel):
         result = self.param_vector()
         if result[0] == 0:
             # Set lengthscale with input scale
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = np.random.normal(loc=0, scale=sd)
+            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -845,7 +809,7 @@ class LinKernelFamily(BaseKernelFamily):
         return colored('LN', self.depth())
     
     def default(self):
-        return LinKernel(-2.0, 0., 0.)
+        return LinKernel(-0., 0., 0.)
     
     def __cmp__(self, other):
         assert isinstance(other, KernelFamily)
@@ -868,9 +832,8 @@ class LinKernelFamily(BaseKernelFamily):
         return "bias"
     
 class LinKernel(BaseKernel):
-    # FIXME - Caution - magic numbers! This one means offset of essentially zero and scale of 1
     # FIXME - lengthscale is actually an inverse scale
-    def __init__(self, offset=-2, lengthscale=0, location=0):
+    def __init__(self, offset=0, lengthscale=0, location=0):
         self.offset = offset
         self.lengthscale = lengthscale
         self.location = location
@@ -893,19 +856,22 @@ class LinKernel(BaseKernel):
         
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
-        if result[0] == -2:
-            #### Caution - magic numbers - Offset assumed to be near zero since non zero means covered by constant kernel
-            #### FIXME - is this really what I want to do?
-            result[0] = np.random.normal(loc=-10, scale=sd)
-        if result[1] == 0:
-            # Lengthscale scales with ratio of y std and x std (gradient = delta y / delta x)
+        if result[0] == 0:
+            # Set scale factor with output scale
             if np.random.rand() < 0.5:
-                result[1] = np.random.normal(loc=data_shape['output_scale'] - data_shape['input_scale'], scale=sd)
+                result[0] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            else:
+                result[0] = np.random.normal(loc=0, scale=sd)
+        if result[1] == 0:
+            # Lengthscale scales inverselywith ratio of y std and x std (gradient = delta y / delta x)
+            if np.random.rand() < 0.5:
+                result[1] = np.random.normal(loc=-(data_shape['output_scale'] - data_shape['input_scale']), scale=sd)
             else:
                 result[1] = np.random.normal(loc=0, scale=sd)
         if result[2] == 0:
             # Location moves with input location, and variance scales in input variance
-            result[2] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+            #### TODO - this should probably be closer to uniform (but allowed to bleed beyond edges)
+            result[2] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
         return result
         
     def effective_params(self):
@@ -1002,10 +968,10 @@ class StepKernel(BaseKernel):
         result = self.param_vector()
         if result[0] == 0:
             # Location moves with input location, and variance scales in input variance
-            result[0] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+            result[0] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
         if result[1] == 0:
             # Set steepness with inverse input scale
-            #### TODO - is this correct scaling?
+            #### TODO - Check me more thoroughly
             result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=0.5*sd)
         if result[2] == 0:
             # Set scale factor with output scale
@@ -1110,6 +1076,7 @@ class IBMKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
+            #### TODO - any idea how to initialise the rate parameter?
             result[0] = np.random.normal(loc=0, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
@@ -1487,10 +1454,7 @@ class PP0Kernel(BaseKernel):
         result = self.param_vector()
         if result[0] == 0:
             # Set lengthscale with input scale
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = np.random.normal(loc=0, scale=sd)
+            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -1590,10 +1554,7 @@ class PP1Kernel(BaseKernel):
         result = self.param_vector()
         if result[0] == 0:
             # Set lengthscale with input scale
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = np.random.normal(loc=0, scale=sd)
+            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -1693,10 +1654,7 @@ class PP2Kernel(BaseKernel):
         result = self.param_vector()
         if result[0] == 0:
             # Set lengthscale with input scale
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = np.random.normal(loc=0, scale=sd)
+            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -1796,10 +1754,7 @@ class PP3Kernel(BaseKernel):
         result = self.param_vector()
         if result[0] == 0:
             # Set lengthscale with input scale
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = np.random.normal(loc=0, scale=sd)
+            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -1898,10 +1853,7 @@ class Matern1Kernel(BaseKernel):
         result = self.param_vector()
         if result[0] == 0:
             # Set lengthscale with input scale
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = np.random.normal(loc=0, scale=sd)
+            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -2000,10 +1952,7 @@ class Matern3Kernel(BaseKernel):
         result = self.param_vector()
         if result[0] == 0:
             # Set lengthscale with input scale
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = np.random.normal(loc=0, scale=sd)
+            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -2102,10 +2051,7 @@ class Matern5Kernel(BaseKernel):
         result = self.param_vector()
         if result[0] == 0:
             # Set lengthscale with input scale
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = np.random.normal(loc=0, scale=sd)
+            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale
             if np.random.rand() < 0.5:
@@ -2143,102 +2089,7 @@ class Matern5Kernel(BaseKernel):
         return 0 
             
     def out_of_bounds(self, constraints):
-        return self.lengthscale < constraints['min_lengthscale']  
-    
-class ChangeKernelFamily(BaseKernelFamily):
-    def from_param_vector(self, params):
-        steepness, location = params
-        return ChangeKernel(steepness, location)
-    
-    def num_params(self):
-        return 2
-    
-    def pretty_print(self):
-        return colored('CH', self.depth())
-    
-    def default(self):
-        # A steepness of exactly zero will result in no gradient.
-        # We might consider reparameterizing at some point.
-        # The parameters aren't in log space.
-        #### TODO - Put steepness parameter in log space for consistency since this will scale like a lengthscale
-        return ChangeKernel(1., 0.)
-    
-    def __cmp__(self, other):
-        assert isinstance(other, KernelFamily)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return 0
-    
-    def depth(self):
-        return 0
-    
-    def id_name(self):
-        return 'Change'
-    
-    @staticmethod    
-    def description():
-        return "Changepoint"
-
-    @staticmethod    
-    def params_description():
-        return "steepness, location"    
-
-class ChangeKernel(BaseKernel):
-    def __init__(self, steepness, location):
-        self.steepness = steepness
-        self.location = location
-        
-    def family(self):
-        return ChangeKernelFamily()
-        
-    def gpml_kernel_expression(self):
-        return '{@covChange}'
-    
-    def english_name(self):
-        return 'CH'
-    
-    def id_name(self):
-        return 'Change'
-    
-    def param_vector(self):
-        # order of args matches GPML
-        return np.array([self.steepness, self.location])
-    
-    #### TODO - Uncomment me when this kernel is implemented
-    #### N.B. This assumes the steepness parameter is on a log scale and scales like a lengthscale    
-    def default_params_replaced(self, sd=1, data_shape=None):
-        result = self.param_vector()
-        if result[0] == 0: #### TODO - Make sure this default matches that in self.default() - should do when on log scale
-            # Set steepness with input scale
-            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-        if result[1] == 0:
-            # Location moves with input location, and variance scales in input variance
-            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
-        return result
-
-    def copy(self):
-        return ChangeKernel(self.steepness, self.location)
-    
-    def __repr__(self):
-        return 'ChangeKernel(steepness=%f, location=%f)' % (self.steepness, self.location)
-    
-    def pretty_print(self):
-        return colored('CH(steep=%1.1f, loc=%1.1f)' % (self.steepness, self.location), self.depth())
-    
-    def latex_print(self):
-        return 'Change'
-        
-    def __cmp__(self, other):
-        assert isinstance(other, Kernel)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        differences = [self.steepness - other.steepness, self.location - other.location]
-        differences = map(shrink_below_tolerance, differences)
-        return cmp(differences, [0] * len(differences))
-    
-    def depth(self):
-        return 0 
-    
+        return self.lengthscale < constraints['min_lengthscale']    
         
 class MaskKernelFamily(KernelFamily):
     def __init__(self, ndim, active_dimension, base_kernel_family):
@@ -2320,6 +2171,10 @@ class MaskKernel(Kernel):
             data_shape['input_scale'] = data_shape['input_scale'][self.active_dimension]
         if isinstance(data_shape['min_period'], (list, tuple, np.ndarray)):
             data_shape['min_period'] = data_shape['min_period'][self.active_dimension]
+        if isinstance(data_shape['input_min'], (list, tuple, np.ndarray)):
+            data_shape['input_min'] = data_shape['input_min'][self.active_dimension]
+        if isinstance(data_shape['input_max'], (list, tuple, np.ndarray)):
+            data_shape['input_max'] = data_shape['input_max'][self.active_dimension]
         return self.base_kernel.default_params_replaced(sd=sd, data_shape=data_shape)
     
     def __cmp__(self, other):
@@ -2546,7 +2401,7 @@ class BurstKernel(Kernel):
         if result[2] == 0:
             # Set width with input scale
             #### TODO - is this correct scaling?
-            result[2] = np.random.normal(loc=0.5*data_shape['input_scale'], scale=sd)
+            result[2] = np.random.normal(loc=np.log(0.1)+data_shape['input_scale'], scale=0.5*sd)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
     
     def __cmp__(self, other):

@@ -77,6 +77,16 @@ saveas( gcf, filename );
 %filename = sprintf('%s_all.pdf', figname);
 %save2pdf( filename, gcf, 400, true )
 
+% Plot kernel
+
+figure(666); clf; hold on;
+imagesc(complete_sigmastarstart);
+xlim([1, length(xrange)]);
+ylim([1, length(xrange)]);
+title(full_name);
+filename = sprintf('%s_kernel.fig', figname);
+saveas( gcf, filename );
+
 % Plot residuals.
 figure(1000); clf; hold on;
 data_complete_mean = feval(complete_covfunc{:}, complete_hypers, X, X)' / complete_sigma * y;
@@ -208,6 +218,16 @@ for j = 1:numel(decomp_list)
     saveas( gcf, filename );
     %filename = sprintf('%s_%d.pdf', figname, i);
     %save2pdf( filename, gcf, 400, true );
+    
+    % Plot the kernel
+    
+    figure(666); clf; hold on;
+    imagesc(decomp_sigma_starstar);
+    xlim([1, length(xrange)]);
+    ylim([1, length(xrange)]);
+    title(latex_names{i});
+    filename = sprintf('%s_%d_kernel.fig', figname, j);
+    saveas( gcf, filename );
 end
 
 cum_kernel = cell(0);
@@ -246,6 +266,16 @@ for j = 1:numel(decomp_list)
     saveas( gcf, filename );
     %filename = sprintf('%s_%d.pdf', figname, i);
     %save2pdf( filename, gcf, 400, true );
+    
+    % Plot the kernel
+    
+    figure(666); clf; hold on;
+    imagesc(decomp_sigma_starstar);
+    xlim([1, length(xrange)]);
+    ylim([1, length(xrange)]);
+    title(['The above + ' latex_names{i}]);
+    filename = sprintf('%s_%d_cum_kernel.fig', figname, j);
+    saveas( gcf, filename );
 end
 end
 

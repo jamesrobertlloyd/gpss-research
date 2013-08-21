@@ -478,7 +478,7 @@ class SpectralKernel(BaseKernel):
             else:
                 result[2] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
         if result[1] == 0:
-            # Set scale factor with output scale
+            # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
                 result[1] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
             else:
@@ -582,7 +582,7 @@ class RQKernel(BaseKernel):
             # Set lengthscale with input scale
             result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
         if result[1] == 0:
-            # Set scale factor with output scale
+            # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
                 result[1] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
             else:
@@ -687,8 +687,11 @@ class ConstKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # Set scale factor with output location
-            result[0] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            # Set scale factor with max of output location and scale or neutrally
+            if np.random.rand() < 0.5:
+                result[0] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            else:
+                result[0] = np.random.normal(loc=0, scale=sd)
         return result
     
     def __repr__(self):
@@ -795,7 +798,38 @@ class ZeroKernel(BaseKernel):
         return cmp(self.__class__, other.__class__)
         
     def depth(self):
-        return 0   
+        return 0 
+        
+class NoneKernelFamily(BaseKernelFamily): 
+    def __init__(self):
+        pass   
+        
+    def pretty_print(self):
+        return colored('None', self.depth())
+        
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        return cmp(self.__class__, other.__class__)    
+        
+class NoneKernel(BaseKernel):
+    def __init__(self):
+        pass
+
+    def copy(self):
+        return NoneKernel() 
+        
+    def family(self):
+        return NoneKernelFamily()   
+        
+    def pretty_print(self):
+        return colored('None', self.depth())
+        
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        return cmp(self.__class__, other.__class__) 
+    
+    def depth(self):
+        return 0    
 
 class LinKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -857,13 +891,13 @@ class LinKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # Set scale factor with output location
+            # Set scale factor with output location or neutrally
             if np.random.rand() < 0.5:
                 result[0] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
             else:
                 result[0] = np.random.normal(loc=0, scale=sd)
         if result[1] == 0:
-            # Lengthscale scales inverselywith ratio of y std and x std (gradient = delta y / delta x)
+            # Lengthscale scales inversely with ratio of y std and x std (gradient = delta y / delta x)
             if np.random.rand() < 0.5:
                 result[1] = np.random.normal(loc=-(data_shape['output_scale'] - data_shape['input_scale']), scale=sd)
             else:
@@ -967,18 +1001,24 @@ class StepKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # Location moves with input location, and variance scales in input variance
-            result[0] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
+            # Uniform over input
+            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
         if result[1] == 0:
-            # Set steepness with inverse input scale
-            #### TODO - Check me more thoroughly
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=sd)
+            # Set steepness with inverse input scale (and on average quite steep)
+            #### FIXME - Caution, magic numbers
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
         if result[2] == 0:
-            # Set scale factor with output scale
-            result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
         if result[3] == 0:
-            # Set scale factor with output scale
-            result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            else:
+                result[3] = np.random.normal(loc=0, scale=sd)
         return result
         
     def effective_params(self):
@@ -1014,9 +1054,9 @@ class StepKernel(BaseKernel):
         return 0 
             
     def out_of_bounds(self, constraints): #### TODO - check me!
-        return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2)
+        return (self.location < constraints['input_min']) or \
+               (self.location > constraints['input_max']) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3)
         
 class IBMKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1180,7 +1220,10 @@ class IBMLinKernel(BaseKernel):
             # Location moves with input location, and variance scales in input variance
             result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
         if result[2] == 0:
-            result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
         if result[3] == 0:
             # Lengthscale scales with ratio of y std and x std (gradient = delta y / delta x)
             if np.random.rand() < 0.5:
@@ -2278,15 +2321,13 @@ class ChangePointKernel(Kernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         '''Returns the parameter vector with any default values replaced with random Gaussian'''
         result = self.param_vector()[:2]
-        if result[0] == 0: #### TODO - Make sure this default matches that in self.default() - should do when on log scale
-            # Location moves with input location, and variance scales in input variance
-            # Expect change points to occur with the data
-            #### TODO - check us for sensibleness!
-            result[0] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
+        if result[0] == 0:
+            # Location uniform in data range
+            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
         if result[1] == 0:
+            #### FIXME - Caution, magic numbers
             # Set steepness with inverse input scale
-            #### TODO - is this correct scaling?
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=sd)
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
     
     def __cmp__(self, other):
@@ -2299,10 +2340,10 @@ class ChangePointKernel(Kernel):
     def depth(self):
         return max([op.depth() for op in self.operands]) + 1
             
-    def out_of_bounds(self, constraints): #### TODO - check me!
-        return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2) or \
+    def out_of_bounds(self, constraints):
+        return (self.location < constraints['input_min']) or \
+               (self.location > constraints['input_max']) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
         
 class BurstSEKernelFamily(KernelFamily):
@@ -2389,19 +2430,17 @@ class BurstKernel(Kernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         '''Returns the parameter vector with any default values replaced with random Gaussian'''
         result = self.param_vector()[:3]
-        if result[0] == 0: #### TODO - Make sure this default matches that in self.default() - should do when on log scale
-            # Location moves with input location, and variance scales in input variance
-            # Expect change points to occur with the data
-            #### TODO - check us for sensibleness!
-            result[0] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
+        if result[0] == 0:
+            # Location uniform in input
+            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
         if result[1] == 0:
             # Set steepness with inverse input scale
-            #### TODO - is this correct scaling?
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=sd)
+            #### FIXME - Caution, magic numbers
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
         if result[2] == 0:
-            # Set width with input scale
-            #### TODO - is this correct scaling?
-            result[2] = np.random.normal(loc=np.log(0.1)+data_shape['input_scale'], scale=sd)
+            # Set width with input scale - but expecting small widths
+            #### FIXME - Caution, magic numbers
+            result[2] = np.random.normal(loc=np.log(0.1*(data_shape['input_max'] - data_shape['input_min'])), scale=1)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
     
     def __cmp__(self, other):
@@ -2414,12 +2453,12 @@ class BurstKernel(Kernel):
     def depth(self):
         return max([op.depth() for op in self.operands]) + 1
             
-    def out_of_bounds(self, constraints):#### TODO - check me!
-        return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.width > np.log(0.25*(constraints['input_max'] -constraints['input_min']))) or \
+    def out_of_bounds(self, constraints):
+        return (self.location < constraints['input_min']) or \
+               (self.location > constraints['input_max']) or \
+               (self.width > np.log(0.25*(constraints['input_max'] - constraints['input_min']))) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
-               #(self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or 
                
 class BlackoutKernelFamily(KernelFamily):
     def __init__(self, operands):
@@ -2497,21 +2536,19 @@ class BlackoutKernel(Kernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         '''Returns the parameter vector with any default values replaced with random Gaussian'''
         result = self.param_vector()[:4]
-        if result[0] == 0: #### TODO - Make sure this default matches that in self.default() - should do when on log scale
-            # Location moves with input location, and variance scales in input variance
-            # Expect change points to occur with the data
-            #### TODO - check us for sensibleness!
-            result[0] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
+        if result[0] == 0:
+            # Location uniform in input
+            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
         if result[1] == 0:
             # Set steepness with inverse input scale
-            #### TODO - is this correct scaling?
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=0.5*sd)
+            #### FIXME - Caution, magic numbers
+            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
         if result[2] == 0:
-            # Set width with input scale
-            #### TODO - is this correct scaling?
-            result[2] = np.random.normal(loc=np.log(0.1)+data_shape['input_scale'], scale=0.5*sd)
+            # Set width with input scale - but expecting small widths
+            #### FIXME - Caution, magic numbers
+            result[2] = np.random.normal(loc=np.log(0.1*(data_shape['input_max'] - data_shape['input_min'])), scale=1)
         if result[3] == 0:
-            # Set sf with output location or small
+            # Set sf with output location or neutral
             if np.random.rand() < 0.5:
                 result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
             else:
@@ -2532,8 +2569,8 @@ class BlackoutKernel(Kernel):
         return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.width > np.log(0.5*(constraints['input_max'] -constraints['input_min']))) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
-               #(self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or 
         
 class SumKernelFamily(KernelFamily):
     def __init__(self, operands):

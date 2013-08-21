@@ -29,19 +29,22 @@ class OneDGrammar:
         else:
             raise RuntimeError('Unknown type: %s' % tp)
         
+MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
+                 ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
+                 ('A', 'B', {'A': 'multi', 'B': 'mask'}),
+                 ('A', ('CP', 'A'), {'A': 'multi'}),
+                 ('A', ('B', 'A'), {'A': 'multi'}),
+                 ('A', ('BL', 'A'), {'A': 'multi'}),
+                 ('A', ('None',), {'A': 'multi'}),
+                 ]
+                 
+#('A', 'B', {'A': 'base', 'B': 'base'}),                 
+                 
 #MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
 #                 ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
 #                 ('A', 'B', {'A': 'base', 'B': 'base'}),
 #                 ('A', ('CP', 'A'), {'A': 'multi'}),
-#                 ('A', ('B', 'A'), {'A': 'multi'}),
-#                 ('A', ('BL', 'A'), {'A': 'multi'}),
 #                 ]
-                 
-MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
-                 ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
-                 ('A', 'B', {'A': 'base', 'B': 'base'}),
-                 ('A', ('CP', 'A'), {'A': 'multi'}),
-                 ]
         
 #MULTI_D_RULES = [('A', ('BL', 'A'), {'A': 'multi'}),
 #                 ]
@@ -144,10 +147,12 @@ def polish_to_kernel(polish_expr):
             base_kernel = polish_to_kernel(polish_expr[1])
             #### FIXME - there should not be constants here!
             return fk.BlackoutKernel(0, 0, 0, 0, [base_kernel])
+        elif polish_expr[0] == 'None':
+            return fk.NoneKernel()
         else:
             raise RuntimeError('Unknown operator: %s' % polish_expr[0])
     else:
-        assert isinstance(polish_expr, fk.Kernel)
+        assert isinstance(polish_expr, fk.Kernel) or (polish_expr is None)
         return polish_expr
 
 
@@ -214,31 +219,57 @@ def canonical(kernel):
     if isinstance(kernel, fk.BaseKernel):
         return kernel.copy()
     elif isinstance(kernel, fk.MaskKernel):
-        return fk.MaskKernel(kernel.ndim, kernel.active_dimension, canonical(kernel.base_kernel))
+        if isinstance(canonical(kernel.base_kernel), fk.NoneKernel):
+            return fk.NoneKernel()
+        else:
+            return fk.MaskKernel(kernel.ndim, kernel.active_dimension, canonical(kernel.base_kernel))
     elif isinstance(kernel, fk.ChangePointKernel):
-        return fk.ChangePointKernel(kernel.location, kernel.steepness, [canonical(o) for o in kernel.operands])
+        canop = [canonical(o) for o in kernel.operands]
+        if isinstance(canop[0], fk.NoneKernel) or isinstance(canop[1], fk.NoneKernel):
+            #### TODO - might want to allow the zero kernel to appear
+            return fk.NoneKernel()
+        else:
+            return fk.ChangePointKernel(kernel.location, kernel.steepness, canop)
     elif isinstance(kernel, fk.BurstKernel):
-        return fk.BurstKernel(kernel.location, kernel.steepness, kernel.width, [canonical(o) for o in kernel.operands])
+        canop = [canonical(o) for o in kernel.operands]
+        if isinstance(canop[0], fk.NoneKernel):
+            return fk.NoneKernel()
+        else:
+            return fk.BurstKernel(kernel.location, kernel.steepness, kernel.width, canop)
     elif isinstance(kernel, fk.BlackoutKernel):
-        return fk.BlackoutKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, [canonical(o) for o in kernel.operands])
+        canop = [canonical(o) for o in kernel.operands]
+        if isinstance(canop[0], fk.NoneKernel):
+            return fk.NoneKernel()
+        else:
+            return fk.BlackoutKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, canop)
     elif isinstance(kernel, fk.SumKernel):
         new_ops = []
         for op in kernel.operands:
             op_canon = canonical(op)
             if isinstance(op, fk.SumKernel):
                 new_ops += op_canon.operands
-            else:
+            elif not isinstance(op_canon, fk.NoneKernel):
                 new_ops.append(op_canon)
-        return fk.SumKernel(sorted(new_ops))
+        if len(new_ops) == 0:
+            return fk.NoneKernel()
+        elif len(new_ops) == 1:
+            return new_ops[0]
+        else:
+            return fk.SumKernel(sorted(new_ops))
     elif isinstance(kernel, fk.ProductKernel):
         new_ops = []
         for op in kernel.operands:
             op_canon = canonical(op)
             if isinstance(op, fk.ProductKernel):
                 new_ops += op_canon.operands
-            else:
+            elif not isinstance(op_canon, fk.NoneKernel):
                 new_ops.append(op_canon)
-        return fk.ProductKernel(sorted(new_ops))
+        if len(new_ops) == 0:
+            return fk.NoneKernel()
+        elif len(new_ops) == 1:
+            return new_ops[0]
+        else:
+            return fk.ProductKernel(sorted(new_ops))
     else:
         raise RuntimeError('Unknown kernel class:', kernel.__class__)
 
@@ -263,6 +294,7 @@ def expand_kernels(D, seed_kernels, verbose=False, debug=False, base_kernels='SE
     for k in seed_kernels:
         kernels = kernels + expand(k, g)
     kernels = remove_duplicates(kernels)
+    kernels = [k for k in kernels if not isinstance(k, fk.NoneKernel)]
     if verbose:
         print 'Expanded kernels :'
         for k in kernels:

@@ -823,6 +823,9 @@ class NoneKernel(BaseKernel):
         
     def pretty_print(self):
         return colored('None', self.depth())
+    
+    def __repr__(self):
+        return 'NoneKernel()'
         
     def __cmp__(self, other):
         assert isinstance(other, Kernel)

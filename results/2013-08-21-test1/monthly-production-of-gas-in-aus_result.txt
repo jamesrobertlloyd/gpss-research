@@ -1,0 +1,42 @@
+Experiment all_results for
+ datafile = ../data/temp/monthly-production-of-gas-in-aus.mat
+
+ Running experiment:
+description = Seeing if CP, step and burst ever used,
+data_dir = ../data/temp/,
+max_depth = 6,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 4,
+sd = 4,
+max_jobs = 400,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2013-08-21-test1/,
+iters = 500,
+base_kernels = SE,Const,Lin,Cos,Step,BurstSE,IBMLin,Per,PP3,MT5,
+zero_mean = True,
+verbose_results = False,
+random_seed = 0,
+use_min_period = True,
+period_heuristic = 10,
+use_constraints = False,
+alpha_heuristic = -2,
+lengthscale_heuristic = -4.5,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+ScoredKernel(k_opt=MaskKernel(ndim=1, active_dimension=0, base_kernel=IBMLinKernel(rate=13.339832, location=1965.556724, offset=7.734260, scale=2.659256)), nll=4690.245842, laplace_nle=nan, bic_nle=9398.987938, npll=4684.744706, pic_nle=9387.985665, mae=3113.913171, std_ratio=0.988663, noise=[ 8.38984733])
+
+%%%%% Level 1 %%%%%
+
+ScoredKernel(k_opt=ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=IBMLinKernel(rate=3.522281, location=1956.062697, offset=0.069969, scale=-3.180966)), MaskKernel(ndim=1, active_dimension=0, base_kernel=IBMLinKernel(rate=11.568748, location=1960.054819, offset=4.142801, scale=1.770175)) ]), nll=4194.231752, laplace_nle=nan, bic_nle=8419.290594, npll=4200.066236, pic_nle=8430.959562, mae=8319.593269, std_ratio=63.977540, noise=[ 4.15713852])
+
+%%%%% Level 2 %%%%%
+
+ScoredKernel(k_opt=ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=IBMLinKernel(rate=10.091393, location=1961.054517, offset=3.765924, scale=0.099082)), SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=IBMLinKernel(rate=3.795319, location=1960.852435, offset=3.718502, scale=-3.187963)), MaskKernel(ndim=1, active_dimension=0, base_kernel=PP3Kernel(lengthscale=-2.785738, output_variance=-2.089981)) ]) ]), nll=4071.116654, laplace_nle=nan, bic_nle=8185.391234, npll=4096.208858, pic_nle=8235.575641, mae=9095.870354, std_ratio=59.960965, noise=[ 4.20458884])

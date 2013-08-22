@@ -541,7 +541,7 @@ plot(x, y);
 x = linspace(0, 1, 1000)';
 
 cov_func = {@covIMT5};
-hyp.cov = [0,-0];
+hyp.cov = [-2,-10];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));

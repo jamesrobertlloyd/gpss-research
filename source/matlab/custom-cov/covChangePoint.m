@@ -61,8 +61,12 @@ else                                                               % derivatives
   if i==1
     dx = -steepness * repmat(exp(+(x-location)*steepness), 1, length(z)) .* ...
          (1 + repmat(exp(+(x-location)*steepness), 1, length(z))).^(-2);
+    dx(isnan(dx)) = 0; % infty * 0 = 0 for this function
+    dx(isinf(dx)) = 0; % infty * eps = 0 for this function
     dz = -steepness * repmat(exp(+(z-location)*steepness)', length(x), 1) .* ...
          (1 + repmat(exp(+(z-location)*steepness)', length(x), 1)).^(-2);
+    dz(isnan(dz)) = 0; % infty * 0 = 0 for this function
+    dz(isinf(dz)) = 0; % infty * eps = 0 for this function
     dx = -dx; % Switching the order of base kernels to match intuition 
     dz = -dz;
     K = 0;
@@ -79,8 +83,12 @@ else                                                               % derivatives
   elseif i==2
     dx = steepness * repmat(exp(+(x-location)*steepness).*(x-location), 1, length(z)) .* ...
          (1 + repmat(exp(+(x-location)*steepness), 1, length(z))).^(-2);
+    dx(isnan(dx)) = 0; % infty * 0 = 0 for this function
+    dx(isinf(dx)) = 0; % infty * eps = 0 for this function
     dz = steepness * repmat((exp(+(z-location)*steepness).*(z-location))', length(x), 1) .* ...
          (1 + repmat(exp(+(z-location)*steepness)', length(x), 1)).^(-2);
+    dz(isnan(dz)) = 0; % infty * 0 = 0 for this function
+    dz(isinf(dz)) = 0; % infty * eps = 0 for this function
     dx = -dx; % Switching the order of base kernels to match intuition 
     dz = -dz;
     K = 0;

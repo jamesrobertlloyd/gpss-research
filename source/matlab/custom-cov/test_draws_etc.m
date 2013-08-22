@@ -12,6 +12,34 @@ y = chol(K)' * randn(size(x));
 
 plot(x, y);
 
+%% MT3 draw
+
+x = linspace(-5, 5, 1000)';
+
+cov_func = {@covMaterniso, 3};
+hyp.cov = [0,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-5*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% MT5 draw
+
+x = linspace(-5, 5, 1000)';
+
+cov_func = {@covMaterniso, 5};
+hyp.cov = [0,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
 %% Cosine draw
 
 x = linspace(-5, 5, 100)';
@@ -479,3 +507,59 @@ plot(x, y, 'o');
 hold on;
 plot(xrange, fit);
 hold off;
+
+%% IMT1 draw
+
+x = linspace(0, 1, 1000)';
+
+cov_func = {@covIMT1};
+hyp.cov = [0,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% IMT3 draw
+
+x = linspace(0, 1, 1000)';
+
+cov_func = {@covIMT3};
+hyp.cov = [0,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% IMT5 draw
+
+x = linspace(0, 1, 1000)';
+
+cov_func = {@covIMT5};
+hyp.cov = [0,-0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% IMT5 * SE draw
+
+x = linspace(0, 100, 1000)';
+
+cov_func = {@covProd, {@covSEiso, @covIMT5}};
+hyp.cov = [5,0,0,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);

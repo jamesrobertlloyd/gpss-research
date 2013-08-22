@@ -1,0 +1,46 @@
+Experiment all_results for
+ datafile = ../data/tsdlr/beveridge-wheat-price-index-1500.mat
+
+ Running experiment:
+description = Most but IBM,
+data_dir = ../data/tsdlr/,
+max_depth = 10,
+random_order = True,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 4,
+max_jobs = 400,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2013-08-22-time-series/,
+iters = 500,
+base_kernels = Step,BurstSE,Per,Cos,Lin,SE,Const,PP2,PP3,MT3,MT5,
+zero_mean = True,
+verbose_results = False,
+random_seed = 0,
+use_min_period = True,
+period_heuristic = 5,
+use_constraints = False,
+alpha_heuristic = -2,
+lengthscale_heuristic = -4.5,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+ScoredKernel(k_opt=MaskKernel(ndim=1, active_dimension=0, base_kernel=Matern3Kernel(lengthscale=4.105441, output_variance=4.707397)), nll=1749.110675, laplace_nle=nan, bic_nle=3510.048356, npll=1733.996434, pic_nle=3479.819874, mae=23.173339, std_ratio=0.962564, noise=[ 3.18134845])
+
+%%%%% Level 1 %%%%%
+
+ScoredKernel(k_opt=ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=LinKernel(offset=-1.198565, lengthscale=3.998984, location=1511.256546)), MaskKernel(ndim=1, active_dimension=0, base_kernel=Matern3Kernel(lengthscale=1.766868, output_variance=3.458760)) ]), nll=1628.555811, laplace_nle=nan, bic_nle=3274.852130, npll=1617.531521, pic_nle=3252.803550, mae=79.256260, std_ratio=0.532676, noise=[ 1.60870514])
+
+%%%%% Level 2 %%%%%
+
+ScoredKernel(k_opt=ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=LinKernel(offset=-0.844990, lengthscale=3.582258, location=1477.927868)), SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=Matern3Kernel(lengthscale=4.895479, output_variance=2.826401)), MaskKernel(ndim=1, active_dimension=0, base_kernel=Matern5Kernel(lengthscale=0.190412, output_variance=1.402660)) ]) ]), nll=1537.156729, laplace_nle=nan, bic_nle=3103.880973, npll=1528.095315, pic_nle=3085.758145, mae=22.439978, std_ratio=0.212568, noise=[-1.13836924])
+
+%%%%% Level 3 %%%%%
+
+ScoredKernel(k_opt=ProductKernel([ BlackoutKernel(location=1766.302509, steepness=-0.729228, width=3.814183, sf=2.189974, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=LinKernel(offset=0.067234, lengthscale=2.633374, location=1483.746107)) ]), SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=Matern3Kernel(lengthscale=5.195866, output_variance=2.268831)), MaskKernel(ndim=1, active_dimension=0, base_kernel=Matern5Kernel(lengthscale=0.195095, output_variance=0.561277)) ]) ]), nll=1520.749731, laplace_nle=nan, bic_nle=3094.720989, npll=1509.245299, pic_nle=3071.712126, mae=22.422568, std_ratio=1.302452, noise=[-2.48712331])

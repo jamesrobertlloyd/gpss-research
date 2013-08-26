@@ -3017,4 +3017,5 @@ def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):
 
 def add_jitter(kernels, sd=0.1, data_shape=None):    
     '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
+    #### FIXME - this is ok for log transformed parameters - for other parameters the scale of jitter might be completely off
     return [k.family().from_param_vector(k.param_vector() + np.random.normal(loc=0., scale=sd, size=k.param_vector().size)) for k in kernels]

@@ -293,10 +293,10 @@ plot(x, y);
 %% Check Burst grad
 
 delta = 0.00001;
-i = 2;
+i = 3;
 
 cov_func = {@covBurst, {@covSEiso}};
-hyp1.cov = [2, -2, 2, 2, 2];
+hyp1.cov = [2, 0, 2, 2, 2];
 hyp2.cov = hyp1.cov;
 hyp2.cov(i) = hyp2.cov(i) + delta;
 
@@ -311,6 +311,59 @@ max(max(abs(diff - deriv)))
 
 cov_func = {@covBurst, {@covSEiso}};
 hyp.cov = [-2, 0, 0, -3, 0];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y-mean(y)) / 10);
+
+hyp = minimize(hyp, @gp, -1000, @infExact, mean_func, cov_func, lik_func, x, y);
+
+xrange = linspace(min(x)-5, max(x)+5, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
+hold off;
+
+%% BurstLin draw
+
+x = linspace(-10, 10, 1000)';
+
+cov_func = {@covBurstLin, {@covSEiso}};
+
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% Check BurstLin grad
+
+delta = 0.0000001;
+i = 3;
+
+cov_func = {@covBurstLin, {@covSEiso}};
+hyp1.cov = [1, 3, 1, 1, 1];
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x, x) - feval(cov_func{:}, hyp2.cov, x, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
+%% Burst fit
+
+%y = y + 0.05 * randn(size(y));
+
+cov_func = {@covBurstLin, {@covSEiso}};
+hyp.cov = [0, 0, 2, -2, 2];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -393,8 +446,70 @@ hyp.mean = [];
 lik_func = @likGauss;
 hyp.lik = log(std(y-mean(y)) / 10);
 
-repeats = 5;
-total_iters = 1000;
+repeats = 1;
+total_iters = 200;
+for i = 1:repeats
+  hyp = minimize(hyp, @gp, -floor(total_iters/repeats), @infExact, mean_func, cov_func, lik_func, x, y);
+end
+
+xrange = linspace(min(x)-5, max(x)+5, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
+hold off;
+
+%% Change point Lin draw
+
+x = linspace(-10, 10, 1000)';
+
+cov_func = {@covChangePointLin, {@covSEiso, @covSEiso}};
+hyp.cov = [0, 0, -2, 0, 2, 0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% Check CPLin grad
+
+x = linspace(-10, 10, 1000)';
+
+delta = 0.00000001;
+i = 2;
+
+cov_func = {@covChangePoint, {@covSEiso, @covSEiso}};
+hyp1.cov = [1, 1, 1, 2, 3, 4] -2;
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
+%% ChangePointLin fit
+
+%load 01-airline
+
+x = linspace(-15, 15, 250)';
+y = cos(1*pi*x) .* (1- (max(0,x)>0)) + cos(3*pi*x) .* ((max(0,x)>0)) + 0.1*randn(size(x)) + max(0,x);
+
+cov_func = {@covChangePointLin, {{@covProd, {@covPeriodic, @covSEiso}}, {@covProd, {@covPeriodic, @covSEiso}}}};
+hyp.cov = [-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y-mean(y)) / 10);
+
+repeats = 1;
+total_iters = 200;
 for i = 1:repeats
   hyp = minimize(hyp, @gp, -floor(total_iters/repeats), @infExact, mean_func, cov_func, lik_func, x, y);
 end
@@ -448,7 +563,7 @@ delta = 0.00001;
 i = 2;
 
 cov_func = {@covBlackout, {@covSEiso}};
-hyp1.cov = [2, 3, 1, 1, 1, 1] + 1;
+hyp1.cov = [2, 3, 1, 1, 1, 1] - 1;
 hyp2.cov = hyp1.cov;
 hyp2.cov(i) = hyp2.cov(i) + delta;
 
@@ -493,6 +608,91 @@ y = y / std(y);
 x = X;
 
 cov_func = {@covBlackout, {@covSEiso}};
+hyp.cov = [1695, -2.5, 4.8, -2, 4, 1];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y-mean(y)) / 10);
+
+hyp = minimize(hyp, @gp, -500, @infExact, mean_func, cov_func, lik_func, x, y);
+
+xrange = linspace(min(x)-5, max(x)+5, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
+hold off;
+
+%% Blackout Lin draw
+
+x = linspace(-10, 10, 500)';
+
+cov_func = {@covBlackoutLin, {@covSEiso}};
+hyp.cov = [0, 1, 2, -2, -1, 2];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% Check Blackout Lin grad
+
+delta = 0.000000001;
+i = 2;
+
+cov_func = {@covBlackoutLin, {@covSEiso}};
+hyp1.cov = [ 0.0229   -0.2586    1.6875   -0.1492   -0.9620    1.9555];
+hyp1.cov = hyp.cov;
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x, x) - feval(cov_func{:}, hyp2.cov, x, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
+%% Blackout Lin fit
+
+y = y + 0.05 * randn(size(y));
+
+cov_func = {@covBlackoutLin, {@covSEiso}};
+hyp.cov = [0, 0, 0, 0, 0, 0];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y-mean(y)) / 10);
+
+hyp = minimize(hyp, @gp, -1000, @infExact, mean_func, cov_func, lik_func, x, y);
+
+xrange = linspace(min(x)-5, max(x)+5, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
+hold off;
+
+%% Blackout Lin fit
+
+load '02-solar.mat'
+
+%X = X - mean(X);
+%X = X / std(X);
+y = y - min(y);
+y = y / std(y);
+
+x = X;
+
+cov_func = {@covBlackoutLin, {@covSEiso}};
 hyp.cov = [1695, -2.5, 4.8, -2, 4, 1];
 
 mean_func = @meanZero;

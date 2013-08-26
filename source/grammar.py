@@ -72,9 +72,15 @@ class MultiDGrammar:
                 return True
             elif isinstance(kernel, fk.ChangePointKernel):
                 return all([self.type_matches(op, 'multi') for op in kernel.operands])
+            elif isinstance(kernel, fk.ChangePointTanhKernel):
+                return all([self.type_matches(op, 'multi') for op in kernel.operands])
             elif isinstance(kernel, fk.BurstKernel):
                 return all([self.type_matches(op, 'multi') for op in kernel.operands])
+            elif isinstance(kernel, fk.BurstTanhKernel):
+                return all([self.type_matches(op, 'multi') for op in kernel.operands])
             elif isinstance(kernel, fk.BlackoutKernel):
+                return all([self.type_matches(op, 'multi') for op in kernel.operands])
+            elif isinstance(kernel, fk.BlackoutTanhKernel):
                 return all([self.type_matches(op, 'multi') for op in kernel.operands])
             elif isinstance(kernel, fk.SumKernel):
                 return all([self.type_matches(op, 'multi') for op in kernel.operands])
@@ -93,6 +99,12 @@ class MultiDGrammar:
                 return all([self.type_matches(op, '1d') for op in kernel.operands])
             elif isinstance(kernel, fk.BlackoutKernel):
                 return all([self.type_matches(op, '1d') for op in kernel.operands])
+            elif isinstance(kernel, fk.ChangePointTanhKernel):
+                return all([self.type_matches(op, '1d') for op in kernel.operands])
+            elif isinstance(kernel, fk.BurstTanhKernel):
+                return all([self.type_matches(op, '1d') for op in kernel.operands])
+            elif isinstance(kernel, fk.BlackoutTanhKernel):
+                return all([self.type_matches(op, '1d') for op in kernel.operands])
             elif isinstance(kernel, fk.SumKernel):
                 return all([self.type_matches(op, '1d') for op in kernel.operands])
             elif isinstance(kernel, fk.ProductKernel):
@@ -103,11 +115,11 @@ class MultiDGrammar:
             return isinstance(kernel, fk.BaseKernel)
         elif tp == 'mask':
             #### FIXME - this is a burst kernel hack
-            return (isinstance(kernel, fk.MaskKernel) or (isinstance(kernel, fk.BurstKernel) and all([self.type_matches(op, tp) for op in kernel.operands])))
+            return (isinstance(kernel, fk.MaskKernel) or (isinstance(kernel, fk.BurstTanhKernel) and all([self.type_matches(op, tp) for op in kernel.operands])))
         elif tp == 'mask-not-const':
             #### TODO - should this become more general somehow?
             #### FIXME - this is a burst kernel hack
-            return ((isinstance(kernel, fk.MaskKernel) and (not isinstance(kernel.base_kernel, fk.ConstKernel))) or (isinstance(kernel, fk.BurstKernel) and all([self.type_matches(op, tp) for op in kernel.operands])))
+            return ((isinstance(kernel, fk.MaskKernel) and (not isinstance(kernel.base_kernel, fk.ConstKernel))) or (isinstance(kernel, fk.BurstTanhKernel) and all([self.type_matches(op, tp) for op in kernel.operands])))
         else:
             raise RuntimeError('Unknown type: %s' % tp)
         
@@ -121,7 +133,7 @@ class MultiDGrammar:
             return list(fk.base_kernels(self.ndim, self.base_kernels))
         elif tp == 'mask-not-const':
             #### FIXME - this is a burst kernel hack
-            return [k for k in list(fk.base_kernels(self.ndim, self.base_kernels)) if ((isinstance(k, fk.MaskKernel) and (not isinstance(k.base_kernel, fk.ConstKernel))) or (isinstance(k, fk.BurstKernel)))]
+            return [k for k in list(fk.base_kernels(self.ndim, self.base_kernels)) if ((isinstance(k, fk.MaskKernel) and (not isinstance(k.base_kernel, fk.ConstKernel))) or (isinstance(k, fk.BurstTanhKernel)))]
         else:
             raise RuntimeError('Unknown type: %s' % tp)
     
@@ -153,15 +165,15 @@ def polish_to_kernel(polish_expr):
         elif polish_expr[0] == 'CP':
             base_kernel = polish_to_kernel(polish_expr[1])
             #### FIXME - there should not be constants here!
-            return fk.ChangePointKernel(0, 0, [base_kernel, base_kernel.copy()])
+            return fk.ChangePointTanhKernel(0, 0, [base_kernel, base_kernel.copy()])
         elif polish_expr[0] == 'B':
             base_kernel = polish_to_kernel(polish_expr[1])
             #### FIXME - there should not be constants here!
-            return fk.BurstKernel(0, 0, 0, [base_kernel])
+            return fk.BurstTanhKernel(0, 0, 0, [base_kernel])
         elif polish_expr[0] == 'BL':
             base_kernel = polish_to_kernel(polish_expr[1])
             #### FIXME - there should not be constants here!
-            return fk.BlackoutKernel(0, 0, 0, 0, [base_kernel])
+            return fk.BlackoutTanhKernel(0, 0, 0, 0, [base_kernel])
         elif polish_expr[0] == 'None':
             return fk.NoneKernel()
         else:
@@ -213,6 +225,24 @@ def expand(kernel, grammar):
                 new_ops = kernel.operands[:i] + [e] + kernel.operands[i+1:]
                 new_ops = [op.copy() for op in new_ops]
                 result.append(fk.BlackoutKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, new_ops))
+    elif isinstance(kernel, fk.ChangePointTanhKernel):
+        for i, op in enumerate(kernel.operands):
+            for e in expand(op, grammar):
+                new_ops = kernel.operands[:i] + [e] + kernel.operands[i+1:]
+                new_ops = [op.copy() for op in new_ops]
+                result.append(fk.ChangePointTanhKernel(kernel.location, kernel.steepness, new_ops))
+    elif isinstance(kernel, fk.BurstTanhKernel):
+        for i, op in enumerate(kernel.operands):
+            for e in expand(op, grammar):
+                new_ops = kernel.operands[:i] + [e] + kernel.operands[i+1:]
+                new_ops = [op.copy() for op in new_ops]
+                result.append(fk.BurstTanhKernel(kernel.location, kernel.steepness, kernel.width, new_ops))
+    elif isinstance(kernel, fk.BlackoutTanhKernel):
+        for i, op in enumerate(kernel.operands):
+            for e in expand(op, grammar):
+                new_ops = kernel.operands[:i] + [e] + kernel.operands[i+1:]
+                new_ops = [op.copy() for op in new_ops]
+                result.append(fk.BlackoutTanhKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, new_ops))
     elif isinstance(kernel, fk.SumKernel):
         for i, op in enumerate(kernel.operands):
             for e in expand(op, grammar):
@@ -257,6 +287,25 @@ def canonical(kernel):
             return fk.NoneKernel()
         else:
             return fk.BlackoutKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, canop)
+    elif isinstance(kernel, fk.ChangePointTanhKernel):
+        canop = [canonical(o) for o in kernel.operands]
+        if isinstance(canop[0], fk.NoneKernel) or isinstance(canop[1], fk.NoneKernel):
+            #### TODO - might want to allow the zero kernel to appear
+            return fk.NoneKernel()
+        else:
+            return fk.ChangePointTanhKernel(kernel.location, kernel.steepness, canop)
+    elif isinstance(kernel, fk.BurstTanhKernel):
+        canop = [canonical(o) for o in kernel.operands]
+        if isinstance(canop[0], fk.NoneKernel):
+            return fk.NoneKernel()
+        else:
+            return fk.BurstTanhKernel(kernel.location, kernel.steepness, kernel.width, canop)
+    elif isinstance(kernel, fk.BlackoutTanhKernel):
+        canop = [canonical(o) for o in kernel.operands]
+        if isinstance(canop[0], fk.NoneKernel):
+            return fk.NoneKernel()
+        else:
+            return fk.BlackoutTanhKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, canop)
     elif isinstance(kernel, fk.SumKernel):
         new_ops = []
         for op in kernel.operands:

@@ -2187,7 +2187,11 @@ class MaskKernel(Kernel):
         dim_vec = np.zeros(self.ndim, dtype=int)
         dim_vec[self.active_dimension] = 1
         dim_vec_str = '[' + ' '.join(map(str, dim_vec)) + ']'
-        return '{@covMask, {%s, %s}}' % (dim_vec_str, self.base_kernel.gpml_kernel_expression())
+        if self.ndim > 1:
+            return '{@covMask, {%s, %s}}' % (dim_vec_str, self.base_kernel.gpml_kernel_expression())
+        else:
+            #### TO THINK ABOUT - is this ever risky?
+            return self.base_kernel.gpml_kernel_expression()
     
     def pretty_print(self):
         return colored('M(%d, ' % self.active_dimension, self.depth()) + \
@@ -2490,7 +2494,7 @@ class BlackoutKernelFamily(KernelFamily):
             colored(')', self.depth())
     
     def default(self):
-        return BurstKernel(0., 0., 0., 0., [op.default() for op in self.operands])
+        return BlackoutKernel(0., 0., 0., 0., [op.default() for op in self.operands])
     
     def __cmp__(self, other):
         assert isinstance(other, KernelFamily)
@@ -2573,6 +2577,333 @@ class BlackoutKernel(Kernel):
                (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.width > np.log(0.5*(constraints['input_max'] -constraints['input_min']))) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
+               (any([o.out_of_bounds(constraints) for o in self.operands])) 
+               
+class ChangePointTanhKernelFamily(KernelFamily):
+    def __init__(self, operands):
+        self.operands = operands
+        assert len(operands) == 2
+        
+    def from_param_vector(self, params):
+        location = params[0]
+        steepness = params[1]
+        start = 2
+        ops = []
+        for e in self.operands:
+            end = start + e.num_params()
+            ops.append(e.from_param_vector(params[start:end]))
+            start = end
+        return ChangePointTanhKernel(location, steepness, ops)
+    
+    def num_params(self):
+        return 2 + sum([e.num_params() for e in self.operands])
+    
+    def pretty_print(self):        
+        return colored('CPT(', self.depth()) + \
+            self.operands[0].pretty_print() + \
+            colored(', ', self.depth()) + \
+            self.operands[1].pretty_print() + \
+            colored(')', self.depth())
+    
+    def default(self):
+        return ChangePointTanhKernel(0., 0., [op.default() for op in self.operands])
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return cmp(self.operands, other.operands)
+    
+    def depth(self):
+        return max([op.depth() for op in self.operands]) + 1
+
+class ChangePointTanhKernel(Kernel):
+    def __init__(self, location, steepness, operands):
+        self.location = location
+        self.steepness = steepness
+        self.operands = operands
+        
+    def family(self):
+        return ChangePointTanhKernelFamily([e.family() for e in self.operands])
+        
+    def pretty_print(self): 
+        return colored('CPT(loc=%1.1f, steep=%1.1f, ' % (self.location, self.steepness), self.depth()) + \
+            self.operands[0].pretty_print() + \
+            colored(', ', self.depth()) + \
+            self.operands[1].pretty_print() + \
+            colored(')', self.depth())
+            
+    def latex_print(self):
+        return 'CPT\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
+            
+    def __repr__(self):
+        return 'ChangePointTanhKernel(location=%f, steepness=%f, operands=%s)' % \
+            (self.location, self.steepness, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
+    
+    def gpml_kernel_expression(self):
+        return '{@covChangePointTanh, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
+    
+    def copy(self):
+        return ChangePointTanhKernel(self.location, self.steepness, [e.copy() for e in self.operands])
+
+    def param_vector(self):
+        return np.concatenate([np.array([self.location, self.steepness])] + [e.param_vector() for e in self.operands])
+        
+    def effective_params(self):
+        return 2 + sum([o.effective_params() for o in self.operands])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        '''Returns the parameter vector with any default values replaced with random Gaussian'''
+        result = self.param_vector()[:2]
+        if result[0] == 0:
+            # Location uniform in data range
+            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
+        if result[1] == 0:
+            #### FIXME - Caution, magic numbers
+            # Set steepness with inverse input scale
+            result[1] = np.random.normal(loc=3.3-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
+        return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return cmp((self.location, self.steepness, self.operands),
+                   (other.location, other.steepness, other.operands))
+    
+    def depth(self):
+        return max([op.depth() for op in self.operands]) + 1
+            
+    def out_of_bounds(self, constraints):
+        return (self.location < constraints['input_min']) or \
+               (self.location > constraints['input_max']) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
+               (any([o.out_of_bounds(constraints) for o in self.operands])) 
+        
+class BurstTanhSEKernelFamily(KernelFamily):
+    def __init__(self):
+        pass
+    
+    def default(self):
+        return BurstTanhKernel(0., 0., 0., [SqExpKernelFamily().default()])
+        
+    def id_name(self):
+        return 'BurstTanhSE'
+        
+class BurstTanhKernelFamily(KernelFamily):
+    def __init__(self, operands):
+        self.operands = operands
+        assert len(operands) == 1
+        
+    def from_param_vector(self, params):
+        location = params[0]
+        steepness = params[1]
+        width = params[2]
+        start = 3
+        ops = []
+        for e in self.operands:
+            end = start + e.num_params()
+            ops.append(e.from_param_vector(params[start:end]))
+            start = end
+        return BurstTanhKernel(location, steepness, width, ops)
+    
+    def num_params(self):
+        return 3 + sum([e.num_params() for e in self.operands])
+    
+    def pretty_print(self):        
+        return colored('BT(', self.depth()) + \
+            self.operands[0].pretty_print() + \
+            colored(')', self.depth())
+    
+    def default(self):
+        return BurstTanhKernel(0., 0., 0., [op.default() for op in self.operands])
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return cmp(self.operands, other.operands)
+    
+    def depth(self):
+        return max([op.depth() for op in self.operands]) + 1
+
+class BurstTanhKernel(Kernel):
+    def __init__(self, location, steepness, width, operands):
+        self.location = location
+        self.steepness = steepness
+        self.width = width
+        self.operands = operands
+        
+    def family(self):
+        return BurstTanhKernelFamily([e.family() for e in self.operands])
+        
+    def pretty_print(self): 
+        return colored('BT(loc=%1.1f, steep=%1.1f, width=%1.1f, ' % (self.location, self.steepness, self.width), self.depth()) + \
+            self.operands[0].pretty_print() + \
+            colored(')', self.depth())
+            
+    def latex_print(self):
+        return 'BT\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
+            
+    def __repr__(self):
+        return 'BurstTanhKernel(location=%f, steepness=%f, width=%f, operands=%s)' % \
+            (self.location, self.steepness, self.width, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
+    
+    def gpml_kernel_expression(self):
+        return '{@covBurstTanh, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
+    
+    def copy(self):
+        return BurstTanhKernel(self.location, self.steepness, self.width, [e.copy() for e in self.operands])
+
+    def param_vector(self):
+        return np.concatenate([np.array([self.location, self.steepness, self.width])] + [e.param_vector() for e in self.operands])
+        
+    def effective_params(self):
+        return 3 + sum([o.effective_params() for o in self.operands])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        '''Returns the parameter vector with any default values replaced with random Gaussian'''
+        result = self.param_vector()[:3]
+        if result[0] == 0:
+            # Location uniform in input
+            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
+        if result[1] == 0:
+            # Set steepness with inverse input scale
+            #### FIXME - Caution, magic numbers
+            result[1] = np.random.normal(loc=3.3-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
+        if result[2] == 0:
+            # Set width with input scale - but expecting small widths
+            #### FIXME - Caution, magic numbers
+            result[2] = np.random.normal(loc=np.log(0.1*(data_shape['input_max'] - data_shape['input_min'])), scale=1)
+        return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return cmp((self.location, self.steepness, self.width, self.operands),
+                   (other.location, other.steepness, other.width, other.operands))
+    
+    def depth(self):
+        return max([op.depth() for op in self.operands]) + 1
+            
+    def out_of_bounds(self, constraints):
+        return (self.location < constraints['input_min']) or \
+               (self.location > constraints['input_max']) or \
+               (self.width > np.log(0.25*(constraints['input_max'] - constraints['input_min']))) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
+               (any([o.out_of_bounds(constraints) for o in self.operands])) 
+               
+class BlackoutTanhKernelFamily(KernelFamily):
+    def __init__(self, operands):
+        self.operands = operands
+        assert len(operands) == 1
+        
+    def from_param_vector(self, params):
+        location = params[0]
+        steepness = params[1]
+        width = params[2]
+        sf = params[3]
+        start = 4
+        ops = []
+        for e in self.operands:
+            end = start + e.num_params()
+            ops.append(e.from_param_vector(params[start:end]))
+            start = end
+        return BlackoutTanhKernel(location, steepness, width, sf, ops)
+    
+    def num_params(self):
+        return 4 + sum([e.num_params() for e in self.operands])
+    
+    def pretty_print(self):        
+        return colored('BLT(', self.depth()) + \
+            self.operands[0].pretty_print() + \
+            colored(')', self.depth())
+    
+    def default(self):
+        return BlackoutTanhKernel(0., 0., 0., 0., [op.default() for op in self.operands])
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return cmp(self.operands, other.operands)
+    
+    def depth(self):
+        return max([op.depth() for op in self.operands]) + 1
+
+class BlackoutTanhKernel(Kernel):
+    def __init__(self, location, steepness, width, sf, operands):
+        self.location = location
+        self.steepness = steepness
+        self.width = width
+        self.sf = sf
+        self.operands = operands
+        
+    def family(self):
+        return BlackoutTanhKernelFamily([e.family() for e in self.operands])
+        
+    def pretty_print(self): 
+        return colored('BLT(loc=%1.1f, steep=%1.1f, width=%1.1f, sf=%1.1f, ' % (self.location, self.steepness, self.width, self.sf), self.depth()) + \
+            self.operands[0].pretty_print() + \
+            colored(')', self.depth())
+            
+    def latex_print(self):
+        return 'BLT\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
+            
+    def __repr__(self):
+        return 'BlackoutTanhKernel(location=%f, steepness=%f, width=%f, sf=%f, operands=%s)' % \
+            (self.location, self.steepness, self.width, self.sf, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
+    
+    def gpml_kernel_expression(self):
+        return '{@covBlackoutTanh, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
+    
+    def copy(self):
+        return BlackoutTanhKernel(self.location, self.steepness, self.width, self.sf, [e.copy() for e in self.operands])
+
+    def param_vector(self):
+        return np.concatenate([np.array([self.location, self.steepness, self.width, self.sf])] + [e.param_vector() for e in self.operands])
+        
+    def effective_params(self):
+        return 4 + sum([o.effective_params() for o in self.operands])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        '''Returns the parameter vector with any default values replaced with random Gaussian'''
+        result = self.param_vector()[:4]
+        if result[0] == 0:
+            # Location uniform in input
+            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
+        if result[1] == 0:
+            # Set steepness with inverse input scale
+            #### FIXME - Caution, magic numbers
+            result[1] = np.random.normal(loc=3.3-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
+        if result[2] == 0:
+            # Set width with input scale - but expecting small widths
+            #### FIXME - Caution, magic numbers
+            result[2] = np.random.normal(loc=np.log(0.1*(data_shape['input_max'] - data_shape['input_min'])), scale=1)
+        if result[3] == 0:
+            # Set sf with output location or neutral
+            if np.random.rand() < 0.5:
+                result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            else:
+                result[3] = np.random.normal(loc=0, scale=sd)
+        return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return cmp((self.location, self.steepness, self.width, self.sf, self.operands),
+                   (other.location, other.steepness, other.width, other.sf, other.operands))
+    
+    def depth(self):
+        return max([op.depth() for op in self.operands]) + 1
+            
+    def out_of_bounds(self, constraints):#### TODO - check me!
+        return (self.location < constraints['input_min'] + 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.location > constraints['input_max'] - 0.0 * (constraints['input_max'] -constraints['input_min'])) or \
+               (self.width > np.log(0.5*(constraints['input_max'] -constraints['input_min']))) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
         
 class SumKernelFamily(KernelFamily):
@@ -2772,6 +3103,12 @@ def base_kernels(ndim=1, base_kernel_names='SE'):
             #yield MaskKernel(ndim, dim, BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default())
             #### FIXME - only works in 1d
             yield BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default()
+            
+    if 'BurstTanhSE' in base_kernel_names:
+        for dim in range(ndim):
+            #yield MaskKernel(ndim, dim, BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default())
+            #### FIXME - only works in 1d
+            yield BurstTanhKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default()
     
     for dim in range(ndim):
         for fam in base_kernel_families(base_kernel_names):

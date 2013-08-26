@@ -2769,7 +2769,9 @@ def base_kernels(ndim=1, base_kernel_names='SE'):
     #### FIXME - special behaviour
     if 'BurstSE' in base_kernel_names:
         for dim in range(ndim):
-            yield MaskKernel(ndim, dim, BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default())
+            #yield MaskKernel(ndim, dim, BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default())
+            #### FIXME - only works in 1d
+            yield BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default()
     
     for dim in range(ndim):
         for fam in base_kernel_families(base_kernel_names):

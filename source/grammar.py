@@ -30,7 +30,8 @@ class OneDGrammar:
             raise RuntimeError('Unknown type: %s' % tp)
         
 MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
-                 ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
+                 ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask-not-const'}),
+                 ('A', ('*-const', 'A', 'B'), {'A': 'multi', 'B': 'mask-not-const'}), # Might be possible to do this more elegantly
                  ('A', 'B', {'A': 'multi', 'B': 'mask'}),
                  ('A', ('CP', 'A'), {'A': 'multi'}),
                  ('A', ('B', 'A'), {'A': 'multi'}),
@@ -101,7 +102,12 @@ class MultiDGrammar:
         elif tp == 'base':
             return isinstance(kernel, fk.BaseKernel)
         elif tp == 'mask':
-            return isinstance(kernel, fk.MaskKernel)
+            #### FIXME - this is a burst kernel hack
+            return (isinstance(kernel, fk.MaskKernel) or (isinstance(kernel, fk.BurstKernel) and all([self.type_matches(op, tp) for op in kernel.operands])))
+        elif tp == 'mask-not-const':
+            #### TODO - should this become more general somehow?
+            #### FIXME - this is a burst kernel hack
+            return ((isinstance(kernel, fk.MaskKernel) and (not isinstance(kernel.base_kernel, fk.ConstKernel))) or (isinstance(kernel, fk.BurstKernel) and all([self.type_matches(op, tp) for op in kernel.operands])))
         else:
             raise RuntimeError('Unknown type: %s' % tp)
         
@@ -109,9 +115,13 @@ class MultiDGrammar:
         if tp in ['1d', 'multi']:
             raise RuntimeError("Can't expand the '%s' type" % tp)
         elif tp == 'base':
+            #### FIXME - base and mask should use the same function to ensure they are the same
             return [fam.default() for fam in fk.base_kernel_families(self.base_kernels)]
         elif tp == 'mask':
             return list(fk.base_kernels(self.ndim, self.base_kernels))
+        elif tp == 'mask-not-const':
+            #### FIXME - this is a burst kernel hack
+            return [k for k in list(fk.base_kernels(self.ndim, self.base_kernels)) if ((isinstance(k, fk.MaskKernel) and (not isinstance(k.base_kernel, fk.ConstKernel))) or (isinstance(k, fk.BurstKernel)))]
         else:
             raise RuntimeError('Unknown type: %s' % tp)
     
@@ -135,6 +145,11 @@ def polish_to_kernel(polish_expr):
         elif polish_expr[0] == '*':
             operands = [polish_to_kernel(e) for e in polish_expr[1:]]
             return fk.ProductKernel(operands)
+        elif polish_expr[0] == '*-const':
+            operands = [polish_to_kernel(e) for e in polish_expr[1:]]
+            # A * (B + Const)
+            #### FIXME - assumes 1d - inelegant as well
+            return fk.ProductKernel([operands[0], fk.SumKernel([operands[1], fk.MaskKernel(1, 0, fk.ConstKernelFamily().default())])])
         elif polish_expr[0] == 'CP':
             base_kernel = polish_to_kernel(polish_expr[1])
             #### FIXME - there should not be constants here!

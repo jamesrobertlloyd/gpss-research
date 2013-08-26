@@ -3014,3 +3014,7 @@ def add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape):
 def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):    
     '''Augments the list to include random restarts of all default value parameters'''
     return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape)]
+
+def add_jitter(kernels, sd=0.1, data_shape=None):    
+    '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
+    return [k.family().from_param_vector(k.param_vector() + np.random.normal(loc=0., scale=sd, size=k.param_vector().size)) for k in kernels]

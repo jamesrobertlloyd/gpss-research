@@ -100,6 +100,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     noise = None # Initially have no guess at noise
     
     best_mae = np.Inf
+    best_kernels = None
     
     # Perform search
     for depth in range(exp.max_depth):
@@ -109,9 +110,18 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
              
         # Add random restarts to kernels
         current_kernels = fk.add_random_restarts(current_kernels, exp.n_rand, exp.sd, data_shape=data_shape)
-        #print 'Trying these kernels'
-        #for result in current_kernels:
-        #    print result.pretty_print()
+        
+        # Add jitter to parameter values (empirically discovered to help broken optimiser - hopefully prevents excessive const kernel proliferation)
+        current_kernels = fk.add_jitter(current_kernels, exp.jitter_sd)
+        
+        # Add the previous best kernels - in case we just need to optimise more rather than changing structure
+        if not best_kernels is None:
+            for kernel in best_kernels:
+                current_kernels = current_kernels + [kernel.copy()] + fk.add_jitter([kernel.copy() for dummy in range(exp.n_rand)], exp.jitter_sd)
+        
+        print 'Trying these kernels'
+        for result in current_kernels:
+            print result.pretty_print()
         
         # Score the kernels
         new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
@@ -123,6 +133,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             
         # Enforce the period heuristic
         #### TODO - Concept of parameter constraints is more general than this - make it so
+        #### FIXME - this is set to true because parameter constraints are not the same as min period (see comment above)
         if True:#exp.use_min_period:
             new_results = [sk for sk in new_results if not sk.k_opt.out_of_bounds(data_shape)]
             
@@ -183,13 +194,16 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             print 'Printing all results'
             for result in all_results:
                 #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-                print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+                print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
         
         # Extract the best k kernels from the new all_results
         best_results = sorted(new_results, key=ScoredKernel.score)[0:exp.k]
         noise = best_results[0].noise # Remember the best noise #### WARNING - this only really makes sense when k = 1 since other kernels may have different noise levels
         best_kernels = [r.k_opt for r in best_results]
         current_kernels = grammar.expand_kernels(D, best_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels)
+        # Also add copies of the seed kernels in case it is just best to run the optimiser for a bit longer
+        #for kernel in best_kernels:
+        #    current_kernels = current_kernels + [kernel.copy() for dummy in range(exp.n_rand+1)]
         
         if exp.debug==True:
             current_kernels = current_kernels[0:4]
@@ -248,7 +262,7 @@ def gen_all_datasets(dir):
 
 # Defines a class that keeps track of all the options for an experiment.
 # Maybe more natural as a dictionary to handle defaults - but named tuple looks nicer with . notation
-class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic')):
+class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
                 results_dir,                  # Where to write the results.
@@ -260,6 +274,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 local_computation = True,     # Run experiments locally, or on the cloud.
                 n_rand = 2,                   # Number of random restarts.
                 sd = 4,                       # Standard deviation of random restarts.
+                jitter_sd = 0.5,              # Standard deviation of jitter.
                 max_jobs=500,                 # Maximum number of jobs to run at once on cluster.
                 verbose=False,
                 make_predictions=False,       # Whether or not to forecast on a test set.
@@ -274,7 +289,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
 		        use_constraints=False,        # Place hard constraints on some parameter values? #### TODO - should be replaced with a prior / more Bayesian analysis
                 alpha_heuristic=-2,           # Minimum alpha value for RQ kernel
                 lengthscale_heuristic=-4.5):  # Minimum lengthscale     
-        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic)
+        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic)
 
 def experiment_fields_to_str(exp):
     str = "Running experiment:\n"

@@ -101,6 +101,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     
     best_mae = np.Inf
     best_kernels = None
+    best_predictor_sequence = []
     
     # Perform search
     for depth in range(exp.max_depth):
@@ -205,7 +206,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #### TODO - make me an experiment parameter
         # Add the best predicting kernel as well - might lead to a better marginal likelihood eventually
         best_kernels = best_kernels + [sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0].k_opt]
-        best_predictor = sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0]
+        best_predictor_sequence += [[sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0]]]
         current_kernels = grammar.expand_kernels(D, best_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels)
         
         if exp.debug==True:
@@ -216,7 +217,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         with open(results_filename + '.unfinished', 'w') as outfile:
             outfile.write('Experiment all_results for\n datafile = %s\n\n %s \n\n' \
                           % (experiment_data_file_name, experiment_fields_to_str(exp)))
-            for (i, all_results) in enumerate(results_sequence):
+            for (i, (best_predictors, all_results)) in enumerate(zip(best_predictor_sequence, results_sequence)):
                 outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
                 if exp.verbose_results:
                     for result in all_results:
@@ -224,7 +225,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                 else:
                     # Only print top k kernels - i.e. those used to seed the next level of the search
                     #### FIXME - adding in best_predictor like this is hacky
-                    for result in [best_predictor] + sorted(all_results, key=ScoredKernel.score)[0:exp.k]:
+                    for result in best_predictors + sorted(all_results, key=ScoredKernel.score)[0:exp.k]:
                         print >> outfile, result 
     
     # Rename temporary results file to actual results file                

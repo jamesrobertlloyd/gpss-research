@@ -119,9 +119,9 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             for kernel in best_kernels:
                 current_kernels = current_kernels + [kernel.copy()] + fk.add_jitter([kernel.copy() for dummy in range(exp.n_rand)], exp.jitter_sd)
         
-        print 'Trying these kernels'
-        for result in current_kernels:
-            print result.pretty_print()
+        #print 'Trying these kernels'
+        #for result in current_kernels:
+        #    print result.pretty_print()
         
         # Score the kernels
         new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
@@ -129,7 +129,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                                           
         #print 'Raw results'
         #for result in new_results:
-        #    print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
             
         # Enforce the period heuristic
         #### TODO - Concept of parameter constraints is more general than this - make it so
@@ -139,7 +139,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             
         #print 'Removing out of bounds'
         #for result in new_results:
-        #    print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
         
         # Some of the scores may have failed - remove nans to prevent sorting algorithms messing up
         new_results = remove_nan_scored_kernels(new_results)
@@ -150,7 +150,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #print 'All new results:'
         #for result in new_results:
         #    #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-        #    print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
             
         # Remove near duplicates from these all_results (top m all_results only for efficiency)
         if exp.k > 1:
@@ -160,7 +160,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         print 'All new results after duplicate removal:'
         for result in new_results:
             #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-            print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+            print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
             
         # Remove overfitting
         #new_results = [result for result in new_results if (result.std_ratio > 0.5) and (result.std_ratio < 1.5)]
@@ -168,7 +168,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #print 'All new results after overfitting removal:'
         #for result in new_results:
         #    #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-        #    print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
             
         # Remove bad predictors
         #old_best_mae = best_mae
@@ -184,7 +184,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #print 'All new results after removing bad predictors:'
         #for result in new_results:
         #    #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-        #    print result.bic_nle, result.mae, result.std_ratio, result.k_opt.pretty_print()
+        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
 
         all_results = all_results + new_results
         all_results = sorted(all_results, key=ScoredKernel.score, reverse=True)
@@ -198,12 +198,15 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Extract the best k kernels from the new all_results
         best_results = sorted(new_results, key=ScoredKernel.score)[0:exp.k]
+        #### FIXME - this only really works for k = 1
         noise = best_results[0].noise # Remember the best noise #### WARNING - this only really makes sense when k = 1 since other kernels may have different noise levels
         best_kernels = [r.k_opt for r in best_results]
+        #### FIXME - the next line of code is incompatible with the noise code two lines above - to be fixed when code next re-written
+        #### TODO - make me an experiment parameter
+        # Add the best predicting kernel as well - might lead to a better marginal likelihood eventually
+        best_kernels = best_kernels + [sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0].k_opt]
+        best_predictor = sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0]
         current_kernels = grammar.expand_kernels(D, best_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels)
-        # Also add copies of the seed kernels in case it is just best to run the optimiser for a bit longer
-        #for kernel in best_kernels:
-        #    current_kernels = current_kernels + [kernel.copy() for dummy in range(exp.n_rand+1)]
         
         if exp.debug==True:
             current_kernels = current_kernels[0:4]
@@ -220,7 +223,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                         print >> outfile, result  
                 else:
                     # Only print top k kernels - i.e. those used to seed the next level of the search
-                    for result in sorted(all_results, key=ScoredKernel.score)[0:exp.k]:
+                    #### FIXME - adding in best_predictor like this is hacky
+                    for result in [best_predictor] + sorted(all_results, key=ScoredKernel.score)[0:exp.k]:
                         print >> outfile, result 
     
     # Rename temporary results file to actual results file                

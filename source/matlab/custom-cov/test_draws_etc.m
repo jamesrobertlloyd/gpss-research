@@ -893,7 +893,7 @@ hold off;
 x = linspace(-1, 1, 1000)';
 
 cov_func = {@covIMT1};
-hyp.cov = [1,0,0];
+hyp.cov = [0,0,0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));
@@ -905,10 +905,10 @@ plot(x, y);
 %% Check IMT1 grad
 
 delta = 0.00001;
-i = 1;
+i = 3;
 
 cov_func = {@covIMT1};
-hyp1.cov = [1, 0.5, 0];
+hyp1.cov = [0, 0, 0];
 hyp2.cov = hyp1.cov;
 hyp2.cov(i) = hyp2.cov(i) + delta;
 
@@ -929,7 +929,7 @@ y = y / std(y);
 x = X;
 
 cov_func = {@covSum, {@covIMT1, @covIMT1, @covConst}};
-%hyp.cov = [0, mean(x), 0, 2, mean(x), 2, 0];
+hyp.cov = [0, mean(x), 0, 2, mean(x), 2, 0];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -950,13 +950,11 @@ hold off;
 
 %% IMT1 fit
 
-load '02-solar.mat'
-
-x = linspace(-1, 1, 100);
-y = x + 0.1*randn(size(x));
+x = linspace(-1, 1, 100)';
+y = x.^2 + 0.1*randn(size(x));
 
 cov_func = {@covSum, {@covIMT1, @covConst}};
-hyp.cov = [10, 1, 1, 0];
+hyp.cov = [0, 0, 0, 0];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -966,7 +964,7 @@ hyp.lik = log(std(y-mean(y)) / 10);
 
 hyp = minimize(hyp, @gp, -500, @infExact, mean_func, cov_func, lik_func, x, y);
 
-xrange = linspace(min(x)-100, max(x)+100, 1000)';
+xrange = linspace(min(x)-1, max(x)+1, 1000)';
 
 fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
 

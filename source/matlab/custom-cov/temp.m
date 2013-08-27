@@ -18,7 +18,7 @@ hyp.mean = [];
 lik_func = @likGauss;
 hyp.lik = log(std(y-mean(y)) / 10);
 
-hyp = minimize(hyp, @gp, -100, @infExact, mean_func, cov_func, lik_func, x, y);
+hyp = minimize(hyp, @gp, -10, @infExact, mean_func, cov_func, lik_func, x, y);
 
 xrange = linspace(min(x)-100, max(x)+1000, 10000)';
 

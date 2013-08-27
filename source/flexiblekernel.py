@@ -3389,6 +3389,13 @@ def distribute_products(k):
         return SumKernel([BurstKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op]) for op in break_kernel_into_summands(k.operands[0])])
     elif isinstance(k, BurstKernel):
         return SumKernel([BlackoutKernel(location=k.location, steepness=k.steepness, width=k.width, sf=k.sf-np.log(len(break_kernel_into_summands(k.operands[0]))), operands=[op]) for op in break_kernel_into_summands(k.operands[0])])
+    elif isinstance(k, ChangePointTanhKernel):
+        return SumKernel([ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
+                         [ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
+    elif isinstance(k, BurstTanhKernel):
+        return SumKernel([BurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op]) for op in break_kernel_into_summands(k.operands[0])])
+    elif isinstance(k, BurstTanhKernel):
+        return SumKernel([BlackoutTanhKernel(location=k.location, steepness=k.steepness, width=k.width, sf=k.sf-np.log(len(break_kernel_into_summands(k.operands[0]))), operands=[op]) for op in break_kernel_into_summands(k.operands[0])])
     else:
         # Base case: A kernel that's just, like, a kernel, man.
         return k

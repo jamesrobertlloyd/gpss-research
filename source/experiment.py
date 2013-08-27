@@ -83,7 +83,9 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     data_shape['input_max'] = [np.max(X[:,dim]) for dim in range(X.shape[1])][0]
     # Initialise period at a multiple of the shortest / average distance between points, to prevent Nyquist problems.
     if exp.use_min_period:
-        data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
+        #data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
+        # This heuristic works with evenly spaced data even when subsampled
+        data_shape['min_period'] = np.log([exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]) for i in range(X.shape[1])])
     else:
         data_shape['min_period'] = None
     #### TODO - make the below and above more elegant
@@ -205,7 +207,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #### FIXME - the next line of code is incompatible with the noise code two lines above - to be fixed when code next re-written
         #### TODO - make me an experiment parameter
         # Add the best predicting kernel as well - might lead to a better marginal likelihood eventually
-        best_kernels = best_kernels + [sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0].k_opt]
+        #best_kernels = best_kernels + [sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0].k_opt]
         best_predictor_sequence += [[sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0]]]
         current_kernels = grammar.expand_kernels(D, best_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels)
         

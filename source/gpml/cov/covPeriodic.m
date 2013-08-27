@@ -36,7 +36,9 @@ end
 
 K = pi*K/p;
 if nargin<4                                                        % covariances
-    K = sin(K)/ell; K = K.*K; K =   sf2*exp(-2*K);
+    K = sin(K)/ell;
+    K = K.*K;
+    K = sf2*exp(-2*K);
 else                                                               % derivatives
   if i==1
     K = sin(K)/ell; K = K.*K; K = 4*sf2*exp(-2*K).*K;

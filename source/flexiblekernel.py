@@ -1060,6 +1060,123 @@ class StepKernel(BaseKernel):
         return (self.location < constraints['input_min']) or \
                (self.location > constraints['input_max']) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3)
+               
+class StepTanhKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        location, steepness, sf1, sf2 = params
+        return StepTanhKernel(location=location, steepness=steepness, sf1=sf1, sf2=sf2)
+    
+    def num_params(self):
+        return 4
+    
+    def pretty_print(self):
+        return colored('STT', self.depth())
+    
+    def default(self):
+        return StepTanhKernel(0., 0., 0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'StepTanh'
+
+    @staticmethod    
+    def description():
+        return "StepTanh"
+
+    @staticmethod    
+    def params_description():
+        return "location, steepness, sf1, sf2"
+               
+class StepTanhKernel(BaseKernel):
+    def __init__(self, location=0, steepness=0, sf1=0, sf2=0):
+        self.location = location
+        self.steepness = steepness
+        self.sf1 = sf1
+        self.sf2 = sf2
+        
+    def family(self):
+        return StepTanhKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covChangePointTanh, {@covConst, @covConst}}'
+    
+    def english_name(self):
+        return 'StepTanh'
+    
+    def id_name(self):
+        return 'StepTanh'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.location, self.steepness, self.sf1, self.sf2])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            # Uniform over input
+            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
+        if result[1] == 0:
+            # Set steepness with inverse input scale (and on average quite steep)
+            #### FIXME - Caution, magic numbers
+            result[1] = np.random.normal(loc=3.3-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
+        if result[2] == 0:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
+        if result[3] == 0:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+            else:
+                result[3] = np.random.normal(loc=0, scale=sd)
+        return result
+        
+    def effective_params(self):
+        return 4
+
+    def copy(self):
+        return StepTanhKernel(location=self.location, steepness=self.steepness, sf1=self.sf1, sf2=self.sf2)
+    
+    def __repr__(self):
+        return 'StepTanhKernel(location=%f, steepness=%f, sf1=%f, sf2=%f)' % \
+            (self.location, self.steepness, self.sf1, self.sf2)
+    
+    def pretty_print(self):
+        return colored('STT(loc=%1.1f, steep=%1.1f, sf1=%1.1f, sf2=%1.1f)' % (self.location, self.steepness, self.sf1, self.sf2),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'StepTanh'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.location - other.location, self.steepness - other.steepness, self.sf1 - other.sf1, self.sf2 - other.sf2]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
+#                   (other.lengthscale, other.output_variance, other.alpha))
+        
+    def depth(self):
+        return 0 
+            
+    def out_of_bounds(self, constraints): #### TODO - check me!
+        return (self.location < constraints['input_min']) or \
+               (self.location > constraints['input_max']) or \
+               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3)
         
 class IBMKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -3144,7 +3261,8 @@ def base_kernel_families(base_kernel_names):
                    SpectralKernelFamily(), \
                    IBMKernelFamily(), \
                    IBMLinKernelFamily(), \
-                   StepKernelFamily()]:
+                   StepKernelFamily(), \
+                   StepTanhKernelFamily()]:
         if family.id_name() in base_kernel_names.split(','):
             yield family
     #if ndim == 1:

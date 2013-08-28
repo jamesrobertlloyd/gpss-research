@@ -557,7 +557,7 @@ hold off;
 x = linspace(-10, 10, 1000)';
 
 cov_func = {@covChangePointTanh, {@covSEiso, @covSEiso}};
-hyp.cov = [0, 0, -2, 0, 2, 0];
+hyp.cov = [0, 0, 0, 0, 2, 0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));
@@ -592,6 +592,66 @@ y = cos(1*pi*x) .* (1- (max(0,x)>0)) + cos(3*pi*x) .* ((max(0,x)>0)) + 0.1*randn
 
 cov_func = {@covChangePointLin, {{@covProd, {@covPeriodic, @covSEiso}}, {@covProd, {@covPeriodic, @covSEiso}}}};
 %hyp.cov = [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y-mean(y)) / 10);
+
+repeats = 1;
+total_iters = 200;
+for i = 1:repeats
+  hyp = minimize(hyp, @gp, -floor(total_iters/repeats), @infExact, mean_func, cov_func, lik_func, x, y);
+end
+
+xrange = linspace(min(x)-5, max(x)+5, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
+hold off;
+
+%% Change point burst draw
+
+x = linspace(-10, 10, 1000)';
+
+cov_func = {@covChangeBurstTanh, {@covSEiso, @covSEiso}};
+hyp.cov = [0, 1, 2, -1, 0, 1, 0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% Check CP tanh grad
+
+x = linspace(-15, 15, 1000)';
+
+delta = 0.00001;
+i = 6;
+
+hyp.cov = [0, 0, 0, -2, 0, 2, 0];
+
+cov_func = {@covChangeBurstTanh, {@covSEiso, @covSEiso}};
+hyp1.cov = hyp.cov;
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
+%% ChangeBurstTanh fit
+
+cov_func = {@covChangeBurstTanh, {@covSEiso, @covSEiso}};
+%hyp.cov = [0, 1, 2, -1, 0, 1, 0];
+hyp.cov = [0, 0, 0, 0, 0, 0, 0];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -651,7 +711,7 @@ plot(x, y);
 %% Check Blackout grad
 
 delta = 0.00001;
-i = 2;
+i = 3;
 
 cov_func = {@covBlackout, {@covSEiso}};
 hyp1.cov = [2, 3, 1, 1, 1, 1] + 1;
@@ -820,7 +880,7 @@ plot(x, y);
 %% Check Blackout Lin grad
 
 delta = 0.00001;
-i = 5;
+i = 3;
 
 cov_func = {@covBlackoutTanh, {@covSEiso}};
 hyp1.cov = [ 0.0229   -0.2586    1.6875   -0.1492   0.9620    1.9555];

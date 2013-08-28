@@ -21,7 +21,7 @@ import re
 
 PAREN_COLORS = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow']
 #### MAGIC NUMBER - CAUTION
-CMP_TOLERANCE = np.log(1.01) # i.e. 1%
+CMP_TOLERANCE = np.log(1.0001) # i.e. 0.01%
 
 def shrink_below_tolerance(x):
     if np.abs(x) < CMP_TOLERANCE:
@@ -689,7 +689,7 @@ class ConstKernel(BaseKernel):
         if result[0] == 0:
             # Set scale factor with max of output location and scale or neutrally
             if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+                result[0] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
             else:
                 result[0] = np.random.normal(loc=0, scale=sd)
         return result
@@ -896,7 +896,7 @@ class LinKernel(BaseKernel):
         if result[0] == 0:
             # Set scale factor with output location or neutrally
             if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+                result[0] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
             else:
                 result[0] = np.random.normal(loc=0, scale=sd)
         if result[1] == 0:
@@ -1013,13 +1013,13 @@ class StepKernel(BaseKernel):
         if result[2] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
-                result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+                result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
             else:
                 result[2] = np.random.normal(loc=0, scale=sd)
         if result[3] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
-                result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+                result[3] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
             else:
                 result[3] = np.random.normal(loc=0, scale=sd)
         return result
@@ -1130,13 +1130,13 @@ class StepTanhKernel(BaseKernel):
         if result[2] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
-                result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+                result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
             else:
                 result[2] = np.random.normal(loc=0, scale=sd)
         if result[3] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
-                result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+                result[3] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
             else:
                 result[3] = np.random.normal(loc=0, scale=sd)
         return result
@@ -1341,7 +1341,7 @@ class IBMLinKernel(BaseKernel):
             result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
         if result[2] == 0:
             if np.random.rand() < 0.5:
-                result[2] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+                result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
             else:
                 result[2] = np.random.normal(loc=0, scale=sd)
         if result[3] == 0:
@@ -2674,7 +2674,7 @@ class BlackoutKernel(Kernel):
         if result[3] == 0:
             # Set sf with output location or neutral
             if np.random.rand() < 0.5:
-                result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+                result[3] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
             else:
                 result[3] = np.random.normal(loc=0, scale=sd)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
@@ -2812,7 +2812,7 @@ class ChangeBurstTanhKernelFamily(KernelFamily):
             end = start + e.num_params()
             ops.append(e.from_param_vector(params[start:end]))
             start = end
-        return ChangeBurstTanhKernel(location, steepness, width ops)
+        return ChangeBurstTanhKernel(location, steepness, width, ops)
     
     def num_params(self):
         return 3 + sum([e.num_params() for e in self.operands])
@@ -2874,7 +2874,7 @@ class ChangeBurstTanhKernel(Kernel):
         
     def default_params_replaced(self, sd=1, data_shape=None):
         '''Returns the parameter vector with any default values replaced with random Gaussian'''
-        result = self.param_vector()[:2]
+        result = self.param_vector()[:3]
         if result[0] == 0:
             # Location uniform in data range
             result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
@@ -3109,7 +3109,7 @@ class BlackoutTanhKernel(Kernel):
         if result[3] == 0:
             # Set sf with output location or neutral
             if np.random.rand() < 0.5:
-                result[3] = np.random.normal(loc=np.max([np.log(data_shape['output_location']), data_shape['output_scale']]), scale=sd)
+                result[3] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
             else:
                 result[3] = np.random.normal(loc=0, scale=sd)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
@@ -3448,6 +3448,7 @@ def Carls_Mauna_kernel():
 
 def strip_masks(k):
     """Recursively strips masks out of a kernel, for when we used a multi-d grammar on a 1d problem."""    
+    #### TODO - extend to other operators (e.g. changepoint) as well
     if isinstance(k, MaskKernel):
         return strip_masks(k.base_kernel)
     elif isinstance(k, SumKernel):
@@ -3502,8 +3503,8 @@ def distribute_products(k):
         return SumKernel([ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
                          [ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
     elif isinstance(k, ChangeBurstTanhKernel):
-        return SumKernel([ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
-                         [ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
+        return SumKernel([ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
+                         [ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
     elif isinstance(k, BurstTanhKernel):
         return SumKernel([BurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op]) for op in break_kernel_into_summands(k.operands[0])])
     elif isinstance(k, BlackoutTanhKernel):

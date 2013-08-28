@@ -1,6 +1,6 @@
 Experiment(description='More thorough version',
            data_dir='../data/tsdlr-250/',
-           max_depth=8, 
+           max_depth=10, 
            random_order=True,
            k=1,
            debug=False, 

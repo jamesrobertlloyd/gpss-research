@@ -39,6 +39,12 @@ MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ('A', ('BL', 'A'), {'A': 'multi'}),
                  ('A', ('None',), {'A': 'multi'}),
                  ]
+        
+#MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
+#                 ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask-not-const'}),
+#                 ('A', ('*-const', 'A', 'B'), {'A': 'multi', 'B': 'mask-not-const'}),
+#                 ('A', ('None',), {'A': 'multi'}),
+#                 ]
                  
 #('A', 'B', {'A': 'base', 'B': 'base'}),                 
                  

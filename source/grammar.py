@@ -338,7 +338,7 @@ def canonical(kernel):
         new_ops = []
         for op in kernel.operands:
             op_canon = canonical(op)
-            if isinstance(op, fk.SumKernel):
+            if isinstance(op_canon, fk.SumKernel):
                 new_ops += op_canon.operands
             elif not isinstance(op_canon, fk.NoneKernel):
                 new_ops.append(op_canon)
@@ -352,7 +352,7 @@ def canonical(kernel):
         new_ops = []
         for op in kernel.operands:
             op_canon = canonical(op)
-            if isinstance(op, fk.ProductKernel):
+            if isinstance(op_canon, fk.ProductKernel):
                 new_ops += op_canon.operands
             elif not isinstance(op_canon, fk.NoneKernel):
                 new_ops.append(op_canon)

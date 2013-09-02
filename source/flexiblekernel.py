@@ -21,7 +21,7 @@ import re
 
 PAREN_COLORS = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow']
 #### MAGIC NUMBER - CAUTION
-CMP_TOLERANCE = np.log(1.0001) # i.e. 0.01%
+CMP_TOLERANCE = np.log(1.01) # i.e. 1%
 
 def shrink_below_tolerance(x):
     if np.abs(x) < CMP_TOLERANCE:

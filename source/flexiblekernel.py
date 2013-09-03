@@ -1384,6 +1384,446 @@ class IBMLinKernel(BaseKernel):
         
     def depth(self):
         return 0 
+        
+class IMT1KernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        lengthscale, location, sf = params
+        return IMT1Kernel(lengthscale=lengthscale, location=location, sf=sf)
+    
+    def num_params(self):
+        return 3
+    
+    def pretty_print(self):
+        return colored('IMT1', self.depth())
+    
+    def default(self):
+        return IMT1Kernel(0., 0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'IMT1'
+
+    @staticmethod    
+    def description():
+        return "Integrated Matern 1"
+
+    @staticmethod    
+    def params_description():
+        return "lengthscale, location, sf"
+    
+class IMT1Kernel(BaseKernel):
+    def __init__(self, lengthscale=0, location=0, sf=0):
+        self.lengthscale = lengthscale
+        self.location = location
+        self.sf = sf
+        
+    def family(self):
+        return IMT1KernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covIMT1}'
+    
+    def english_name(self):
+        return 'IMT1'
+    
+    def id_name(self):
+        return 'IMT1'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.lengthscale, self.location, self.sf])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            #### TODO - any idea how to initialise the lengthscale parameter?
+            result[0] = np.random.normal(loc=0, scale=sd)
+        if result[1] == 0:
+            # Location moves with input location, and variance scales in input variance
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+        if result[2] == 0:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
+        return result
+        
+    def effective_params(self):  
+        return 3
+
+    def copy(self):
+        return IMT1Kernel(lengthscale=self.lengthscale, location=self.location, sf=self.sf)
+    
+    def __repr__(self):
+        return 'IMT1Kernel(lengthscale=%f, location=%f, sf=%f)' % \
+            (self.lengthscale, self.location, self.sf)
+    
+    def pretty_print(self):
+        return colored('IMT1(ell=%1.1f, loc=%1.1f, sf=%1.1f)' % (self.lengthscale, self.location, self.sf),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'IMT1'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.lengthscale - other.lengthscale, self.location - other.location, self.sf - other.sf]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
+#                   (other.lengthscale, other.output_variance, other.alpha))
+        
+    def depth(self):
+        return 0 
+        
+class IMT1LinKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        lengthscale, location, sf, offset, scale = params
+        return IMT1LinKernel(lengthscale=lengthscale, location=location, sf=sf, offset=offset, scale=scale)
+    
+    def num_params(self):
+        return 5
+    
+    def pretty_print(self):
+        return colored('IMT1Lin', self.depth())
+    
+    def default(self):
+        return IMT1LinKernel(0., 0., 0., 0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'IMT1Lin'
+
+    @staticmethod    
+    def description():
+        return "Integrated Matern 1 + Linear"
+
+    @staticmethod    
+    def params_description():
+        return "lengthscale, location, sf, offset, scale"
+    
+class IMT1LinKernel(BaseKernel):
+    def __init__(self, lengthscale=0, location=0, sf=0, offset=0, scale=0):
+        self.lengthscale = lengthscale
+        self.location = location
+        self.sf = sf
+        self.offset = offset
+        self.scale = scale
+        
+    def family(self):
+        return IMT1LinKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covIMT1Lin}'
+    
+    def english_name(self):
+        return 'IMT1Lin'
+    
+    def id_name(self):
+        return 'IMT1Lin'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.lengthscale, self.location, self.sf, self.offset, self.scale])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            result[0] = np.random.normal(loc=0, scale=sd)
+        if result[1] == 0:
+            # Location moves with input location, and variance scales in input variance
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+        if result[2] == 0:
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
+        if result[3] == 0:
+            if np.random.rand() < 0.5:
+                result[3] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
+            else:
+                result[3] = np.random.normal(loc=0, scale=sd)
+        if result[4] == 0:
+            # Lengthscale scales with ratio of y std and x std (gradient = delta y / delta x)
+            if np.random.rand() < 0.5:
+                result[4] = np.random.normal(loc=data_shape['output_scale'] - data_shape['input_scale'], scale=sd)
+            else:
+                result[4] = np.random.normal(loc=0, scale=sd)
+        return result
+        
+    def effective_params(self):  
+        #### FIXME - is this sensible?
+        return 4
+
+    def copy(self):
+        return IMT1LinKernel(lengthscale=self.lengthscale, location=self.location, sf=self.sf, offset=self.offset, scale=self.scale)
+    
+    def __repr__(self):
+        return 'IMT1LinKernel(lengthscale=%f, location=%f, sf=%f, offset=%f, scale=%f)' % \
+            (self.lengthscale, self.location, self.sf, self.offset, self.scale)
+    
+    def pretty_print(self):
+        return colored('IMT1Lin(ell=%1.1f, loc=%1.1f, sf=%1.1f, off=%1.1f, scale=%1.1f)' % (self.lengthscale, self.location, self.sf, self.offset, self.scale),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'IMT1Lin'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.lengthscale - other.lengthscale, self.location - other.location, self.sf - other.sf, self.offset - other.offset, self.scale - other.scale]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
+#                   (other.lengthscale, other.output_variance, other.alpha))
+        
+    def depth(self):
+        return 0 
+        
+class IMT3KernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        lengthscale, location, sf = params
+        return IMT3Kernel(lengthscale=lengthscale, location=location, sf=sf)
+    
+    def num_params(self):
+        return 3
+    
+    def pretty_print(self):
+        return colored('IMT3', self.depth())
+    
+    def default(self):
+        return IMT3Kernel(0., 0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'IMT3'
+
+    @staticmethod    
+    def description():
+        return "Integrated Matern 3"
+
+    @staticmethod    
+    def params_description():
+        return "lengthscale, location, sf"
+    
+class IMT3Kernel(BaseKernel):
+    def __init__(self, lengthscale=0, location=0, sf=0):
+        self.lengthscale = lengthscale
+        self.location = location
+        self.sf = sf
+        
+    def family(self):
+        return IMT3KernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covIMT3}'
+    
+    def english_name(self):
+        return 'IMT3'
+    
+    def id_name(self):
+        return 'IMT3'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.lengthscale, self.location, self.sf])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            #### TODO - any idea how to initialise the lengthscale parameter?
+            result[0] = np.random.normal(loc=0, scale=sd)
+        if result[1] == 0:
+            # Location moves with input location, and variance scales in input variance
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+        if result[2] == 0:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
+        return result
+        
+    def effective_params(self):  
+        return 3
+
+    def copy(self):
+        return IMT3Kernel(lengthscale=self.lengthscale, location=self.location, sf=self.sf)
+    
+    def __repr__(self):
+        return 'IMT3Kernel(lengthscale=%f, location=%f, sf=%f)' % \
+            (self.lengthscale, self.location, self.sf)
+    
+    def pretty_print(self):
+        return colored('IMT3(ell=%1.1f, loc=%1.1f, sf=%1.1f)' % (self.lengthscale, self.location, self.sf),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'IMT3'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.lengthscale - other.lengthscale, self.location - other.location, self.sf - other.sf]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
+#                   (other.lengthscale, other.output_variance, other.alpha))
+        
+    def depth(self):
+        return 0 
+        
+class IMT3LinKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        lengthscale, location, sf, offset, scale = params
+        return IMT3LinKernel(lengthscale=lengthscale, location=location, sf=sf, offset=offset, scale=scale)
+    
+    def num_params(self):
+        return 5
+    
+    def pretty_print(self):
+        return colored('IMT3Lin', self.depth())
+    
+    def default(self):
+        return IMT3LinKernel(0., 0., 0., 0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'IMT3Lin'
+
+    @staticmethod    
+    def description():
+        return "Integrated Matern 3 + Linear"
+
+    @staticmethod    
+    def params_description():
+        return "lengthscale, location, sf, offset, scale"
+    
+class IMT3LinKernel(BaseKernel):
+    def __init__(self, lengthscale=0, location=0, sf=0, offset=0, scale=0):
+        self.lengthscale = lengthscale
+        self.location = location
+        self.sf = sf
+        self.offset = offset
+        self.scale = scale
+        
+    def family(self):
+        return IMT3LinKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covIMT3Lin}'
+    
+    def english_name(self):
+        return 'IMT3Lin'
+    
+    def id_name(self):
+        return 'IMT3Lin'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.lengthscale, self.location, self.sf, self.offset, self.scale])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            result[0] = np.random.normal(loc=0, scale=sd)
+        if result[1] == 0:
+            # Location moves with input location, and variance scales in input variance
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+        if result[2] == 0:
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
+        if result[3] == 0:
+            if np.random.rand() < 0.5:
+                result[3] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
+            else:
+                result[3] = np.random.normal(loc=0, scale=sd)
+        if result[4] == 0:
+            # Lengthscale scales with ratio of y std and x std (gradient = delta y / delta x)
+            if np.random.rand() < 0.5:
+                result[4] = np.random.normal(loc=data_shape['output_scale'] - data_shape['input_scale'], scale=sd)
+            else:
+                result[4] = np.random.normal(loc=0, scale=sd)
+        return result
+        
+    def effective_params(self):  
+        #### FIXME - is this sensible?
+        return 4
+
+    def copy(self):
+        return IMT3LinKernel(lengthscale=self.lengthscale, location=self.location, sf=self.sf, offset=self.offset, scale=self.scale)
+    
+    def __repr__(self):
+        return 'IMT3LinKernel(lengthscale=%f, location=%f, sf=%f, offset=%f, scale=%f)' % \
+            (self.lengthscale, self.location, self.sf, self.offset, self.scale)
+    
+    def pretty_print(self):
+        return colored('IMT3Lin(ell=%1.1f, loc=%1.1f, sf=%1.1f, off=%1.1f, scale=%1.1f)' % (self.lengthscale, self.location, self.sf, self.offset, self.scale),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'IMT3Lin'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.lengthscale - other.lengthscale, self.location - other.location, self.sf - other.sf, self.offset - other.offset, self.scale - other.scale]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
+#        return max_diff > CMP_TOLERANCE
+#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
+#                   (other.lengthscale, other.output_variance, other.alpha))
+        
+    def depth(self):
+        return 0 
 
 class QuadraticKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -3369,6 +3809,10 @@ def base_kernel_families(base_kernel_names):
                    SpectralKernelFamily(), \
                    IBMKernelFamily(), \
                    IBMLinKernelFamily(), \
+                   IMT1KernelFamily(), \
+                   IMT1LinKernelFamily(), \
+                   IMT3KernelFamily(), \
+                   IMT3LinKernelFamily(), \
                    StepKernelFamily(), \
                    StepTanhKernelFamily()]:
         if family.id_name() in base_kernel_names.split(','):

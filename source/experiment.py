@@ -128,7 +128,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Score the kernels
         new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
-                                          zip_files=False, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed)
+                                          zip_files=False, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed,
+                                          subset=exp.subset, subset_size=exp.subset_size)
                                           
         #print 'Raw results'
         #for result in new_results:
@@ -269,7 +270,7 @@ def gen_all_datasets(dir):
 
 # Defines a class that keeps track of all the options for an experiment.
 # Maybe more natural as a dictionary to handle defaults - but named tuple looks nicer with . notation
-class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic')):
+class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
                 results_dir,                  # Where to write the results.
@@ -295,8 +296,10 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 period_heuristic=10,
 		        use_constraints=False,        # Place hard constraints on some parameter values? #### TODO - should be replaced with a prior / more Bayesian analysis
                 alpha_heuristic=-2,           # Minimum alpha value for RQ kernel
-                lengthscale_heuristic=-4.5):  # Minimum lengthscale     
-        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic)
+                lengthscale_heuristic=-4.5,   # Minimum lengthscale 
+                subset=False,
+                subset_size=250):      
+        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size)
 
 def experiment_fields_to_str(exp):
     str = "Running experiment:\n"

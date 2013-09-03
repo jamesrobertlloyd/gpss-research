@@ -1,4 +1,4 @@
-function K = covIBMLin(hyp, x, z, i)
+function K = covIBM(hyp, x, z, i)
 
 % Integrated Brownian motion
 %

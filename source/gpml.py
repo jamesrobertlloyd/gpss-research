@@ -160,6 +160,15 @@ load '%(datafile)s'
 X = double(X)
 y = double(y)
 
+X_full = X;
+y_full = y;
+
+if %(subset)s & (%(subset_size)s < size(X, 1))
+    subset = randsample(size(X, 1), %(subset_size)s, false)
+    X = X_full(subset,:);
+    y = y_full(subset);
+end
+
 %% Load GPML
 addpath(genpath('%(gpml_path)s'));
 
@@ -178,7 +187,10 @@ hyp.lik = %(noise)s
 %% ...optimisation - hopefully restarting optimiser will make it more robust to scale issues
 %% [hyp_opt, nlls_2] = minimize(hyp_opt, @gp, -int32(%(iters)s * 3 / 3), @infExact, meanfunc, covfunc, likfunc, X, y);
 %% nlls = [nlls_1; nlls_2];
-best_nll = nlls(end)
+%% best_nll = nlls(end)
+
+%% Evaluate the nll on the full data
+best_nll = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, X_full, y_full)
 
 %% Compute Hessian numerically for laplace approx
 num_hypers = length(hyp_opt.cov);
@@ -222,7 +234,7 @@ catch
 end
 
 try
-    std_ratio = std_ratio(hyp_opt, meanfunc, covfunc, likfunc, X, y);
+    std_ratio = std_ratio(hyp_opt, meanfunc, covfunc, likfunc, X_full, y_full);
 catch
     std_ratio = NaN
 end

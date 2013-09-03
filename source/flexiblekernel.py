@@ -1444,11 +1444,12 @@ class IMT1Kernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            #### TODO - any idea how to initialise the lengthscale parameter?
-            result[0] = np.random.normal(loc=0, scale=sd)
+            # Set lengthscale with input scale - but expecting broad scales
+            #### FIXME - magic numbers
+            result[0] = np.random.normal(loc=data_shape['input_scale']+2, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
-            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale==0.5*sd*np.exp(data_shape['input_scale']))
         if result[2] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
@@ -1553,10 +1554,12 @@ class IMT1LinKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            result[0] = np.random.normal(loc=0, scale=sd)
+            # Set lengthscale with input scale - but expecting broad scales
+            #### FIXME - magic numbers
+            result[0] = np.random.normal(loc=data_shape['input_scale']+2, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
-            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
         if result[2] == 0:
             if np.random.rand() < 0.5:
                 result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
@@ -1670,11 +1673,12 @@ class IMT3Kernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            #### TODO - any idea how to initialise the lengthscale parameter?
-            result[0] = np.random.normal(loc=0, scale=sd)
+            # Set lengthscale with input scale - but expecting broad scales
+            #### FIXME - magic numbers
+            result[0] = np.random.normal(loc=data_shape['input_scale']+2, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
-            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
         if result[2] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
@@ -1779,10 +1783,12 @@ class IMT3LinKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            result[0] = np.random.normal(loc=0, scale=sd)
+            # Set lengthscale with input scale - but expecting broad scales
+            #### FIXME - magic numbers
+            result[0] = np.random.normal(loc=data_shape['input_scale']+2, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
-            result[1] = np.random.normal(loc=data_shape['input_location'], scale=sd*np.exp(data_shape['input_scale']))
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
         if result[2] == 0:
             if np.random.rand() < 0.5:
                 result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)

@@ -1489,6 +1489,9 @@ class IMT1Kernel(BaseKernel):
     def depth(self):
         return 0 
         
+    def out_of_bounds(self, constraints):
+        return self.lengthscale < constraints['min_integral_lengthscale']
+        
 class IMT1LinKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
         lengthscale, location, sf, offset, scale = params
@@ -1605,6 +1608,9 @@ class IMT1LinKernel(BaseKernel):
     def depth(self):
         return 0 
         
+    def out_of_bounds(self, constraints):
+        return self.lengthscale < constraints['min_integral_lengthscale']
+        
 class IMT3KernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
         lengthscale, location, sf = params
@@ -1708,6 +1714,9 @@ class IMT3Kernel(BaseKernel):
         
     def depth(self):
         return 0 
+        
+    def out_of_bounds(self, constraints):
+        return self.lengthscale < constraints['min_integral_lengthscale']
         
 class IMT3LinKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1824,6 +1833,9 @@ class IMT3LinKernel(BaseKernel):
         
     def depth(self):
         return 0 
+        
+    def out_of_bounds(self, constraints):
+        return self.lengthscale < constraints['min_integral_lengthscale']
 
 class QuadraticKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -2806,6 +2818,8 @@ class MaskKernel(Kernel):
             constraints['input_min'] = constraints['input_min'][self.active_dimension]
         if isinstance(constraints['input_max'], (list, tuple, np.ndarray)):
             constraints['input_max'] = constraints['input_max'][self.active_dimension]
+        if isinstance(constraints['min_integral_lengthscale'], (list, tuple, np.ndarray)):
+            constraints['min_integral_lengthscale'] = constraints['min_integral_lengthscale'][self.active_dimension]
         return self.base_kernel.out_of_bounds(constraints)
     
 

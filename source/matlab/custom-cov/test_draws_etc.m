@@ -1,9 +1,9 @@
 %% MT1 draw
 
-x = linspace(-5, 5, 1000)';
+x = linspace(0, 1, 1000)';
 
 cov_func = {@covMaterniso, 1};
-hyp.cov = [0,0];
+hyp.cov = [-3,0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-5*max(max(K))*eye(size(K));
@@ -14,10 +14,10 @@ plot(x, y);
 
 %% MT3 draw
 
-x = linspace(-5, 5, 1000)';
+x = linspace(0, 1, 1000)';
 
 cov_func = {@covMaterniso, 3};
-hyp.cov = [0,0];
+hyp.cov = [-2.5,0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-5*max(max(K))*eye(size(K));
@@ -28,10 +28,10 @@ plot(x, y);
 
 %% MT5 draw
 
-x = linspace(-5, 5, 1000)';
+x = linspace(0, 1, 1000)';
 
 cov_func = {@covMaterniso, 5};
-hyp.cov = [0,0];
+hyp.cov = [-3,0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));
@@ -1120,10 +1120,10 @@ hold off;
 
 %% IMT3 draw
 
-x = linspace(-1, 1, 1000)';
+x = linspace(0, 1, 1000)';
 
 cov_func = {@covIMT3};
-hyp.cov = [0.1,0,0];
+hyp.cov = [-2.5,0,0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));

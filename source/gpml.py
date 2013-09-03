@@ -189,6 +189,11 @@ hyp.lik = %(noise)s
 %% nlls = [nlls_1; nlls_2];
 %% best_nll = nlls(end)
 
+%% Optimise on full data
+if %(full_iters)s > 0
+    hyp_opt = minimize(hyp_opt, @gp, -%(full_iters)s, @infExact, meanfunc, covfunc, likfunc, X_full, y_full);
+end
+
 %% Evaluate the nll on the full data
 best_nll = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, X_full, y_full)
 

@@ -1449,7 +1449,7 @@ class IMT1Kernel(BaseKernel):
             result[0] = np.random.normal(loc=data_shape['input_scale']+2, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
-            result[1] = np.random.normal(loc=data_shape['input_location'], scale==0.5*sd*np.exp(data_shape['input_scale']))
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
         if result[2] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:

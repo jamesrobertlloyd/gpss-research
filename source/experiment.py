@@ -27,14 +27,17 @@ from cblparallel.util import mkstemp_safe
 import job_controller as jc
 import utils.misc
 
+#### Explanation : This is not used anymore
 FROBENIUS_CUTOFF = 0.01; # How different two matrices have to be to be considered different.
 
+#### Explanation : This is no longer used - but a potentially useful idea if using non-greedy searches
 def remove_duplicates(kernels, X, n_eval=250, local_computation=True, verbose=True):
     '''
     Test the top n_eval performing kernels for equivalence, in terms of their covariance matrix evaluated on training inputs
     Assumes kernels is a list of ScoredKernel objects
     '''
     # Because this is slow, we can do it locally.
+    #### Explanation : This is often high memory which makes it inappropriate for the cluster
     local_computation = True
 
     kernels = sorted(kernels, key=ScoredKernel.score, reverse=False)
@@ -56,10 +59,11 @@ def remove_duplicates(kernels, X, n_eval=250, local_computation=True, verbose=Tr
                 # Destroy the inferior duplicate
                 kernels[j] = None
 
-    kernels = [k for k in kernels if k is not None]
+    kernels = [k for k in kernels if k is not None] # Pack the list
     kernels = sorted(kernels, key=ScoredKernel.score, reverse=True)
     return kernels
  
+#### TODO - this is a silently remove errors function i.e. dangerous - at the least it should raise runtime warnings or make a log file 
 def remove_nan_scored_kernels(scored_kernels):    
     return [k for k in scored_kernels if not np.isnan(k.score())] 
     
@@ -84,12 +88,12 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     data_shape['min_integral_lengthscale'] = np.log(data_shape['input_max'] - data_shape['input_min']) - 2.5
     # Initialise period at a multiple of the shortest / average distance between points, to prevent Nyquist problems.
     if exp.use_min_period:
-        #data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
+        data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
         # This heuristic works with evenly spaced data even when subsampled
-        data_shape['min_period'] = np.log([exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]) for i in range(X.shape[1])])
+        #data_shape['min_period'] = np.log([exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]) for i in range(X.shape[1])])
     else:
         data_shape['min_period'] = None
-    #### TODO - make the below and above more elegant
+    #### TODO - delete these constraints unless you have thought of a reason to keep them - not currently used
     if exp.use_constraints:
         data_shape['min_alpha'] = exp.alpha_heuristic
         data_shape['min_lengthscale'] = exp.lengthscale_heuristic + data_shape['input_scale']
@@ -97,14 +101,16 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         data_shape['min_alpha'] = None
         data_shape['min_lengthscale'] = None
     
-    all_results = []
-    results_sequence = []     # List of lists of results, indexed by level of expansion.
+    all_results = [] # List of scored kernels
+    results_sequence = [] # List of lists of results, indexed by level of expansion.
     
     noise = None # Initially have no guess at noise
     
     best_mae = np.Inf
     best_kernels = None
-    best_predictor_sequence = []
+    #### Explanation : Sometimes, marginal likelihood does not pick a kernel that results in dramatically increased predictive performance
+    ####               The below was included to track these kernels - no obvious wins for the search were noted (no crossover between optimising predictions and marginal liklelihood)
+    best_predictor_sequence = [] # List of kernels that were good at predicting
     
     # Perform search
     for depth in range(exp.max_depth):
@@ -127,7 +133,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #for result in current_kernels:
         #    print result.pretty_print()
         
-        # Score the kernels
+        # Optimise parameters of and score the kernels
         new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
                                           zip_files=False, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed,
                                           subset=exp.subset, subset_size=exp.subset_size, full_iters=exp.full_iters)
@@ -136,20 +142,18 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #for result in new_results:
         #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
             
-        # Enforce the period heuristic
-        #### TODO - Concept of parameter constraints is more general than this - make it so
-        #### FIXME - this is set to true because parameter constraints are not the same as min period (see comment above)
-        if True:#exp.use_min_period:
-            new_results = [sk for sk in new_results if not sk.k_opt.out_of_bounds(data_shape)]
+        # Remove kernels that were optimised to be out of bounds (this is similar to a 0-1 prior)
+        new_results = [sk for sk in new_results if not sk.k_opt.out_of_bounds(data_shape)]
             
         #print 'Removing out of bounds'
         #for result in new_results:
         #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
         
         # Some of the scores may have failed - remove nans to prevent sorting algorithms messing up
+        #### TODO - this should not fail silently like this
         new_results = remove_nan_scored_kernels(new_results)
         assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens 
-        # Sort the new all_results
+        # Sort the new results
         new_results = sorted(new_results, key=ScoredKernel.score, reverse=True)
         
         #print 'All new results:'
@@ -157,9 +161,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #    #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
         #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
             
-        # Remove near duplicates from these all_results (top m all_results only for efficiency)
-        if exp.k > 1:
-            # Only remove duplicates if they affect the search
+        # Remove near duplicates from these all_results (top m results only for efficiency)
+        if exp.k > 1: # Only if this affects the search
             new_results = remove_duplicates(new_results, X, local_computation=exp.local_computation, verbose=exp.verbose)
 
         print 'All new results after duplicate removal:'
@@ -167,14 +170,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
             print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
             
-        # Remove overfitting
-        #new_results = [result for result in new_results if (result.std_ratio > 0.5) and (result.std_ratio < 1.5)]
-
-        #print 'All new results after overfitting removal:'
-        #for result in new_results:
-        #    #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
-            
+        #### Explanation : This heuristic was not especially useful when first tried   
         # Remove bad predictors
         #old_best_mae = best_mae
         #best_mae = min(result.mae for result in new_results)
@@ -203,16 +199,26 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Extract the best k kernels from the new all_results
         best_results = sorted(new_results, key=ScoredKernel.score)[0:exp.k]
-        #### FIXME - this only really works for k = 1
+        #### Explanation : This would be fixed if kernel objects know their noise - rather than just scored kernels
+        ####               Ultimately we have to decide if we really want all kernels to have the form K + sigma^2*I
+        ####               The answer is probably - but I don't think noise should be treated in a special way as it is currently
+        #### FIXME - this only really works for k = 1 - see comment above
         noise = best_results[0].noise # Remember the best noise #### WARNING - this only really makes sense when k = 1 since other kernels may have different noise levels
         best_kernels = [r.k_opt for r in best_results]
-        #### FIXME - the next line of code is incompatible with the noise code two lines above - to be fixed when code next re-written
-        #### TODO - make me an experiment parameter
+        
+        #### Explanation : This heuristic was not especially useful when first tried   
         # Add the best predicting kernel as well - might lead to a better marginal likelihood eventually
         #best_kernels = best_kernels + [sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0].k_opt]
+        
+        #### Explanation : Sometimes, marginal likelihood does not pick a kernel that results in dramatically increased predictive performance
+        ####               The below was included to track these kernels - no obvious wins for the search were noted (no crossover between optimising predictions and marginal liklelihood) 
         best_predictor_sequence += [[sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0]]]
+        
+        # Expand the best kernels
+        #### Question : Does the grammar expand kernels or is this really a search object?
         current_kernels = grammar.expand_kernels(D, best_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels)
         
+        # Reduce number of kernels when in debug mode
         if exp.debug==True:
             current_kernels = current_kernels[0:4]
 
@@ -228,7 +234,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                         print >> outfile, result  
                 else:
                     # Only print top k kernels - i.e. those used to seed the next level of the search
-                    #### FIXME - adding in best_predictor like this is hacky
+                    #### FIXME - adding in best_predictor like this is hacky - do we even want to record this anymore?
                     for result in best_predictors + sorted(all_results, key=ScoredKernel.score)[0:exp.k]:
                         print >> outfile, result 
     
@@ -249,7 +255,6 @@ def parse_results( results_filename, max_level=None ):
                 level = int(line.split(' ')[2])
                 if level > max_level:
                     break
-    #result_tuples = [fk.repr_string_to_kernel(line.strip()) for line in open(results_filename) if line.startswith("ScoredKernel")]
     result_tuples = [fk.repr_string_to_kernel(line.strip()) for line in lines]
     best_tuple = sorted(result_tuples, key=ScoredKernel.score)[0]
     return best_tuple
@@ -289,18 +294,18 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 make_predictions=False,       # Whether or not to forecast on a test set.
                 skip_complete=True,           # Whether to re-run already completed experiments.
                 iters=100,                    # How long to optimize hyperparameters for.
-                base_kernels='SE,RQ,Per,Lin,Const',
+                base_kernels='SE,Per,Lin,Const',
                 zero_mean=True,               # If false, use a constant mean function - cannot be used with the Const kernel
                 verbose_results=False,        # Whether or not to record all kernels tested
                 random_seed=0,
 		        use_min_period=True,          # Whether to not let the period in a periodic kernel be smaller than the minimum period.
-                period_heuristic=10,
+                period_heuristic=10,          # The minimum number of data points per period (roughly)
 		        use_constraints=False,        # Place hard constraints on some parameter values? #### TODO - should be replaced with a prior / more Bayesian analysis
                 alpha_heuristic=-2,           # Minimum alpha value for RQ kernel
                 lengthscale_heuristic=-4.5,   # Minimum lengthscale 
-                subset=False,
-                subset_size=250,
-                full_iters=0):      
+                subset=False,                 # Optimise on a subset of the data?
+                subset_size=250,              # Size of data subset
+                full_iters=0):                # Number of iterations to perform on full data after subset optimisation
         return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters)
 
 def experiment_fields_to_str(exp):
@@ -411,12 +416,3 @@ def calculate_model_fits(data_file, output_file, exp):
 def run_debug_kfold():
     """This is a quick debugging function."""
     run_experiment_file('../experiments/debug_example.py')
-    
-#def compute_SNRs(experiment_file):
-#    expstring = open(filename, 'r').read()
-#    exp = eval(expstring)
-#    print experiment_fields_to_str(exp)
-#    data_sets = list(gen_all_datasets(exp.data_dir))
-#    for r, file in data_sets:
-#        data_file = os.path.join(r, file + ".mat")
-    

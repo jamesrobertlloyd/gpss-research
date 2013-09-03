@@ -34,6 +34,7 @@ import re
 import shutil
 import random
 
+#### Explanation : This is no longer used - but a potentially useful idea if using non-greedy searches
 def covariance_distance(kernels, X, local_computation=True, verbose=True): 
     '''
     Evaluate a distance matrix of kernels, in terms of their covariance matrix evaluated on training inputs
@@ -128,7 +129,7 @@ def evaluate_kernels(kernels, X, y, verbose=True, noise=None, iters=300, local_c
             y_train[fold] = y[range(0,int(cut_points[fold-1])) + range(int(cut_points[fold]),int(X.shape[0])),:]
             X_valid[fold] = X[range(int(cut_points[fold-1]), int(cut_points[fold])),:]
             y_valid[fold] = y[range(int(cut_points[fold-1]), int(cut_points[fold])),:]
-    scipy.io.savemat(data_file, {'X': X, 'y': y, 'X_train' : X_train, 'y_train' : y_train, 'X_valid' : X_valid, 'y_valid' : y_valid, }) # Save regression data
+    scipy.io.savemat(data_file, {'X': X, 'y': y, 'X_train' : X_train, 'y_train' : y_train, 'X_valid' : X_valid, 'y_valid' : y_valid, })
     
     # Move to fear if necessary
     if not local_computation:

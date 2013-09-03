@@ -28,6 +28,9 @@ class OneDGrammar:
             return list(fk.base_kernel_families())
         else:
             raise RuntimeError('Unknown type: %s' % tp)
+            
+#### TODO - make these experiment parameters
+####        Also - these are search operators rather than grammar rules - do we need to make this distinction clear?
         
 MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask-not-const'}),
@@ -39,27 +42,6 @@ MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ('A', ('BL', 'A'), {'A': 'multi'}),
                  ('A', ('None',), {'A': 'multi'}),
                  ]
-        
-#MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
-#                 ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask-not-const'}),
-#                 ('A', ('*-const', 'A', 'B'), {'A': 'multi', 'B': 'mask-not-const'}),
-#                 ('A', ('None',), {'A': 'multi'}),
-#                 ]
-                 
-#('A', 'B', {'A': 'base', 'B': 'base'}),                 
-                 
-#MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
-#                 ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
-#                 ('A', 'B', {'A': 'base', 'B': 'base'}),
-#                 ('A', ('CP', 'A'), {'A': 'multi'}),
-#                 ]
-        
-#MULTI_D_RULES = [('A', ('BL', 'A'), {'A': 'multi'}),
-#                 ]
-                 
-#MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
-#                 ('A', 'B', {'A': 'base', 'B': 'base'}),
-#                 ]
     
 class MultiDGrammar:
     def __init__(self, ndim, debug=False, base_kernels='SE'):
@@ -72,6 +54,7 @@ class MultiDGrammar:
             self.base_kernels = 'SE'
         
     def type_matches(self, kernel, tp):
+        #### FIXME - code duplication
         if tp == 'multi':
             if isinstance(kernel, fk.BaseKernel):
                 return False
@@ -128,7 +111,6 @@ class MultiDGrammar:
             #### FIXME - this is a burst kernel hack
             return (isinstance(kernel, fk.MaskKernel) or (isinstance(kernel, fk.BurstTanhKernel) and all([self.type_matches(op, tp) for op in kernel.operands])))
         elif tp == 'mask-not-const':
-            #### TODO - should this become more general somehow?
             #### FIXME - this is a burst kernel hack
             return ((isinstance(kernel, fk.MaskKernel) and (not isinstance(kernel.base_kernel, fk.ConstKernel))) or (isinstance(kernel, fk.BurstTanhKernel) and all([self.type_matches(op, tp) for op in kernel.operands])))
         else:
@@ -199,7 +181,6 @@ def polish_to_kernel(polish_expr):
 
 
 def expand_single_tree(kernel, grammar):
-    '''kernel should be a Kernel.'''
     assert isinstance(kernel, fk.Kernel)
     result = []
     for lhs, rhs, types in grammar.rules:
@@ -292,7 +273,7 @@ def canonical(kernel):
     elif isinstance(kernel, fk.ChangePointKernel):
         canop = [canonical(o) for o in kernel.operands]
         if isinstance(canop[0], fk.NoneKernel) or isinstance(canop[1], fk.NoneKernel):
-            #### TODO - might want to allow the zero kernel to appear
+            #### TODO - might want to allow the zero kernel to appear i.e. change point to zero?
             return fk.NoneKernel()
         else:
             return fk.ChangePointKernel(kernel.location, kernel.steepness, canop)

@@ -20,7 +20,6 @@ import utils.misc
 import re
 
 PAREN_COLORS = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow']
-#### MAGIC NUMBER - CAUTION
 CMP_TOLERANCE = np.log(1.01) # i.e. 1%
 
 def shrink_below_tolerance(x):
@@ -187,7 +186,8 @@ class SqExpPeriodicKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('PE', self.depth())
     
-    # FIXME - Caution - magic numbers!
+    #### FIXME - Caution - magic numbers!
+    #### Explanation : This is centered on about 20 periods
     def default(self):
         return SqExpPeriodicKernel(0., -2.0, 0.)
     
@@ -245,6 +245,7 @@ class SqExpPeriodicKernel(BaseKernel):
                 result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
         if result[1] == -2:
             #### FIXME - Caution, magic numbers
+            #### Explanation : This is centered on about 20 periods
             # Min period represents a minimum sensible scale
             # Scale with data_scale
             if data_shape['min_period'] is None:
@@ -282,16 +283,14 @@ class SqExpPeriodicKernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.period, self.output_variance), 
-#                   (other.lengthscale, other.period, other.output_variance))
         
     def depth(self):
         return 0
             
     def out_of_bounds(self, constraints):
-        return (self.period < constraints['min_period']) or (self.lengthscale < constraints['min_lengthscale']) or (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min'])))
+        return (self.period < constraints['min_period']) or \
+               (self.lengthscale < constraints['min_lengthscale']) or \
+               (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
         
 class CosineKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -305,6 +304,7 @@ class CosineKernelFamily(BaseKernelFamily):
         return colored('Cos', self.depth())
     
     # FIXME - Caution - magic numbers!
+    #### Explanation : This is centered on about 20 periods
     def default(self):
         return CosineKernel(-2.0, 0.)
     
@@ -354,6 +354,7 @@ class CosineKernel(BaseKernel):
         result = self.param_vector()
         if result[0] == -2:
             #### FIXME - Caution, magic numbers
+            #### Explanation : This is centered on about 20 periods
             # Min period represents a minimum sensible scale
             # Scale with data_scale
             if data_shape['min_period'] is None:
@@ -379,9 +380,7 @@ class CosineKernel(BaseKernel):
         return colored('Cos(p=%1.1f, sf=%1.1f)' % (self.period, self.output_variance),
                        self.depth())
         
-    def latex_print(self):
-        # return 'PE(\\ell=%1.1f, p=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.period, self.output_variance)
-        #return 'PE(p=%1.1f)' % self.period          
+    def latex_print(self):    
         return 'Cos'
     
     def __cmp__(self, other):
@@ -391,16 +390,13 @@ class CosineKernel(BaseKernel):
         differences = [self.period - other.period, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.period, self.output_variance), 
-#                   (other.lengthscale, other.period, other.output_variance))
         
     def depth(self):
         return 0
             
     def out_of_bounds(self, constraints):
-        return (self.period < constraints['min_period']) or (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min'])))
+        return (self.period < constraints['min_period']) or \
+               (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
         
 class SpectralKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -414,6 +410,7 @@ class SpectralKernelFamily(BaseKernelFamily):
         return colored('SP', self.depth())
     
     # FIXME - Caution - magic numbers!
+    #### Explanation : This is centered on about 20 periods
     def default(self):
         return SpectralKernel(0., -2.0, 0.)
     
@@ -471,6 +468,7 @@ class SpectralKernel(BaseKernel):
                 result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
         if result[2] == -2:
             #### FIXME - Caution, magic numbers
+            #### Explanation : This is centered on about 20 periods
             # Min period represents a minimum sensible scale
             # Scale with data_scale
             if data_shape['min_period'] is None:
@@ -496,9 +494,7 @@ class SpectralKernel(BaseKernel):
         return colored('SP(ell=%1.1f, p=%1.1f, sf=%1.1f)' % (self.lengthscale, self.period, self.output_variance),
                        self.depth())
         
-    def latex_print(self):
-        # return 'PE(\\ell=%1.1f, p=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.period, self.output_variance)
-        #return 'PE(p=%1.1f)' % self.period          
+    def latex_print(self):         
         return 'Spec'
     
     def __cmp__(self, other):
@@ -508,16 +504,14 @@ class SpectralKernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.period, self.output_variance), 
-#                   (other.lengthscale, other.period, other.output_variance))
         
     def depth(self):
         return 0
             
     def out_of_bounds(self, constraints):
-        return (self.period < constraints['min_period']) or (self.lengthscale < constraints['min_lengthscale']) or (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min'])))
+        return (self.period < constraints['min_period']) or \
+               (self.lengthscale < constraints['min_lengthscale']) or \
+               (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
 
 class RQKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -615,10 +609,6 @@ class RQKernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.output_variance - other.output_variance, self.alpha - other.alpha]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.output_variance - other.output_variance, self.alpha - other.alpha]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0   
@@ -628,8 +618,7 @@ class RQKernel(BaseKernel):
     
 class ConstKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
-        #### Note - expects list input
-        output_variance, = params
+        output_variance, = params # N.B. - expects list input
         return ConstKernel(output_variance)
     
     def num_params(self):
@@ -715,10 +704,6 @@ class ConstKernel(BaseKernel):
         differences = [self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0    
@@ -775,7 +760,6 @@ class ZeroKernel(BaseKernel):
         return 'Zero'
     
     def param_vector(self):
-        # order of args matches GPML
         return np.array([])
 
     def copy(self):
@@ -869,7 +853,8 @@ class LinKernelFamily(BaseKernelFamily):
         return "bias"
     
 class LinKernel(BaseKernel):
-    # FIXME - lengthscale is actually an inverse scale
+    #### FIXME - lengthscale is actually an inverse scale
+    #### Also - lengthscale is a silly name even if it is used by GPML
     def __init__(self, offset=0, lengthscale=0, location=0):
         self.offset = offset
         self.lengthscale = lengthscale
@@ -936,10 +921,6 @@ class LinKernel(BaseKernel):
         differences = [self.offset - other.offset, self.lengthscale - other.lengthscale, self.location - other.location]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0 
@@ -1009,6 +990,7 @@ class StepKernel(BaseKernel):
         if result[1] == 0:
             # Set steepness with inverse input scale (and on average quite steep)
             #### FIXME - Caution, magic numbers
+            #### Explanation - Larger than the hard constraint
             result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
         if result[2] == 0:
             # Set scale factor with output scale or neutrally
@@ -1048,15 +1030,12 @@ class StepKernel(BaseKernel):
         differences = [self.location - other.location, self.steepness - other.steepness, self.sf1 - other.sf1, self.sf2 - other.sf2]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0 
             
-    def out_of_bounds(self, constraints): #### TODO - check me!
+    def out_of_bounds(self, constraints):
+        #### Explanation : The steepness constraint encodes the belief that after travelling 10% of the input scale, the transition function is at a value of 10%
         return (self.location < constraints['input_min']) or \
                (self.location > constraints['input_max']) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3)
@@ -1126,6 +1105,7 @@ class StepTanhKernel(BaseKernel):
         if result[1] == 0:
             # Set steepness with inverse input scale (and on average quite steep)
             #### FIXME - Caution, magic numbers
+            #### Explanation - Larger than the hard constraint
             result[1] = np.random.normal(loc=3.3-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
         if result[2] == 0:
             # Set scale factor with output scale or neutrally
@@ -1165,15 +1145,12 @@ class StepTanhKernel(BaseKernel):
         differences = [self.location - other.location, self.steepness - other.steepness, self.sf1 - other.sf1, self.sf2 - other.sf2]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0 
             
-    def out_of_bounds(self, constraints): #### TODO - check me!
+    def out_of_bounds(self, constraints):
+        #### Explanation : The steepness constraint encodes the belief that after travelling 10% of the input scale, the transition function is at a value of 10%
         return (self.location < constraints['input_min']) or \
                (self.location > constraints['input_max']) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3)
@@ -1267,10 +1244,6 @@ class IBMKernel(BaseKernel):
         differences = [self.rate - other.rate, self.location - other.location]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0 
@@ -1335,6 +1308,7 @@ class IBMLinKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
+            #### TODO - any idea how to initialise the rate parameter?
             result[0] = np.random.normal(loc=0, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
@@ -1354,6 +1328,7 @@ class IBMLinKernel(BaseKernel):
         
     def effective_params(self):  
         #### FIXME - is this sensible?
+        #### Explanation : Felt similar to the linear kernel - but not so sure on second thought
         return 3
 
     def copy(self):
@@ -1377,10 +1352,6 @@ class IBMLinKernel(BaseKernel):
         differences = [self.rate - other.rate, self.location - other.location, self.offset - other.offset, self.scale - other.scale]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0 
@@ -1446,6 +1417,7 @@ class IMT1Kernel(BaseKernel):
         if result[0] == 0:
             # Set lengthscale with input scale - but expecting broad scales
             #### FIXME - magic numbers
+            #### Explanation : Moderately large lengthscale - preventing noise from being fit by these kernels
             result[0] = np.random.normal(loc=data_shape['input_scale']+2, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
@@ -1482,10 +1454,6 @@ class IMT1Kernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.location - other.location, self.sf - other.sf]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0 
@@ -1556,6 +1524,7 @@ class IMT1LinKernel(BaseKernel):
         if result[0] == 0:
             # Set lengthscale with input scale - but expecting broad scales
             #### FIXME - magic numbers
+            #### Explanation : Moderately large lengthscale - preventing noise from being fit by these kernels
             result[0] = np.random.normal(loc=data_shape['input_scale']+2, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
@@ -1580,6 +1549,7 @@ class IMT1LinKernel(BaseKernel):
         
     def effective_params(self):  
         #### FIXME - is this sensible?
+        #### Explanation : Felt similar to the linear kernel - but not so sure on second thought
         return 4
 
     def copy(self):
@@ -1603,10 +1573,6 @@ class IMT1LinKernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.location - other.location, self.sf - other.sf, self.offset - other.offset, self.scale - other.scale]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0 
@@ -1675,6 +1641,7 @@ class IMT3Kernel(BaseKernel):
         if result[0] == 0:
             # Set lengthscale with input scale - but expecting broad scales
             #### FIXME - magic numbers
+            #### Explanation : Moderately large lengthscale - preventing noise from being fit by these kernels
             result[0] = np.random.normal(loc=data_shape['input_scale']+2, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
@@ -1711,10 +1678,6 @@ class IMT3Kernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.location - other.location, self.sf - other.sf]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0 
@@ -1785,6 +1748,7 @@ class IMT3LinKernel(BaseKernel):
         if result[0] == 0:
             # Set lengthscale with input scale - but expecting broad scales
             #### FIXME - magic numbers
+            #### Explanation : Moderately large lengthscale - preventing noise from being fit by these kernels
             result[0] = np.random.normal(loc=data_shape['input_scale']+2, scale=sd)
         if result[1] == 0:
             # Location moves with input location, and variance scales in input variance
@@ -1809,6 +1773,7 @@ class IMT3LinKernel(BaseKernel):
         
     def effective_params(self):  
         #### FIXME - is this sensible?
+        #### Explanation : Felt similar to the linear kernel - but not so sure on second thought
         return 4
 
     def copy(self):
@@ -1832,10 +1797,6 @@ class IMT3LinKernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.location - other.location, self.sf - other.sf, self.offset - other.offset, self.scale - other.scale]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0 
@@ -1843,6 +1804,7 @@ class IMT3LinKernel(BaseKernel):
     def out_of_bounds(self, constraints):
         return self.lengthscale < constraints['min_integral_lengthscale']
 
+#### TODO - Will we ever use this - else remove  
 class QuadraticKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
         offset, output_variance = params
@@ -1877,6 +1839,7 @@ class QuadraticKernelFamily(BaseKernelFamily):
     def params_description():
         return "offset"     
     
+#### TODO - Will we ever use this - else remove    
 class QuadraticKernel(BaseKernel):
     def __init__(self, offset, output_variance):
         #### FIXME - Should the offset defauly to something small? Or will we never use this kernel
@@ -1921,14 +1884,11 @@ class QuadraticKernel(BaseKernel):
         differences = [self.offset - other.offset, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.offset - other.offset, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0   
 
+#### TODO - Will we ever use this - else remove  
 class CubicKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
         offset, output_variance = params
@@ -1963,6 +1923,7 @@ class CubicKernelFamily(BaseKernelFamily):
     def params_description():
         return "offset"     
     
+#### TODO - Will we ever use this - else remove  
 class CubicKernel(BaseKernel):
     def __init__(self, offset, output_variance):
         #### FIXME - Should the offset defauly to something small? Or will we never use this kernel
@@ -2007,10 +1968,6 @@ class CubicKernel(BaseKernel):
         differences = [self.offset - other.offset, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.offset - other.offset, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance, self.alpha), 
-#                   (other.lengthscale, other.output_variance, other.alpha))
         
     def depth(self):
         return 0   
@@ -2094,8 +2051,6 @@ class PP0Kernel(BaseKernel):
         return colored('P0(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth())
     
     def latex_print(self):
-        #return 'SE(\\ell=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.output_variance)    
-        #return 'SE(\\ell=%1.1f)' % self.lengthscale
         return 'P0'
         
     def __cmp__(self, other):
@@ -2105,9 +2060,6 @@ class PP0Kernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance), (other.lengthscale, other.output_variance))
     
     def depth(self):
         return 0 
@@ -2194,8 +2146,6 @@ class PP1Kernel(BaseKernel):
         return colored('P1(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth())
     
     def latex_print(self):
-        #return 'SE(\\ell=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.output_variance)    
-        #return 'SE(\\ell=%1.1f)' % self.lengthscale
         return 'P1'
         
     def __cmp__(self, other):
@@ -2205,9 +2155,6 @@ class PP1Kernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance), (other.lengthscale, other.output_variance))
     
     def depth(self):
         return 0 
@@ -2294,8 +2241,6 @@ class PP2Kernel(BaseKernel):
         return colored('P2(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth())
     
     def latex_print(self):
-        #return 'SE(\\ell=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.output_variance)    
-        #return 'SE(\\ell=%1.1f)' % self.lengthscale
         return 'P2'
         
     def __cmp__(self, other):
@@ -2305,9 +2250,6 @@ class PP2Kernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance), (other.lengthscale, other.output_variance))
     
     def depth(self):
         return 0
@@ -2394,8 +2336,6 @@ class PP3Kernel(BaseKernel):
         return colored('P3(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth())
     
     def latex_print(self):
-        #return 'SE(\\ell=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.output_variance)    
-        #return 'SE(\\ell=%1.1f)' % self.lengthscale
         return 'P3'
         
     def __cmp__(self, other):
@@ -2405,9 +2345,6 @@ class PP3Kernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance), (other.lengthscale, other.output_variance))
     
     def depth(self):
         return 0 
@@ -2493,8 +2430,6 @@ class Matern1Kernel(BaseKernel):
         return colored('MT1(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth())
     
     def latex_print(self):
-        #return 'SE(\\ell=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.output_variance)    
-        #return 'SE(\\ell=%1.1f)' % self.lengthscale
         return 'MT1'
         
     def __cmp__(self, other):
@@ -2504,9 +2439,6 @@ class Matern1Kernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance), (other.lengthscale, other.output_variance))
     
     def depth(self):
         return 0 
@@ -2592,8 +2524,6 @@ class Matern3Kernel(BaseKernel):
         return colored('MT3(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth())
     
     def latex_print(self):
-        #return 'SE(\\ell=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.output_variance)    
-        #return 'SE(\\ell=%1.1f)' % self.lengthscale
         return 'MT3'
         
     def __cmp__(self, other):
@@ -2603,9 +2533,6 @@ class Matern3Kernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance), (other.lengthscale, other.output_variance))
     
     def depth(self):
         return 0 
@@ -2691,8 +2618,6 @@ class Matern5Kernel(BaseKernel):
         return colored('MT5(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth())
     
     def latex_print(self):
-        #return 'SE(\\ell=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.output_variance)    
-        #return 'SE(\\ell=%1.1f)' % self.lengthscale
         return 'MT5'
         
     def __cmp__(self, other):
@@ -2702,9 +2627,6 @@ class Matern5Kernel(BaseKernel):
         differences = [self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
-#        max_diff = max(np.abs([self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]))
-#        return max_diff > CMP_TOLERANCE
-#        return cmp((self.lengthscale, self.output_variance), (other.lengthscale, other.output_variance))
     
     def depth(self):
         return 0 
@@ -2726,7 +2648,6 @@ class MaskKernelFamily(KernelFamily):
         return self.base_kernel_family.num_params()
     
     def pretty_print(self):
-        #return colored('Mask(%d, ' % self.active_dimension, self.depth()) + \
         return colored('M(%d, ' % self.active_dimension, self.depth()) + \
             self.base_kernel_family.pretty_print() + \
             colored(')', self.depth())
@@ -2765,7 +2686,7 @@ class MaskKernel(Kernel):
         if self.ndim > 1:
             return '{@covMask, {%s, %s}}' % (dim_vec_str, self.base_kernel.gpml_kernel_expression())
         else:
-            #### TO THINK ABOUT - is this ever risky?
+            # Only 1d - don't need a mask - reduces GPML overhead
             return self.base_kernel.gpml_kernel_expression()
     
     def pretty_print(self):
@@ -2773,9 +2694,12 @@ class MaskKernel(Kernel):
             self.base_kernel.pretty_print() + \
             colored(')', self.depth())
             
-    def latex_print(self):
-        #return 'M_%d \\left(' % self.active_dimension + self.base_kernel.latex_print() + '\\right)'                 
-        return self.base_kernel.latex_print() + '_{%d}' % self.active_dimension
+    def latex_print(self): 
+        if self.ndim > 1:
+            return self.base_kernel.latex_print() + '_{%d}' % self.active_dimension
+        else:
+            # Only 1d - don't need to mention dimension
+            return self.base_kernel.latex_print()
             
     def __repr__(self):
         return 'MaskKernel(ndim=%d, active_dimension=%d, base_kernel=%s)' % \
@@ -2790,6 +2714,8 @@ class MaskKernel(Kernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         # Replaces multi-d parameters with appropriate dimensions selected
         # If parameters are already 1-d then it does nothing
+        #### FIXME - this should iterate over all keys in data_shape
+        ####         This might break things so smattering assert statements will be very important
         if isinstance(data_shape['input_location'], (list, tuple, np.ndarray)):
             data_shape['input_location'] = data_shape['input_location'][self.active_dimension]
         if isinstance(data_shape['input_scale'], (list, tuple, np.ndarray)):
@@ -2814,6 +2740,8 @@ class MaskKernel(Kernel):
             
     def out_of_bounds(self, constraints):
         # Extract relevant constraints
+        #### FIXME - this should iterate over all keys in constraints
+        ####         This might break things so smattering assert statements will be very important
         if isinstance(constraints['min_period'], (list, tuple, np.ndarray)):
             # Pick out relevant minimum period
             constraints['min_period'] = constraints['min_period'][self.active_dimension]
@@ -2910,6 +2838,7 @@ class ChangePointKernel(Kernel):
             result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
         if result[1] == 0:
             #### FIXME - Caution, magic numbers
+            #### Explanation - larger than constraint
             # Set steepness with inverse input scale
             result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
@@ -2925,6 +2854,7 @@ class ChangePointKernel(Kernel):
         return max([op.depth() for op in self.operands]) + 1
             
     def out_of_bounds(self, constraints):
+        #### Explanation - Decays to 10% after 10% of data
         return (self.location < constraints['input_min']) or \
                (self.location > constraints['input_max']) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
@@ -3149,7 +3079,7 @@ class BlackoutKernel(Kernel):
     def depth(self):
         return max([op.depth() for op in self.operands]) + 1
             
-    def out_of_bounds(self, constraints):#### TODO - check me!
+    def out_of_bounds(self, constraints):
         return (self.location - np.exp(self.width)/2 < constraints['input_min'] + 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.location + np.exp(self.width)/2 > constraints['input_max'] - 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.width > np.log(0.5*(constraints['input_max'] -constraints['input_min']))) or \
@@ -3584,7 +3514,7 @@ class BlackoutTanhKernel(Kernel):
     def depth(self):
         return max([op.depth() for op in self.operands]) + 1
             
-    def out_of_bounds(self, constraints):#### TODO - check me!
+    def out_of_bounds(self, constraints):
         return (self.location - np.exp(self.width)/2 < constraints['input_min'] + 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.location + np.exp(self.width)/2 > constraints['input_max'] - 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
                (self.width > np.log(0.5*(constraints['input_max'] -constraints['input_min']))) or \
@@ -3633,7 +3563,7 @@ class SumKernel(Kernel):
         return SumKernelFamily([e.family() for e in self.operands])
         
     def pretty_print(self):
-        #### Should this call the family method?
+        #### TODO - Should this call the family method?
         op = colored(' + ', self.depth())
         return colored('( ', self.depth()) + \
             op.join([e.pretty_print() for e in self.operands]) + \
@@ -3724,15 +3654,13 @@ class ProductKernel(Kernel):
         return ProductKernelFamily([e.family() for e in self.operands])
         
     def pretty_print(self):
-        #### Should this call the family method?
+        #### TODO - Should this call the family method?
         op = colored(' x ', self.depth())
         return colored('( ', self.depth()) + \
             op.join([e.pretty_print() for e in self.operands]) + \
             colored(' ) ', self.depth())
 
     def latex_print(self):
-        #return '\\left( ' + ' \\times '.join([e.latex_print() for e in self.operands]) + ' \\right)'
-        # Don't need brackets for product, order of operations is unambiguous, I think.
         return ' \\times '.join([e.latex_print() for e in self.operands])
             
     def __repr__(self):
@@ -3775,7 +3703,6 @@ class ProductKernel(Kernel):
     def out_of_bounds(self, constraints):
         return any([o.out_of_bounds(constraints) for o in self.operands]) 
 
-
 #### FIXME - Sort out the naming of the two functions below            
 def base_kernels(ndim=1, base_kernel_names='SE'):
     '''
@@ -3798,14 +3725,6 @@ def base_kernels(ndim=1, base_kernel_names='SE'):
     for dim in range(ndim):
         for fam in base_kernel_families(base_kernel_names):
             yield MaskKernel(ndim, dim, fam.default())
-    #if ndim == 1:
-    #    for k in base_kernel_families(ndim):
-    #        yield MaskKernel(ndim, 0, k)
-    #        # Todo: fix 1D kernels to work without MaskKernels.
-    #else:
-    #    for dim in range(ndim):
-    #        for k in multi_d_kernel_families():
-    #            yield MaskKernel(ndim, dim, k)
  
 def base_kernel_families(base_kernel_names):
     '''
@@ -3837,34 +3756,6 @@ def base_kernel_families(base_kernel_names):
                    StepTanhKernelFamily()]:
         if family.id_name() in base_kernel_names.split(','):
             yield family
-    #if ndim == 1:
-    #    yield SqExpKernelFamily().default()
-    #    yield SqExpPeriodicKernelFamily().default()
-    #    yield RQKernelFamily().default()
-    #    yield LinKernelFamily().default()
-    #    #yield ChangeKernelFamily().default()
-    #else:
-    #    yield SqExpKernelFamily().default()
-    #    yield SqExpPeriodicKernelFamily().default()
-    #    yield RQKernelFamily().default()
-    #    yield LinKernelFamily().default()
-    #yield QuadraticKernelFamily().default()
-    #yield CubicKernelFamily().default()
-    #yield PP0KernelFamily().default()
-    #yield PP1KernelFamily().default()
-    #yield PP2KernelFamily().default()
-    #yield PP3KernelFamily().default()
-    #yield MaternKernelFamily().default()       
-
-#def multi_d_kernel_families():
-#    '''
-#    Generator of all base kernel families for multidimensional problems.
-#    '''
-#    yield SqExpKernelFamily().default()
-#    yield SqExpPeriodicKernelFamily().default()
-#    yield RQKernelFamily().default()
-#    yield LinKernelFamily().default()  
-   
    
 #### FIXME - Do the two functions below get called ever?        
 def test_kernels(ndim=1):
@@ -3883,6 +3774,7 @@ def test_kernel_families():
     #yield SqExpPeriodicKernelFamily().default() 
     #yield RQKernelFamily().default()       
 
+#### TODO - Do we still nedd this here?
 def Carls_Mauna_kernel():
     '''
     This kernel described in pages 120-122 of "Gaussian Processes for Machine Learning.
@@ -3909,7 +3801,7 @@ def Carls_Mauna_kernel():
     
     return kernel
 
-
+#### TODO - this may not be necessary - only useful for printing to latex and gpml - and the mask kernel can detect when it is 1d
 def strip_masks(k):
     """Recursively strips masks out of a kernel, for when we used a multi-d grammar on a 1d problem."""    
     #### TODO - extend to other operators (e.g. changepoint) as well
@@ -4027,6 +3919,7 @@ class ScoredKernel:
     @staticmethod	
     def from_matlab_output(output, kernel_family, ndata):
         '''Computes Laplace marginal lik approx and BIC - returns scored Kernel'''
+        #### TODO - reinstate me
         #laplace_nle, problems = psd_matrices.laplace_approx_stable(output.nll, output.kernel_hypers, output.hessian)
         #### TODO - this check should be within the psd_matrices code
         if np.any(np.isnan(output.hessian)):
@@ -4040,6 +3933,7 @@ class ScoredKernel:
         PIC = 2 * output.npll + k_opt.effective_params() * np.log(ndata)
         return ScoredKernel(k_opt, output.nll, laplace_nle, BIC, output.npll, PIC, output.mae, output.std_ratio, output.noise_hyp)	
 
+# TODO - I don't think this is called anymore
 def replace_defaults(param_vector, sd):
     #### FIXME - remove dependence on special value of zero
     ####       - Caution - remember print, compare etc when making the change (e.g. just replacing 0 with None would cause problems later)
@@ -4048,7 +3942,6 @@ def replace_defaults(param_vector, sd):
 
 def add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape):
     '''Returns a list of kernels with random restarts for default values'''
-    #return [kernel] + list(itertools.repeat(kernel.family().from_param_vector(replace_defaults(kernel.param_vector(), sd)), n_rand))
     return [kernel] + list(map(lambda unused : kernel.family().from_param_vector(kernel.default_params_replaced(sd=sd, data_shape=data_shape)), [None] * n_rand))
 
 def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):    

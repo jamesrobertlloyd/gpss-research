@@ -181,6 +181,27 @@ class fear(object):
         # Return the job id
         return output_text[0].split(' ')[2]
     
+    def qsub_multi(self, shell_files, verbose=True):
+        '''
+        Submit multiple jobs onto the stack.
+        Currently runs jobs from the same folder as they are saved in.
+        Warning : assume that all jobs are in the same folder
+        '''
+        #### TODO - correctly handle case when jobs not in same folder
+        fear_string = '. /usr/local/grid/divf2/common/settings.sh; cd %s; ' % os.path.split(shell_files[0])[0]
+        fear_string += '; '.join([' '.join(['chmod +x %s;' % os.path.split(shell_file)[-1],
+                                            'qsub -l lr=0',
+                                            os.path.split(shell_file)[-1]])
+                                  for shell_file in shell_files if not shell_file is None])  
+        fear_string += '; cd ..'
+    
+        if verbose:
+            print 'Submitting : %s' % fear_string
+            
+        output_text = self.command(fear_string)
+        # Return the job ids
+        return [output_text[i].split(' ')[2] for i in range(len(shell_files)) if not shell_files[i] is None]
+    
     def qdel(self, job_id):
         output = self.command('. /usr/local/grid/divf2/common/settings.sh; qdel %s' % job_id)
         return output

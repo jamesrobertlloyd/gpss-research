@@ -52,3 +52,10 @@ class timeoutCommand(object):
             if self.verbose:    
                 print self.process.returncode
             return (True, self.process.returncode)
+            
+def string_is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False

@@ -133,10 +133,13 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #for result in current_kernels:
         #    print result.pretty_print()
         
+        # Randomise the order of the kernels to distribute computationaal load evenly
+        np.random.shuffle(current_kernels)
+        
         # Optimise parameters of and score the kernels
         new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
-                                          zip_files=False, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed,
-                                          subset=exp.subset, subset_size=exp.subset_size, full_iters=exp.full_iters)
+                                          zip_files=True, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed,
+                                          subset=exp.subset, subset_size=exp.subset_size, full_iters=exp.full_iters, bundle_size=exp.bundle_size)
                                           
         #print 'Raw results'
         #for result in new_results:
@@ -276,7 +279,7 @@ def gen_all_datasets(dir):
 
 # Defines a class that keeps track of all the options for an experiment.
 # Maybe more natural as a dictionary to handle defaults - but named tuple looks nicer with . notation
-class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters')):
+class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
                 results_dir,                  # Where to write the results.
@@ -305,8 +308,9 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 lengthscale_heuristic=-4.5,   # Minimum lengthscale 
                 subset=False,                 # Optimise on a subset of the data?
                 subset_size=250,              # Size of data subset
-                full_iters=0):                # Number of iterations to perform on full data after subset optimisation
-        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters)
+                full_iters=0,                 # Number of iterations to perform on full data after subset optimisation
+                bundle_size=1):               # Number of kernel evaluations per job sent to cluster 
+        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size)
 
 def experiment_fields_to_str(exp):
     str = "Running experiment:\n"

@@ -108,6 +108,9 @@ def make_all_1d_figures_all_depths(folder, max_depth=10, **kwargs):
     for level in range(max_depth+1):
         make_all_1d_figures(folder=folder, max_level=level, **kwargs)
         
+def figs_to_pdf():
+    gpml.run_matlab_code('cd /scratch/home/Research/GPs/gpss-research/source/matlab\nfigs2pdf', verbose=True, jvm=True)
+        
 def compare_1d_decompositions():
     '''Produces the decomposition for all the files in the listed directories - to see which one to pick'''
     folders = ['../results/4-Feb-1d', 

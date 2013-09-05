@@ -132,15 +132,59 @@ for fold = 1:folds
     y_train{fold} = y(range);
 end
 
+% idx = [];
+% 
+% decomp_sigma_star_list = cell(numel(decomp_list),1);
+% decomp_sigma_starstar_list = cell(numel(decomp_list),1);
+% 
+% for i = 1:numel(decomp_list)
+%     cur_cov = decomp_list{i};
+%     cur_hyp = decomp_hypers{i};
+%     
+%     % Compute mean and variance for this kernel.
+%     decomp_sigma_star_list{i} = feval(cur_cov{:}, cur_hyp, X, xrange);
+%     decomp_sigma_starstar_list{i} = feval(cur_cov{:}, cur_hyp, xrange, xrange);
+% end
+% 
+% temp_decomp_sigma_star_list = decomp_sigma_star_list;
+% temp_decomp_sigma_starstar_list = decomp_sigma_starstar_list;
+% 
+% for i = 1:numel(decomp_list)
+%     best_var = Inf;
+%     for j = 1:numel(decomp_list)
+%         if ~sum(j == idx)
+%             % Project all other remaining components
+%             for k = 1:numel(decomp_list)
+%                 if (~sum(k == idx)) && (k ~= j)
+%                     alpha = solve_sdp(decomp_sigma_starstar_list{k}, decomp_sigma_starstar_list{j});
+%                     temp_decomp_sigma_star_list{j} = decomp_sigma_star_list{j} + alpha*decomp_sigma_star_list{j};
+%                     temp_decomp_sigma_starstar_list{j} = decomp_sigma_starstar_list{j} + alpha*decomp_sigma_starstar_list{j};
+%                 end
+%             end
+% 
+%             decomp_var = diag(temp_decomp_sigma_starstar_list{j} - temp_decomp_sigma_star_list{j}' / complete_sigma * temp_decomp_sigma_star_list{j});
+%             
+%             my_var = mean(decomp_var);
+%             if my_var < best_var
+%                 best_j  = j;
+%                 best_var = my_var;
+%             end
+%         end
+%     end
+%     idx = [idx, best_j];
+%     % Project
+%     for k = 1:numel(decomp_list)
+%         if (~sum(k == idx)) && (k ~= best_j)
+%             alpha = solve_sdp(decomp_sigma_starstar_list{k}, decomp_sigma_starstar_list{best_j});
+%             decomp_sigma_starstar_list{k} = decomp_sigma_starstar_list{k} - alpha*decomp_sigma_starstar_list{best_j};
+%             decomp_sigma_star_list{k} = decomp_sigma_star_list{k} - alpha*decomp_sigma_star_list{best_j};
+%             decomp_sigma_starstar_list{best_j} = decomp_sigma_starstar_list{best_j} + alpha*decomp_sigma_starstar_list{best_j};
+%             decomp_sigma_star_list{best_j} = decomp_sigma_star_list{best_j} + alpha*decomp_sigma_star_list{best_j};
+%         end
+%     end
+% end
+
 idx = [];
-
-cum_kernel = cell(0);
-cum_hyp = [];
-%used_components = [];
-
-
-cum_kernel = cell(0);
-cum_hyp = [];
 
 K_list = cell(length(X_train),1);
 Ks_list = cell(length(X_train),numel(decomp_list));
@@ -205,11 +249,11 @@ for i = 1:numel(decomp_list)
         if (~sum(k == idx)) && (k ~= best_j)
             alpha = solve_sdp(decomp_sigma_starstar_list{k}, decomp_sigma_starstar_list{best_j});
             for fold = 1:length(X_train)
-                Ks_list{fold, best_j} = Ks_list{fold, best_j} + alpha*Ks_list{fold, best_j};
                 Ks_list{fold, k} = Ks_list{fold, k} - alpha*Ks_list{fold, best_j};
-                decomp_sigma_starstar_list{best_j} = decomp_sigma_starstar_list{best_j} + alpha*decomp_sigma_starstar_list{best_j};
-                decomp_sigma_starstar_list{k} = decomp_sigma_starstar_list{k} - alpha*decomp_sigma_starstar_list{best_j};
+                Ks_list{fold, best_j} = Ks_list{fold, best_j} + alpha*Ks_list{fold, best_j};
             end
+            decomp_sigma_starstar_list{k} = decomp_sigma_starstar_list{k} - alpha*decomp_sigma_starstar_list{best_j};
+            decomp_sigma_starstar_list{best_j} = decomp_sigma_starstar_list{best_j} + alpha*decomp_sigma_starstar_list{best_j};
         end
     end
     for fold = 1:length(X_train)

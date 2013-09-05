@@ -754,8 +754,19 @@ addpath(genpath('%(matlab_script_path)s'));
 plot_decomp(X, y, %(kernel_family)s, %(kernel_params)s, %(kernel_family_list)s, %(kernel_params_list)s, %(noise)s, '%(figname)s', %(latex_names)s, %(full_kernel_name)s, %(X_mean)f, %(X_scale)f, %(y_mean)f, %(y_scale)f)
 exit();"""
 
+MATLAB_PLOT_DECOMP_PROJECTIVE_CALLER_CODE = r"""
+load '%(datafile)s'  %% Load the data, it should contain X and y.
+X = double(X);
+y = double(y);
 
-def plot_decomposition(kernel, X, y, figname, noise=None, X_mean=0, X_scale=1, y_mean=0, y_scale=1):
+addpath(genpath('%(gpml_path)s'));
+addpath(genpath('%(matlab_script_path)s'));
+
+plot_decomp_projective(X, y, %(kernel_family)s, %(kernel_params)s, %(kernel_family_list)s, %(kernel_params_list)s, %(noise)s, '%(figname)s', %(latex_names)s, %(full_kernel_name)s, %(X_mean)f, %(X_scale)f, %(y_mean)f, %(y_scale)f)
+exit();"""
+
+
+def plot_decomposition(kernel, X, y, figname, noise=None, X_mean=0, X_scale=1, y_mean=0, y_scale=1, projective=False):
     matlab_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'matlab'))
     figname = os.path.abspath(os.path.join(os.path.dirname(__file__), figname))
     print 'Plotting to: %s' % figname
@@ -771,7 +782,11 @@ def plot_decomposition(kernel, X, y, figname, noise=None, X_mean=0, X_scale=1, y
     (fd1, temp_data_file) = tempfile.mkstemp(suffix='.mat')
     scipy.io.savemat(temp_data_file, data)
     
-    code = MATLAB_PLOT_DECOMP_CALLER_CODE % {'datafile': temp_data_file,
+    if not projective:
+        code = MATLAB_PLOT_DECOMP_CALLER_CODE
+    else:
+        code = MATLAB_PLOT_DECOMP_PROJECTIVE_CALLER_CODE
+    code = code % {'datafile': temp_data_file,
         'gpml_path': config.GPML_PATH,
         'matlab_script_path': matlab_dir,
         'kernel_family': kernel.gpml_kernel_expression(),

@@ -53,7 +53,7 @@ def gen_all_results(folder):
             yield files.split('.')[-2], best_tuple
                 
 
-def make_all_1d_figures(folder, save_folder='../figures/decomposition/', max_level=None, prefix='', rescale=True, data_folder=None):
+def make_all_1d_figures(folder, save_folder='../figures/decomposition/', max_level=None, prefix='', rescale=True, data_folder=None, projective=False):
     """Crawls the results directory, and makes decomposition plots for each file.
     
     prefix is an optional string prepended to the output directory
@@ -99,7 +99,7 @@ def make_all_1d_figures(folder, save_folder='../figures/decomposition/', max_lev
                 fig_folder = os.path.join(save_folder, (prefix + file))
             if not os.path.exists(fig_folder):
                 os.makedirs(fig_folder)
-            gpml.plot_decomposition(stripped_kernel, X, y, os.path.join(fig_folder, file), best_kernel.noise, X_mean, X_scale, y_mean, y_scale)
+            gpml.plot_decomposition(stripped_kernel, X, y, os.path.join(fig_folder, file), best_kernel.noise, X_mean, X_scale, y_mean, y_scale, projective=projective)
         else:
             print "Cannnot find file %s" % results_file
             

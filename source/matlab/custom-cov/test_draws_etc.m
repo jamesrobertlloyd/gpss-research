@@ -180,7 +180,7 @@ plot(x, y);
 x = linspace(0, 1, 1000)';
 
 cov_func = {@covIBMLin};
-hyp.cov = [-40, 0, -1000, -1000];
+hyp.cov = [100, 0, -1000, -1000];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));

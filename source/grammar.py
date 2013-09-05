@@ -166,11 +166,15 @@ def polish_to_kernel(polish_expr):
         elif polish_expr[0] == 'B':
             base_kernel = polish_to_kernel(polish_expr[1])
             #### FIXME - there should not be constants here!
-            return fk.BurstTanhKernel(0., 0., 0., [base_kernel])
+            #return fk.BurstTanhKernel(0., 0., 0., [base_kernel])
+            #### FIXME - assumes 1d - inelegant as well
+            return fk.ChangeBurstTanhKernel(0., 0., 0., [fk.MaskKernel(1, 0, fk.ConstKernelFamily().default()), base_kernel])
         elif polish_expr[0] == 'BL':
             base_kernel = polish_to_kernel(polish_expr[1])
             #### FIXME - there should not be constants here!
-            return fk.BlackoutTanhKernel(0., 0., 0., 0., [base_kernel])
+            #return fk.BlackoutTanhKernel(0., 0., 0., 0., [base_kernel])
+            #### FIXME - assumes 1d - inelegant as well
+            return fk.ChangeBurstTanhKernel(0., 0., 0., [base_kernel, fk.MaskKernel(1, 0, fk.ConstKernelFamily().default())])
         elif polish_expr[0] == 'None':
             return fk.NoneKernel()
         else:

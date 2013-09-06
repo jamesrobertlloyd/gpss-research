@@ -364,6 +364,7 @@ def expand_kernels(D, seed_kernels, verbose=False, debug=False, base_kernels='SE
     kernels = []
     for k in seed_kernels:
         kernels = kernels + expand(k, g)
+    kernels = map(canonical, kernels)
     kernels = remove_duplicates(kernels)
     kernels = [k for k in kernels if not isinstance(k, fk.NoneKernel)]
     if verbose:

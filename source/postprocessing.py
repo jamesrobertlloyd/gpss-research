@@ -20,6 +20,7 @@ import flexiblekernel as fk
 import gpml
 import utils.latex
 import re
+import grammar
 
 
 def parse_all_results(folder, save_file='kernels.tex', one_d=False):
@@ -93,6 +94,11 @@ def make_all_1d_figures(folder, save_folder='../figures/decomposition/', max_lev
                                 
             best_kernel = exp.parse_results(os.path.join(folder, file + "_result.txt"), max_level=max_level)
             stripped_kernel = fk.strip_masks(best_kernel.k_opt)
+            print stripped_kernel.pretty_print()
+            stripped_kernel = grammar.canonical(fk.centre_periodic(stripped_kernel))
+            print stripped_kernel.pretty_print()
+            stripped_kernel = grammar.canonical(fk.collapse_const_sums(stripped_kernel))
+            print stripped_kernel.pretty_print()
             if not max_level is None:
                 fig_folder = os.path.join(save_folder, (prefix + file + '_max_level_%d' % max_level))
             else:

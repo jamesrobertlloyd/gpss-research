@@ -18,6 +18,7 @@ import config
 from utils import psd_matrices
 import utils.misc
 import re
+from scipy.special import i0 # 0th order Bessel function of the first kind
 
 PAREN_COLORS = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow']
 CMP_TOLERANCE = np.log(1.01) # i.e. 1%
@@ -275,6 +276,123 @@ class SqExpPeriodicKernel(BaseKernel):
         # return 'PE(\\ell=%1.1f, p=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.period, self.output_variance)
         #return 'PE(p=%1.1f)' % self.period          
         return 'Per'
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+        
+    def depth(self):
+        return 0
+            
+    def out_of_bounds(self, constraints):
+        return (self.period < constraints['min_period']) or \
+               (self.lengthscale < constraints['min_lengthscale']) or \
+               (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
+
+class CentredPeriodicKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        lengthscale, period, output_variance = params
+        return CentredPeriodicKernel(lengthscale, period, output_variance)
+    
+    def num_params(self):
+        return 3
+    
+    def pretty_print(self):
+        return colored('CPE', self.depth())
+    
+    #### FIXME - Caution - magic numbers!
+    #### Explanation : This is centered on about 20 periods
+    def default(self):
+        return CentredPeriodicKernel(0., -2.0, 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'CenPer'
+    
+    @staticmethod    
+    def description():
+        return "Centred Periodic"
+
+    @staticmethod    
+    def params_description():
+        return "lengthscale, period"  
+    
+class CentredPeriodicKernel(BaseKernel):
+    def __init__(self, lengthscale, period, output_variance):
+        self.lengthscale = lengthscale
+        self.period = period
+        self.output_variance = output_variance
+        
+    def family(self):
+        return CentredPeriodicKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covPeriodicCentre}'
+    
+    def english_name(self):
+        return 'Centred Periodic'
+    
+    def id_name(self):
+        return 'CenPer'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.lengthscale, self.period, self.output_variance])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        '''Overwrites base method, using min period to prevent Nyquist errors'''
+        result = self.param_vector()
+        if result[0] == 0:
+            # Min period represents a minimum sensible scale - use it for lengthscale as well
+            # Scale with data_scale though
+            if data_shape['min_period'] is None:
+                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
+            else:
+                result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
+        if result[1] == -2:
+            #### FIXME - Caution, magic numbers
+            #### Explanation : This is centered on about 20 periods
+            # Min period represents a minimum sensible scale
+            # Scale with data_scale
+            if data_shape['min_period'] is None:
+                result[1] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+            else:
+                result[1] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
+        if result[2] == 0:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
+        return result
+
+    def copy(self):
+        return CentredPeriodicKernel(self.lengthscale, self.period, self.output_variance)
+    
+    def __repr__(self):
+        return 'CentredPeriodicKernel(lengthscale=%f, period=%f, output_variance=%f)' % \
+            (self.lengthscale, self.period, self.output_variance)
+    
+    def pretty_print(self):
+        return colored('CPE(ell=%1.1f, p=%1.1f, sf=%1.1f)' % (self.lengthscale, self.period, self.output_variance),
+                       self.depth())
+        
+    def latex_print(self):
+        # return 'PE(\\ell=%1.1f, p=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.period, self.output_variance)
+        #return 'PE(p=%1.1f)' % self.period          
+        return 'CenPer'
     
     def __cmp__(self, other):
         assert isinstance(other, Kernel)
@@ -3732,6 +3850,7 @@ def base_kernel_families(base_kernel_names):
     '''
     for family in [SqExpKernelFamily(), \
                    SqExpPeriodicKernelFamily(), \
+                   CentredPeriodicKernelFamily(), \
                    RQKernelFamily(), \
                    ConstKernelFamily(), \
                    LinKernelFamily(), \
@@ -3813,6 +3932,97 @@ def strip_masks(k):
         return ProductKernel([strip_masks(op) for op in k.operands])
     else:
         return k  
+        
+def centre_periodic(k):
+    """Replaces the SqExpPeriodicKernel with the centred version"""    
+    #### TODO - extend to other operators (e.g. changepoint) as well
+    if isinstance(k, MaskKernel):
+        return centre_periodic(k.base_kernel)
+    elif isinstance(k, SumKernel):
+        return SumKernel([centre_periodic(op) for op in k.operands])
+    elif isinstance(k, ProductKernel):
+        return ProductKernel([centre_periodic(op) for op in k.operands])
+    elif isinstance(k, ChangePointTanhKernel):
+        return ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[centre_periodic(op) for op in k.operands])
+    elif isinstance(k, ChangeBurstTanhKernel):
+        return ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[centre_periodic(op) for op in k.operands])
+    elif isinstance(k, SqExpPeriodicKernel):
+        return CentredPeriodicKernel(lengthscale=k.lengthscale, period=k.period, output_variance=k.output_variance) + \
+               ConstKernel(output_variance=k.output_variance-0.5*np.exp(-2*k.lengthscale)+0.5*np.log(i0(np.exp(-2*k.lengthscale))))
+    else:
+        return k 
+        
+def collapse_const_sums(kernel):
+    '''Replaces sums of constants with a single constant'''
+    #### FIXME - This is a bit of a shunt for the periodic kernel - probably somehow fits with the grammar.canonical
+    if isinstance(kernel, BaseKernel):
+        return kernel.copy()
+    elif isinstance(kernel, MaskKernel):
+        return MaskKernel(kernel.ndim, kernel.active_dimension, collapse_const_sums(kernel.base_kernel))
+    elif isinstance(kernel, ChangePointKernel):
+        canop = [collapse_const_sums(o) for o in kernel.operands]
+        return ChangePointKernel(kernel.location, kernel.steepness, canop)
+    elif isinstance(kernel, BurstKernel):
+        canop = [collapse_const_sums(o) for o in kernel.operands]
+        return BurstKernel(kernel.location, kernel.steepness, kernel.width, canop)
+    elif isinstance(kernel, BlackoutKernel):
+        canop = [collapse_const_sums(o) for o in kernel.operands]
+        return BlackoutKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, canop)
+    elif isinstance(kernel, ChangePointTanhKernel):
+        canop = [collapse_const_sums(o) for o in kernel.operands]
+        return ChangePointTanhKernel(kernel.location, kernel.steepness, canop)
+    elif isinstance(kernel, ChangeBurstTanhKernel):
+        canop = [collapse_const_sums(o) for o in kernel.operands]
+        return ChangeBurstTanhKernel(kernel.location, kernel.steepness, kernel.width, canop)
+    elif isinstance(kernel, BurstTanhKernel):
+        canop = [collapse_const_sums(o) for o in kernel.operands]
+        return BurstTanhKernel(kernel.location, kernel.steepness, kernel.width, canop)
+    elif isinstance(kernel, BlackoutTanhKernel):
+        canop = [collapse_const_sums(o) for o in kernel.operands]
+        return BlackoutTanhKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, canop)
+    elif isinstance(kernel, SumKernel):
+        new_ops = []
+        for op in kernel.operands:
+            op_canon = collapse_const_sums(op)
+            if isinstance(op_canon, SumKernel):
+                new_ops += op_canon.operands
+            elif not isinstance(op_canon, NoneKernel):
+                new_ops.append(op_canon)
+        # Check for multiple const kernels
+        new_ops_wo_multi_const = []
+        sf = 0
+        for op in new_ops:
+            if isinstance(op, MaskKernel) and isinstance(op.base_kernel, ConstKernel):
+                sf += np.exp(2*op.base_kernel.output_variance)
+            elif isinstance(op, ConstKernel):
+                sf += np.exp(2*op.output_variance)
+            else:
+                new_ops_wo_multi_const.append(op)
+        if sf > 0:
+            new_ops_wo_multi_const.append(ConstKernel(output_variance=np.log(sf)*0.5))
+        new_ops = new_ops_wo_multi_const
+        if len(new_ops) == 0:
+            return NoneKernel()
+        elif len(new_ops) == 1:
+            return new_ops[0]
+        else:
+            return SumKernel(sorted(new_ops))
+    elif isinstance(kernel, ProductKernel):
+        new_ops = []
+        for op in kernel.operands:
+            op_canon = collapse_const_sums(op)
+            if isinstance(op_canon, ProductKernel):
+                new_ops += op_canon.operands
+            elif not isinstance(op_canon, NoneKernel):
+                new_ops.append(op_canon)
+        if len(new_ops) == 0:
+            return NoneKernel()
+        elif len(new_ops) == 1:
+            return new_ops[0]
+        else:
+            return ProductKernel(sorted(new_ops))
+    else:
+        raise RuntimeError('Unknown kernel class:', kernel.__class__)
 
 def break_kernel_into_summands(k):
     '''Takes a kernel, expands it into a polynomial, and breaks terms up into a list.

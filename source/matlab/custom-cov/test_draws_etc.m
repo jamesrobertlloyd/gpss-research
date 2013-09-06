@@ -45,7 +45,7 @@ plot(x, y);
 x = linspace(-5, 5, 100)';
 
 cov_func = {@covCos};
-hyp.cov = [0,0];
+hyp.cov = [1,0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-5*max(max(K))*eye(size(K));
@@ -93,6 +93,62 @@ fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, x);
 plot(x, y, 'o');
 hold on;
 plot(x, fit);
+hold off;
+
+%% Centered periodic draw
+
+x = linspace(-5, 5, 1000)';
+
+cov_func = {@covPeriodicCenter};
+hyp.cov = [0,1,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-5*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% Check centered periodic grad
+
+x = linspace(-5, 5, 1000)';
+
+delta = 0.000000001;
+i = 3;
+
+cov_func = {@covPeriodicCenter};
+hyp1.cov = [0, 0, 0] - 1;
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
+%% centered periodic fit
+
+x = linspace(-5, 5, 100)';
+y = cos(1.8*pi*x) + 2*cos(3.6*pi*x) + 0.1*randn(size(x));
+
+cov_func = {@covPeriodicCenter};
+hyp.cov = [0,0,0];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y) / 10);
+
+hyp = minimize(hyp, @gp, -1000, @infExact, mean_func, cov_func, lik_func, x, y);
+
+xrange = linspace(min(x)-10, max(x)+10, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
 hold off;
 
 %% Spectral draw

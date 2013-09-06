@@ -3946,6 +3946,10 @@ def centre_periodic(k):
         return ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[centre_periodic(op) for op in k.operands])
     elif isinstance(k, ChangeBurstTanhKernel):
         return ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[centre_periodic(op) for op in k.operands])
+    elif isinstance(k, BurstTanhKernel):
+        return BurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[centre_periodic(op) for op in k.operands])
+    elif isinstance(k, BlackoutTanhKernel):
+        return BlackoutTanhKernel(location=k.location, steepness=k.steepness, width=k.width, sf=k.sf, operands=[centre_periodic(op) for op in k.operands])
     elif isinstance(k, SqExpPeriodicKernel):
         return CentredPeriodicKernel(lengthscale=k.lengthscale, period=k.period, output_variance=k.output_variance) + \
                ConstKernel(output_variance=k.output_variance-0.5*np.exp(-2*k.lengthscale)+0.5*np.log(i0(np.exp(-2*k.lengthscale))))

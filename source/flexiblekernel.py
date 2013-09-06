@@ -62,6 +62,10 @@ class Kernel:
             return ProductKernel([self] + other.operands).copy()
         else:
             return ProductKernel([self, other])
+            
+    def __hash__(self):
+        # Really simple hash - presumably there is something better?
+        return hash(self.__repr__())
 
 class BaseKernelFamily(KernelFamily):
     pass

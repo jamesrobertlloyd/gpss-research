@@ -351,14 +351,8 @@ def canonical(kernel):
         raise RuntimeError('Unknown kernel class:', kernel.__class__)
 
 def remove_duplicates(kernels):
-    kernels = sorted(map(canonical, kernels))
-    result = []
-    curr = None
-    for k in kernels:
-        if curr is None or k != curr:
-            result.append(k)
-        curr = k
-    return result
+    # This is possible since kernels are now hashable
+    return list(set(kernels))
     
 def expand_kernels(D, seed_kernels, verbose=False, debug=False, base_kernels='SE'):    
     '''Makes a list of all expansions of a set of kernels in D dimensions.'''

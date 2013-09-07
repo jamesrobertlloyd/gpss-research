@@ -244,21 +244,26 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     # Rename temporary results file to actual results file                
     os.rename(results_filename + '.unfinished', results_filename)
 
-def parse_results( results_filename, max_level=None ):
+def parse_results( results_filenames, max_level=None ):
     '''
     Returns the best kernel in an experiment output file as a ScoredKernel
     '''
-    # Read relevant lines of file
-    lines = []
-    with open(results_filename) as results_file:
-        for line in results_file:
-            if line.startswith("ScoredKernel"):
-                lines.append(line)
-            elif (not max_level is None) and (len(re.findall('Level [0-9]+', line)) > 0):
-                level = int(line.split(' ')[2])
-                if level > max_level:
-                    break
-    result_tuples = [fk.repr_string_to_kernel(line.strip()) for line in lines]
+    if not isinstance(results_filenames, list):
+        # Backward compatibility wth specifying a single file
+        results_filenames = [results_filenames]
+    # Read relevant lines of file(s)
+    result_tuples = []
+    for results_filename in results_filenames:
+        lines = []
+        with open(results_filename) as results_file:
+            for line in results_file:
+                if line.startswith("ScoredKernel"):
+                    lines.append(line)
+                elif (not max_level is None) and (len(re.findall('Level [0-9]+', line)) > 0):
+                    level = int(line.split(' ')[2])
+                    if level > max_level:
+                        break
+        result_tuples += [fk.repr_string_to_kernel(line.strip()) for line in lines]
     best_tuple = sorted(result_tuples, key=ScoredKernel.score)[0]
     return best_tuple
 

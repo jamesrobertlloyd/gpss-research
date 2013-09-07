@@ -54,13 +54,15 @@ def gen_all_results(folder):
             yield files.split('.')[-2], best_tuple
                 
 
-def make_all_1d_figures(folder, save_folder='../figures/decomposition/', max_level=None, prefix='', rescale=True, data_folder=None, projective=False):
+def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_level=None, prefix='', rescale=True, data_folder=None, projective=False):
     """Crawls the results directory, and makes decomposition plots for each file.
     
     prefix is an optional string prepended to the output directory
     """
     #### Quick fix to axis scaling
     #### TODO - Ultimately this and the shunt below should be removed / made elegant
+    if not isinstance(folders, list):
+        folders = [folders] # Backward compatibility with specifying one folder
     if rescale:
         data_sets = list(exp.gen_all_datasets("../data/1d_data_rescaled/"))
     else:
@@ -69,9 +71,13 @@ def make_all_1d_figures(folder, save_folder='../figures/decomposition/', max_lev
         else:
             data_sets = list(exp.gen_all_datasets(data_folder))
     for r, file in data_sets:
-        results_file = os.path.join(folder, file + "_result.txt")
+        results_files = []
+        for folder in folders:
+            results_file = os.path.join(folder, file + "_result.txt")
+            if os.path.isfile(results_file):
+                results_files.append(results_file)
         # Is the experiment complete
-        if os.path.isfile(results_file):
+        if len(results_files) > 0:
             # Find best kernel and produce plots
             datafile = os.path.join(r,file + ".mat")
             X, y, D = gpml.load_mat(datafile)
@@ -92,7 +98,7 @@ def make_all_1d_figures(folder, save_folder='../figures/decomposition/', max_lev
                 X_mean = X_mean + 1949
                 X_scale = 1.0/12.0
                                 
-            best_kernel = exp.parse_results(os.path.join(folder, file + "_result.txt"), max_level=max_level)
+            best_kernel = exp.parse_results(results_files, max_level=max_level)
             stripped_kernel = fk.strip_masks(best_kernel.k_opt)
             print stripped_kernel.pretty_print()
             stripped_kernel = grammar.canonical(fk.centre_periodic(stripped_kernel))
@@ -107,7 +113,7 @@ def make_all_1d_figures(folder, save_folder='../figures/decomposition/', max_lev
                 os.makedirs(fig_folder)
             gpml.plot_decomposition(stripped_kernel, X, y, os.path.join(fig_folder, file), best_kernel.noise, X_mean, X_scale, y_mean, y_scale, projective=projective)
         else:
-            print "Cannnot find file %s" % results_file
+            print "Cannnot find results for %s" % file
             
 def make_all_1d_figures_all_depths(folder, max_depth=10, **kwargs):
     make_all_1d_figures(folder=folder)

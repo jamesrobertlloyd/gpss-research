@@ -711,6 +711,25 @@ def laplace_approx_stable(nll, opt_hyper, hessian, prior_var=100000):
     total += -nll
 
     return -total, problems
+    
+def laplace_approx_stable_no_prior(nll, hessian):
+    H_eig, Q = scipy.linalg.eigh(hessian)
+    
+    problems = []
+    if np.min(H_eig) < -(1e-8)*np.max(H_eig):
+        # Check for non-trivially small negative eigenvalues
+        neg_marg_lik = np.nan
+        problems.append('Not PSD')
+        return neg_marg_lik, problems
+    else:    
+        # treat very small values as zero - i.e. computing the pseudo-determinant
+        is_zero = (H_eig < (1e-8)*np.max(H_eig))
+
+        # compute integral
+        temp = np.where(is_zero, 1., (2*np.pi / H_eig))
+        neg_marg_lik = nll - 0.5 * np.sum(np.log(temp))
+
+        return neg_marg_lik, problems
 
 
 def check_laplace_approx():

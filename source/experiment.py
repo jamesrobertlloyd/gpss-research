@@ -155,7 +155,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         # Some of the scores may have failed - remove nans to prevent sorting algorithms messing up
         #### TODO - this should not fail silently like this
         new_results = remove_nan_scored_kernels(new_results)
-        assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens 
+        assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens
         # Sort the new results
         new_results = sorted(new_results, key=ScoredKernel.score, reverse=True)
         
@@ -171,7 +171,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         print 'All new results after duplicate removal:'
         for result in new_results:
             #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-            print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
+            print result.bic_nle, result.pic_nle, result.laplace_nle, result.mae, result.k_opt.pretty_print()
             
         #### Explanation : This heuristic was not especially useful when first tried   
         # Remove bad predictors
@@ -194,11 +194,11 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         all_results = sorted(all_results, key=ScoredKernel.score, reverse=True)
 
         results_sequence.append(all_results)
-        if exp.verbose:
-            print 'Printing all results'
-            for result in all_results:
-                #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-                print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
+        #if exp.verbose:
+        #    print 'Printing all results'
+        #    for result in all_results:
+        #        #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
+        #        print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
         
         # Extract the best k kernels from the new all_results
         best_results = sorted(new_results, key=ScoredKernel.score)[0:exp.k]

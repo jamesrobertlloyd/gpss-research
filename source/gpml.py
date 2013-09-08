@@ -59,8 +59,7 @@ def run_matlab_code(code, verbose=False, jvm=True):
     
     if err_txt != '':
         #### TODO - need to catch error local to new MLG machines
-#        print 'Matlab produced the following errors:\n\n%s' % err_txt    
-        pass 
+        print 'Matlab produced the following errors:\n\n%s' % err_txt  
 #        raise RuntimeError('Matlab produced the following errors:\n\n%s' % err_txt)
     else:     
         # Only remove temporary files if run was successful    

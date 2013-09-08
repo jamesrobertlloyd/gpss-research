@@ -750,7 +750,20 @@ y = double(y);
 addpath(genpath('%(gpml_path)s'));
 addpath(genpath('%(matlab_script_path)s'));
 
-plot_decomp(X, y, %(kernel_family)s, %(kernel_params)s, %(kernel_family_list)s, %(kernel_params_list)s, %(noise)s, '%(figname)s', %(latex_names)s, %(full_kernel_name)s, %(X_mean)f, %(X_scale)f, %(y_mean)f, %(y_scale)f)
+kernel_family = %(kernel_family)s;
+kernel_params = %(kernel_params)s;
+kernel_family_list = %(kernel_family_list)s;
+kernel_params_list = %(kernel_params_list)s;
+noise = %(noise)s;
+figname = '%(figname)s';
+latex_names = %(latex_names)s;
+full_kernel_name = %(full_kernel_name)s;
+X_mean = %(X_mean)f;
+X_scale = %(X_scale)f;
+y_mean = %(y_mean)f;
+y_scale = %(y_scale)f;
+
+plot_decomp(X, y, kernel_family, kernel_params, kernel_family_list, kernel_params_list, noise, figname, latex_names, full_kernel_name, X_mean, X_scale, y_mean, y_scale)
 exit();"""
 
 MATLAB_PLOT_DECOMP_PROJECTIVE_CALLER_CODE = r"""
@@ -761,7 +774,20 @@ y = double(y);
 addpath(genpath('%(gpml_path)s'));
 addpath(genpath('%(matlab_script_path)s'));
 
-plot_decomp_projective(X, y, %(kernel_family)s, %(kernel_params)s, %(kernel_family_list)s, %(kernel_params_list)s, %(noise)s, '%(figname)s', %(latex_names)s, %(full_kernel_name)s, %(X_mean)f, %(X_scale)f, %(y_mean)f, %(y_scale)f)
+kernel_family = %(kernel_family)s;
+kernel_params = %(kernel_params)s;
+kernel_family_list = %(kernel_family_list)s;
+kernel_params_list = %(kernel_params_list)s;
+noise = %(noise)s;
+figname = '%(figname)s';
+latex_names = %(latex_names)s;
+full_kernel_name = %(full_kernel_name)s;
+X_mean = %(X_mean)f;
+X_scale = %(X_scale)f;
+y_mean = %(y_mean)f;
+y_scale = %(y_scale)f;
+
+plot_decomp_projective(X, y, kernel_family, kernel_params, kernel_family_list, kernel_params_list, noise, figname, latex_names, full_kernel_name, X_mean, X_scale, y_mean, y_scale)
 exit();"""
 
 

@@ -716,7 +716,7 @@ def laplace_approx_stable_no_prior(nll, hessian):
     H_eig, Q = scipy.linalg.eigh(hessian)
     
     problems = []
-    if np.min(H_eig) < -(1e-8)*np.max(H_eig):
+    if (np.min(H_eig) < -(1e-8)*np.max(H_eig)) or (np.max(H_eig) <= 0):
         # Check for non-trivially small negative eigenvalues
         neg_marg_lik = np.nan
         problems.append('Not PSD')

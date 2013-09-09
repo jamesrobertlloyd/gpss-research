@@ -14,7 +14,12 @@ try:
 except:
     has_termcolor = False
 
-import config
+try:
+    import config
+    color_scheme = config.COLOR_SCHEME
+except:
+    color_scheme = 'dark'
+
 from utils import psd_matrices
 import utils.misc
 import re
@@ -30,9 +35,9 @@ def shrink_below_tolerance(x):
         return x 
 
 def paren_colors():
-    if config.COLOR_SCHEME == 'dark':
+    if color_scheme == 'dark':
         return ['red', 'green', 'cyan', 'magenta', 'yellow']
-    elif config.COLOR_SCHEME == 'light':
+    elif color_scheme == 'light':
         return ['blue', 'red', 'magenta', 'green', 'cyan']
     else:
         raise RuntimeError('Unknown color scheme: %s' % config.COLOR_SCHEME)

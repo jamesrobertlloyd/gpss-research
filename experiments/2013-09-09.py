@@ -1,6 +1,6 @@
 Experiment(description='Using Laplace',
            data_dir='../data/tsdlr/',
-           max_depth=12, 
+           max_depth=8, 
            random_order=False,
            k=1,
            debug=False, 

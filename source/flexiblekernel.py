@@ -183,6 +183,9 @@ class SqExpKernel(BaseKernel):
             
     def out_of_bounds(self, constraints):
         return self.lengthscale < constraints['min_lengthscale']
+    
+    def english(self):
+        return "slowly varying"  
 
 
 class SqExpPeriodicKernelFamily(BaseKernelFamily):
@@ -301,6 +304,9 @@ class SqExpPeriodicKernel(BaseKernel):
         return (self.period < constraints['min_period']) or \
                (self.lengthscale < constraints['min_lengthscale']) or \
                (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
+               
+    def english(self):
+        return "periodic"                
 
 class CentredPeriodicKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -742,6 +748,9 @@ class RQKernel(BaseKernel):
             
     def out_of_bounds(self, constraints):
         return (self.lengthscale < constraints['min_lengthscale']) or (self.alpha < constraints['min_alpha'])
+    
+    def english(self):
+        return "slowly varying over multiple scales"
     
 class ConstKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -3738,6 +3747,10 @@ class SumKernel(Kernel):
     def out_of_bounds(self, constraints):
         return any([o.out_of_bounds(constraints) for o in self.operands]) 
     
+    def english(self):
+        return string.join([e.english() for e in self.operands], " plus ")
+    
+    
 class ProductKernelFamily(KernelFamily):
     def __init__(self, operands):
         self.operands = operands
@@ -3828,7 +3841,10 @@ class ProductKernel(Kernel):
             return ProductKernel(self.operands + [other]).copy()
             
     def out_of_bounds(self, constraints):
-        return any([o.out_of_bounds(constraints) for o in self.operands]) 
+        return any([o.out_of_bounds(constraints) for o in self.operands])
+    
+    def english(self):
+        return string.join([e.english() for e in self.operands], " times ")    
 
 #### FIXME - Sort out the naming of the two functions below            
 def base_kernels(ndim=1, base_kernel_names='SE'):
@@ -3928,6 +3944,7 @@ def Carls_Mauna_kernel():
            + SqExpKernel(output_variance=theta_9, lengthscale=theta_10)
     
     return kernel
+
 
 #### TODO - this may not be necessary - only useful for printing to latex and gpml - and the mask kernel can detect when it is 1d
 def strip_masks(k):

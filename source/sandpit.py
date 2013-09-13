@@ -1001,3 +1001,7 @@ def debug_laplace():
     
 
 
+def debug_descriptions():
+    ck = fk.Carls_Mauna_kernel()
+    print ck.english()
+    

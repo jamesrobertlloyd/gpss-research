@@ -3869,8 +3869,9 @@ class ProductKernel(Kernel):
     def out_of_bounds(self, constraints):
         return any([o.out_of_bounds(constraints) for o in self.operands])
     
+    @property
     def output_variance(self):
-        return prod([e.output_variance for e in self.operands])
+        return sum([e.output_variance for e in self.operands])
     
     def english(self):
         """Produces an english description of a product of kernels"""

@@ -1,3 +1,17 @@
+%% SE draw
+
+x = linspace(0, 1, 1000)';
+
+cov_func = {@covSEiso};
+hyp.cov = [-1,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
 %% MT1 draw
 
 x = linspace(0, 1, 1000)';
@@ -31,7 +45,7 @@ plot(x, y);
 x = linspace(0, 1, 1000)';
 
 cov_func = {@covMaterniso, 5};
-hyp.cov = [-3,0];
+hyp.cov = [0,0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));
@@ -42,13 +56,13 @@ plot(x, y);
 
 %% Cosine draw
 
-x = linspace(-5, 5, 100)';
+x = linspace(-0, 1, 1000)';
 
 cov_func = {@covCos};
-hyp.cov = [1,0];
+hyp.cov = [-log(2),0];
 
 K = feval(cov_func{:}, hyp.cov, x);
-K = K + 1e-5*max(max(K))*eye(size(K));
+K = K + 1e-9*max(max(K))*eye(size(K));
 
 y = chol(K)' * randn(size(x));
 
@@ -97,16 +111,36 @@ hold off;
 
 %% Centered periodic draw
 
-x = linspace(-5, 5, 1000)';
+x = linspace(0, 1, 1000)';
 
-cov_func = {@covPeriodicCenter};
-hyp.cov = [0,1,0];
+cov_func = {@covPeriodicCentre};
+hyp.cov = [log(100),log(max(x)/2),0];
 
 K = feval(cov_func{:}, hyp.cov, x);
-K = K + 1e-5*max(max(K))*eye(size(K));
+K = K + 1e-9*max(max(K))*eye(size(K));
 
 y = chol(K)' * randn(size(x));
 
+plot(x, y);
+hold on;
+plot(x, 0.5*(max(y)-min(y))*sin(x*4*pi) + mean(y), 'r');
+hold off;
+%figure;
+%plot(K(:,1));
+
+%% periodic draw
+
+x = linspace(0, 1000, 1000)';
+
+cov_func = {@covPeriodic};
+hyp.cov = [log(1),log(max(x)/2),0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+figure;
 plot(x, y);
 
 %% Check centered periodic grad

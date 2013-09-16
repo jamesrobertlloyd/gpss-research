@@ -1,5 +1,9 @@
 """
 Translates kernel expressions into natural language descriptions
+The main assumptions made by this module at the moment are
+ - 1d input
+ - A limited number of possible base kernels and operators
+ - Probably others
 
 @authors: James Robert Lloyd (jrl44@cam.ac.uk)
           
@@ -66,11 +70,125 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
     # Note that new_intervals may now be empty but we should recurse to return a kernel in a standard form
     return find_region_of_influence(base_kernel, new_intervals)
                     
-def translate_product(k, X):
+def translate_product(prod, X):
     '''
     Translates a product of base kernels
     '''
-    return 'I don''t know how to describe base kernels yet so I can''t talk about this component'
+    #### TODO - assumes 1d
+    # Strip masks and produce list of base kernels in product
+    prod = grammar.canonical(sk.strip_masks(grammar.canonical(prod)))
+    if isinstance(prod, fk.BaseKernel):
+        kernels = [prod]
+    else
+        kernels = prod.operands
+    # Initialise
+    descriptions = []
+    lengthscale = np.Inf
+    los_count = 0 # Local smooth components
+    lin_count = 0
+    per_count = 0
+    cos_count = 0
+    imt_count = 0 # Integrated Matern components
+    unk_count = 0 # 'Unknown' kernel function
+    per_kernels = []
+    cos_kernels = []
+    # Count calculate a variety of summary quantities
+    for k in kernels:
+        if isinstance(k, fk.SqExpKernel) or isinstance(k, fk.Matern5Kernel):
+            #### FIXME - How accurate is it to assume that SqExp and Matern lengthscales multiply similarly
+            los_count += 1
+            lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*k.lengthscale))
+        elif isinstance(k, fk.LinKernel):
+            lin_count += 1
+        elif isinstance(k, fk.CentredPeriodicKernel):
+            per_count += 1
+            per_kernels.append(k)
+        elif isinstance(k, fk.CosineKernel):
+            cos_count += 1
+            cos_kernels.append(k)
+        else:
+            # Cannot deal with whatever type of kernel this is
+            unk_count +=1
+    lengthscale = np.exp(lengthscale)
+    domain_range = np.max(X) - np.min(X)
+    poly_names = ['linear', 'quadratic', 'cubic', 'quadratic', 'quintic']
+    ordinal_numbers = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eigth', 'ninth', 'tenth']
+    # Now describe the properties of this product of kernels
+    if (unk_count > 0):
+        descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
+    elif (los_count > 0) and (lin_count == 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
+        # This is a pure smooth and local component
+        descriptions.append('This component is locally correlated and smooth')
+        if lengthscale > domain_range:
+            descriptions.append('This function is very smooth; the exact lengthscale is likely to be uninterpretable')
+        elif lengthscale < domain_range * 0.005:
+            descriptions.append('This function varies very rapidly and will look like noise unless one zooms in')
+        descriptions.append('The typical lengthscale of this function is %f' % lengthscale)
+    elif (los_count == 0) and (lin_count > 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
+        # This is a pure polynomial component
+        if linear_count == 1:
+            descriptions.append('This component is linear')
+            #### FIXME - Use inference to figure out the exact gradient and location it passes through
+            descriptions.append('This is a placeholder that will comment on the gradient and a point it passes through')
+        elif linear_count <= len(poly_names):
+            # I know a special name for this type of polynomial
+            descriptions.append('This component is a %s polynomial' % poly_names[linear_count-1])
+        else:
+            descriptions.append('This component is a polynomial of degree %d' % linear_count)
+    #### TODO
+    #     - The below can be merged - just say it is a product of periodic kernels and then describe cosine as a perfect sinusoid
+    #     - los_count > 0 can be merged easily - just need to say that it is approximately periodic and then describe the nature of the approximation (with detail if only one periodic component)
+    #     - lin_count > 0 can be merged easily - just need to describe the increasing / decreasing / bow-tieing (increasing away from in both directions) marginal variance
+    #     - imt_count > 0 can probably be easily merged when I've figured out how to best describe it's interaction with Lin
+    elif (los_count == 0) and (lin_count == 0) and (per_count > 0) and (cos_count == 0) and (imt_count == 0):
+        if per_count > 1:
+            descriptions.append('This component behaves like the product of several periodic functions'
+            for (i, k) in enumerate(per_kernels):
+                if i <= length(ordinal_numbers):
+                    descriptions.append('The %s periodic function is described as follows' % ordinal_numbers[i+1])
+                else:
+                    descriptions.append('The %d-th periodic function is described as follows' % (i+1))
+                descriptions.append('This function has a period of %f' % np.exp(k.period))
+                #### FIXME - this correspondence is only approximate
+                per_lengthscale = 0.5*np.exp(k.lengthscale + k.period) # This definition of lengthscale fits better with local smooth kernels
+                descriptions.append('The typical lengthscale of this function is %f' % per_lengthscale)
+                if per_lengthscale > np.exp(k.period):
+                    descriptions.append('The lengthscale is greater than the period so the function is almost sinusoidal')
+        else:
+            k = per_kernels[0]
+            descriptions.append('This function is periodic with a period of %f' % np.exp(k.period))
+            #### FIXME - this correspondence is only approximate
+            per_lengthscale = 0.5*np.exp(k.lengthscale + k.period) # This definition of lengthscale fits better with local smooth kernels
+            descriptions.append('The typical lengthscale of this function is %f' % per_lengthscale)
+            if per_lengthscale > np.exp(k.period):
+                descriptions.append('The lengthscale is greater than the period so the function is almost sinusoidal')
+    elif (los_count == 0) and (lin_count == 0) and (per_count == 0) and (cos_count > 0) and (imt_count == 0):
+        if cos_count > 1:
+            #### FIXME - is the following true / sensible - think gcd etc
+            descriptions.append('This component behaves like the product of several sinusoids'
+            for (i, k) in enumerate(cos_kernels):
+                if i <= length(ordinal_numbers):
+                    descriptions.append('The %s sinusoid has a period of %f' % (ordinal_numbers[i+1], np.exp(k.period)))
+                else:
+                    descriptions.append('The %d-th sinusoid has a period of %f' % (i+1, np.exp(k.period)))
+        else:
+            k = cos_kernels[0]
+            descriptions.append('This function is sinusoidal with a period of %f' % np.exp(k.period))
+    else:
+        descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
+    # Return a list of sentences
+    return descriptions
+    
+def translate_interval(interval):
+    '''Describe a 1d interval, including relevant prepositions'''
+    if interval == (-np.Inf, np.Inf):
+        return 'to the entire input domain'
+    elif interval[0] == -np.Inf:
+        return 'until %f' % interval[1]
+    elif interval[1] == np.Inf:
+        return 'from %f' % interval[0]
+    else:
+        return 'from %f until %f' % (interval[0], interval[1])
 
 def translate_additive_component(k, X):
     '''
@@ -85,5 +203,17 @@ def translate_additive_component(k, X):
     #     - The above can be done by plot_decomp MATLAB code saving data files with details about the components (and their order)
     k = grammar.canonical(k) # Just in case
     (intervals, k) = find_region_of_influence(k)
-    descriptions = 
+    # Calculate the description of the changepoint free part of the kernel
+    descriptions = translate_product(k, X)
+    # Describe the intervals this kernel acts upon
+    intervals = sorted(intervals)
+    if len(intervals) == 0:
+        interval_description = 'The combination of changepoint operators is such that this simple AI cannot describe where this component acts; please see visual output or upgrade me'
+    elif len(intervals) == 1:
+        interval_description = 'This component applies %s' % translate_interval(intervals[0])
+    else
+        interval_description = 'This component applies %s and %s' % (', '.join(intervals[:-1]), translate_interval(intervals[-1]))
+    # Combine and return the descriptions
+    descriptions.append(interval_description)
+    return descriptions
     

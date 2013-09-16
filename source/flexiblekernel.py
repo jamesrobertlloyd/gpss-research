@@ -3956,6 +3956,10 @@ def strip_masks(k):
         return SumKernel([strip_masks(op) for op in k.operands])
     elif isinstance(k, ProductKernel):
         return ProductKernel([strip_masks(op) for op in k.operands])
+    elif isinstance(k, ChangePointTanhKernel):
+        return ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[strip_masks(op) for op in k.operands])
+    elif isinstance(k, ChangeBurstTanhKernel):
+        return ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[strip_masks(op) for op in k.operands])
     else:
         return k  
         

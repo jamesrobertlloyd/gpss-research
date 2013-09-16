@@ -41,7 +41,7 @@ def paren_colors():
     elif color_scheme == 'light':
         return ['blue', 'red', 'magenta', 'green', 'cyan']
     else:
-        raise RuntimeError('Unknown color scheme: %s' % config.COLOR_SCHEME)
+        raise RuntimeError('Unknown color scheme: %s' % color_scheme)
 
 def colored(text, depth):
     if has_termcolor:

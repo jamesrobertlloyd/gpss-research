@@ -20,6 +20,7 @@ try:
 except:
     color_scheme = 'dark'
 
+import operator
 from utils import psd_matrices
 import utils.misc
 import re
@@ -185,8 +186,7 @@ class SqExpKernel(BaseKernel):
         return self.lengthscale < constraints['min_lengthscale']
     
     def english(self):
-        return "slowly varying"  
-
+        return lengthscale_description(self.lengthscale)
 
 class SqExpPeriodicKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -306,7 +306,7 @@ class SqExpPeriodicKernel(BaseKernel):
                (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
                
     def english(self):
-        return "periodic"                
+        return "periodic every {0:f} units".format(np.exp(self.period))           
 
 class CentredPeriodicKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -750,7 +750,7 @@ class RQKernel(BaseKernel):
         return (self.lengthscale < constraints['min_lengthscale']) or (self.alpha < constraints['min_alpha'])
     
     def english(self):
-        return "slowly varying over multiple scales"
+        return lengthscale_description(self.lengthscale) + " over multiple scales"
     
 class ConstKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -3748,8 +3748,34 @@ class SumKernel(Kernel):
         return any([o.out_of_bounds(constraints) for o in self.operands]) 
     
     def english(self):
-        return string.join([e.english() for e in self.operands], " plus ")
+        return string.join(["a " + variance_descriptor(e) + ", " + e.english() + " component" for e in self.operands], "\nplus\n")
     
+def variance_descriptor(k):
+    # First, find the overall magnitude of the kernel.
+    output_variance = getattr(k, 'output_variance', None)
+    if output_variance is not None:
+        if callable(output_variance):
+            output_variance = k.output_variance()
+        if output_variance < 1:
+            return "small"
+        else:
+            if output_variance > 4:
+                return "large"
+            else:
+                return "medium-sized"
+    return ""
+
+def lengthscale_description(lengthscale):
+    if lengthscale < 0.1:
+        return "noise"
+    elif lengthscale < 1:
+        return "quickly-varying"  
+    elif lengthscale < 5:
+        return "smoothly-varying"
+    elif lengthscale < 15:
+        return "slowly-varying"
+    else:
+        return "almost constant"
     
 class ProductKernelFamily(KernelFamily):
     def __init__(self, operands):
@@ -3843,8 +3869,21 @@ class ProductKernel(Kernel):
     def out_of_bounds(self, constraints):
         return any([o.out_of_bounds(constraints) for o in self.operands])
     
+    def output_variance(self):
+        return prod([e.output_variance for e in self.operands])
+    
     def english(self):
-        return string.join([e.english() for e in self.operands], " times ")    
+        """Produces an english description of a product of kernels"""
+        return string.join([e.english() for e in self.operands], ", ")    
+
+def prod(iterable):
+    return reduce(operator.mul, iterable, 1)
+
+def debug_descriptions():
+    print "The function can be decomposed into a sum of"
+    ck = Carls_Mauna_kernel()
+    print ck.english()
+
 
 #### FIXME - Sort out the naming of the two functions below            
 def base_kernels(ndim=1, base_kernel_names='SE'):

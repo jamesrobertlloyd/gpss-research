@@ -207,10 +207,10 @@ def translate_product(prod, X):
                 if per_lengthscale > np.exp(k.period):
                     descriptions.append('The lengthscale is greater than the period so the function is almost sinusoidal')
         else: # Several periodic components
-            main_description = 'This component behaves '
+            main_description = 'This component is a product of'
             #if los_count > 0:
             #    main_description += 'approximately '
-            main_description += 'like the product of'
+            #main_description += 'like the product of'
             if per_count == 1:
                 main_description += ' a periodic function'
             elif per_count > 1:

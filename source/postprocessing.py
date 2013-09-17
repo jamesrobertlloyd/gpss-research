@@ -120,7 +120,9 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_le
             while os.path.isfile(os.path.join(fig_folder, '%s_%d.fig' % (file, i))):
                 # Describe this component
                 sentences = translation.translate_additive_component(kernel_components[component_order[i-1]], X)
-                print sentences
+                paragraph = '.\n'.join(sentences) + '.'
+                with open(os.path.join(fig_folder, '%s_%d_description.tex' % (file, i)), 'w') as description_file:
+                    description_file.write(paragraph)
                 i += 1
         else:
             print "Cannnot find results for %s" % file
@@ -450,7 +452,12 @@ def collate_decompositions_cumulative(top_folder, tex):
 \section{%(folder)s}
 
 \input{figures/%(folder)s/decomp.tex}    
-'''    
+'''   
+
+    latex_body_description = '''
+\subsection{Component %(number)d}
+\input{figures/%(folder)s/%(folder)s_%(number)d_description.tex} 
+'''
 
     decomp_header = '''
 \\begin{figure}[H]
@@ -474,17 +481,18 @@ def collate_decompositions_cumulative(top_folder, tex):
     
     latex = latex_header
     for folder in [adir for adir in sorted(os.listdir(top_folder)) if os.path.isdir(os.path.join(top_folder, adir))]:
+        latex = latex + latex_body % {'folder' : folder}
+        
         decomp_text = decomp_header % {'folder' : folder}
         i = 1
         while os.path.isfile(os.path.join(top_folder, folder, '%s_%d.pdf' % (folder, i))):
             decomp_text = decomp_text + decomp_body % {'folder' : folder, 'number' : i}
+            latex += latex_body_description % {'folder' : folder, 'number' : i}
             i += 1
         decomp_text = decomp_text + decomp_footer % {'folder' : folder}
         
         with open(os.path.join(top_folder, folder, 'decomp.tex'), 'w') as decomp_file:
             decomp_file.write(decomp_text)
-        
-        latex = latex + latex_body % {'folder' : folder}
     latex = latex + latex_footer
     
     with open(tex, 'w') as latex_file:

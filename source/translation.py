@@ -110,7 +110,7 @@ def translate_product(prod, X):
         elif isinstance(k, fk.CosineKernel):
             cos_count += 1
             cos_kernels.append(k)
-        else:
+        elif not isinstance(k, fk.ConstKernel):
             # Cannot deal with whatever type of kernel this is
             unk_count +=1
     lengthscale = np.exp(lengthscale)
@@ -122,7 +122,7 @@ def translate_product(prod, X):
         descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
         raise RuntimeError('I''m not intelligent enough to describe this kernel in natural language', prod)
     elif (los_count == 0) and (lin_count == 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
-        descriptions.append('This component is constant with a value of PLACEHOLDER')
+        descriptions.append('This component is constant')
     elif (los_count > 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
         # This is a pure smooth and local component (possibly with polynomial variance)
         descriptions.append('This component is locally correlated and smooth')
@@ -159,7 +159,10 @@ def translate_product(prod, X):
             descriptions.append('This component is a polynomial of degree %d' % lin_count)
     elif (per_count > 0) or (cos_count > 0) and (imt_count == 0):
         if ((per_count == 1) and (cos_count == 0)) or ((per_count == 0) and (cos_count == 1)):
-            k = per_kernels[0]
+            if per_count == 1:
+                k = per_kernels[0]
+            else:
+                k = cos_kernels[0]
             main_description = 'This component is '
             #if los_count > 0:
             #    main_description += 'approximately '
@@ -195,11 +198,11 @@ def translate_product(prod, X):
                     main_description += 'follows a polynomial of degree %d' % lin_count
             descriptions.append(main_description)
             if los_count > 0:
-                descriptions.append('This exact form of the function changes but it is locally correlated and the changes are smooth')
+                descriptions.append('The exact form of the function changes but it is locally correlated and the changes are smooth')
                 descriptions.append('The local correlation has a typical lengthscale of %f' % lengthscale)
-            #### FIXME - this correspondence is only approximate - based on small angle approx
-            per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
             if per_count == 1:
+                #### FIXME - this correspondence is only approximate - based on small angle approx
+                per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
                 descriptions.append('The typical lengthscale of the periodic function is %f' % per_lengthscale)
                 if per_lengthscale > np.exp(k.period):
                     descriptions.append('The lengthscale is greater than the period so the function is almost sinusoidal')
@@ -245,7 +248,7 @@ def translate_product(prod, X):
                     main_description += 'follows a polynomial of degree %d' % lin_count
             descriptions.append(main_description)
             if los_count > 0:
-                descriptions.append('This exact form of the function changes but it is locally correlated and the changes are smooth')
+                descriptions.append('The exact form of the function changes but it is locally correlated and the changes are smooth')
                 descriptions.append('The local correlation has a typical lengthscale of %f' % lengthscale)
             for (i, k) in enumerate(per_kernels):
                 description = 'The '
@@ -308,7 +311,7 @@ def translate_additive_component(k, X):
     elif len(intervals) == 1:
         interval_description = 'This component applies %s' % translate_interval(intervals[0])
     else:
-        interval_description = 'This component applies %s and %s' % (', '.join(intervals[:-1]), translate_interval(intervals[-1]))
+        interval_description = 'This component applies %s and %s' % (', '.join(translate_interval(interval) for interval in intervals[:-1]), translate_interval(intervals[-1]))
     # Combine and return the descriptions
     descriptions.append(interval_description)
     return descriptions

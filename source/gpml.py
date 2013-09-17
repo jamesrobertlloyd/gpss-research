@@ -807,7 +807,7 @@ def plot_decomposition(kernel, X, y, figname, noise=None, X_mean=0, X_scale=1, y
     os.close(fd1)
     # The below is commented out whilst debugging
     #os.remove(temp_data_file)
-    return code
+    return (code, kernel_components)
 
 def load_mat(data_file, y_dim=1):
     '''

@@ -1,8 +1,10 @@
 function plot_decomp(X, y, complete_covfunc, complete_hypers, decomp_list, ...
                      decomp_hypers, log_noise, figname, latex_names, ...
-                     full_name, X_mean, X_scale, y_mean, y_scale)
+                     full_name, X_mean, X_scale, y_mean, y_scale, max_depth)
 
 % TODO: Assert that the sum of all kernels is the same as the complete kernel.
+
+if nargin < 15; max_depth = 5; end
 
 % Convert to double in case python saved as integers
 X = double(X);
@@ -91,7 +93,7 @@ idx = [];
 cum_kernel = cell(0);
 cum_hyp = [];
 
-for i = 1:numel(decomp_list)
+for i = 1:min(numel(decomp_list), max_depth)
     best_MAE = Inf;
     for j = 1:numel(decomp_list)
         if ~sum(j == idx)
@@ -125,9 +127,13 @@ for i = 1:numel(decomp_list)
     cum_hyp = [cum_hyp, decomp_hypers{best_j}];
 end
 
+% Save the order of the components to file
+
+save(sprintf('%s_decomp_data.mat', figname), 'idx');
+
 % Plot each component without data
 
-for j = 1:numel(decomp_list)
+for j = 1:min(numel(decomp_list), max_depth)
     i = idx(j);
     cur_cov = decomp_list{i};
     cur_hyp = decomp_hypers{i};
@@ -162,7 +168,7 @@ end
 cum_kernel = cell(0);
 cum_hyp = [];
 
-for j = 1:numel(decomp_list)
+for j = 1:min(numel(decomp_list), max_depth)
     i = idx(j);
     cum_kernel{j} = decomp_list{i};
     cum_hyp = [cum_hyp, decomp_hypers{i}];

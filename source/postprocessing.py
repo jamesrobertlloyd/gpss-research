@@ -21,7 +21,7 @@ import gpml
 import utils.latex
 import re
 import grammar
-
+import translation
 
 def parse_all_results(folder, save_file='kernels.tex', one_d=False):
     """
@@ -111,7 +111,17 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_le
                 fig_folder = os.path.join(save_folder, (prefix + file))
             if not os.path.exists(fig_folder):
                 os.makedirs(fig_folder)
-            gpml.plot_decomposition(stripped_kernel, X, y, os.path.join(fig_folder, file), best_kernel.noise, X_mean, X_scale, y_mean, y_scale)
+            # Call gpml to plot the decomposition and evaluate the kernels
+            (code, kernel_components) = gpml.plot_decomposition(stripped_kernel, X, y, os.path.join(fig_folder, file), best_kernel.noise, X_mean, X_scale, y_mean, y_scale)
+            # Now the kernels have been evaluated we can translate the revelant ones
+            evaluation_data = scipy.io.loadmat(os.path.join(fig_folder, '%s_decomp_data.mat' % file))
+            component_order = evaluation_data['idx'].ravel() - 1 # MATLAB to python OBOE
+            i = 1
+            while os.path.isfile(os.path.join(fig_folder, '%s_%d.fig' % (file, i))):
+                # Describe this component
+                sentences = translation.translate_additive_component(kernel_components[component_order[i-1]], X)
+                print sentences
+                i += 1
         else:
             print "Cannnot find results for %s" % file
             

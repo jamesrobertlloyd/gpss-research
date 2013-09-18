@@ -93,6 +93,43 @@ idx = [];
 cum_kernel = cell(0);
 cum_hyp = [];
 
+% Precompute some kernels
+
+K_list = cell(numel(decomp_list), 1);
+for i = 1:numel(decomp_list)
+    cur_cov = decomp_list{i};
+    cur_hyp = decomp_hypers{i};
+    K_list{i} = feval(cur_cov{:}, cur_hyp, X, X);
+end
+
+% Determine if some components are very similar
+
+% component_corr = zeros(numel(decomp_list));
+% for i = 1:numel(decomp_list)
+%     for j = (i+1):numel(decomp_list)
+%         component_corr(i,j) = -mean(diag(K_list{i}*(complete_sigma\K_list{j}))./sqrt(abs(diag(K_list{i} - K_list{i}*(complete_sigma\K_list{i})).*diag(K_list{j} - K_list{j}*(complete_sigma\K_list{j})))));
+%     end
+% end
+% 
+% i = 1;
+% while i <= numel(decomp_list)
+%     j = (i+1);
+%     while j <= numel(decomp_list)
+%         if component_corr(i, j) < -0.8
+%             % Components v. sim. - remove
+%             new_idx = [1:(j-1),(j+1):numel(decomp_list)];
+%             component_corr = component_corr(new_idx, new_idx);
+%             decomp_list{i} = {@covSum, {decomp_list{i}, decomp_list{j}}};
+%             decomp_list = decomp_list(new_idx);
+%             decomp_hypers{i} = [decomp_hypers{i}, decomp_hypers{j}];
+%             decomp_hypers = decomp_hypers(new_idx);
+%         else
+%             j = j + 1;
+%         end
+%     end
+%     i = i + 1;
+% end
+
 for i = 1:min(numel(decomp_list), max_depth)
     best_MAE = Inf;
     for j = 1:numel(decomp_list)
@@ -122,6 +159,7 @@ for i = 1:min(numel(decomp_list), max_depth)
             end
         end
     end
+    best_MAE;
     idx = [idx, best_j];
     cum_kernel{i} = decomp_list{best_j};
     cum_hyp = [cum_hyp, decomp_hypers{best_j}];
@@ -144,6 +182,11 @@ for j = 1:min(numel(decomp_list), max_depth)
     decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange, xrange);
     decomp_mean = decomp_sigma_star' / complete_sigma * y;
     decomp_var = diag(decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star);
+    
+    data_mean = decomp_sigma' / complete_sigma * y;
+    data_var = diag(decomp_sigma - decomp_sigma' / complete_sigma * decomp_sigma);
+    SNR = 10 * log10(sum(data_mean.^2)/sum(data_var));
+    var_explained = (1 - var(y - data_mean) / var(y)) * 100;
     
     % Compute the remaining signal after removing the mean prediction from all
     % other parts of the kernel.
@@ -168,6 +211,9 @@ end
 cum_kernel = cell(0);
 cum_hyp = [];
 
+var(y);
+resid = y;
+
 for j = 1:min(numel(decomp_list), max_depth)
     i = idx(j);
     cum_kernel{j} = decomp_list{i};
@@ -182,6 +228,15 @@ for j = 1:min(numel(decomp_list), max_depth)
     decomp_mean = decomp_sigma_star' / complete_sigma * y;
     decomp_var = diag(decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star);
     
+    var(y-decomp_sigma' / complete_sigma * y);    
+    
+    data_mean = decomp_sigma' / complete_sigma * y;
+    data_var = diag(decomp_sigma - decomp_sigma' / complete_sigma * decomp_sigma);
+    SNR = 10 * log10(sum(data_mean.^2)/sum(data_var));
+    var_explained = (1 - var(y - data_mean) / var(y)) * 100;
+    residvar_explained = (1 - var(y - data_mean) / var(resid)) * 100;
+    resid = y - data_mean;
+    
     figure(i + 1); clf; hold on;
     mean_var_plot( X*X_scale+X_mean, y*y_scale, ...
                    xrange*X_scale+X_mean, ...
@@ -190,7 +245,7 @@ for j = 1:min(numel(decomp_list), max_depth)
     latex_names{i} = strrep(latex_names{i}, '\left', '');
     latex_names{i} = strrep(latex_names{i}, '\right', '');
     title(['The above + ' latex_names{i}]);
-    fprintf([latex_names{i}, '\n']);
+    %fprintf([latex_names{i}, '\n']);
     filename = sprintf('%s_%d_cum.fig', figname, j);
     saveas( gcf, filename );
 end

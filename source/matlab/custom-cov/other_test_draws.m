@@ -88,3 +88,17 @@ K = K + 1e-9*max(max(K))*eye(size(K));
 y = chol(K)' * randn(size(x));
 
 plot(x, y);
+
+%% Product of two Matern
+
+x = linspace(1977, 1991, 1000)';
+
+cov_func = {@covProd, {{@covMaterniso, 5}, {@covMaterniso, 5}, {@covMaterniso, 5}}};
+hyp.cov = [4.494469 -2.520251 5.866723 5.492876 4.922308 4.333409];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+imagesc(K);

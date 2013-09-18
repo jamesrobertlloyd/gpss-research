@@ -18,7 +18,7 @@ except:
     print '\n\nERROR : source/config.py not found\n\nPlease create it following example file as a guide\n\n'
     raise Exception('No config')
 import flexiblekernel as fk
-
+import grammar
 
 def run_matlab_code(code, verbose=False, jvm=True):
     # Write to a temp script
@@ -776,6 +776,7 @@ def plot_decomposition(kernel, X, y, figname, noise=None, X_mean=0, X_scale=1, y
     print 'Plotting to: %s' % figname
     
     kernel_components = fk.break_kernel_into_summands(kernel)
+    kernel_components = [grammar.canonical(k) for k in kernel_components]
     latex_names = [k.latex_print().strip() for k in kernel_components]
     kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector()) for k in kernel_components)
     

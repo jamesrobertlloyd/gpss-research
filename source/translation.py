@@ -145,6 +145,7 @@ def translate_product(prod, X, monotonic, gradient):
     unk_count = 0 # 'Unknown' kernel function
     per_kernels = []
     cos_kernels = []
+    min_period = np.Inf
     # Count calculate a variety of summary quantities
     for k in kernels:
         if isinstance(k, fk.SqExpKernel) or isinstance(k, fk.Matern5Kernel):
@@ -157,9 +158,11 @@ def translate_product(prod, X, monotonic, gradient):
         elif isinstance(k, fk.CentredPeriodicKernel):
             per_count += 1
             per_kernels.append(k)
+            min_period = np.min(min_period, np.Inf)
         elif isinstance(k, fk.CosineKernel):
             cos_count += 1
             cos_kernels.append(k)
+            min_period = np.min(min_period, np.Inf)
         elif not isinstance(k, fk.ConstKernel):
             # Cannot deal with whatever type of kernel this is
             unk_count +=1
@@ -284,14 +287,18 @@ def translate_product(prod, X, monotonic, gradient):
                     main_description += 'follows a polynomial of degree %d' % lin_count
             descriptions.append(main_description)
             if los_count > 0:
-                descriptions.append('The exact form of the function changes but it is locally correlated and the changes are smooth')
-                descriptions.append('The local correlation has a typical lengthscale of %f' % lengthscale)
+                if lengthscale > domain_range:
+                    descriptions.append('The exact form of the function changes smoothly but very slowly')
+                else:
+                    descriptions.append('The exact form of the function changes smoothly with a typical lengthscale of %f' % lengthscale)
+                if lengthscale < min_period * 0.5:
+                    descriptions.append('Since this lengthscale is smaller than half the period this component may more closely resemble a smooth function without periodicity')
             if per_count == 1:
                 #### FIXME - this correspondence is only approximate - based on small angle approx
                 per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
                 descriptions.append('The typical lengthscale of the periodic function is %f' % per_lengthscale)
                 if per_lengthscale > np.exp(k.period):
-                    descriptions.append('The lengthscale is greater than the period so the function is almost sinusoidal')
+                    descriptions.append('The lengthscale of this periodic function is greater than its period so the function is almost sinusoidal')
         else: # Several periodic components
             if los_count > 0:
                 summary = 'An approxiate product of'
@@ -351,8 +358,12 @@ def translate_product(prod, X, monotonic, gradient):
                     main_description += 'follows a polynomial of degree %d' % lin_count
             descriptions.append(main_description)
             if los_count > 0:
-                descriptions.append('The exact form of the function changes but it is locally correlated and the changes are smooth')
-                descriptions.append('The local correlation has a typical lengthscale of %f' % lengthscale)
+                if lengthscale > domain_range:
+                    descriptions.append('The exact form of the function changes smoothly but very slowly')
+                else:
+                    descriptions.append('The exact form of the function changes smoothly with a typical lengthscale of %f' % lengthscale)
+                if lengthscale < min_period * 0.5:
+                    descriptions.append('Since this lengthscale is smaller than half the minimum period over the various components this function may more closely resemble a smooth function without periodicity')
             for (i, k) in enumerate(per_kernels):
                 description = 'The '
                 if i <= len(ordinal_numbers):

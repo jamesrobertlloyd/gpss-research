@@ -4,7 +4,8 @@ function plot_decomp(X, y, complete_covfunc, complete_hypers, decomp_list, ...
 
 % TODO: Assert that the sum of all kernels is the same as the complete kernel.
 
-if nargin < 15; max_depth = 5; end
+% if nargin < 15; max_depth = numel(decomp_list); end
+if nargin < 15; max_depth = 6; end
 
 % Convert to double in case python saved as integers
 X = double(X);
@@ -40,7 +41,22 @@ mean_var_plot( X*X_scale+X_mean, y*y_scale+y_mean, ...
 if iscell(full_name); full_name = full_name{1}; end
 full_name = strrep(full_name, '\left', '');
 full_name = strrep(full_name, '\right', '');
-title(full_name);
+%title(full_name);
+title('Raw data');
+filename = sprintf('%s_raw_data.fig', figname);
+saveas( gcf, filename );
+
+figure(2); clf; hold on;
+mean_var_plot( X*X_scale+X_mean, y*y_scale+y_mean, ...
+               xrange*X_scale+X_mean, complete_mean*y_scale+y_mean, ...
+               2.*sqrt(complete_var)*y_scale, false, false);
+
+% Remove outer brackets and extra latex markup from name.
+if iscell(full_name); full_name = full_name{1}; end
+full_name = strrep(full_name, '\left', '');
+full_name = strrep(full_name, '\right', '');
+%title(full_name);
+title('Full model posterior and extrapolations');
 filename = sprintf('%s_all.fig', figname);
 saveas( gcf, filename );
 
@@ -130,6 +146,11 @@ end
 %     i = i + 1;
 % end
 
+MAEs = zeros(numel(decomp_list), 1);
+MAE_reductions = zeros(numel(decomp_list), 1);
+MAV_data = mean(abs(y));
+previous_MAE = MAV_data;
+
 for i = 1:min(numel(decomp_list), max_depth)
     best_MAE = Inf;
     for j = 1:numel(decomp_list)
@@ -159,17 +180,20 @@ for i = 1:min(numel(decomp_list), max_depth)
             end
         end
     end
-    best_MAE;
+    MAEs(i) = best_MAE;
+    MAE_reductions(i) = (1 - best_MAE / previous_MAE)*100;
+    previous_MAE = best_MAE;
     idx = [idx, best_j];
     cum_kernel{i} = decomp_list{best_j};
     cum_hyp = [cum_hyp, decomp_hypers{best_j}];
 end
 
-% Save the order of the components to file
-
-save(sprintf('%s_decomp_data.mat', figname), 'idx');
-
 % Plot each component without data
+
+SNRs = zeros(numel(decomp_list),1);
+vars = zeros(numel(decomp_list),1);
+monotonic = zeros(numel(decomp_list),1);
+gradients = zeros(numel(decomp_list),1);
 
 for j = 1:min(numel(decomp_list), max_depth)
     i = idx(j);
@@ -184,9 +208,18 @@ for j = 1:min(numel(decomp_list), max_depth)
     decomp_var = diag(decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star);
     
     data_mean = decomp_sigma' / complete_sigma * y;
+    diffs = data_mean(2:end) - data_mean(1:(end-1));
     data_var = diag(decomp_sigma - decomp_sigma' / complete_sigma * decomp_sigma);
-    SNR = 10 * log10(sum(data_mean.^2)/sum(data_var));
-    var_explained = (1 - var(y - data_mean) / var(y)) * 100;
+    SNRs(j) = 10 * log10(sum(data_mean.^2)/sum(data_var));
+    vars(j) = (1 - var(y - data_mean) / var(y)) * 100;
+    if all(diffs>0)
+        monotonic(j) = 1;
+    elseif all(diffs<0)
+        monotonic(j) = -1;
+    else
+        monotonic(j) = 0;
+    end
+    gradients(j) = (data_mean(end) - data_mean(1)) / (X(end) - X(1));
     
     % Compute the remaining signal after removing the mean prediction from all
     % other parts of the kernel.
@@ -200,7 +233,8 @@ for j = 1:min(numel(decomp_list), max_depth)
     %set(gca, 'Children', [h_bars, h_mean, h_dots] );
     latex_names{i} = strrep(latex_names{i}, '\left', '');
     latex_names{i} = strrep(latex_names{i}, '\right', '');
-    title(latex_names{i});
+    %title(latex_names{i});
+    title(sprintf('Posterior of component %d', j));
     fprintf([latex_names{i}, '\n']);
     filename = sprintf('%s_%d.fig', figname, j);
     saveas( gcf, filename );
@@ -213,6 +247,10 @@ cum_hyp = [];
 
 var(y);
 resid = y;
+
+cum_SNRs = zeros(numel(decomp_list),1);
+cum_vars = zeros(numel(decomp_list),1);
+cum_resid_vars = zeros(numel(decomp_list),1);
 
 for j = 1:min(numel(decomp_list), max_depth)
     i = idx(j);
@@ -232,9 +270,9 @@ for j = 1:min(numel(decomp_list), max_depth)
     
     data_mean = decomp_sigma' / complete_sigma * y;
     data_var = diag(decomp_sigma - decomp_sigma' / complete_sigma * decomp_sigma);
-    SNR = 10 * log10(sum(data_mean.^2)/sum(data_var));
-    var_explained = (1 - var(y - data_mean) / var(y)) * 100;
-    residvar_explained = (1 - var(y - data_mean) / var(resid)) * 100;
+    cum_SNRs(j) = 10 * log10(sum(data_mean.^2)/sum(data_var));
+    cum_vars(j) = (1 - var(y - data_mean) / var(y)) * 100;
+    cum_resid_vars(j) = (1 - var(y - data_mean) / var(resid)) * 100;
     resid = y - data_mean;
     
     figure(i + 1); clf; hold on;
@@ -244,11 +282,33 @@ for j = 1:min(numel(decomp_list), max_depth)
     
     latex_names{i} = strrep(latex_names{i}, '\left', '');
     latex_names{i} = strrep(latex_names{i}, '\right', '');
-    title(['The above + ' latex_names{i}]);
+    %title(['The above + ' latex_names{i}]);
+    title(sprintf('Sum of components up to component %d', j));
     %fprintf([latex_names{i}, '\n']);
     filename = sprintf('%s_%d_cum.fig', figname, j);
     saveas( gcf, filename );
 end
+
+% Save data to file
+
+save(sprintf('%s_decomp_data.mat', figname), 'idx', 'SNRs', 'vars', ...
+     'cum_SNRs', 'cum_vars', 'cum_resid_vars', 'MAEs', 'MAV_data', ...
+     'MAE_reductions', 'monotonic', 'gradients');
+ 
+% Convert everything to pdf
+
+dirname = fileparts(figname);
+files = dir([dirname, '/*.fig']);
+for f_ix = 1:numel(files)
+    curfile = [dirname, '/', files(f_ix).name];
+    h = open(curfile);
+    outfile = [dirname, '/', files(f_ix).name];
+    pdfname = strrep(outfile, '.fig', '')
+    save2pdf( pdfname, gcf, 600, true );
+    %export_fig(pdfname, '-pdf');
+    close all
+end
+
 end
 
 

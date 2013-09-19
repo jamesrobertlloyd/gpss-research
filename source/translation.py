@@ -158,11 +158,11 @@ def translate_product(prod, X, monotonic, gradient):
         elif isinstance(k, fk.CentredPeriodicKernel):
             per_count += 1
             per_kernels.append(k)
-            min_period = np.min(min_period, np.Inf)
+            min_period = np.min([np.exp(k.period), min_period])
         elif isinstance(k, fk.CosineKernel):
             cos_count += 1
             cos_kernels.append(k)
-            min_period = np.min(min_period, np.Inf)
+            min_period = np.min([np.exp(k.period), min_period])
         elif not isinstance(k, fk.ConstKernel):
             # Cannot deal with whatever type of kernel this is
             unk_count +=1
@@ -547,7 +547,7 @@ The structure search algorithm has identified %(n_components)s additive componen
                 text += '\nThe '
                 if i < n_components - 1:
                     text += ' first '
-                if i == 1:
+                if i == 0:
                     text += 'additive component explains'
                 else:
                     text += '%d additive components explain' % (i+1)

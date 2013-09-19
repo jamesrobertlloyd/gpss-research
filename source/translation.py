@@ -11,6 +11,8 @@ September 2013
 """
 
 import numpy as np
+import time
+
 import flexiblekernel as fk
 import grammar
 
@@ -63,6 +65,47 @@ def english_number(val):
             
 poly_names = ['linear', 'quadratic', 'cubic', 'quartic', 'quintic']
 ordinal_numbers = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eigth', 'ninth', 'tenth']
+
+def english_length(val, unit):
+    if unit == '':
+        return '%f' % val
+    elif unit == 'year':
+        if val > 0.75:
+            return '%0.1f years' % val
+        elif val > 2.0 / 12:
+            return '%0.1f months' % (val * 12)
+        elif val > 2.0 / 52:
+            return '%0.1f weeks' % (val * 52)
+        elif val > 2.0 / 365:
+            return '%0.1f days' % (val * 365)
+        elif val > 2.0 / (24 * 365):
+            return '%0.1f hours' % (val * (24 * 365))
+        elif val > 2.0 / (60 * 24 * 365):
+            return '%0.1f minutes' % (val * (60 * 24 * 365))
+        else: 
+            return '%0.1f seconds' % (val * (60 * 60 * 24 * 365))
+    else:
+        return 'Unrecognised format'
+        raise RuntimeError('I do not know about this unit of measurement', unit)
+
+def english_point(val, unit, X):
+    #### TODO - be clever about different dimensions?
+    unit_range = np.max(X) - np.min(X)
+    if unit == '':
+        return '%f' % val
+    elif unit == 'year':
+        time_val = time.gmtime((val - 1970)*365*24*60*60)
+        if unit_range > 20:
+            return '%4d' % time_val.tm_year
+        elif unit_range > 2:
+            return '%02d/%4d' % (time_val.tm_mon, time_val.tm_year)
+        elif unit_range > 2.0 / 12:
+            return '%02d/%02d/%4d' % (time_val.tm_mday, time_val.tm_mon, time_val.tm_year)
+        else:
+            return '%02d:%02d:%02d %02d/%02d/%4d' % (time_val.tm_hour, time_val.tm_min, time_val.tm_sec, time_val.tm_mday, time_val.tm_mon, time_val.tm_year)
+    else:
+        return 'Unrecognised format'
+        raise RuntimeError('I do not know about this unit of measurement', unit)
 
 def interval_intersection(int1, int2):
     '''Finds the intersection of two intervals'''
@@ -120,7 +163,7 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
     # Note that new_intervals may now be empty but we should recurse to return a kernel in a standard form
     return find_region_of_influence(base_kernel, new_intervals)
                     
-def translate_product(prod, X, monotonic, gradient):
+def translate_product(prod, X, monotonic, gradient, unit=''):
     '''
     Translates a product of base kernels
     '''
@@ -190,17 +233,17 @@ def translate_product(prod, X, monotonic, gradient):
                 descriptions.append('This function is very smooth')
         elif lengthscale < domain_range * 0.005:
             summary = 'A rapidly varying smooth function'
-            descriptions.append('This function is a rapidly varying but smooth function with a typical lengthscale of %f' % lengthscale)
+            descriptions.append('This function is a rapidly varying but smooth function with a typical lengthscale of %s' % english_length(lengthscale, unit))
         else:
             if monotonic == 1:
                 summary = 'A smooth monotonically increasing function'
-                descriptions.append('This component is a smooth and monotonically increasing function with a typical lengthscale of %f' % lengthscale)
+                descriptions.append('This component is a smooth and monotonically increasing function with a typical lengthscale of %s' % english_length(lengthscale, unit))
             elif monotonic == -1:
                 summary = 'A smooth monotonically decreasing function'
-                descriptions.append('This component is a smooth and monotonically decreasing function with a typical lengthscale of %f' % lengthscale)
+                descriptions.append('This component is a smooth and monotonically decreasing function with a typical lengthscale of %s' % english_length(lengthscale, unit))
             else:
                 summary = 'A smooth function'
-                descriptions.append('This component is a smooth function with a typical lengthscale of %f' % lengthscale)
+                descriptions.append('This component is a smooth function with a typical lengthscale of %s' % english_length(lengthscale, unit))
         if lin_count > 0:
             description = 'The variance of this function '
             if lin_count == 1:
@@ -211,8 +254,8 @@ def translate_product(prod, X, monotonic, gradient):
                     summary += ' with linearly decreasing variance'
                     description += 'decreases linearly'
                 else:
-                    summary += ' with variance increasing linearly away from %f' % lin_location
-                    description += 'increases linearly away from %f' % lin_location
+                    summary += ' with variance increasing linearly away from %s' % english_point(lin_location, unit, X)
+                    description += 'increases linearly away from %s' % english_point(lin_location, unit, X)
             elif lin_count <= len(poly_names):
                 summary += ' with %sly varying variance' % poly_names[lin_count-1]
                 description += 'varies %sly' % poly_names[lin_count-1]
@@ -251,8 +294,8 @@ def translate_product(prod, X, monotonic, gradient):
             else:
                 summary += 'sinusoidal function'
                 main_description += 'sinusoidal '
-            summary += ' with a period of %f' % np.exp(k.period)
-            main_description += 'with a period of %f' % np.exp(k.period)
+            summary += ' with a period of %s' % english_length(np.exp(k.period), unit)
+            main_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
             if lin_count > 0:
                 summary += ' with '
                 main_description += ' with '
@@ -271,8 +314,8 @@ def translate_product(prod, X, monotonic, gradient):
                         main_description += 'amplitude increasing '
                         #if los_count > 0:
                         #    main_description += 'approximately '
-                        summary += 'linearly away from %f' % lin_location
-                        main_description += 'linearly away from %f' % lin_location
+                        summary += 'linearly away from %s' % english_point(lin_location, unit, X)
+                        main_description += 'linearly away from %s' % english_point(lin_location, unit, X)
                 elif lin_count <= len(poly_names):
                     #if los_count > 0:
                     #    main_description += 'approximately '
@@ -290,18 +333,18 @@ def translate_product(prod, X, monotonic, gradient):
                 if lengthscale > domain_range:
                     descriptions.append('The exact form of the function changes smoothly but very slowly')
                 else:
-                    descriptions.append('The exact form of the function changes smoothly with a typical lengthscale of %f' % lengthscale)
+                    descriptions.append('The exact form of the function changes smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
                 if lengthscale < min_period * 0.5:
                     descriptions.append('Since this lengthscale is smaller than half the period this component may more closely resemble a smooth function without periodicity')
             if per_count == 1:
                 #### FIXME - this correspondence is only approximate - based on small angle approx
                 per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
-                descriptions.append('The typical lengthscale of the periodic function is %f' % per_lengthscale)
+                descriptions.append('The typical lengthscale of the periodic function is %s' % english_length(per_lengthscale, unit))
                 if per_lengthscale > np.exp(k.period):
                     descriptions.append('The lengthscale of this periodic function is greater than its period so the function is almost sinusoidal')
         else: # Several periodic components
             if los_count > 0:
-                summary = 'An approxiate product of'
+                summary = 'An approximate product of'
             else:
                 summary = 'A product of'
             main_description = 'This component is a product of'
@@ -342,8 +385,8 @@ def translate_product(prod, X, monotonic, gradient):
                         main_description += 'amplitude increasing '
                         #if los_count > 0:
                         #    main_description += 'approximately '
-                        summary += 'linearly away from %f' % lin_location
-                        main_description += 'linearly away from %f' % lin_location
+                        summary += 'linearly away from %s' % english_point(lin_location, unit, X)
+                        main_description += 'linearly away from %s' % english_point(lin_location, unit, X)
                 elif lin_count <= len(poly_names):
                     #if los_count > 0:
                     #    main_description += 'approximately '
@@ -361,7 +404,7 @@ def translate_product(prod, X, monotonic, gradient):
                 if lengthscale > domain_range:
                     descriptions.append('The exact form of the function changes smoothly but very slowly')
                 else:
-                    descriptions.append('The exact form of the function changes smoothly with a typical lengthscale of %f' % lengthscale)
+                    descriptions.append('The exact form of the function changes smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
                 if lengthscale < min_period * 0.5:
                     descriptions.append('Since this lengthscale is smaller than half the minimum period over the various components this function may more closely resemble a smooth function without periodicity')
             for (i, k) in enumerate(per_kernels):
@@ -371,39 +414,39 @@ def translate_product(prod, X, monotonic, gradient):
                         description += '%s ' % ordinal_numbers[i]
                 else:
                     description += '%dth ' % (i+1)
-                description += 'periodic function has a period of %f' % np.exp(k.period)
+                description += 'periodic function has a period of %s' % english_length(np.exp(k.period), unit)
                 descriptions.append(description)
                 #### FIXME - this correspondence is only approximate
                 per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
-                descriptions.append('The typical lengthscale of this function is %f' % per_lengthscale)
+                descriptions.append('The typical lengthscale of this function is %s' % english_length(per_lengthscale, unit))
                 if per_lengthscale > np.exp(k.period):
                     descriptions.append('The lengthscale is greater than the period so this function is almost sinusoidal')
             for (i, k) in enumerate(cos_kernels):
                 if i <= len(ordinal_numbers):
                     if len(cos_kernels) > 1:
-                        descriptions.append('The %s sinusoid has a period of %f' % (ordinal_numbers[i], np.exp(k.period)))
+                        descriptions.append('The %s sinusoid has a period of %s' % (ordinal_numbers[i], english_length(np.exp(k.period), unit)))
                     else:
-                        descriptions.append('The sinusoid has a period of %f' % np.exp(k.period))
+                        descriptions.append('The sinusoid has a period of %s' % english_length(np.exp(k.period), unit))
                 else:
-                    descriptions.append('The %dth sinusoid has a period of %f' % (i+1, np.exp(k.period)))
+                    descriptions.append('The %dth sinusoid has a period of %s' % (i+1, english_length(np.exp(k.period), unit)))
     else:
         descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
         raise RuntimeError('I''m not intelligent enough to describe this kernel in natural language', prod)
     # Return a list of sentences
     return (summary, descriptions)
     
-def translate_interval(interval):
+def translate_interval(interval, unit, X):
     '''Describe a 1d interval, including relevant prepositions'''
     if interval == (-np.Inf, np.Inf):
         return 'to the entire input domain'
     elif interval[0] == -np.Inf:
-        return 'until %f' % interval[1]
+        return 'until %s' % english_point(interval[1], unit, X)
     elif interval[1] == np.Inf:
-        return 'from %f onwards' % interval[0]
+        return 'from %s onwards' % english_point(interval[0], unit, X)
     else:
-        return 'from %f until %f' % (interval[0], interval[1])
+        return 'from %s until %s' % (english_point(interval[0], unit, X), english_point(interval[1], unit, X))
 
-def translate_additive_component(k, X, monotonic, gradient):
+def translate_additive_component(k, X, monotonic, gradient, unit):
     '''
     Expects a kernel that is a single component after calling flexiblekernel.distribute_products
     Translates this into natural language or explains that why it's translation abilities aren't up to the job
@@ -417,7 +460,7 @@ def translate_additive_component(k, X, monotonic, gradient):
     k = grammar.canonical(k) # Just in case
     (intervals, k) = find_region_of_influence(k)
     # Calculate the description of the changepoint free part of the kernel
-    (summary, descriptions) = translate_product(k, X, monotonic, gradient)
+    (summary, descriptions) = translate_product(k, X, monotonic, gradient, unit)
     # Describe the intervals this kernel acts upon
     intervals = sorted(intervals)
     if len(intervals) == 0:
@@ -425,17 +468,17 @@ def translate_additive_component(k, X, monotonic, gradient):
         interval_description = 'The combination of changepoint operators is such that this simple AI cannot describe where this component acts; please see visual output or upgrade me'
     elif len(intervals) == 1:
         if not intervals == [(-np.Inf, np.Inf)]: 
-            summary += '. The function applies %s' % translate_interval(intervals[0])
-        interval_description = 'This component applies %s' % translate_interval(intervals[0])
+            summary += '. The function applies %s' % translate_interval(intervals[0], unit, X)
+        interval_description = 'This component applies %s' % translate_interval(intervals[0], unit, X)
     else:
-        summary += '. The function applies %s and %s' % (', '.join(translate_interval(interval) for interval in intervals[:-1]), translate_interval(intervals[-1]))
-        interval_description = 'This component applies %s and %s' % (', '.join(translate_interval(interval) for interval in intervals[:-1]), translate_interval(intervals[-1]))
+        summary += '. The function applies %s and %s' % (', '.join(translate_interval(interval, unit, X) for interval in intervals[:-1]), translate_interval(intervals[-1], unit, X))
+        interval_description = 'This component applies %s and %s' % (', '.join(translate_interval(interval, unit, X) for interval in intervals[:-1]), translate_interval(intervals[-1], unit, X))
     # Combine and return the descriptions
     if not intervals == [(-np.Inf, np.Inf)]: 
         descriptions.append(interval_description)
     return (summary, descriptions)
 
-def produce_summary_document(dataset_name, n_components, fit_data):
+def produce_summary_document(dataset_name, n_components, fit_data, short_descriptions):
     '''
     Summarises the fit to dataset_name
     '''
@@ -519,25 +562,11 @@ The raw data and full model posterior are shown in figure~\\ref{fig:rawandfit}.
 \label{fig:rawandfit}
 \end{figure}
 
-The structure search algorithm has identified %(n_components)s additive components in the data
-\\begin{itemize}
-'''
+The structure search algorithm has identified %(n_components)s additive components in the data.'''
 
     text += header % {'dataset_name' : dataset_name, 'n_components' : english_number(n_components)}
 
-    summary_item = '''
-  \item \input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_short_description.tex} 
-'''
-    for i in range(n_components):
-        text += summary_item % {'dataset_name' : dataset_name, 'component' : i+1}
-    
-    summary_end = '''
-\end{itemize}
-'''
-    
-    text += summary_end
-    
-    # Comment on how much variance is explained by the fit
+     # Comment on how much variance is explained by the fit
     
     if np.all(fit_data['cum_vars'][:-1] < 90):
         text += '\nThe full model explains %2.1f\%% of the variation in the data as shown by the coefficient of determination ($R^2$) values in table~\\ref{table:stats}.' % fit_data['cum_vars'][-1]
@@ -561,8 +590,41 @@ The structure search algorithm has identified %(n_components)s additive componen
                             text += '%d additive components explain %2.1f\%% of the variation in the data.' % (j+1, fit_data['cum_vars'][j])  
                             break
                 break
+                
+    # Comment on the MAE
+                
+    for i in range(n_components):
+        if np.all(fit_data['MAE_reductions'][i:] < 0.1):
+            if True:#i < n_components - 1:
+                if i > 0:
+                    text += '\nAfter the first '
+                    if i > 1:
+                        text += '%d components' % (i)
+                    else:
+                        text += 'component'
+                    text += ' the cross validated mean absolute error (MAE) does not decrease by more than 0.1\%'
+                    text += '.\nThis suggests that subsequent terms are modelling very short term trends, uncorrelated noise or are artefacts of the search procedure.'
+                else:
+                    text += 'No single component reduces the cross validated mean absolute error (MAE) by more than 0.1\%'
+                    text += '.\nThis suggests that the structure search algorithm has not found anything other than very short term trends or uncorrelated noise.'
+                break
+                
+    text +='''
+High level descriptions of the additive components are as follows:
+\\begin{itemize}
+'''
 
-    text += '\nSome comment about cross validated predictive mean absolute error (MAE)?'
+    summary_item = '''
+  \item \input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_short_description.tex} 
+'''
+    for i in range(n_components):
+        text += summary_item % {'dataset_name' : dataset_name, 'component' : i+1}
+    
+    summary_end = '''
+\end{itemize}
+'''
+    
+    text += summary_end
     
     text += '''
 \\begin{table}[htb]
@@ -588,7 +650,9 @@ The structure search algorithm has identified %(n_components)s additive componen
 \end{tabular}
 \caption{
 Summary statistics for individual additive component functions and cumulative fits.
-The cross validated MAE measures the ability of the model to interpolate and extrapolate (TODO - be less vague).
+The residual coefficient of determination ($R^2$) values are computed using the residuals from the previous fit as the target values; this measures how much of the residual variance is explained by each new component.
+The mean absolute error (MAE) is calculated using 10 fold cross validation with a continuous block design; this measures the ability of the model to interpolate and extrapolate.
+The model is fit using the full data so the MAE values cannot be used as an estimate of out-of-sample predictive performance.
 }
 \label{table:stats}
 }
@@ -599,7 +663,8 @@ The cross validated MAE measures the ability of the model to interpolate and ext
 '''
 
     component_text = '''
-\subsection{Component %(component)d}
+%%\subsection{Component %(component)d}
+\subsection{%(short_description)s}
 
 \input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex} 
 
@@ -617,12 +682,14 @@ The cross validated MAE measures the ability of the model to interpolate and ext
 '''
 
     for i in range(n_components):
-        text += component_text % {'dataset_name' : dataset_name, 'component' : i+1}
+        text += component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1}
     
     text += '''
 \subsection{Residuals}
 
-Some discussion of the size of the residuals and their independence.
+Some discussion of the size of the residuals and their (lack of) independence.
+Sometime they will look strange due to changepoints which is hinting that we should allow changepoints to apply to noise levels as well.
+\\fTBD{Additive noise can be expressed in the kernel and should be searched over as well - allowing explicit heteroskedasticity when multiplied by linear terms}
 
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}

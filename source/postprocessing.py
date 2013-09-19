@@ -13,6 +13,7 @@ nax = np.newaxis
 import os
 import random
 import scipy.io
+import subprocess
 
 import config
 import experiment as exp
@@ -54,7 +55,7 @@ def gen_all_results(folder):
             yield files.split('.')[-2], best_tuple
                 
 
-def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_level=None, prefix='', rescale=True, data_folder=None):
+def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_level=None, prefix='', rescale=True, data_folder=None, skip_kernel_evaluation=False):
     """Crawls the results directory, and makes decomposition plots for each file.
     
     prefix is an optional string prepended to the output directory
@@ -113,7 +114,7 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_le
             if not os.path.exists(fig_folder):
                 os.makedirs(fig_folder)
             # Call gpml to plot the decomposition and evaluate the kernels
-            (code, kernel_components) = gpml.plot_decomposition(stripped_kernel, X, y, os.path.join(fig_folder, file), best_kernel.noise, X_mean, X_scale, y_mean, y_scale)
+            (code, kernel_components) = gpml.plot_decomposition(stripped_kernel, X, y, os.path.join(fig_folder, file), best_kernel.noise, X_mean, X_scale, y_mean, y_scale, dont_run_code_hack=skip_kernel_evaluation)
             # Now the kernels have been evaluated we can translate the revelant ones
             evaluation_data = scipy.io.loadmat(os.path.join(fig_folder, '%s_decomp_data.mat' % file))
             component_order = evaluation_data['idx'].ravel() - 1 # MATLAB to python OBOE
@@ -125,9 +126,11 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_le
             evaluation_data['monotonic'] = evaluation_data['monotonic'].ravel()
             evaluation_data['gradients'] = evaluation_data['gradients'].ravel()
             i = 1
+            short_descriptions = []
             while os.path.isfile(os.path.join(fig_folder, '%s_%d.fig' % (file, i))):
                 # Describe this component
-                (summary, sentences) = translation.translate_additive_component(kernel_components[component_order[i-1]], X, evaluation_data['monotonic'][i-1], evaluation_data['gradients'][i-1])
+                (summary, sentences) = translation.translate_additive_component(kernel_components[component_order[i-1]], X, evaluation_data['monotonic'][i-1], evaluation_data['gradients'][i-1], 'year')
+                short_descriptions.append(summary)
                 paragraph = '.\n'.join(sentences) + '.'
                 with open(os.path.join(fig_folder, '%s_%d_description.tex' % (file, i)), 'w') as description_file:
                     description_file.write(paragraph)
@@ -135,7 +138,7 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_le
                     description_file.write(summary + '.')
                 i += 1
             # Produce the summary LaTeX document
-            latex_summary = translation.produce_summary_document(file, i-1, evaluation_data)
+            latex_summary = translation.produce_summary_document(file, i-1, evaluation_data, short_descriptions)
             with open(os.path.join(save_folder, os.pardir, '%s.tex' % file), 'w') as latex_file:
                 latex_file.write(latex_summary)
         else:

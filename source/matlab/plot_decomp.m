@@ -5,7 +5,7 @@ function plot_decomp(X, y, complete_covfunc, complete_hypers, decomp_list, ...
 % TODO: Assert that the sum of all kernels is the same as the complete kernel.
 
 if nargin < 15; max_depth = numel(decomp_list); end
-% if nargin < 15; max_depth = 6; end
+% if nargin < 15; max_depth = 4; end
 
 % Convert to double in case python saved as integers
 X = double(X);

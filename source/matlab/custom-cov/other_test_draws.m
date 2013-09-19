@@ -102,3 +102,17 @@ K = K + 1e-9*max(max(K))*eye(size(K));
 y = chol(K)' * randn(size(x));
 
 imagesc(K);
+
+%% SE * Per
+
+x = linspace(0, 1, 1000)';
+
+cov_func = {@covProd, {@covSEiso, @covPeriodicCentre}};
+hyp.cov = [log(1/(5*10)), 0, log(1),log(max(x)/5),0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);

@@ -770,7 +770,7 @@ plot_decomp(X, y, kernel_family, kernel_params, kernel_family_list, kernel_param
 exit();"""
 
 
-def plot_decomposition(kernel, X, y, figname, noise=None, X_mean=0, X_scale=1, y_mean=0, y_scale=1):
+def plot_decomposition(kernel, X, y, figname, noise=None, X_mean=0, X_scale=1, y_mean=0, y_scale=1, dont_run_code_hack=False):
     matlab_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'matlab'))
     figname = os.path.abspath(os.path.join(os.path.dirname(__file__), figname))
     print 'Plotting to: %s' % figname
@@ -804,7 +804,8 @@ def plot_decomposition(kernel, X, y, figname, noise=None, X_mean=0, X_scale=1, y
         'y_mean' : y_mean,
         'y_scale' : y_scale}
     
-    run_matlab_code(code, verbose=True, jvm=True)
+    if not dont_run_code_hack:
+        run_matlab_code(code, verbose=True, jvm=True)
     os.close(fd1)
     # The below is commented out whilst debugging
     #os.remove(temp_data_file)

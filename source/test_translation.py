@@ -10,22 +10,22 @@ import translation
 class translation_testcase(unittest.TestCase):
     def test_SE(self):
         k = fk.SqExpKernelFamily().default()
-        sentences = translation.translate_additive_component(k, np.array([-1,0,1]))
+        sentences = translation.translate_additive_component(k, np.array([-1,0,1]), monotonic=0, gradient=0, unit='year')
         #print '.\n'.join(sentences) + '.'
         
     def test_BroadSE(self):
         k = fk.SqExpKernelFamily().default()
-        sentences = translation.translate_additive_component(k, np.array([0,0.5]))
+        sentences = translation.translate_additive_component(k, np.array([0,0.5]), monotonic=0, gradient=0, unit='year')
         #print '.\n'.join(sentences) + '.'
         
     def test_poly(self):
         k = fk.LinKernelFamily().default() * fk.LinKernelFamily().default() * fk.LinKernelFamily().default()
-        sentences = translation.translate_additive_component(k, np.array([0,0.5]))
+        sentences = translation.translate_additive_component(k, np.array([0,0.5]), monotonic=0, gradient=0, unit='year')
         #print '.\n'.join(sentences) + '.'
         
     def test_SEpolydecrease(self):
         k = fk.SqExpKernelFamily().default() * fk.LinKernelFamily().default()
-        sentences = translation.translate_additive_component(k, np.array([0.2,0.5]))
+        sentences = translation.translate_additive_component(k, np.array([0.2,0.5]), monotonic=0, gradient=0, unit='year')
         #print '.\n'.join(sentences) + '.'
         
     def test_complicated(self):
@@ -34,36 +34,36 @@ class translation_testcase(unittest.TestCase):
         k = fk.ChangePointTanhKernel(location = 1.5, steepness=2, operands=op)
         op = [k, fk.ZeroKernel()]
         k = fk.ChangePointTanhKernel(location = 1.8, steepness=2, operands=op)
-        sentences = translation.translate_additive_component(k, np.array([1,2]))
+        sentences = translation.translate_additive_component(k, np.array([1,2]), monotonic=0, gradient=0, unit='year')
         #print k.pretty_print()
         #print '.\n'.join(sentences) + '.'
         
     def test_IMT3(self):
         k = fk.IMT3LinKernelFamily().default()
-        sentences = translation.translate_additive_component(k, np.array([1,2]))
+        sentences = translation.translate_additive_component(k, np.array([1,2]), monotonic=0, gradient=0, unit='year')
         #print '.\n'.join(sentences) + '.'
         
     def test_Const(self):
         k = fk.ConstKernelFamily().default()
-        sentences = translation.translate_additive_component(k, np.array([1,2]))
+        sentences = translation.translate_additive_component(k, np.array([1,2]), monotonic=0, gradient=0, unit='year')
         #print '.\n'.join(sentences) + '.'
         
     def test_ConstSE(self):
         k = fk.ConstKernelFamily().default() * fk.SqExpKernelFamily().default()
-        sentences = translation.translate_additive_component(k, np.array([1,2]))
+        sentences = translation.translate_additive_component(k, np.array([1,2]), monotonic=0, gradient=0, unit='year')
         #print '.\n'.join(sentences) + '.'
         
     def test_Window(self):
         k = fk.SqExpKernelFamily().default()
         op = [k, fk.ZeroKernel()]
         k = fk.ChangeBurstTanhKernel(location = 1.5, steepness=2, width=np.log(0.2), operands=op)
-        sentences = translation.translate_additive_component(k, np.array([1,2]))
+        sentences = translation.translate_additive_component(k, np.array([1,2]), monotonic=0, gradient=0, unit='year')
         #print k.pretty_print()
         #print '.\n'.join(sentences) + '.'
         
     def test_cos(self):
         k = fk.CosineKernelFamily().default()
-        sentences = translation.translate_additive_component(k, np.array([1,2]))
+        sentences = translation.translate_additive_component(k, np.array([1,2]), monotonic=0, gradient=0, unit='year')
         #print k.pretty_print()
         #print '.\n'.join(sentences) + '.'
         
@@ -71,7 +71,7 @@ class translation_testcase(unittest.TestCase):
         k = fk.SqExpKernelFamily().default()
         op = [fk.ZeroKernel(), k]
         k = fk.ChangeBurstTanhKernel(location = 1.5, steepness=2, width=np.log(0.2), operands=op)
-        sentences = translation.translate_additive_component(k, np.array([1,2]))
+        sentences = translation.translate_additive_component(k, np.array([1,2]), monotonic=0, gradient=0, unit='year')
         #print k.pretty_print()
         #print '.\n'.join(sentences) + '.'
         
@@ -81,7 +81,7 @@ class translation_testcase(unittest.TestCase):
         k = fk.ChangePointTanhKernel(location = 1.5, steepness=2, operands=op)
         op = [k, fk.ZeroKernel()]
         k = fk.ChangePointTanhKernel(location = 1.8, steepness=2, operands=op)
-        sentences = translation.translate_additive_component(k, np.array([1,2]))
+        sentences = translation.translate_additive_component(k, np.array([1,2]), monotonic=0, gradient=0, unit='year')
         #print '.\n'.join(sentences) + '.'
 
 if __name__ == "__main__":

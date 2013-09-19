@@ -311,6 +311,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                         summary += 'linearly decreasing amplitude'
                         main_description += 'linearly decreasing amplitude'
                     else:
+                        summary += 'amplitude increasing '
                         main_description += 'amplitude increasing '
                         #if los_count > 0:
                         #    main_description += 'approximately '
@@ -340,8 +341,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 #### FIXME - this correspondence is only approximate - based on small angle approx
                 per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
                 descriptions.append('The typical lengthscale of the periodic function is %s' % english_length(per_lengthscale, unit))
-                if per_lengthscale > np.exp(k.period):
-                    descriptions.append('The lengthscale of this periodic function is greater than its period so the function is almost sinusoidal')
+                if per_lengthscale > 2*np.exp(k.period):
+                    descriptions.append('The lengthscale of this periodic function is greater than twice its period so the function is almost sinusoidal')
         else: # Several periodic components
             if los_count > 0:
                 summary = 'An approximate product of'
@@ -419,8 +420,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 #### FIXME - this correspondence is only approximate
                 per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
                 descriptions.append('The typical lengthscale of this function is %s' % english_length(per_lengthscale, unit))
-                if per_lengthscale > np.exp(k.period):
-                    descriptions.append('The lengthscale is greater than the period so this function is almost sinusoidal')
+                if per_lengthscale > 2*np.exp(k.period):
+                    descriptions.append('The lengthscale is greater than twice the period so this function is almost sinusoidal')
             for (i, k) in enumerate(cos_kernels):
                 if i <= len(ordinal_numbers):
                     if len(cos_kernels) > 1:
@@ -666,7 +667,33 @@ The model is fit using the full data so the MAE values cannot be used as an esti
 %%\subsection{Component %(component)d}
 \subsection{%(short_description)s}
 
-\input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex} 
+\input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex}
+
+This component explains %(resid_var)0.1f\%% of the residual variance; this increases the total variance explained from %(prev_var)0.1f\%% to %(var)0.1f\%%.
+The addition of this component reduces the cross validated MAE by %(MAE_reduction)0.1f\%% from %(MAE_orig)0.1f to %(MAE_new)0.1f.
+%(discussion)s
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum}
+\end{tabular}
+\caption{Posterior of component %(component)d (left) and posterior of sum of components with data (right)}
+\label{fig:comp%(component)d}
+\end{figure}
+'''
+    first_component_text = '''
+%%\subsection{Component %(component)d}
+\subsection{%(short_description)s}
+
+\input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex}
+
+This component explains %(resid_var)0.1f\%% of the total variance.
+The addition of this component reduces the cross validated MAE by %(MAE_reduction)0.1f\%% from %(MAE_orig)0.1f to %(MAE_new)0.1f.
+%(discussion)s
 
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
@@ -682,14 +709,25 @@ The model is fit using the full data so the MAE values cannot be used as an esti
 '''
 
     for i in range(n_components):
-        text += component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1}
+        if fit_data['MAE_reductions'][i] < 0.1:
+            if fit_data['cum_resid_vars'][i] < 0.1:
+                discussion = 'This component neither explains residual variance nor improves MAE and therefore is likely to be an artefact of the model.'
+            else:
+                discussion = 'This component explains residual variance but does not improve MAE which suggests that this component describes very short term patterns, uncorrelated noise or is an artefact of the model.'
+        else:
+            discussion = ''
+        if i == 0:
+            text += first_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                      'var' : fit_data['cum_vars'][i], 'MAE_reduction' : fit_data['MAE_reductions'][i], 'MAE_orig' : fit_data['MAV_data'], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion}
+        else:
+            text += component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                      'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : fit_data['MAE_reductions'][i], 'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion}
     
     text += '''
 \subsection{Residuals}
 
-Some discussion of the size of the residuals and their (lack of) independence.
-Sometime they will look strange due to changepoints which is hinting that we should allow changepoints to apply to noise levels as well.
-\\fTBD{Additive noise can be expressed in the kernel and should be searched over as well - allowing explicit heteroskedasticity when multiplied by linear terms}
+Sometimes they will look strange due to changepoints which is hinting that we should allow changepoints to apply to noise levels as well.
+In more generality, we should include noise in the kernel (\ie the white noise kernel) and allow modifications of it to be searched over as well \eg can get heteroskedasticity when multiplied by linear kernels and changepoints.
 
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}

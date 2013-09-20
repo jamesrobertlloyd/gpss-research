@@ -11,6 +11,7 @@ September 2013
 """
 
 import numpy as np
+import scipy.stats
 import time
 
 import flexiblekernel as fk
@@ -87,6 +88,8 @@ def english_length(val, unit):
     else:
         return 'Unrecognised format'
         raise RuntimeError('I do not know about this unit of measurement', unit)
+        
+english_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 def english_point(val, unit, X):
     #### TODO - be clever about different dimensions?
@@ -98,11 +101,11 @@ def english_point(val, unit, X):
         if unit_range > 20:
             return '%4d' % time_val.tm_year
         elif unit_range > 2:
-            return '%02d/%4d' % (time_val.tm_mon, time_val.tm_year)
+            return '%s %4d' % (english_months[time_val.tm_mon-1], time_val.tm_year)
         elif unit_range > 2.0 / 12:
-            return '%02d/%02d/%4d' % (time_val.tm_mday, time_val.tm_mon, time_val.tm_year)
+            return '%02d %s %4d' % (time_val.tm_mday, english_months[time_val.tm_mon-1], time_val.tm_year)
         else:
-            return '%02d:%02d:%02d %02d/%02d/%4d' % (time_val.tm_hour, time_val.tm_min, time_val.tm_sec, time_val.tm_mday, time_val.tm_mon, time_val.tm_year)
+            return '%02d:%02d:%02d %02d %s %4d' % (time_val.tm_hour, time_val.tm_min, time_val.tm_sec, time_val.tm_mday, english_months[time_val.tm_mon-1], time_val.tm_year)
     else:
         return 'Unrecognised format'
         raise RuntimeError('I do not know about this unit of measurement', unit)
@@ -335,8 +338,14 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     descriptions.append('The exact form of the function changes smoothly but very slowly')
                 else:
                     descriptions.append('The exact form of the function changes smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
-                if lengthscale < min_period * 0.5:
-                    descriptions.append('Since this lengthscale is smaller than half the period this component may more closely resemble a smooth function without periodicity')
+                # Compute 50% prior credible interval
+                lower_per = 1.0 / (np.exp(-k.period) + scipy.stats.norm.isf(0.25) / lengthscale)
+                upper_per = 1.0 / (np.exp(-k.period) - scipy.stats.norm.isf(0.25) / lengthscale)
+                if upper_per < 0:
+                    upper_per = np.Inf
+                    descriptions.append('Since this lengthscale is small the prior 50\% credible region of the period includes non-periodic functions so this component may more closely resemble a non-periodic smooth function\\fTBD{Need to find better wording for this Fourier transform based comment}')
+                else:
+                    descriptions.append('This results in a prior 50\%% credible region of %s to %s for the period\\fTBD{Need to find better wording for this Fourier transform based comment}' % (english_length(lower_per, unit), english_length(upper_per, unit)))
             if per_count == 1:
                 #### FIXME - this correspondence is only approximate - based on small angle approx
                 per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
@@ -402,6 +411,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     main_description += 'follows a polynomial of degree %d' % lin_count
             descriptions.append(main_description)
             if los_count > 0:
+                #### TODO - Discuss credible intervals
                 if lengthscale > domain_range:
                     descriptions.append('The exact form of the function changes smoothly but very slowly')
                 else:

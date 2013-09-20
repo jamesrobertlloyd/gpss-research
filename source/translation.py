@@ -343,9 +343,9 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 upper_per = 1.0 / (np.exp(-k.period) - scipy.stats.norm.isf(0.25) / lengthscale)
                 if upper_per < 0:
                     upper_per = np.Inf
-                    descriptions.append('Since this lengthscale is small the prior 50\% credible region of the period includes non-periodic functions so this component may more closely resemble a non-periodic smooth function\\fTBD{Need to find better wording for this Fourier transform based comment}')
+                    descriptions.append('More exactly, the kernel for this component expresses a prior of a mixture of periodic components but since the 50\% maximum density interval includes non-periodic functions (infinite period) this component may more closely resemble a non-periodic smooth function\\fTBD{Need to find better wording for this Fourier transform based comment}')
                 else:
-                    descriptions.append('This results in a prior 50\%% credible region of %s to %s for the period\\fTBD{Need to find better wording for this Fourier transform based comment}' % (english_length(lower_per, unit), english_length(upper_per, unit)))
+                    descriptions.append('More exactly, the kernel for this component expresses a prior of a mixture of periodic components with 50\%% of those periods in the range %s to %s\\fTBD{Need to find better wording for this Fourier transform based comment}' % (english_length(lower_per, unit), english_length(upper_per, unit)))
             if per_count == 1:
                 #### FIXME - this correspondence is only approximate - based on small angle approx
                 per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels

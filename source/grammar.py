@@ -200,7 +200,7 @@ def expand_single_tree(kernel, grammar):
                 result.append(polish_to_kernel(full_polish))
     return result
 
-def expand(kernel, grammar, previous_operation=''):
+def expand(kernel, grammar):
     result = expand_single_tree(kernel, grammar)
     if isinstance(kernel, fk.BaseKernel):
         pass
@@ -251,19 +251,18 @@ def expand(kernel, grammar, previous_operation=''):
                 result.append(fk.BlackoutTanhKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, new_ops))
     elif isinstance(kernel, fk.SumKernel):
         # This version expands all subsets
-        if not previous_operation == 'sum': # Preventing redundant recursion
-            for subset in itertools.product(*((0,1),)*len(kernel.operands)):
-                if (not sum(subset)==0) and (not sum(subset)==len(kernel.operands)):
-                    # Subset non-trivial
-                    unexpanded = [op for (i, op) in enumerate(kernel.operands) if not subset[i]]
-                    to_be_expanded = [op for (i, op) in enumerate(kernel.operands) if subset[i]]
-                    if len(to_be_expanded) > 1:
-                        to_be_expanded = fk.SumKernel(to_be_expanded)
-                    else:
-                        to_be_expanded = to_be_expanded[0]
-                    for expanded in expand(to_be_expanded, grammar, 'sum'):
-                        new_ops = [expanded] + unexpanded
-                        result.append(fk.SumKernel(new_ops))
+        for subset in itertools.product(*((0,1),)*len(kernel.operands)):
+            if (not sum(subset)==0) and (not sum(subset)==len(kernel.operands)):
+                # Subset non-trivial
+                unexpanded = [op for (i, op) in enumerate(kernel.operands) if not subset[i]]
+                to_be_expanded = [op for (i, op) in enumerate(kernel.operands) if subset[i]]
+                if len(to_be_expanded) > 1:
+                    to_be_expanded = fk.SumKernel(to_be_expanded)
+                else:
+                    to_be_expanded = to_be_expanded[0]
+                for expanded in expand_single_tree(to_be_expanded, grammar):
+                    new_ops = [expanded] + unexpanded
+                    result.append(fk.SumKernel(new_ops))
         # This version expands all elements
         #for i, op in enumerate(kernel.operands):
         #    for e in expand(op, grammar):
@@ -272,19 +271,18 @@ def expand(kernel, grammar, previous_operation=''):
         #        result.append(fk.SumKernel(new_ops))
     elif isinstance(kernel, fk.ProductKernel):
         # This version expands all subsets
-        if not previous_operation == 'prod':
-            for subset in itertools.product(*((0,1),)*len(kernel.operands)):
-                if (not sum(subset)==0) and (not sum(subset)==len(kernel.operands)):
-                    # Subset non-trivial
-                    unexpanded = [op for (i, op) in enumerate(kernel.operands) if not subset[i]]
-                    to_be_expanded = [op for (i, op) in enumerate(kernel.operands) if subset[i]]
-                    if len(to_be_expanded) > 1:
-                        to_be_expanded = fk.ProductKernel(to_be_expanded)
-                    else:
-                        to_be_expanded = to_be_expanded[0]
-                    for expanded in expand(to_be_expanded, grammar, 'prod'):
-                        new_ops = [expanded] + unexpanded
-                        result.append(fk.ProductKernel(new_ops))
+        for subset in itertools.product(*((0,1),)*len(kernel.operands)):
+            if (not sum(subset)==0) and (not sum(subset)==len(kernel.operands)):
+                # Subset non-trivial
+                unexpanded = [op for (i, op) in enumerate(kernel.operands) if not subset[i]]
+                to_be_expanded = [op for (i, op) in enumerate(kernel.operands) if subset[i]]
+                if len(to_be_expanded) > 1:
+                    to_be_expanded = fk.ProductKernel(to_be_expanded)
+                else:
+                    to_be_expanded = to_be_expanded[0]
+                for expanded in expand_single_tree(to_be_expanded, grammar):
+                    new_ops = [expanded] + unexpanded
+                    result.append(fk.ProductKernel(new_ops))
         # This version expands all elements
         #for i, op in enumerate(kernel.operands):
         #    for e in expand(op, grammar):

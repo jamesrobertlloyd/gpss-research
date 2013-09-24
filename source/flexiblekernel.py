@@ -4387,11 +4387,12 @@ class ScoredKernel:
     '''
     Wrapper around a kernel with various scores and noise parameter
     '''
-    def __init__(self, k_opt, nll=nan, laplace_nle=nan, bic_nle=nan, npll=nan, pic_nle=nan, mae=nan, std_ratio=nan, noise=nan):
+    def __init__(self, k_opt, nll=nan, laplace_nle=nan, bic_nle=nan, aic_nle=nan, npll=nan, pic_nle=nan, mae=nan, std_ratio=nan, noise=nan):
         self.k_opt = k_opt
         self.nll = nll
         self.laplace_nle = laplace_nle
         self.bic_nle = bic_nle
+        self.aic_nle = aic_nle
         self.npll = npll
         self.pic_nle = pic_nle
         self.mae = mae
@@ -4401,6 +4402,7 @@ class ScoredKernel:
     #### CAUTION - the default keeps on changing!
     def score(self, criterion='bic'):
         return {'bic': self.bic_nle,
+                'aic': self.aic_nle,
                 'nll': self.nll,
                 'laplace': self.laplace_nle,
                 'npll': self.npll,
@@ -4409,12 +4411,12 @@ class ScoredKernel:
                 }[criterion]
                 
     @staticmethod
-    def from_printed_outputs(nll, laplace, BIC, npll, PIC, mae, std_ratio, noise=None, kernel=None):
-        return ScoredKernel(kernel, nll, laplace, BIC, npll, PIC, mae, std_ratio, noise)
+    def from_printed_outputs(nll, laplace, BIC, AIC, npll, PIC, mae, std_ratio, noise=None, kernel=None):
+        return ScoredKernel(kernel, nll, laplace, BIC, AIC, npll, PIC, mae, std_ratio, noise)
     
     def __repr__(self):
-        return 'ScoredKernel(k_opt=%s, nll=%f, laplace_nle=%f, bic_nle=%f, npll=%f, pic_nle=%f, mae=%f, std_ratio=%f, noise=%s)' % \
-            (self.k_opt, self.nll, self.laplace_nle, self.bic_nle, self.npll, self.pic_nle, self.mae, self.std_ratio, self.noise)
+        return 'ScoredKernel(k_opt=%s, nll=%f, laplace_nle=%f, bic_nle=%f, aic_nle=%f, npll=%f, pic_nle=%f, mae=%f, std_ratio=%f, noise=%s)' % \
+            (self.k_opt, self.nll, self.laplace_nle, self.bic_nle, self.aic_nle, self.npll, self.pic_nle, self.mae, self.std_ratio, self.noise)
 
     def pretty_print(self):
         return self.k_opt.pretty_print()
@@ -4433,7 +4435,8 @@ class ScoredKernel:
         k_opt = kernel_family.from_param_vector(output.kernel_hypers)
         BIC = 2 * output.nll + k_opt.effective_params() * np.log(ndata)
         PIC = 2 * output.npll + k_opt.effective_params() * np.log(ndata)
-        return ScoredKernel(k_opt, output.nll, laplace_nle, BIC, output.npll, PIC, output.mae, output.std_ratio, output.noise_hyp)	
+        AIC = 2 * output.nll + k_opt.effective_params() * 2
+        return ScoredKernel(k_opt, output.nll, laplace_nle, BIC, AIC, output.npll, PIC, output.mae, output.std_ratio, output.noise_hyp)	
 
 # TODO - I don't think this is called anymore
 def replace_defaults(param_vector, sd):

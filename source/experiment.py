@@ -171,7 +171,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         print 'All new results after duplicate removal:'
         for result in new_results:
             #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-            print result.bic_nle, result.pic_nle, result.laplace_nle, result.mae, result.k_opt.pretty_print()
+            print 'BIC=%0.1f' % result.bic_nle, 'NLL=%0.1f' % result.nll, 'Laplace=%0.1f' % result.laplace_nle, 'MAE=%0.1f' % result.mae, result.k_opt.pretty_print()
             
         #### Explanation : This heuristic was not especially useful when first tried   
         # Remove bad predictors
@@ -226,7 +226,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             current_kernels = [grammar.additive_form(k) for k in current_kernels]
             # Using regular expansion rules followed by forcing additive results in lots of redundancy
             # TODO - this should happen always when other parts of code fixed
-            current_kernels = [grammar.remove_redundancy(k) for k in current_kernels]
+            # Additive mode = True tells it to use dangerous hacky tricks that should be replaced
+            current_kernels = [grammar.remove_redundancy(k, additive_mode=True) for k in current_kernels]
             # Remove any duplicates
             current_kernels = grammar.remove_duplicates(current_kernels)
         

@@ -425,7 +425,7 @@ def additive_form(k):
         # Base case - return self
         return canonical(k) # Just to make it clear that the output is always canonical
         
-def remove_redundancy(k):
+def remove_redundancy(k, additive_mode=False):
     '''
     Removes unnecessary multiplicative constants
     Combines multiplicative SE
@@ -434,7 +434,7 @@ def remove_redundancy(k):
     #### TODO - for initial testing this function assumes additive form of kernel 
     ####      - i.e. it isn't guaranteed to remove all redundancy
     if isinstance(k, fk.ProductKernel):
-        ops = [remove_redundancy(op) for op in k.operands]
+        ops = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
         # Count the number of SEs
         lengthscale = np.Inf
         output_variance = 0
@@ -470,10 +470,22 @@ def remove_redundancy(k):
                 not_const_ops.append(op)
          # Compactify if necessary
         if (const_count > 0) and len(not_const_ops) > 0:
-            #### FIXME - this reduces expressions to one multiplicative const
-            ####       - this was much simpler to code, and is hinting that our expressions should
-            ####       - explicitly separate all multiplicative factors into a special term
-            ops = not_const_ops + [fk.MaskKernel(1,0,fk.ConstKernel(output_variance=output_variance))]
+            if not additive_mode:
+                #### FIXME - this reduces expressions to one multiplicative const
+                ####       - this was much simpler to code, and is hinting that our expressions should
+                ####       - explicitly separate all multiplicative factors into a special term
+                ops = not_const_ops + [fk.MaskKernel(1,0,fk.ConstKernel(output_variance=output_variance))]
+            else:
+                #### BROKEN - does not work with sum kernels
+                #### WARNING - this assumes a small set of base kernels and additive form (i.e. multiplicative changepoints already dealt with)
+                ops = not_const_ops
+                if isinstance(ops[0].base_kernel, fk.LinKernel):
+                    ops[0].base_kernel.lengthscale -= output_variance
+                    ops[0].base_kernel.offset += output_variance
+                else:
+                    #### WARNING - big assumption about the form of the kernel
+                    # - no error checking so this will crash if something else happens
+                    ops[0].base_kernel.output_variance += output_variance
         elif const_count > 1:
             # Just constants
             #### FIXME - assuming 1d and masks
@@ -485,7 +497,7 @@ def remove_redundancy(k):
             
     elif isinstance(k, fk.SumKernel) or isinstance(k, fk.ChangePointTanhKernel) or isinstance(k, fk.ChangeBurstTanhKernel):
         new_kernel = k.copy()
-        new_kernel.operands = [remove_redundancy(op) for op in k.operands]
+        new_kernel.operands = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
         return canonical(new_kernel)
     else:
         return canonical(k) # Just to make it clear that the output is always canonical

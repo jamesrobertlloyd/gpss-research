@@ -227,6 +227,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             # Using regular expansion rules followed by forcing additive results in lots of redundancy
             # TODO - this should happen always when other parts of code fixed
             current_kernels = [grammar.remove_redundancy(k) for k in current_kernels]
+            # Remove any duplicates
+            current_kernels = grammar.remove_duplicates(current_kernels)
         
         # Reduce number of kernels when in debug mode
         if exp.debug==True:

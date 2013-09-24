@@ -224,6 +224,9 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         # Convert to additive form if desired
         if exp.additive_form:
             current_kernels = [grammar.additive_form(k) for k in current_kernels]
+            # Using regular expansion rules followed by forcing additive results in lots of redundancy
+            # TODO - this should happen always when other parts of code fixed
+            current_kernels = [grammar.remove_redundancy(k) for k in current_kernels]
         
         # Reduce number of kernels when in debug mode
         if exp.debug==True:

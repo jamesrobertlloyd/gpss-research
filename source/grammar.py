@@ -1,4 +1,5 @@
 import itertools
+import numpy as np
 
 import flexiblekernel as fk
 
@@ -422,6 +423,71 @@ def additive_form(k):
     else:
         #### TODO - Place a check here that the kernel is not a binary or higher operator
         # Base case - return self
+        return canonical(k) # Just to make it clear that the output is always canonical
+        
+def remove_redundancy(k):
+    '''
+    Removes unnecessary multiplicative constants
+    Combines multiplicative SE
+    '''
+    #### WARNING - assumes 1d
+    #### TODO - for initial testing this function assumes additive form of kernel 
+    ####      - i.e. it isn't guaranteed to remove all redundancy
+    if isinstance(k, fk.ProductKernel):
+        ops = [remove_redundancy(op) for op in k.operands]
+        # Count the number of SEs
+        lengthscale = np.Inf
+        output_variance = 0
+        SE_count = 0
+        not_SE_ops = []
+        for op in ops:
+            if isinstance(op, fk.SqExpKernel):
+                SE_count += 1
+                lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*op.lengthscale))
+                output_variance += op.output_variance
+            elif isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.SqExpKernel):
+                SE_count += 1
+                lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*op.base_kernel.lengthscale))
+                output_variance += op.base_kernel.output_variance
+            else:
+                not_SE_ops.append(op)
+        # Compactify if necessary
+        if SE_count > 1:
+            #### FIXME - assuming 1d
+            ops = not_SE_ops + [fk.MaskKernel(1, 0, fk.SqExpKernel(lengthscale=lengthscale, output_variance=output_variance))]
+        # Now count the number of constants
+        output_variance = 0
+        const_count = 0
+        not_const_ops = []
+        for op in ops:
+            if isinstance(op, fk.ConstKernel):
+                const_count += 1
+                output_variance += op.output_variance
+            elif (isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.ConstKernel)):
+                const_count += 1
+                output_variance += op.base_kernel.output_variance
+            else:
+                not_const_ops.append(op)
+         # Compactify if necessary
+        if (const_count > 0) and len(not_const_ops) > 0:
+            #### FIXME - this reduces expressions to one multiplicative const
+            ####       - this was much simpler to code, and is hinting that our expressions should
+            ####       - explicitly separate all multiplicative factors into a special term
+            ops = not_const_ops + [fk.MaskKernel(1,0,fk.ConstKernel(output_variance=output_variance))]
+        elif const_count > 1:
+            # Just constants
+            #### FIXME - assuming 1d and masks
+            return fk.MaskKernel(1,0,fk.ConstKernel(output_variance=output_variance))
+        # Finish
+        new_kernel = k.copy()
+        new_kernel.operands = ops
+        return canonical(new_kernel)
+            
+    elif isinstance(k, fk.SumKernel) or isinstance(k, fk.ChangePointTanhKernel) or isinstance(k, fk.ChangeBurstTanhKernel):
+        new_kernel = k.copy()
+        new_kernel.operands = [remove_redundancy(op) for op in k.operands]
+        return canonical(new_kernel)
+    else:
         return canonical(k) # Just to make it clear that the output is always canonical
 
 def remove_duplicates(kernels):

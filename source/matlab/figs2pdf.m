@@ -64,8 +64,10 @@
 % latexdir = '../../analyses/2013-09-08-summary/figures';
 % topdir = '../../analyses/2013-09-17-summary/figures';
 % latexdir = '../../analyses/2013-09-17-summary/figures';
-topdir = '../../analyses/2013-09-19-summary/figures';
-latexdir = '../../analyses/2013-09-19-summary/figures';
+% topdir = '../../analyses/2013-09-19-summary/figures';
+% latexdir = '../../analyses/2013-09-19-summary/figures';
+topdir = '../../analyses/2013-09-24-additive/figures';
+latexdir = '../../analyses/2013-09-24-additive/figures';
 dirnames = dir(topdir);
 isub = [dirnames(:).isdir]; %# returns logical vector
 dirnames = {dirnames(isub).name}';

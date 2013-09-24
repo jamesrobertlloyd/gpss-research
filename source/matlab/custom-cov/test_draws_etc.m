@@ -1420,3 +1420,47 @@ K = K + 1e-9*max(max(K))*eye(size(K));
 y = chol(K)' * randn(size(x));
 
 plot(x, y);
+
+%% exp draw
+
+x = linspace(-5, 5, 1000)';
+
+cov_func = {@covExp};
+hyp.cov = [0.02,0,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% Check exp grad
+
+delta = 0.00000001;
+i = 1;
+
+cov_func = {@covExp};
+hyp1.cov = [0.1, 0.1, 0]+0.3;
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x, x) - feval(cov_func{:}, hyp2.cov, x, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
+%% exp x Fourier draw
+
+l = 2000;
+x = linspace(0, l, 1000)';
+
+cov_func = {@covProd, {@covExp, @covFourier}};
+hyp.cov = [2.5/l,0,0,0,log(l)-log(20),0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);

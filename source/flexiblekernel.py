@@ -1177,6 +1177,108 @@ class LinKernel(BaseKernel):
         return cmp(differences, [0] * len(differences))
         
     def depth(self):
+        return 0  
+
+class ExpKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        rate, location, output_variance = params
+        return ExpKernel(rate=rate, location=location, output_variance=output_variance)
+    
+    def num_params(self):
+        return 3
+    
+    def pretty_print(self):
+        return colored('EXP', self.depth())
+    
+    def default(self):
+        return ExpKernel(0., 0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'Exp'
+
+    @staticmethod    
+    def description():
+        return "Exponential"
+
+    @staticmethod    
+    def params_description():
+        return "Rate, location"
+    
+class ExpKernel(BaseKernel):
+    def __init__(self, rate=0, location=0, output_variance=0):
+        self.rate = rate
+        self.location = location
+        self.output_variance = output_variance
+        
+    def family(self):
+        return ExpKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covExp}'
+    
+    def english_name(self):
+        return 'EXP'
+    
+    def id_name(self):
+        return 'Exp'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.rate, self.location, self.output_variance])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            # This expresses a belief of moderate variation over the range - moderate defined by eye
+            result[0] = np.random.normal(loc=0, scale=2.5/(data_shape['input_max'] - data_shape['input_min']))
+        if result[1] == 0:
+            # Location moves with input location, and variance scales in input variance
+            #### TODO - this should probably be closer to uniform (but allowed to bleed beyond edges)
+            result[1] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
+        if result[2] == 0:
+            # Set scale factor with output location or neutrally
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
+        return result
+        
+    def effective_params(self):
+        '''The function is currently over-parametrised'''  
+        return 2
+
+    def copy(self):
+        return ExpKernel(rate=self.rate, location=self.location, output_variance=self.output_variance)
+    
+    def __repr__(self):
+        return 'ExpKernel(rate=%f, location=%f, output_variance=%f)' % \
+            (self.rate, self.location, self.output_variance)
+    
+    def pretty_print(self):
+        return colored('EXP(rate=%1.1f, loc=%1.1f, sf=%1.1f)' % (self.rate, self.location, self.output_variance),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'Exp'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.rate - other.rate, self.location - other.location, self.output_variance - other.output_variance]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+        
+    def depth(self):
         return 0 
         
 class StepKernelFamily(BaseKernelFamily):
@@ -4056,7 +4158,8 @@ def base_kernel_families(base_kernel_names):
                    IMT3LinKernelFamily(), \
                    StepKernelFamily(), \
                    StepTanhKernelFamily(), \
-                   FourierKernelFamily()]:
+                   FourierKernelFamily(), \
+                   ExpKernelFamily()]:
         if family.id_name() in base_kernel_names.split(','):
             yield family
    

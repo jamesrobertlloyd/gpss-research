@@ -423,6 +423,124 @@ class CentredPeriodicKernel(BaseKernel):
     def out_of_bounds(self, constraints):
         return (self.period < constraints['min_period']) or \
                (self.lengthscale < constraints['min_lengthscale']) or \
+               (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity   
+
+#### TODO - this is a code name for the reparametrised centred periodic
+class FourierKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        lengthscale, period, output_variance = params
+        return FourierKernel(lengthscale, period, output_variance)
+    
+    def num_params(self):
+        return 3
+    
+    def pretty_print(self):
+        return colored('FT', self.depth())
+    
+    #### FIXME - Caution - magic numbers!
+    #### Explanation : This is centered on about 20 periods
+    def default(self):
+        return CentredPeriodicKernel(0., -2.0, 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'Fourier'
+    
+    @staticmethod    
+    def description():
+        return "Fourier decomposition"
+
+    @staticmethod    
+    def params_description():
+        return "lengthscale, period"  
+    
+class FourierKernel(BaseKernel):
+    def __init__(self, lengthscale, period, output_variance):
+        self.lengthscale = lengthscale
+        self.period = period
+        self.output_variance = output_variance
+        
+    def family(self):
+        return FourierKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covFourier}'
+    
+    def english_name(self):
+        return 'Fourier'
+    
+    def id_name(self):
+        return 'Fourier'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.lengthscale, self.period, self.output_variance])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        '''Overwrites base method, using min period to prevent Nyquist errors'''
+        result = self.param_vector()
+        if result[0] == 0:
+            # Min period represents a minimum sensible scale - use it for lengthscale as well
+            # Scale with data_scale though
+            if data_shape['min_period'] is None:
+                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
+            else:
+                result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
+        if result[1] == -2:
+            #### FIXME - Caution, magic numbers
+            #### Explanation : This is centered on about 20 periods
+            # Min period represents a minimum sensible scale
+            # Scale with data_scale
+            if data_shape['min_period'] is None:
+                result[1] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+            else:
+                result[1] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
+        if result[2] == 0:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                result[2] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            else:
+                result[2] = np.random.normal(loc=0, scale=sd)
+        return result
+
+    def copy(self):
+        return FourierKernel(self.lengthscale, self.period, self.output_variance)
+    
+    def __repr__(self):
+        return 'FourierKernel(lengthscale=%f, period=%f, output_variance=%f)' % \
+            (self.lengthscale, self.period, self.output_variance)
+    
+    def pretty_print(self):
+        return colored('FT(ell=%1.1f, p=%1.1f, sf=%1.1f)' % (self.lengthscale, self.period, self.output_variance),
+                       self.depth())
+        
+    def latex_print(self):
+        # return 'PE(\\ell=%1.1f, p=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.period, self.output_variance)
+        #return 'PE(p=%1.1f)' % self.period          
+        return 'Fourier'
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+        
+    def depth(self):
+        return 0
+            
+    def out_of_bounds(self, constraints):
+        return (self.period < constraints['min_period']) or \
+               (self.lengthscale < constraints['min_lengthscale']) or \
                (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
         
 class CosineKernelFamily(BaseKernelFamily):
@@ -3937,7 +4055,8 @@ def base_kernel_families(base_kernel_names):
                    IMT3KernelFamily(), \
                    IMT3LinKernelFamily(), \
                    StepKernelFamily(), \
-                   StepTanhKernelFamily()]:
+                   StepTanhKernelFamily(), \
+                   FourierKernelFamily()]:
         if family.id_name() in base_kernel_names.split(','):
             yield family
    

@@ -109,6 +109,30 @@ hold on;
 plot(x, fit);
 hold off;
 
+%% Fourier fit
+
+x = linspace(-5, 5, 100)';
+%y = cos(1.8*pi*x) + 0.1*randn(size(x));
+y = cos(2.2*pi*x) + 0.1*randn(size(x)) + 0*x;
+
+cov_func = {@covFourier};
+hyp.cov = [0,0,0];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y) / 10);
+
+hyp = minimize(hyp, @gp, -10000, @infExact, mean_func, cov_func, lik_func, x, y);
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, x);
+
+plot(x, y, 'o');
+hold on;
+plot(x, fit);
+hold off;
+
 %% Centered periodic draw
 
 x = linspace(0, 1, 1000)';
@@ -127,6 +151,53 @@ plot(x, 0.5*(max(y)-min(y))*sin(x*4*pi) + mean(y), 'r');
 hold off;
 %figure;
 %plot(K(:,1));
+
+%% periodic draw
+
+x = linspace(0, 1000, 1000)';
+
+cov_func = {@covPeriodicCentre};
+hyp.cov = [log(10),log(max(x)/10),0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+figure;
+plot(x, y);
+
+%% periodic draw
+
+x = linspace(0, 1000, 1000)';
+
+cov_func = {@covFourier};
+hyp.cov = [10,log(max(x)/10),log(4)];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-4*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+figure;
+plot(x, y);
+
+%% Check Fourier grad
+
+x = linspace(-5, 5, 1000)';
+
+delta = 0.0000001;
+i = 2;
+
+cov_func = {@covFourier};
+hyp1.cov = [1, 1, 1] + 0;
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
 
 %% periodic draw
 

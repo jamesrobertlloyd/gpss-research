@@ -440,7 +440,7 @@ class FourierKernelFamily(BaseKernelFamily):
     #### FIXME - Caution - magic numbers!
     #### Explanation : This is centered on about 20 periods
     def default(self):
-        return CentredPeriodicKernel(0., -2.0, 0.)
+        return FourierKernel(0., -2.0, 0.)
     
     def __cmp__(self, other):
         assert isinstance(other, KernelFamily)

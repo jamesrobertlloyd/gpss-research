@@ -377,6 +377,52 @@ def canonical(kernel):
             return fk.ProductKernel(sorted(new_ops))
     else:
         raise RuntimeError('Unknown kernel class:', kernel.__class__)
+        
+def additive_form(k):
+    '''
+    Converts a kernel into a sum of products and with changepoints percolating to the top
+    Output is always in canonical form
+    '''
+    #### TODO - currently implemented for a subset of changepoint operators - to be extended or operators to be abstracted
+    if isinstance(k, fk.ProductKernel):
+        # Convert operands into additive form
+        additive_ops = sorted([additive_form(op) for op in k.operands])
+        # Initialise the new kernel
+        new_kernel = additive_ops[0]
+        # Build up the product, iterating over the other components
+        for additive_op in additive_ops[1:]:
+            #### TODO - duplicate code can be removed with nicer logic - do this when abstracting operators
+            if isinstance(new_kernel, fk.ChangePointTanhKernel) or isinstance(new_kernel, fk.ChangeBurstTanhKernel):
+                # Changepoints take priority - nest the products within this operator
+                new_kernel.operands = [additive_form(canonical(op*additive_op.copy())) for op in new_kernel.operands]
+            elif isinstance(additive_op, fk.ChangePointTanhKernel) or isinstance(additive_op, fk.ChangeBurstTanhKernel):
+                # Nest within the next operator
+                old_kernel = new_kernel.copy()
+                new_kernel = additive_op
+                new_kernel.operands = [additive_form(canonical(op*old_kernel.copy())) for op in new_kernel.operands]
+            elif isinstance(new_kernel, fk.SumKernel):
+                # Nest the products within this sum
+                new_kernel.operands = [additive_form(canonical(op*additive_op.copy())) for op in new_kernel.operands]
+            elif isinstance(additive_op, fk.SumKernel):
+                # Nest within the next operator
+                old_kernel = new_kernel.copy()
+                new_kernel = additive_op
+                new_kernel.operands = [additive_form(canonical(op*old_kernel.copy())) for op in new_kernel.operands]
+            else:
+                # Both base kernels - just multiply
+                new_kernel = new_kernel*additive_op
+            # Make sure still in canonical form - useful mostly for detecting duplicates
+            new_kernel = canonical(new_kernel)
+        return new_kernel
+    elif isinstance(k, fk.SumKernel) or isinstance(k, fk.ChangePointTanhKernel) or isinstance(k, fk.ChangeBurstTanhKernel):
+        # This operator is additive - make all operands additive
+        new_kernel = k.copy()
+        new_kernel.operands = [additive_form(op) for op in k.operands]
+        return canonical(new_kernel)
+    else:
+        #### TODO - Place a check here that the kernel is not a binary or higher operator
+        # Base case - return self
+        return canonical(k) # Just to make it clear that the output is always canonical
 
 def remove_duplicates(kernels):
     # This is possible since kernels are now hashable

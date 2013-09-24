@@ -221,6 +221,10 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #### Question : Does the grammar expand kernels or is this really a search object?
         current_kernels = grammar.expand_kernels(D, best_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels)
         
+        # Convert to additive form if desired
+        if exp.additive_form:
+            current_kernels = [grammar.additive_form(k) for k in current_kernels]
+        
         # Reduce number of kernels when in debug mode
         if exp.debug==True:
             current_kernels = current_kernels[0:4]
@@ -284,7 +288,7 @@ def gen_all_datasets(dir):
 
 # Defines a class that keeps track of all the options for an experiment.
 # Maybe more natural as a dictionary to handle defaults - but named tuple looks nicer with . notation
-class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size')):
+class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, additive_form, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
                 results_dir,                  # Where to write the results.
@@ -303,6 +307,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 skip_complete=True,           # Whether to re-run already completed experiments.
                 iters=100,                    # How long to optimize hyperparameters for.
                 base_kernels='SE,Per,Lin,Const',
+                additive_form=False,          # Restrict kernels to be in an additive form?
                 zero_mean=True,               # If false, use a constant mean function - cannot be used with the Const kernel
                 verbose_results=False,        # Whether or not to record all kernels tested
                 random_seed=0,
@@ -315,7 +320,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 subset_size=250,              # Size of data subset
                 full_iters=0,                 # Number of iterations to perform on full data after subset optimisation
                 bundle_size=1):               # Number of kernel evaluations per job sent to cluster 
-        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size)
+        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, additive_form, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size)
 
 def experiment_fields_to_str(exp):
     str = "Running experiment:\n"

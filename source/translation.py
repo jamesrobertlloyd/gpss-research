@@ -205,6 +205,10 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             per_count += 1
             per_kernels.append(k)
             min_period = np.min([np.exp(k.period), min_period])
+        elif isinstance(k, fk.FourierKernel):
+            per_count += 1
+            per_kernels.append(k)
+            min_period = np.min([np.exp(k.period), min_period])
         elif isinstance(k, fk.CosineKernel):
             cos_count += 1
             cos_kernels.append(k)

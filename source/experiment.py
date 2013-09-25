@@ -121,6 +121,12 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         # Add random restarts to kernels
         current_kernels = fk.add_random_restarts(current_kernels, exp.n_rand, exp.sd, data_shape=data_shape)
         
+        # Remove redundancy in kernel expressions - currently only works in additive mode
+        if exp.additive_form:
+            # Additive mode = True tells it to use dangerous hacky tricks that should be replaced
+            current_kernels = [grammar.remove_redundancy(k, additive_mode=True) for k in current_kernels]
+            current_kernels = grammar.remove_duplicates(current_kernels)
+        
         # Add jitter to parameter values (empirically discovered to help broken optimiser - hopefully prevents excessive const kernel proliferation)
         current_kernels = fk.add_jitter(current_kernels, exp.jitter_sd)
         
@@ -226,8 +232,6 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             current_kernels = [grammar.additive_form(k) for k in current_kernels]
             # Using regular expansion rules followed by forcing additive results in lots of redundancy
             # TODO - this should happen always when other parts of code fixed
-            # Additive mode = True tells it to use dangerous hacky tricks that should be replaced
-            current_kernels = [grammar.remove_redundancy(k, additive_mode=True) for k in current_kernels]
             # Remove any duplicates
             current_kernels = grammar.remove_duplicates(current_kernels)
         

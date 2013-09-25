@@ -189,10 +189,10 @@ plot(x, y);
 x = linspace(0, 1000, 1000)';
 
 cov_func = {@covFourier};
-hyp.cov = [5,log(max(x)/10),log(4)];
+hyp.cov = [1.5,log(max(x)/10),log(4)];
 
 K = feval(cov_func{:}, hyp.cov, x);
-K = K + 1e-4*max(max(K))*eye(size(K));
+K = K + 1e-6*max(max(K))*eye(size(K));
 
 y = chol(K)' * randn(size(x));
 

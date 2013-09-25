@@ -166,7 +166,7 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
     # Note that new_intervals may now be empty but we should recurse to return a kernel in a standard form
     return find_region_of_influence(base_kernel, new_intervals)
     
-def translate_parametric_window(X, unit='', lin_count=0, exp_count=0, lin_location=None, exp_rate=None, quantity='standard deviation', component='function'):
+def translate_parametric_window(X, unit='', lin_count=0, exp_count=0, lin_location=None, exp_rate=None, quantity='standard deviation', component='function', qualifier=''):
     '''
     Translates the effect on standard deviation/amplitude/... of parametric terms (at the time of writing this is just Lin and Exp)
     '''
@@ -176,36 +176,36 @@ def translate_parametric_window(X, unit='', lin_count=0, exp_count=0, lin_locati
         description += 'The %s of the %s ' % (quantity, component)
         if lin_count == 1:
             if lin_location < np.min(X):
-                summary += 'with linearly increasing %s' % quantity
-                description += 'increases linearly'
+                summary += 'with %slinearly increasing %s' % (qualifier, quantity)
+                description += 'increases %slinearly' % qualifier
             elif lin_location > np.max(X):
-                summary += 'with linearly decreasing %s' % quantity
-                description += 'decreases linearly'
+                summary += 'with %slinearly decreasing %s' % (qualifier, quantity)
+                description += 'decreases %slinearly' % qualifier
             else:
-                summary += 'with %s increasing linearly away from %s' % (quantity, english_point(lin_location, unit, X))
-                description += 'increases linearly away from %s' % english_point(lin_location, unit, X)
+                summary += 'with %s increasing %slinearly away from %s' % (quantity, qualifier, english_point(lin_location, unit, X))
+                description += 'increases %slinearly away from %s' % (qualifier, english_point(lin_location, unit, X))
         elif lin_count <= len(poly_names):
-            summary += 'with %sly varying %s' % (poly_names[lin_count-1], quantity)
-            description += 'varies %sly' % poly_names[lin_count-1]
+            summary += 'with %s%sly varying %s' % (qualifier, poly_names[lin_count-1], quantity)
+            description += 'varies %s%sly' % (qualifier, poly_names[lin_count-1])
         else:
-            summary += 'with %s given by a polynomial of degree %d' % (quantity, lin_count)
-            description += 'is given by a polynomial of degree %d' % lin_count
+            summary += 'with %s given %sby a polynomial of degree %d' % (qualifier, quantity, lin_count)
+            description += 'is given %sby a polynomial of degree %d' % (qualifier, lin_count)
     elif (exp_count > 0) and (lin_count == 0):
         description += 'The %s of the %s ' % (quantity, componenet)
         if exp_rate > 0:
-            summary = 'with exponentially increasing %s' % quantity
-            description += 'increases exponentially'
+            summary = 'with exponentially %sincreasing %s' % (qualifier, quantity)
+            description += 'increases %sexponentially' % qualifier
         else:
-            summary = 'with exponentially decreasing %s' % quantity
-            description += 'decreases exponentially'
+            summary = 'with exponentially %sdecreasing %s' % (qualifier, quantity)
+            description += 'decreases %sexponentially' % (qualifier)
     else:
         #### TODO - this is the product of lin and exp - explanantions can be made nicer by looking for turning points
         if exp_rate > 0:
-            description += 'The %s of the %s is given by the product of a polynomial of degree %d and an increasing exponential function' % (quantity, component, lin_count)
-            summary += 'with %s given by a product of a polynomial of degree %d and an increasing exponential function' % (quantity, lin_count)
+            description += 'The %s of the %s is given %sby the product of a polynomial of degree %d and an increasing exponential function' % (quantity, component, qualifier, lin_count)
+            summary += 'with %s given %sby a product of a polynomial of degree %d and an increasing exponential function' % (quantity, qualifier, lin_count)
         else:
-            description += 'The %s of the %s is given by the product of a polynomial of degree %d and a decreasing exponential function' % (quantity, component, lin_count)
-            summary += 'with %s given by a product of a polynomial of degree %d and a decreasing exponential function' % (quantity, lin_count)
+            description += 'The %s of the %s is given %sby the product of a polynomial of degree %d and a decreasing exponential function' % (quantity, component, qualifier, lin_count)
+            summary += 'with %s given %sby a product of a polynomial of degree %d and a decreasing exponential function' % (quantity, qualifier, lin_count)
     return (summary, description)
                     
 def translate_product(prod, X, monotonic, gradient, unit=''):
@@ -231,7 +231,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     per_count = 0
     cos_count = 0
     exp_count = 0
-    noi_count = 0
+    noi_count = 0 # Noise components
     imt_count = 0 # Integrated Matern components
     unk_count = 0 # 'Unknown' kernel function
     per_kernels = []
@@ -239,7 +239,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     min_period = np.Inf
     gradient = None
     lin_location = None
-    # Count calculate a variety of summary quantities
+    # Count kernels and calculate a variety of summary quantities
     for k in kernels:
         if isinstance(k, fk.SqExpKernel) or isinstance(k, fk.Matern5Kernel):
             #### FIXME - How accurate is it to assume that SqExp and Matern lengthscales multiply similarly
@@ -287,19 +287,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
         descriptions.append('This component is constant')      
     elif (los_count > 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
         # This is a pure smooth and local component (possibly with parametric variance)
-        if lengthscale > 2 * domain_range:
-            #### FIXME - Near Linear * Linear = Near Quadratic
-            if monotonic == 1:
-                summary = 'A near-linear monotonically increasing function'
-                descriptions.append('This function is near-linear and monotonically increasing')
-            elif monotonic == -1:
-                summary = 'A near-linear monotonically decreasing function'
-                descriptions.append('This function is near-linear and monotonically decreasing')
-            else:
-                # It has a changepoint in the data - safest just to comment on how smooth it is
-                summary = 'A very smooth function'
-                descriptions.append('This function is very smooth')
-        elif lengthscale > 0.5 * domain_range:
+        if lengthscale > 0.5 * domain_range:
             if monotonic == 1:
                 summary = 'A very smooth monotonically increasing function'
                 descriptions.append('This function is very smooth and monotonically increasing')
@@ -323,6 +311,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 summary = 'A smooth function'
                 descriptions.append('This component is a smooth function with a typical lengthscale of %s' % english_length(lengthscale, unit))
         if lin_count + exp_count > 0:
+            # Parametric variance
             (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
             descriptions.append(var_description)
             summary += ' %s' % var_summary
@@ -344,49 +333,136 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             descriptions.append('This component is a polynomial of degree %d' % lin_count)
     elif (per_count > 0) or (cos_count > 0) and (imt_count == 0):
         if ((per_count == 1) and (cos_count == 0)) or ((per_count == 0) and (cos_count == 1)):
-            if per_count == 1:
-                k = per_kernels[0]
-            else:
-                k = cos_kernels[0]
-            main_description = 'This component is '
-            #if los_count > 0:
-            #    main_description += 'approximately '
-            if los_count > 0:
-                summary = 'An approximately '
-            else:
-                summary = 'A '
-            if per_count == 1:
-                summary += 'periodic function'
-                main_description += 'periodic '
-            else:
-                summary += 'sinusoidal function'
-                main_description += 'sinusoidal '
-            summary += ' with a period of %s' % english_length(np.exp(k.period), unit)
-            main_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
-            descriptions.append(main_description)
-            if lin_count + exp_count > 0:
-                (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
-                descriptions.append(var_description)
-                summary += ' %s' % var_summary
-            if los_count > 0:
-                if lengthscale > domain_range:
-                    descriptions.append('The exact form of the function changes smoothly but very slowly')
+            k = per_kernels[0] if per_count == 1 else cos_kernels[0]
+            if (lin_count + exp_count == 0) and (los_count == 0):
+                # Pure periodic
+                summary = 'An exactly '
+                main_description = 'This component is exactly '
+                if per_count == 1:
+                    summary += 'periodic function '
+                    main_description += 'periodic '
                 else:
-                    descriptions.append('The exact form of the function changes smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
-                # Compute 50% prior credible interval
+                    summary += 'sinusoidal function '
+                    main_description += 'sinusoidal '
+                summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                main_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                descriptions.append(main_description)
+                if per_count == 1:
+                    #### FIXME - this correspondence is only approximate
+                    per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
+                    if k.lengthscale > 2:
+                        descriptions.append('The shape of the function within each period is very smooth and resembles a sinusoid')
+                    else:
+                        descriptions.append('The shape of the function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
+            elif (lin_count + exp_count == 0) and (los_count > 0):
+                # Approx periodic
                 lower_per = 1.0 / (np.exp(-k.period) + scipy.stats.norm.isf(0.25) / lengthscale)
                 upper_per = 1.0 / (np.exp(-k.period) - scipy.stats.norm.isf(0.25) / lengthscale)
                 if upper_per < 0:
-                    upper_per = np.Inf
-                    descriptions.append('More exactly, the kernel for this component expresses a prior of a mixture of periodic components but since the 50\% maximum density interval includes non-periodic functions (infinite period) this component may more closely resemble a non-periodic smooth function\\fTBD{Need to find better wording for this Fourier transform based comment}')
+                    # This will probably look more like noise
+                    summary = 'A very approximately '
+                    main_description = 'This component is very approximately '
+                    if per_count == 1:
+                        summary += 'periodic function '
+                        main_description += 'periodic '
+                    else:
+                        summary += 'sinusoidal function '
+                        main_description += 'sinusoidal '
+                    summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                    main_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                    descriptions.append(main_description)
+                    descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
+                    descriptions.append('Since this lengthscale is small relative to the period this component may more closely resemble a non-periodic smooth function')
                 else:
-                    descriptions.append('More exactly, the kernel for this component expresses a prior of a mixture of periodic components with 50\%% of those periods in the range %s to %s\\fTBD{Need to find better wording for this Fourier transform based comment}' % (english_length(lower_per, unit), english_length(upper_per, unit)))
-            if per_count == 1:
-                #### FIXME - this correspondence is only approximate - based on small angle approx
-                per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
-                descriptions.append('The typical lengthscale of the periodic function is %s' % english_length(per_lengthscale, unit))
-                if per_lengthscale > 2*np.exp(k.period):
-                    descriptions.append('The lengthscale of this periodic function is greater than twice its period so the function is almost sinusoidal')
+                    summary = 'An approximately '
+                    main_description = 'This component is approximately '
+                    if per_count == 1:
+                        summary += 'periodic function '
+                        main_description += 'periodic '
+                    else:
+                        summary += 'sinusoidal function '
+                        main_description += 'sinusoidal '
+                    summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                    main_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                    descriptions.append(main_description)
+                    if lengthscale > 0.5 * domain_range:
+                        descriptions.append('Across periods the shape of the function varies very smoothly')
+                    else:
+                        descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))   
+                    if per_count == 1:
+                        per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
+                        if k.lengthscale > 2:
+                            descriptions.append('The shape of the function within each period is very smooth and resembles a sinusoid')
+                        else:
+                            descriptions.append('The shape of the function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
+            elif (lin_count + exp_count > 0) and (los_count == 0):
+                # Pure periodic but with changing amplitude
+                summary = 'An exactly '
+                main_description = 'This component is exactly '
+                if per_count == 1:
+                    summary += 'periodic function '
+                    main_description += 'periodic '
+                else:
+                    summary += 'sinusoidal function '
+                    main_description += 'sinusoidal '
+                summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                main_description += 'with a period of %s but with varying amplitude' % english_length(np.exp(k.period), unit)
+                descriptions.append(main_description)
+                (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function')
+                descriptions.append(var_description)
+                summary += ' but %s' % var_summary
+                if per_count == 1:
+                    per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
+                    if k.lengthscale > 2:
+                        descriptions.append('The shape of the function within each period is very smooth and resembles a sinusoid')
+                    else:
+                        descriptions.append('The shape of the function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
+            else:
+                lower_per = 1.0 / (np.exp(-k.period) + scipy.stats.norm.isf(0.25) / lengthscale)
+                upper_per = 1.0 / (np.exp(-k.period) - scipy.stats.norm.isf(0.25) / lengthscale)
+                if upper_per < 0:
+                    # This will probably look more like noise
+                    summary = 'A very approximately '
+                    main_description = 'This component is very approximately '
+                    if per_count == 1:
+                        summary += 'periodic function '
+                        main_description += 'periodic '
+                    else:
+                        summary += 'sinusoidal function '
+                        main_description += 'sinusoidal '
+                    summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                    main_description += 'with a period of %s and varying marginal standard deviation' % english_length(np.exp(k.period), unit)
+                    descriptions.append(main_description)
+                    descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
+                    descriptions.append('Since this lengthscale is small relative to the period this component may more closely resemble a non-periodic smooth function')
+                    (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
+                    descriptions.append(var_description)
+                    summary += ' and %s' % var_summary
+                else:
+                    summary = 'An approximately '
+                    main_description = 'This component is approximately '
+                    if per_count == 1:
+                        summary += 'periodic function '
+                        main_description += 'periodic '
+                    else:
+                        summary += 'sinusoidal function '
+                        main_description += 'sinusoidal '
+                    summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                    main_description += 'with a period of %s and varying amplitude' % english_length(np.exp(k.period), unit)
+                    descriptions.append(main_description)
+                    if lengthscale > 0.5 * domain_range:
+                        descriptions.append('Across periods the shape of the function varies very smoothly')
+                    else:
+                        descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))   
+                    (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier='approximately ')
+                    descriptions.append(var_description)
+                    summary += ' and %s' % var_summary
+                    if per_count == 1:
+                        per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
+                        if k.lengthscale > 2:
+                            descriptions.append('The shape of the function within each period is very smooth and resembles a sinusoid')
+                        else:
+                            descriptions.append('The shape of the function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
         else: # Several periodic components
             if los_count > 0:
                 summary = 'An approximate product of'
@@ -411,48 +487,14 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             elif cos_count > 1:
                 summary += ' several sinusoids'
                 main_description += ' several sinusoids'
-            if lin_count + exp_count > 0:
-                summary += ' with '
-                main_description += ' with '
-                if lin_count == 1:
-                    if lin_location < np.min(X):
-                        #if los_count > 0:
-                        #    main_description += 'approximately '
-                        summary += 'linearly increasing amplitude'
-                        main_description += 'linearly increasing amplitude'
-                    elif lin_location > np.max(X):
-                        #if los_count > 0:
-                        #    main_description += 'approximately '
-                        summary += 'linearly decreasing amplitude'
-                        main_description += 'linearly decreasing amplitude'
-                    else:
-                        summary += 'amplitude increasing '
-                        main_description += 'amplitude increasing '
-                        #if los_count > 0:
-                        #    main_description += 'approximately '
-                        summary += 'linearly away from %s' % english_point(lin_location, unit, X)
-                        main_description += 'linearly away from %s' % english_point(lin_location, unit, X)
-                elif lin_count <= len(poly_names):
-                    #if los_count > 0:
-                    #    main_description += 'approximately '
-                    summary += '%sly varying amplitude' % poly_names[lin_count-1]
-                    main_description += '%sly varying amplitude' % poly_names[lin_count-1]
-                else:
-                    summary += 'a variance that '
-                    main_description += 'a variance that '
-                    #if los_count > 0:
-                    #    main_description += 'approximately '
-                    summary += 'follows a polynomial of degree %d' % lin_count
-                    main_description += 'follows a polynomial of degree %d' % lin_count
             descriptions.append(main_description)
             if los_count > 0:
-                #### TODO - Discuss credible intervals
-                if lengthscale > domain_range:
-                    descriptions.append('The exact form of the function changes smoothly but very slowly')
-                else:
-                    descriptions.append('The exact form of the function changes smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
-                if lengthscale < min_period * 0.5:
-                    descriptions.append('Since this lengthscale is smaller than half the minimum period over the various components this function may more closely resemble a smooth function without periodicity')
+                descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
+            if lin_count + exp_count > 0:
+                qualifier = 'approximately ' if (los_count > 0) else ''
+                (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier=qualifier)
+                descriptions.append(var_description)
+                summary += ' and %s' % var_summary
             for (i, k) in enumerate(per_kernels):
                 description = 'The '
                 if i <= len(ordinal_numbers):
@@ -464,9 +506,10 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 descriptions.append(description)
                 #### FIXME - this correspondence is only approximate
                 per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
-                descriptions.append('The typical lengthscale of this function is %s' % english_length(per_lengthscale, unit))
-                if per_lengthscale > 2*np.exp(k.period):
-                    descriptions.append('The lengthscale is greater than twice the period so this function is almost sinusoidal')
+                if k.lengthscale > 2:
+                    descriptions.append('The shape of this function within each period is very smooth and resembles a sinusoid')
+                else:
+                    descriptions.append('The shape of this function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
             for (i, k) in enumerate(cos_kernels):
                 if i <= len(ordinal_numbers):
                     if len(cos_kernels) > 1:
@@ -770,26 +813,6 @@ The addition of this component reduces the cross validated MAE by %(MAE_reductio
         else:
             text += component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
                                       'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : fit_data['MAE_reductions'][i], 'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion}
-    
-    text += '''
-\subsection{Residuals}
-
-Sometimes they will look strange due to changepoints which is hinting that we should allow changepoints to apply to noise levels as well.
-In more generality, we should include noise in the kernel (\ie the white noise kernel) and allow modifications of it to be searched over as well \eg can get heteroskedasticity when multiplied by linear kernels and changepoints.
-
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{center}
-\\begin{tabular}{c}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_resid}
-\end{tabular}
-\end{center}
-\caption{Residuals}
-\label{fig:resid}
-\end{figure}
 
 \end{document}
 ''' % {'dataset_name' : dataset_name}

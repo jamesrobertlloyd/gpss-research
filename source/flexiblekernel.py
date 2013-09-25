@@ -8,6 +8,7 @@ Created Nov 2012
 
 import itertools
 import numpy as np
+inf = np.inf
 try:
     import termcolor
     has_termcolor = True
@@ -88,6 +89,10 @@ class BaseKernel(Kernel):
     def out_of_bounds(self, constraints):
         '''Most kernels are allowed to have any parameter value'''
         return False
+       
+    @property    
+    def stationary(self):
+        return True
         
 class NoiseKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1269,6 +1274,10 @@ class LinKernel(BaseKernel):
         
     def depth(self):
         return 0  
+        
+    @property    
+    def stationary(self):
+        return False
 
 class ExpKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1371,6 +1380,10 @@ class ExpKernel(BaseKernel):
         
     def depth(self):
         return 0 
+        
+    @property    
+    def stationary(self):
+        return False
         
 class StepKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1486,6 +1499,10 @@ class StepKernel(BaseKernel):
         return (self.location < constraints['input_min']) or \
                (self.location > constraints['input_max']) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3)
+        
+    @property    
+    def stationary(self):
+        return False
                
 class StepTanhKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1602,6 +1619,10 @@ class StepTanhKernel(BaseKernel):
                (self.location > constraints['input_max']) or \
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3)
         
+    @property    
+    def stationary(self):
+        return False
+        
 class IBMKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
         rate, location = params
@@ -1694,6 +1715,10 @@ class IBMKernel(BaseKernel):
         
     def depth(self):
         return 0 
+        
+    @property    
+    def stationary(self):
+        return False
         
 class IBMLinKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -1803,6 +1828,10 @@ class IBMLinKernel(BaseKernel):
     def depth(self):
         return 0 
         
+    @property    
+    def stationary(self):
+        return False
+        
 class IMT1KernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
         lengthscale, location, sf = params
@@ -1907,6 +1936,10 @@ class IMT1Kernel(BaseKernel):
         
     def out_of_bounds(self, constraints):
         return self.lengthscale < constraints['min_integral_lengthscale']
+        
+    @property    
+    def stationary(self):
+        return False
         
 class IMT1LinKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -2027,6 +2060,10 @@ class IMT1LinKernel(BaseKernel):
     def out_of_bounds(self, constraints):
         return self.lengthscale < constraints['min_integral_lengthscale']
         
+    @property    
+    def stationary(self):
+        return False
+        
 class IMT3KernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
         lengthscale, location, sf = params
@@ -2131,6 +2168,10 @@ class IMT3Kernel(BaseKernel):
         
     def out_of_bounds(self, constraints):
         return self.lengthscale < constraints['min_integral_lengthscale']
+        
+    @property    
+    def stationary(self):
+        return False
         
 class IMT3LinKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -2250,6 +2291,10 @@ class IMT3LinKernel(BaseKernel):
         
     def out_of_bounds(self, constraints):
         return self.lengthscale < constraints['min_integral_lengthscale']
+        
+    @property    
+    def stationary(self):
+        return False
 
 #### TODO - Will we ever use this - else remove  
 class QuadraticKernelFamily(BaseKernelFamily):
@@ -2334,6 +2379,10 @@ class QuadraticKernel(BaseKernel):
         
     def depth(self):
         return 0   
+        
+    @property    
+    def stationary(self):
+        return False
 
 #### TODO - Will we ever use this - else remove  
 class CubicKernelFamily(BaseKernelFamily):
@@ -2418,6 +2467,10 @@ class CubicKernel(BaseKernel):
         
     def depth(self):
         return 0   
+        
+    @property    
+    def stationary(self):
+        return False
 
 class PP0KernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -3202,6 +3255,10 @@ class MaskKernel(Kernel):
         if isinstance(constraints['min_integral_lengthscale'], (list, tuple, np.ndarray)):
             constraints['min_integral_lengthscale'] = constraints['min_integral_lengthscale'][self.active_dimension]
         return self.base_kernel.out_of_bounds(constraints)
+        
+    @property    
+    def stationary(self):
+        return self.base_kernel.stationary
     
 
 class ChangePointKernelFamily(KernelFamily):

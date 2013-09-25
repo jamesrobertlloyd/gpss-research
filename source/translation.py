@@ -187,10 +187,12 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     lin_count = 0
     per_count = 0
     cos_count = 0
+    exp_count = 0
     imt_count = 0 # Integrated Matern components
     unk_count = 0 # 'Unknown' kernel function
     per_kernels = []
     cos_kernels = []
+    exp_kernels = []
     min_period = np.Inf
     # Count calculate a variety of summary quantities
     for k in kernels:
@@ -213,6 +215,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             cos_count += 1
             cos_kernels.append(k)
             min_period = np.min([np.exp(k.period), min_period])
+        elif isinstance(k, fk.ExpKernel):
+            exp_count += 1
         elif not isinstance(k, fk.ConstKernel):
             # Cannot deal with whatever type of kernel this is
             unk_count +=1
@@ -447,6 +451,9 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     else:
         descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
         raise RuntimeError('I''m not intelligent enough to describe this kernel in natural language', prod)
+    if exp_count > 0:
+        descriptions.append('There were also some undecribed exponentials')
+        summary += '. There was also some quantity of exp'
     # Return a list of sentences
     return (summary, descriptions)
     

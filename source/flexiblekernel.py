@@ -492,12 +492,8 @@ class FourierKernel(BaseKernel):
         '''Overwrites base method, using min period to prevent Nyquist errors'''
         result = self.param_vector()
         if result[0] == 0:
-            # Min period represents a minimum sensible scale - use it for lengthscale as well
-            # Scale with data_scale though
-            if data_shape['min_period'] is None:
-                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-            else:
-                result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
+            # Lengthscale is relative to period so this parameter does not need to scale
+            result[0] = np.random.normal(loc=0, scale=sd)
         if result[1] == -2:
             #### FIXME - Caution, magic numbers
             #### Explanation : This is centered on about 20 periods
@@ -544,7 +540,6 @@ class FourierKernel(BaseKernel):
             
     def out_of_bounds(self, constraints):
         return (self.period < constraints['min_period']) or \
-               (self.lengthscale < constraints['min_lengthscale']) or \
                (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
         
 class CosineKernelFamily(BaseKernelFamily):

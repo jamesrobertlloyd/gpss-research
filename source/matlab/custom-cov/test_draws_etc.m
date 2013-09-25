@@ -116,7 +116,7 @@ x = linspace(-5, 5, 100)';
 y = cos(2.2*pi*x) + 0.1*randn(size(x)) + 0*x;
 
 cov_func = {@covFourier};
-hyp.cov = [0,0,0];
+hyp.cov = [4.9,0,0];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -124,7 +124,7 @@ hyp.mean = [];
 lik_func = @likGauss;
 hyp.lik = log(std(y) / 10);
 
-hyp = minimize(hyp, @gp, -10000, @infExact, mean_func, cov_func, lik_func, x, y);
+hyp = minimize(hyp, @gp, -2000, @infExact, mean_func, cov_func, lik_func, x, y);
 
 fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, x);
 
@@ -167,12 +167,12 @@ y = chol(K)' * randn(size(x));
 figure;
 plot(x, y);
 
-%% periodic draw
+%% Fourier draw
 
 x = linspace(0, 1000, 1000)';
 
 cov_func = {@covFourier};
-hyp.cov = [10,log(max(x)/10),log(4)];
+hyp.cov = [5,log(max(x)/10),log(4)];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-4*max(max(K))*eye(size(K));
@@ -190,7 +190,7 @@ delta = 0.0000001;
 i = 2;
 
 cov_func = {@covFourier};
-hyp1.cov = [1, 1, 1] + 0;
+hyp1.cov = [1, 1, 1] + 4.1;
 hyp2.cov = hyp1.cov;
 hyp2.cov(i) = hyp2.cov(i) + delta;
 

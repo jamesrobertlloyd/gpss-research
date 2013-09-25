@@ -165,6 +165,48 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
                 new_intervals.append((np.max([int1[0], int2[0]]), np.min([int1[1], int2[1]])))
     # Note that new_intervals may now be empty but we should recurse to return a kernel in a standard form
     return find_region_of_influence(base_kernel, new_intervals)
+    
+def translate_parametric_window(X, unit='', lin_count=0, exp_count=0, lin_location=None, exp_rate=None, quantity='standard deviation', component='function'):
+    '''
+    Translates the effect on standard deviation/amplitude/... of parametric terms (at the time of writing this is just Lin and Exp)
+    '''
+    summary = ''
+    description = ''
+    if (lin_count > 0) and (exp_count == 0):
+        description += 'The %s of the %s ' % (quantity, component)
+        if lin_count == 1:
+            if lin_location < np.min(X):
+                summary += 'with linearly increasing %s' % quantity
+                description += 'increases linearly'
+            elif lin_location > np.max(X):
+                summary += 'with linearly decreasing %s' % quantity
+                description += 'decreases linearly'
+            else:
+                summary += 'with %s increasing linearly away from %s' % (quantity, english_point(lin_location, unit, X))
+                description += 'increases linearly away from %s' % english_point(lin_location, unit, X)
+        elif lin_count <= len(poly_names):
+            summary += 'with %sly varying %s' % (poly_names[lin_count-1], quantity)
+            description += 'varies %sly' % poly_names[lin_count-1]
+        else:
+            summary += 'with %s given by a polynomial of degree %d' % (quantity, lin_count)
+            description += 'is given by a polynomial of degree %d' % lin_count
+    elif (exp_count > 0) and (lin_count == 0):
+        description += 'The %s of the %s ' % (quantity, componenet)
+        if exp_rate > 0:
+            summary = 'with exponentially increasing %s' % quantity
+            description += 'increases exponentially'
+        else:
+            summary = 'with exponentially decreasing %s' % quantity
+            description += 'decreases exponentially'
+    else:
+        #### TODO - this is the product of lin and exp - explanantions can be made nicer by looking for turning points
+        if exp_rate > 0:
+            description += 'The %s of the %s is given by the product of a polynomial of degree %d and an increasing exponential function' % (quantity, component, lin_count)
+            summary += 'with %s given by a product of a polynomial of degree %d and an increasing exponential function' % (quantity, lin_count)
+        else:
+            description += 'The %s of the %s is given by the product of a polynomial of degree %d and a decreasing exponential function' % (quantity, component, lin_count)
+            summary += 'with %s given by a product of a polynomial of degree %d and a decreasing exponential function' % (quantity, lin_count)
+    return (summary, description)
                     
 def translate_product(prod, X, monotonic, gradient, unit=''):
     '''
@@ -183,6 +225,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     # Initialise
     descriptions = []
     lengthscale = np.Inf
+    exp_rate = 0
     los_count = 0 # Local smooth components
     lin_count = 0
     per_count = 0
@@ -193,8 +236,9 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     unk_count = 0 # 'Unknown' kernel function
     per_kernels = []
     cos_kernels = []
-    exp_kernels = []
     min_period = np.Inf
+    gradient = None
+    lin_location = None
     # Count calculate a variety of summary quantities
     for k in kernels:
         if isinstance(k, fk.SqExpKernel) or isinstance(k, fk.Matern5Kernel):
@@ -218,6 +262,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             min_period = np.min([np.exp(k.period), min_period])
         elif isinstance(k, fk.ExpKernel):
             exp_count += 1
+            exp_rate += k.rate
         elif isinstance(k, fk.NoiseKernel):
             noi_count += 1
         elif not isinstance(k, fk.ConstKernel):
@@ -231,14 +276,30 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
         descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
         raise RuntimeError('I''m not intelligent enough to describe this kernel in natural language', prod)
     elif (noi_count > 0):
-        summary = 'Some sort of noise'
-        descriptions.append('This component is some sort of noise')
+        summary = 'Uncorrelated noise'
+        descriptions.append('This component models uncorrelated noise')  
+        if lin_count + exp_count > 0:
+            (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='standard deviation', component='noise')
+            descriptions.append(var_description)
+            summary += ' %s' % var_summary
     elif (los_count == 0) and (lin_count == 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
         summary = 'A constant'
-        descriptions.append('This component is constant')
+        descriptions.append('This component is constant')      
     elif (los_count > 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
-        # This is a pure smooth and local component (possibly with polynomial variance)
-        if lengthscale > domain_range:
+        # This is a pure smooth and local component (possibly with parametric variance)
+        if lengthscale > 2 * domain_range:
+            #### FIXME - Near Linear * Linear = Near Quadratic
+            if monotonic == 1:
+                summary = 'A near-linear monotonically increasing function'
+                descriptions.append('This function is near-linear and monotonically increasing')
+            elif monotonic == -1:
+                summary = 'A near-linear monotonically decreasing function'
+                descriptions.append('This function is near-linear and monotonically decreasing')
+            else:
+                # It has a changepoint in the data - safest just to comment on how smooth it is
+                summary = 'A very smooth function'
+                descriptions.append('This function is very smooth')
+        elif lengthscale > 0.5 * domain_range:
             if monotonic == 1:
                 summary = 'A very smooth monotonically increasing function'
                 descriptions.append('This function is very smooth and monotonically increasing')
@@ -261,30 +322,19 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             else:
                 summary = 'A smooth function'
                 descriptions.append('This component is a smooth function with a typical lengthscale of %s' % english_length(lengthscale, unit))
-        if lin_count > 0:
-            description = 'The variance of this function '
-            if lin_count == 1:
-                if lin_location < np.min(X):
-                    summary += ' with linearly increasing variance'
-                    description += 'increases linearly'
-                elif lin_location > np.max(X):
-                    summary += ' with linearly decreasing variance'
-                    description += 'decreases linearly'
-                else:
-                    summary += ' with variance increasing linearly away from %s' % english_point(lin_location, unit, X)
-                    description += 'increases linearly away from %s' % english_point(lin_location, unit, X)
-            elif lin_count <= len(poly_names):
-                summary += ' with %sly varying variance' % poly_names[lin_count-1]
-                description += 'varies %sly' % poly_names[lin_count-1]
-            else:
-                summary += ' with variance following a polynomial of degree' % poly_names[lin_count-1]
-                description += 'follows a polynomial of degree %d' % lin_count
-            descriptions.append(description)
+        if lin_count + exp_count > 0:
+            (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
+            descriptions.append(var_description)
+            summary += ' %s' % var_summary
     elif (los_count == 0) and (lin_count > 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
         # This is a pure polynomial component
         if lin_count == 1:
-            summary = 'A linear function with a gradient of %f' % gradient
-            descriptions.append('This component is linear with a gradient of %f' % gradient)
+            if gradient > 0:
+                summary = 'A linearly increasing function'
+                descriptions.append('This component is linearly increasing')
+            else:
+                summary = 'A linearly decreasing function'
+                descriptions.append('This component is linearly decreasing')
         elif lin_count <= len(poly_names):
             # I know a special name for this type of polynomial
             summary = 'A %s polynomial' % poly_names[lin_count-1]
@@ -313,40 +363,11 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 main_description += 'sinusoidal '
             summary += ' with a period of %s' % english_length(np.exp(k.period), unit)
             main_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
-            if lin_count > 0:
-                summary += ' with '
-                main_description += ' with '
-                if lin_count == 1:
-                    if lin_location < np.min(X):
-                        #if los_count > 0:
-                        #    main_description += 'approximately '
-                        summary += 'linearly increasing amplitude'
-                        main_description += 'linearly increasing amplitude'
-                    elif lin_location > np.max(X):
-                        #if los_count > 0:
-                        #    main_description += 'approximately '
-                        summary += 'linearly decreasing amplitude'
-                        main_description += 'linearly decreasing amplitude'
-                    else:
-                        summary += 'amplitude increasing '
-                        main_description += 'amplitude increasing '
-                        #if los_count > 0:
-                        #    main_description += 'approximately '
-                        summary += 'linearly away from %s' % english_point(lin_location, unit, X)
-                        main_description += 'linearly away from %s' % english_point(lin_location, unit, X)
-                elif lin_count <= len(poly_names):
-                    #if los_count > 0:
-                    #    main_description += 'approximately '
-                    summary += '%sly varying amplitude' % poly_names[lin_count-1]
-                    main_description += '%sly varying amplitude' % poly_names[lin_count-1]
-                else:
-                    summary += 'a variance that '
-                    main_description += 'a variance that '
-                    #if los_count > 0:
-                    #    main_description += 'approximately '
-                    summary += 'follows a polynomial of degree %d' % lin_count
-                    main_description += 'follows a polynomial of degree %d' % lin_count
             descriptions.append(main_description)
+            if lin_count + exp_count > 0:
+                (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
+                descriptions.append(var_description)
+                summary += ' %s' % var_summary
             if los_count > 0:
                 if lengthscale > domain_range:
                     descriptions.append('The exact form of the function changes smoothly but very slowly')
@@ -390,7 +411,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             elif cos_count > 1:
                 summary += ' several sinusoids'
                 main_description += ' several sinusoids'
-            if lin_count > 0:
+            if lin_count + exp_count > 0:
                 summary += ' with '
                 main_description += ' with '
                 if lin_count == 1:

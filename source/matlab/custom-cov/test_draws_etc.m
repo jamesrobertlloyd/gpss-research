@@ -3,7 +3,7 @@
 x = linspace(0, 1, 1000)';
 
 cov_func = {@covSEiso};
-hyp.cov = [-1,0];
+hyp.cov = [log(3),0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));
@@ -11,6 +11,22 @@ K = K + 1e-9*max(max(K))*eye(size(K));
 y = chol(K)' * randn(size(x));
 
 plot(x, y);
+ylim([min(y)-1, max(y)+1]);
+
+%% SE * Lin draw
+
+x = linspace(0, 1, 1000)';
+
+cov_func = {@covProd, {@covSEiso, @covLINscaleshift}};
+hyp.cov = [log(3),0,-1,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+ylim([min(y)-1, max(y)+1]);
 
 %% MT1 draw
 
@@ -25,6 +41,7 @@ K = K + 1e-5*max(max(K))*eye(size(K));
 y = chol(K)' * randn(size(x));
 
 plot(x, y);
+ylim([min(y)-1, max(y)+1]);
 
 %% MT3 draw
 

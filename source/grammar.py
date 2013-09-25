@@ -455,6 +455,23 @@ def remove_redundancy(k, additive_mode=False):
         if SE_count > 1:
             #### FIXME - assuming 1d
             ops = not_SE_ops + [fk.MaskKernel(1, 0, fk.SqExpKernel(lengthscale=lengthscale, output_variance=output_variance))]
+        # Count the number of white noises
+        output_variance = 0
+        WN_count = 0
+        not_WN_ops = []
+        for op in ops:
+            if isinstance(op, fk.NoiseKernel):
+                WN_count += 1
+                output_variance += op.output_variance
+            elif isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.NoiseKernel):
+                WN_count += 1
+                output_variance += op.base_kernel.output_variance
+            else:
+                not_WN_ops.append(op)
+        # Compactify if necessary
+        if WN_count > 1:
+            #### FIXME - assuming 1d
+            ops = not_WN_ops + [fk.MaskKernel(1, 0, fk.NoiseKernel(output_variance=output_variance))]
         # Now count the number of constants
         output_variance = 0
         const_count = 0

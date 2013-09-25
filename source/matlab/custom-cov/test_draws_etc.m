@@ -111,22 +111,22 @@ hold off;
 
 %% Fourier fit
 
-x = linspace(-5, 5, 100)';
+%x = linspace(-5, 5, 100)';
 %y = cos(1.8*pi*x) + 0.1*randn(size(x));
-y = cos(2.2*pi*x) + 0.1*randn(size(x)) + 0*x;
+%y = cos(2.2*pi*x) + 0.1*randn(size(x)) + 0*x;
 
-cov_func = {@covFourier};
-hyp.cov = [4.9,0,0];
+cov_func = {@covSum, {@covFourier, @covNoise}};
+hyp.cov = [4.9,0,0,-5];
 
 mean_func = @meanZero;
 hyp.mean = [];
 
-lik_func = @likGauss;
-hyp.lik = log(std(y) / 10);
+lik_func = @likDelta;
+hyp.lik = [];
 
-hyp = minimize(hyp, @gp, -2000, @infExact, mean_func, cov_func, lik_func, x, y);
+hyp = minimize(hyp, @gp, -2000, @infDelta, mean_func, cov_func, lik_func, x, y);
 
-fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, x);
+fit = gp(hyp, @infDelta, mean_func, cov_func, lik_func, x, y, x);
 
 plot(x, y, 'o');
 hold on;
@@ -186,11 +186,11 @@ plot(x, y);
 
 x = linspace(-5, 5, 1000)';
 
-delta = 0.0000001;
+delta = 0.000001;
 i = 2;
 
 cov_func = {@covFourier};
-hyp1.cov = [1, 1, 1] + 4.1;
+hyp1.cov = [1, 1, 1] + 3.99;
 hyp2.cov = hyp1.cov;
 hyp2.cov(i) = hyp2.cov(i) + delta;
 

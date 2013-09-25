@@ -88,6 +88,98 @@ class BaseKernel(Kernel):
     def out_of_bounds(self, constraints):
         '''Most kernels are allowed to have any parameter value'''
         return False
+        
+class NoiseKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        output_variance, = params # N.B. - expects list input
+        return NoiseKernel(output_variance)
+    
+    def num_params(self):
+        return 1
+    
+    def pretty_print(self):
+        return colored('WN', self.depth())
+    
+    def default(self):
+        return NoiseKernel(0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'Noise'
+    
+    @staticmethod    
+    def description():
+        return "Noise"
+
+    @staticmethod    
+    def params_description():
+        return "Output variance"        
+    
+class NoiseKernel(BaseKernel):
+    def __init__(self, output_variance):
+        self.output_variance = output_variance
+        
+    def family(self):
+        return NoiseKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covNoise}'
+    
+    def english_name(self):
+        return 'WN'
+    
+    def id_name(self):
+        return 'Noise'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.output_variance])
+
+    def copy(self):
+        return NoiseKernel(self.output_variance)
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            # Set scale factor with 1/10 data std or neutrally
+            if np.random.rand() < 0.5:
+                result[0] = np.random.normal(loc=data_shape['output_scale']-np.log(10), scale=sd)
+            else:
+                result[0] = np.random.normal(loc=0, scale=sd)
+        return result
+    
+    def __repr__(self):
+        return 'NoiseKernel(output_variance=%f)' % \
+            (self.output_variance)
+    
+    def pretty_print(self):
+        return colored('WN(sf=%1.1f)' % (self.output_variance),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'WN'    
+    
+    def id_name(self):
+        return 'Noise'       
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.output_variance - other.output_variance]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+        
+    def depth(self):
+        return 0    
 
 class SqExpKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -4158,7 +4250,8 @@ def base_kernel_families(base_kernel_names):
                    StepKernelFamily(), \
                    StepTanhKernelFamily(), \
                    FourierKernelFamily(), \
-                   ExpKernelFamily()]:
+                   ExpKernelFamily(), \
+                   NoiseKernelFamily()]:
         if family.id_name() in base_kernel_names.split(','):
             yield family
    

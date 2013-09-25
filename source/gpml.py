@@ -267,6 +267,97 @@ save( '%(writefile)s', 'hyp_opt', 'best_nll', 'nlls', 'hessian' , 'npll', 'mae',
 %% exit();
 """
 
+OPTIMIZE_KERNEL_CODE_ZERO_MEAN_MODEL_NOISE = r"""
+rand('twister', %(seed)s);
+randn('state', %(seed)s);
+
+a='Load the data, it should contain X and y.'
+load '%(datafile)s'
+X = double(X)
+y = double(y)
+
+X_full = X;
+y_full = y;
+
+if %(subset)s & (%(subset_size)s < size(X, 1))
+    subset = randsample(size(X, 1), %(subset_size)s, false)
+    X = X_full(subset,:);
+    y = y_full(subset);
+end
+
+%% Load GPML
+addpath(genpath('%(gpml_path)s'));
+
+%% Set up model.
+meanfunc = {@meanZero}
+hyp.mean = [];
+
+covfunc = %(kernel_family)s
+hyp.cov = %(kernel_params)s
+
+likfunc = @likDelta
+hyp.lik = []
+
+%% Repeat...
+[hyp_opt, nlls] = minimize(hyp, @gp, -int32(%(iters)s * 3 / 3), @infDelta, meanfunc, covfunc, likfunc, X, y);
+%% ...optimisation - hopefully restarting optimiser will make it more robust to scale issues
+%% [hyp_opt, nlls_2] = minimize(hyp_opt, @gp, -int32(%(iters)s * 3 / 3), @infDelta, meanfunc, covfunc, likfunc, X, y);
+%% nlls = [nlls_1; nlls_2];
+%% best_nll = nlls(end)
+
+%% Optimise on full data
+if %(full_iters)s > 0
+    hyp_opt = minimize(hyp_opt, @gp, -%(full_iters)s, @infDelta, meanfunc, covfunc, likfunc, X_full, y_full);
+end
+
+%% Evaluate the nll on the full data
+best_nll = gp(hyp_opt, @infDelta, meanfunc, covfunc, likfunc, X_full, y_full)
+
+%% Compute Hessian numerically for laplace approx
+num_hypers = length(hyp_opt.cov);
+hessian = NaN(num_hypers, num_hypers);
+delta = 1e-6;
+a='Get original gradients';
+[nll_orig, dnll_orig] = gp(hyp_opt, @infDelta, meanfunc, covfunc, likfunc, X, y);
+for d = 1:(num_hypers)
+    dhyp_opt = hyp_opt;
+    dhyp_opt.cov(d) = dhyp_opt.cov(d) + delta;
+    [nll_delta, dnll_delta] = gp(dhyp_opt, @infDelta, meanfunc, covfunc, likfunc, X, y);
+    hessian(d, :) = ([dnll_delta.cov] - [dnll_orig.cov]) ./ delta;
+end
+hessian = 0.5 * (hessian + hessian');
+%% hessian = hessian + 1e-6*max(max(hessian))*eye(size(hessian));
+
+%% Compute prediction error
+
+folds = length(X_train);
+for fold = 1:folds
+    X_train{fold} = double(X_train{fold});
+    X_valid{fold} = double(X_valid{fold});
+    y_train{fold} = double(y_train{fold});
+    y_valid{fold} = double(y_valid{fold});
+end
+
+hyp_opt.lik = -Inf
+
+try
+    npll = neg_pred_lik(hyp_opt, meanfunc, covfunc, likfunc, X_train, y_train, X_valid, y_valid);
+catch
+    npll = NaN
+end
+
+try
+    mae = MAE(hyp_opt, meanfunc, covfunc, likfunc, X_train, y_train, X_valid, y_valid);
+catch
+    mae = NaN
+end
+
+std_ratio = NaN
+
+save( '%(writefile)s', 'hyp_opt', 'best_nll', 'nlls', 'hessian' , 'npll', 'mae', 'std_ratio');
+%% exit();
+"""
+
 class OptimizerOutput:
     def __init__(self, kernel_hypers, nll, npll, nlls, mae, std_ratio, hessian, noise_hyp):
         self.kernel_hypers = kernel_hypers
@@ -278,7 +369,8 @@ class OptimizerOutput:
         self.hessian = hessian
         self.noise_hyp = noise_hyp
 
-def optimize_params(kernel_expression, kernel_init_params, X, y, return_all=False, verbose=False, noise=None, iters=300, zero_mean=False, random_seed=0):
+#### FIXME - is this function ever called?
+def optimize_params(kernel_expression, kernel_init_params, X, y, return_all=False, verbose=False, noise=None, iters=300, zero_mean=False, random_seed=0, model_noise=False):
     if X.ndim == 1:
         X = X[:, nax]
     if y.ndim == 1:
@@ -304,7 +396,10 @@ def optimize_params(kernel_expression, kernel_init_params, X, y, return_all=Fals
                    'iters': str(iters),
                    'seed': str(random_seed)}
     if zero_mean:
-        code = OPTIMIZE_KERNEL_CODE_ZERO_MEAN % parameters
+        if no_noise:
+            code = OPTIMIZE_KERNEL_CODE_ZERO_MEAN_MODEL_NOISE % parameters
+        else:
+            code = OPTIMIZE_KERNEL_CODE_ZERO_MEAN % parameters
     else:
         code = OPTIMIZE_KERNEL_CODE % parameters
     run_matlab_code(code, verbose)

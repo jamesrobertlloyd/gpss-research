@@ -73,8 +73,22 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     # Initialise random seeds - randomness may be used in e.g. data subsetting
     utils.misc.set_all_random_seeds(exp.random_seed)
 
-    # Initialise kernels to be all base kernels along all dimensions.
-    current_kernels = list(fk.base_kernels(D, exp.base_kernels))
+    if not exp.model_noise:
+        # Initialise kernels to be all base kernels along all dimensions.
+        current_kernels = list(fk.base_kernels(D, exp.base_kernels))
+    else:
+        # Initialise to white noise kernel
+        #### FIXME - no need in principle for the mask kernel
+        current_kernels = [fk.MaskKernel(D,0,fk.NoiseKernelFamily().default())]
+        # And then expand as per usual
+        current_kernels = grammar.expand_kernels(D, current_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels)
+        # Convert to additive form if desired
+        if exp.additive_form:
+            current_kernels = [grammar.additive_form(k) for k in current_kernels]
+            # Using regular expansion rules followed by forcing additive results in lots of redundancy
+            # TODO - this should happen always when other parts of code fixed
+            # Remove any duplicates
+            current_kernels = grammar.remove_duplicates(current_kernels)  
     
     # Create location, scale and minimum period parameters to pass around for initialisations
     data_shape = {}
@@ -145,7 +159,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         # Optimise parameters of and score the kernels
         new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
                                           zip_files=True, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed,
-                                          subset=exp.subset, subset_size=exp.subset_size, full_iters=exp.full_iters, bundle_size=exp.bundle_size)
+                                          subset=exp.subset, subset_size=exp.subset_size, full_iters=exp.full_iters, bundle_size=exp.bundle_size,
+                                          model_noise=exp.model_noise)
                                           
         #print 'Raw results'
         #for result in new_results:
@@ -298,7 +313,7 @@ def gen_all_datasets(dir):
 
 # Defines a class that keeps track of all the options for an experiment.
 # Maybe more natural as a dictionary to handle defaults - but named tuple looks nicer with . notation
-class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, additive_form, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size')):
+class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, additive_form, zero_mean, model_noise, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
                 results_dir,                  # Where to write the results.
@@ -319,6 +334,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 base_kernels='SE,Per,Lin,Const',
                 additive_form=False,          # Restrict kernels to be in an additive form?
                 zero_mean=True,               # If false, use a constant mean function - cannot be used with the Const kernel
+                model_noise=False,            # If true, the noise is included in the kernel and searched over
                 verbose_results=False,        # Whether or not to record all kernels tested
                 random_seed=0,
 		        use_min_period=True,          # Whether to not let the period in a periodic kernel be smaller than the minimum period.
@@ -330,7 +346,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 subset_size=250,              # Size of data subset
                 full_iters=0,                 # Number of iterations to perform on full data after subset optimisation
                 bundle_size=1):               # Number of kernel evaluations per job sent to cluster 
-        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, additive_form, zero_mean, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size)
+        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, additive_form, zero_mean, model_noise, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size)
 
 def experiment_fields_to_str(exp):
     str = "Running experiment:\n"

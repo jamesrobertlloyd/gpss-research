@@ -1,4 +1,4 @@
-function K = covCos(hyp, x, z, i)
+function K = covExp(hyp, x, z, i)
 
 % Simple exponential function - for windowing other functions
 % Initially trying an over-parametrised version

@@ -186,10 +186,10 @@ plot(x, y);
 
 %% Fourier draw
 
-x = linspace(0, 1000, 1000)';
+x = linspace(0, 10, 1000)';
 
 cov_func = {@covFourier};
-hyp.cov = [1.5,log(max(x)/10),log(4)];
+hyp.cov = [3,log(max(x))-3.2,log(4)];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-6*max(max(K))*eye(size(K));
@@ -1469,11 +1469,11 @@ max(max(abs(diff - deriv)))
 
 %% exp x Fourier draw
 
-l = 2000;
+l = 10;
 x = linspace(0, l, 1000)';
 
 cov_func = {@covProd, {@covExp, @covFourier}};
-hyp.cov = [2.5/l,0,0,0,log(l)-log(20),0];
+hyp.cov = [2/l,0*l/2,0,0,log(l)-log(20),0];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));

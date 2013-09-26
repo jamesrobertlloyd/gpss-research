@@ -248,7 +248,7 @@ class SqExpKernel(BaseKernel):
             if np.random.rand() < 0.5:
                 result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
             else:
-                # Long lengthscale ~ infty
+                # Long lengthscale ~ infty = neutral
                 result[0] = np.random.normal(loc=np.log(2*(data_shape['input_max']-data_shape['input_min'])), scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale or neutrally
@@ -593,13 +593,19 @@ class FourierKernel(BaseKernel):
             result[0] = np.random.normal(loc=0, scale=sd)
         if result[1] == -2:
             #### FIXME - Caution, magic numbers
-            #### Explanation : This is centered on about 20 periods
+            #### Explanation : This is centered on about 25 periods
             # Min period represents a minimum sensible scale
-            # Scale with data_scale
-            if data_shape['min_period'] is None:
-                result[1] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+            # Scale with data_scale or data range
+            if np.random.rand() < 0.5:
+                if data_shape['min_period'] is None:
+                    result[1] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+                else:
+                    result[1] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
             else:
-                result[1] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
+                if data_shape['min_period'] is None:
+                    result[1] = np.random.normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd)
+                else:
+                    result[1] = utils.misc.sample_truncated_normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd, min_value=data_shape['min_period'])
         if result[2] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
@@ -1026,9 +1032,12 @@ class ConstKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # Set scale factor with max of output location and scale or neutrally
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
+            # Set scale factor with output location, scale or neutrally
+            rand = np.random.rand()
+            if rand < 1.0 / 3:
+                result[0] = np.random.normal(loc=np.log(np.abs(data_shape['output_location'])), scale=sd)
+            elif rand < 2.0 / 3:
+                result[0] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
             else:
                 result[0] = np.random.normal(loc=0, scale=sd)
         return result
@@ -1229,21 +1238,29 @@ class LinKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # Set scale factor with output location or neutrally
-            if np.random.rand() < 0.5:
-                result[0] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
-            else:
+            # Set scale factor with output location, output scale, neutrally or small
+            rand = np.random.rand()
+            if rand < 0.25:
+                result[0] = np.random.normal(loc=np.log(np.abs(data_shape['output_location'])), scale=sd)
+            elif rand < 0.5:
+                result[0] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+            elif rand < 0.75:
                 result[0] = np.random.normal(loc=0, scale=sd)
+            else:
+                result[0] = np.random.normal(loc=-2, scale=sd)
         if result[1] == 0:
             # Lengthscale scales inversely with ratio of y std and x std (gradient = delta y / delta x)
-            if np.random.rand() < 0.5:
+            # Or with gradient or a neutral value
+            rand = np.random.rand()
+            if rand < 1.0/3:
                 result[1] = np.random.normal(loc=-(data_shape['output_scale'] - data_shape['input_scale']), scale=sd)
+            elif rand < 2.0/3:
+                result[1] = np.random.normal(loc=-np.log(np.abs((data_shape['output_max']-data_shape['output_min'])/(data_shape['input_max']-data_shape['input_min']))), scale=sd)
             else:
                 result[1] = np.random.normal(loc=0, scale=sd)
         if result[2] == 0:
-            # Location moves with input location, and variance scales in input variance
-            #### TODO - this should probably be closer to uniform (but allowed to bleed beyond edges)
-            result[2] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
+            # Uniform over 3 x data range
+            result[2] = np.random.uniform(low=2*data_shape['input_min']-data_shape['input_max'], high=2*data_shape['input_max']-data_shape['input_min'])
         return result
         
     def effective_params(self):
@@ -1338,16 +1355,18 @@ class ExpKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # This expresses a belief of moderate variation over the range - moderate defined by eye
-            result[0] = np.random.normal(loc=0, scale=2.5/(data_shape['input_max'] - data_shape['input_min']))
+            # Designed to give sensible standard deviation
+            result[0] = np.random.normal(loc=0, scale=2.0/(data_shape['input_max'] - data_shape['input_min']))
         if result[1] == 0:
-            # Location moves with input location, and variance scales in input variance
-            #### TODO - this should probably be closer to uniform (but allowed to bleed beyond edges)
-            result[1] = np.random.normal(loc=data_shape['input_location'], scale=0.5*sd*np.exp(data_shape['input_scale']))
+            # The location is not necessary - just helpful for numerical stability probably - it should be near to the middle of the data
+            result[1] = np.random.uniform(low=data_shape['input_min']+0.33*(data_shape['input_max']-data_shape['input_min']), high=data_shape['input_max']-0.33*(data_shape['input_max']-data_shape['input_min']))
         if result[2] == 0:
-            # Set scale factor with output location or neutrally
-            if np.random.rand() < 0.5:
-                result[2] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
+            # Set scale factor with output location, output scale or neutrally
+            rand = np.random.rand()
+            if rand < 1.0/3:
+                result[2] = np.random.normal(loc=np.log(np.abs(data_shape['output_location'])), scale=sd)
+            elif rand < 2.0/3:
+                result[2] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
             else:
                 result[2] = np.random.normal(loc=0, scale=sd)
         return result

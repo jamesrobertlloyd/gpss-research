@@ -96,6 +96,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     data_shape['output_location'] = np.mean(y)
     data_shape['input_scale'] = np.log([np.std(X[:,dim]) for dim in range(X.shape[1])])
     data_shape['output_scale'] = np.log(np.std(y)) 
+    data_shape['output_min'] = np.min(y)
+    data_shape['output_max'] = np.max(y)
     ##### FIXME - only works in one dimension
     data_shape['input_min'] = [np.min(X[:,dim]) for dim in range(X.shape[1])][0]
     data_shape['input_max'] = [np.max(X[:,dim]) for dim in range(X.shape[1])][0]

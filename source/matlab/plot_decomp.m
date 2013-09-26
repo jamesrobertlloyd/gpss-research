@@ -352,6 +352,49 @@ for j = 1:min(numel(decomp_list), max_depth)
     %fprintf([latex_names{i}, '\n']);
     filename = sprintf('%s_%d_cum.fig', figname, j);
     saveas( gcf, filename );
+    
+    % Compute mean and variance for this kernel.
+    
+    decomp_sigma = feval(cur_cov{:}, cur_hyp, X, X);
+    decomp_sigma_star = feval(cur_cov{:}, cur_hyp, X, xrange);
+    decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange, xrange);
+    decomp_mean = decomp_sigma_star' / complete_sigma * y;
+    decomp_var = diag(decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star);
+    
+    var(y-decomp_sigma' / complete_sigma * y);    
+    
+    data_mean = decomp_sigma' / complete_sigma * y;
+    data_var = diag(decomp_sigma - decomp_sigma' / complete_sigma * decomp_sigma);
+    cum_SNRs(j) = 10 * log10(sum(data_mean.^2)/sum(data_var));
+    cum_vars(j) = (1 - var(y - data_mean) / var(y)) * 100;
+    cum_resid_vars(j) = (1 - var(y - data_mean) / var(resid)) * 100;
+    resid = y - data_mean;
+    
+    figure(i + 1); clf; hold on;
+    mean_var_plot( X*X_scale+X_mean, y*y_scale, ...
+                   xrange*X_scale+X_mean, ...
+                   decomp_mean*y_scale, 2.*sqrt(decomp_var)*y_scale, false, false);
+    
+    latex_names{i} = strrep(latex_names{i}, '\left', '');
+    latex_names{i} = strrep(latex_names{i}, '\right', '');
+    %title(['The above + ' latex_names{i}]);
+    title(sprintf('Sum of components up to component %d', j));
+    %fprintf([latex_names{i}, '\n']);
+    filename = sprintf('%s_%d_cum_extrap.fig', figname, j);
+    saveas( gcf, filename );
+    
+    posterior_sigma = decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star;
+    figure(i + 1); clf; hold on;
+    sample_plot( X*X_scale+X_mean, xrange*X_scale+X_mean, ...
+                 decomp_mean*y_scale, posterior_sigma);
+    
+    latex_names{i} = strrep(latex_names{i}, '\left', '');
+    latex_names{i} = strrep(latex_names{i}, '\right', '');
+    %title(['The above + ' latex_names{i}]);
+    title(sprintf('Random samples from the cumulative posterior', j));
+    %fprintf([latex_names{i}, '\n']);
+    filename = sprintf('%s_%d_cum_sample.fig', figname, j);
+    saveas( gcf, filename );
 end
 
 % Save data to file
@@ -463,7 +506,7 @@ function sample_plot( xdata, xrange, forecast_mu, forecast_sigma )
     
     set(gca,'Layer','top');  % Stop axes from being overridden.
     
-    K = forecast_sigma + 10e-6*eye(size(forecast_sigma))*max(max(forecast_sigma));
+    K = forecast_sigma + 10e-5*eye(size(forecast_sigma))*max(max(forecast_sigma));
     L = chol(K);
  
     sample = forecast_mu + L' * randn(size(forecast_mu));

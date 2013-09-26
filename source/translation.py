@@ -849,7 +849,8 @@ Some discussion about extrapolation.
 \\newcommand{\mdrd}{figures/%(dataset_name)s}
 \\newcommand{\mbm}{\hspace{-0.3cm}}
 \\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_sample}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_sample} \\\\
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_sample}
 \end{tabular}
 \caption{Posterior of component %(component)d. Mean and pointwise variance (left) and three random samples from this distribution (right)}
 \label{fig:extrap%(component)d}

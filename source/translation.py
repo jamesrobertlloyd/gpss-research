@@ -640,7 +640,7 @@ See \url{http://arxiv.org/abs/1302.4922} for a preliminary paper and see \url{ht
 
 \section{Executive summary}
 
-The raw data and full model posterior are shown in figure~\\ref{fig:rawandfit}.
+The raw data and full model posterior with extrapolations are shown in figure~\\ref{fig:rawandfit}.
 
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
@@ -695,14 +695,14 @@ The structure search algorithm has identified %(n_components)s additive componen
                     else:
                         text += 'component'
                     text += ' the cross validated mean absolute error (MAE) does not decrease by more than 0.1\%'
-                    text += '.\nThis suggests that subsequent terms are modelling very short term trends, uncorrelated noise or are artefacts of the search procedure.'
+                    text += '.\nThis suggests that subsequent terms are modelling very short term trends, uncorrelated noise or are artefacts of the model or search procedure.'
                 else:
                     text += 'No single component reduces the cross validated mean absolute error (MAE) by more than 0.1\%'
                     text += '.\nThis suggests that the structure search algorithm has not found anything other than very short term trends or uncorrelated noise.'
                 break
                 
     text +='''
-High level descriptions of the additive components are as follows:
+Short summaries of the additive components are as follows:
 \\begin{itemize}
 '''
 
@@ -722,29 +722,30 @@ High level descriptions of the additive components are as follows:
 \\begin{table}[htb]
 \\begin{center}
 {\small
-\\begin{tabular}{|r|r|rrrr|}
+\\begin{tabular}{|r|rrrrr|}
 \hline
-& \multicolumn{1}{c|}{\\bf{Additive components}} & \multicolumn{4}{c|}{\\bf{Cumulative fit}}\\\\
-\\bf{\#} & {$R^2$ (\%%)}& {$R^2$ (\%%)} & {Residual $R^2$ (\%%)} & {Cross validated MAE} & Reduction in MAE (\%%)\\\\
+\\bf{\#} & {$R^2$ (\%%)} & {$\Delta R^2$ (\%%)} & {Residual $R^2$ (\%%)} & {Cross validated MAE} & Reduction in MAE (\%%)\\\\
 \hline
-0 & - & - & - & %1.2f & -\\\\
+- & - & - & - & %1.2f & -\\\\
 ''' % fit_data['MAV_data']
 
     table_text = '''
 %d & %2.1f & %2.1f & %2.1f & %1.2f & %2.1f\\\\
 '''
 
+    cum_var_deltas = [fit_data['cum_vars'][0]] + list(np.array(fit_data['cum_vars'][1:]) - np.array(fit_data['cum_vars'][:-1]))
+
     for i in range(n_components):
-        text += table_text % (i+1, fit_data['vars'][i], fit_data['cum_vars'][i], fit_data['cum_resid_vars'][i], fit_data['MAEs'][i], fit_data['MAE_reductions'][i])
+        text += table_text % (i+1, fit_data['cum_vars'][i], cum_var_deltas[i], fit_data['cum_resid_vars'][i], fit_data['MAEs'][i], fit_data['MAE_reductions'][i])
         
     text += '''
 \hline
 \end{tabular}
 \caption{
-Summary statistics for individual additive component functions and cumulative fits.
+Summary statistics for cumulative additive fits to the data.
 The residual coefficient of determination ($R^2$) values are computed using the residuals from the previous fit as the target values; this measures how much of the residual variance is explained by each new component.
-The mean absolute error (MAE) is calculated using 10 fold cross validation with a continuous block design; this measures the ability of the model to interpolate and extrapolate.
-The model is fit using the full data so the MAE values cannot be used as an estimate of out-of-sample predictive performance.
+The mean absolute error (MAE) is calculated using 10 fold cross validation with a contiguous block design; this measures the ability of the model to interpolate and extrapolate over moderate distances.
+The model is fit using the full data so the MAE values cannot be used reliably as an estimate of out-of-sample predictive performance.
 }
 \label{table:stats}
 }
@@ -755,13 +756,12 @@ The model is fit using the full data so the MAE values cannot be used as an esti
 '''
 
     component_text = '''
-%%\subsection{Component %(component)d}
-\subsection{%(short_description)s}
+\subsection{Component %(component)d : %(short_description)s}
 
 \input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex}
 
-This component explains %(resid_var)0.1f\%% of the residual variance; this increases the total variance explained from %(prev_var)0.1f\%% to %(var)0.1f\%%.
-The addition of this component reduces the cross validated MAE by %(MAE_reduction)0.1f\%% from %(MAE_orig)0.1f to %(MAE_new)0.1f.
+This component explains %(resid_var)0.1f\%% of the residual variance; this %(incdecvar)s the total variance explained from %(prev_var)0.1f\%% to %(var)0.1f\%%.
+The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_reduction)0.2f\%% from %(MAE_orig)0.2f to %(MAE_new)0.2f.
 %(discussion)s
 
 \\begin{figure}[H]
@@ -772,18 +772,17 @@ The addition of this component reduces the cross validated MAE by %(MAE_reductio
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum}
 \end{tabular}
-\caption{Posterior of component %(component)d (left) and posterior of sum of components with data (right)}
+\caption{Posterior of component %(component)d (left) and the posterior of the cumulative sum of components with data (right)}
 \label{fig:comp%(component)d}
 \end{figure}
 '''
     first_component_text = '''
-%%\subsection{Component %(component)d}
-\subsection{%(short_description)s}
+\subsection{Component %(component)d : %(short_description)s}
 
 \input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex}
 
 This component explains %(resid_var)0.1f\%% of the total variance.
-The addition of this component reduces the cross validated MAE by %(MAE_reduction)0.1f\%% from %(MAE_orig)0.1f to %(MAE_new)0.1f.
+The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_reduction)0.1f\%% from %(MAE_orig)0.1f to %(MAE_new)0.1f.
 %(discussion)s
 
 \\begin{figure}[H]
@@ -794,7 +793,7 @@ The addition of this component reduces the cross validated MAE by %(MAE_reductio
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum}
 \end{tabular}
-\caption{Posterior of component %(component)d (left) and posterior of sum of components with data (right)}
+\caption{Posterior of component %(component)d (left) and the posterior of the cumulative sum of components with data (right)}
 \label{fig:comp%(component)d}
 \end{figure}
 '''
@@ -802,17 +801,67 @@ The addition of this component reduces the cross validated MAE by %(MAE_reductio
     for i in range(n_components):
         if fit_data['MAE_reductions'][i] < 0.1:
             if fit_data['cum_resid_vars'][i] < 0.1:
-                discussion = 'This component neither explains residual variance nor improves MAE and therefore is likely to be an artefact of the model.'
+                discussion = 'This component neither explains residual variance nor improves MAE and therefore is likely to be an artefact of the model or search procedure.'
             else:
-                discussion = 'This component explains residual variance but does not improve MAE which suggests that this component describes very short term patterns, uncorrelated noise or is an artefact of the model.'
+                discussion = 'This component explains residual variance but does not improve MAE which suggests that this component describes very short term patterns, uncorrelated noise or is an artefact of the model or search procedure.'
         else:
             discussion = ''
         if i == 0:
             text += first_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
-                                      'var' : fit_data['cum_vars'][i], 'MAE_reduction' : fit_data['MAE_reductions'][i], 'MAE_orig' : fit_data['MAV_data'], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion}
+                                      'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]), 'MAE_orig' : fit_data['MAV_data'], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
+                                      'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                      'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
         else:
             text += component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
-                                      'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : fit_data['MAE_reductions'][i], 'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion}
+                                      'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                      'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
+                                      'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                      'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+
+    text += '''
+\section{Extrapolation}
+
+Summaries of the posterior distribution of the full model are shown in figure~\\ref{fig:extrap}.
+The plot on the left displays the mean of the posterior together with pointwise variance.
+The plot on the right displays three random samples from the posterior.
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all_sample}
+\end{tabular}
+\caption{Full model posterior. Mean and pointwise variance (left) and three random samples (right)}
+\label{fig:extrap}
+\end{figure}
+''' % {'dataset_name' : dataset_name}
+
+    extrap_component_text = '''
+\subsection{Component %(component)d : %(short_description)s}
+
+Some discussion about extrapolation.
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_sample}
+\end{tabular}
+\caption{Posterior of component %(component)d. Mean and pointwise variance (left) and three random samples from this distribution (right)}
+\label{fig:extrap%(component)d}
+\end{figure}
+'''
+
+    for i in range(n_components):
+        text += extrap_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                         'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                         'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
+                                         'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                         'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
 
     text += '''
 \end{document}

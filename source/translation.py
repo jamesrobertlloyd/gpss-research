@@ -814,8 +814,9 @@ The addition of this component reduces the cross validated MAE by %(MAE_reductio
             text += component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
                                       'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : fit_data['MAE_reductions'][i], 'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion}
 
+    text += '''
 \end{document}
-''' % {'dataset_name' : dataset_name}
+'''
 
     # Document complete
     return text

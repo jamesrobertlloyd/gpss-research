@@ -509,7 +509,7 @@ function sample_plot( xdata, xrange, forecast_mu, forecast_sigma )
     set(gca,'Layer','top');  % Stop axes from being overridden.
     
     K = forecast_sigma;
-    K = K + 1e-4*eye(size(K))*max(max(K));
+    K = K + 1e-6*eye(size(K))*max(max(K));
     L = chol(K);
  
     sample = forecast_mu + L' * randn(size(forecast_mu));

@@ -26,6 +26,7 @@ xrange_no_extrap = linspace(min(X), max(X), num_interpolation_points)';
 
 noise_var = exp(2*log_noise);
 complete_sigma = feval(complete_covfunc{:}, complete_hypers, X, X) + eye(length(y)).*noise_var;
+%complete_sigma = non_singular(complete_sigma);
 complete_sigmastar = feval(complete_covfunc{:}, complete_hypers, X, xrange);
 complete_sigmastarstart = feval(complete_covfunc{:}, complete_hypers, xrange, xrange);
 
@@ -33,6 +34,7 @@ complete_sigmastarstart = feval(complete_covfunc{:}, complete_hypers, xrange, xr
 complete_mean = complete_sigmastar' / complete_sigma * y;
 complete_var = diag(complete_sigmastarstart - complete_sigmastar' / complete_sigma * complete_sigmastar);
 posterior_sigma = complete_sigmastarstart - complete_sigmastar' / complete_sigma * complete_sigmastar;
+%posterior_sigma = non_singular(posterior_sigma);
     
 figure(1); clf; hold on;
 mean_var_plot( X*X_scale+X_mean, y*y_scale+y_mean, ...
@@ -506,7 +508,8 @@ function sample_plot( xdata, xrange, forecast_mu, forecast_sigma )
     
     set(gca,'Layer','top');  % Stop axes from being overridden.
     
-    K = forecast_sigma + 10e-5*eye(size(forecast_sigma))*max(max(forecast_sigma));
+    K = forecast_sigma;
+    K = K + 1e-4*eye(size(K))*max(max(K));
     L = chol(K);
  
     sample = forecast_mu + L' * randn(size(forecast_mu));

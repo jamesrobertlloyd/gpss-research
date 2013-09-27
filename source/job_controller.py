@@ -84,7 +84,7 @@ def covariance_distance(kernels, X, local_computation=True, verbose=True):
     return distance
 
        
-def evaluate_kernels(kernels, X, y, verbose=True, noise=None, iters=300, local_computation=False, zip_files=False, max_jobs=500, zero_mean=False, random_seed=0, subset=False, subset_size=250, full_iters=0, bundle_size=1, model_noise=False):
+def evaluate_kernels(kernels, X, y, verbose=True, noise=None, iters=300, local_computation=False, zip_files=False, max_jobs=500, zero_mean=False, random_seed=0, subset=False, subset_size=250, full_iters=0, bundle_size=1, no_noise=False):
     '''
     Sets up the kernel optimisation and nll calculation experiments, returns the results as scored kernels
     Input:
@@ -158,8 +158,8 @@ def evaluate_kernels(kernels, X, y, verbose=True, noise=None, iters=300, local_c
                       'subset_size' : str(subset_size),
                       'full_iters' : str(full_iters)}
         if zero_mean:
-            if model_noise:
-                scripts[i] = gpml.OPTIMIZE_KERNEL_CODE_ZERO_MEAN_MODEL_NOISE % parameters
+            if no_noise:
+                scripts[i] = gpml.OPTIMIZE_KERNEL_CODE_ZERO_MEAN_NO_NOISE % parameters
             else:
                 scripts[i] = gpml.OPTIMIZE_KERNEL_CODE_ZERO_MEAN % parameters
         else:

@@ -1,18 +1,18 @@
-load '/var/folders/ss/chbkrr6d6rdgn0w3848wmh040000gn/T/tmphZd5Yv.mat'  % Load the data, it should contain X and y.
+load '/tmp/tmpv3QnIz.mat'  % Load the data, it should contain X and y.
 X = double(X);
 y = double(y);
 
-addpath(genpath('/Users/JamesLloyd/Documents/Cambridge/MachineLearning/Research/GPs/gpss-research/source/gpml'));
-addpath(genpath('/Users/JamesLloyd/Documents/Cambridge/MachineLearning/Research/GPs/gpss-research/source/matlab'));
+addpath(genpath('gpml/'));
+addpath(genpath('/scratch/home/Research/GPs/gpss-research/source/matlab'));
 
-kernel_family = {@covProd, {{@covMaterniso, 5}, {@covSum, {{@covProd, {{@covPeriodicCentre}, {@covSum, {@covConst, @covLINscaleshift}}}}, {@covProd, {{@covConst}, {@covSum, {{@covPeriodicCentre}, {@covConst}}}}}}}}};
-kernel_params = [ 3.217148 6.007081 -0.423756 0.001793 -5.933056 0.950227 -1.562857 1946.454477 0.807736 0.196506 1.447892 -4.044675 -0.761862408406 ];
-kernel_family_list = { {@covProd, {{@covPeriodicCentre}, {@covSum, {@covConst, @covLINscaleshift}}, {@covMaterniso, 5}}},{@covProd, {{@covPeriodicCentre}, {@covConst}, {@covMaterniso, 5}}},{@covProd, {{@covConst}, {@covConst}, {@covMaterniso, 5}}} };
-kernel_params_list = { [ -0.423756 0.001793 -5.933056 0.950227 -1.562857 1946.454477 3.217148 6.007081 ],[ 0.196506 1.447892 -4.044675 0.807736 3.217148 6.007081 ],[ -0.761862408406 0.807736 3.217148 6.007081 ] };
-noise = [1.84979287];
-figname = '/Users/JamesLloyd/Documents/Cambridge/MachineLearning/Research/GPs/gpss-research/analyses/2013-09-19-summary/figures/01-airline/01-airline';
-latex_names = { ' CenPer \times Lin \times MT5','CenPer \times CS \times MT5','CS \times CS \times MT5 ' };
-full_kernel_name = { 'MT5 \times \left( CenPer \times Lin + CS \times \left( CenPer + CS \right) \right)' };
+kernel_family = {@covSum, {{@covSEiso}, {@covSum, {@covConst, @covLINscaleshift}}, {@covProd, {{@covNoise}, {@covSum, {@covConst, @covLINscaleshift}}}}, {@covProd, {{@covSEiso}, {@covFourier}, {@covSum, {@covConst, @covLINscaleshift}}}}}};
+kernel_params = [ -0.421213 2.534102 -0.628703 -3.794036 1946.100163 2.083379 -3.311197 2.651618 1943.871657 3.151642 -0.547919 -0.31074 0.002349 1.105826 0.077946 -1.044053 1945.527471 ];
+kernel_family_list = { {@covSEiso},{@covSum, {@covConst, @covLINscaleshift}},{@covProd, {{@covNoise}, {@covSum, {@covConst, @covLINscaleshift}}}},{@covProd, {{@covSEiso}, {@covFourier}, {@covSum, {@covConst, @covLINscaleshift}}}} };
+kernel_params_list = { [ -0.421213 2.534102 ],[ -0.628703 -3.794036 1946.100163 ],[ 2.083379 -3.311197 2.651618 1943.871657 ],[ 3.151642 -0.547919 -0.31074 0.002349 1.105826 0.077946 -1.044053 1945.527471 ] };
+noise = [-inf];
+figname = '/scratch/home/Research/GPs/gpss-research/analyses/2013-09-26/figures/01-airline/01-airline';
+latex_names = { ' SE','Lin','WN \times Lin','SE \times Fourier \times Lin ' };
+full_kernel_name = { '\left( SE + Lin + WN \times Lin + SE \times Fourier \times Lin \right)' };
 X_mean = 0.000000;
 X_scale = 1.000000;
 y_mean = 0.000000;

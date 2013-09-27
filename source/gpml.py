@@ -267,7 +267,7 @@ save( '%(writefile)s', 'hyp_opt', 'best_nll', 'nlls', 'hessian' , 'npll', 'mae',
 %% exit();
 """
 
-OPTIMIZE_KERNEL_CODE_ZERO_MEAN_MODEL_NOISE = r"""
+OPTIMIZE_KERNEL_CODE_ZERO_MEAN_NO_NOISE = r"""
 rand('twister', %(seed)s);
 randn('state', %(seed)s);
 
@@ -370,7 +370,7 @@ class OptimizerOutput:
         self.noise_hyp = noise_hyp
 
 #### FIXME - is this function ever called?
-def optimize_params(kernel_expression, kernel_init_params, X, y, return_all=False, verbose=False, noise=None, iters=300, zero_mean=False, random_seed=0, model_noise=False):
+def optimize_params(kernel_expression, kernel_init_params, X, y, return_all=False, verbose=False, noise=None, iters=300, zero_mean=False, random_seed=0, no_noise=False):
     if X.ndim == 1:
         X = X[:, nax]
     if y.ndim == 1:
@@ -397,7 +397,7 @@ def optimize_params(kernel_expression, kernel_init_params, X, y, return_all=Fals
                    'seed': str(random_seed)}
     if zero_mean:
         if no_noise:
-            code = OPTIMIZE_KERNEL_CODE_ZERO_MEAN_MODEL_NOISE % parameters
+            code = OPTIMIZE_KERNEL_CODE_ZERO_MEAN_NO_NOISE % parameters
         else:
             code = OPTIMIZE_KERNEL_CODE_ZERO_MEAN % parameters
     else:

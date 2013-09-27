@@ -22,4 +22,5 @@ Experiment(description='We need to go deeper - and restarts revised - as well as
            full_iters=10,
            bundle_size=5,
            additive_form=True,
-           model_noise=True)
+           model_noise=True,
+           no_noise=True)

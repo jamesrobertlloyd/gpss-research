@@ -25,10 +25,10 @@ xrange = linspace(x_left, x_right, num_interpolation_points)';
 xrange_no_extrap = linspace(min(X), max(X), num_interpolation_points)';
 
 noise_var = exp(2*log_noise);
-complete_sigma = feval(complete_covfunc{:}, complete_hypers, X, X) + eye(length(y)).*noise_var;
+complete_sigma = feval(complete_covfunc{:}, complete_hypers, X) + eye(length(y)).*noise_var;
 %complete_sigma = non_singular(complete_sigma);
 complete_sigmastar = feval(complete_covfunc{:}, complete_hypers, X, xrange);
-complete_sigmastarstart = feval(complete_covfunc{:}, complete_hypers, xrange, xrange);
+complete_sigmastarstart = feval(complete_covfunc{:}, complete_hypers, xrange);
 
 % First, plot the data
 complete_mean = complete_sigmastar' / complete_sigma * y;
@@ -216,9 +216,9 @@ for j = 1:min(numel(decomp_list), max_depth)
     cur_hyp = decomp_hypers{i};
     
     % Compute mean and variance for this kernel.
-    decomp_sigma = feval(cur_cov{:}, cur_hyp, X, X);
+    decomp_sigma = feval(cur_cov{:}, cur_hyp, X);
     decomp_sigma_star = feval(cur_cov{:}, cur_hyp, X, xrange_no_extrap);
-    decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange_no_extrap, xrange_no_extrap);
+    decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange_no_extrap);
     decomp_mean = decomp_sigma_star' / complete_sigma * y;
     decomp_var = diag(decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star);
     
@@ -255,9 +255,9 @@ for j = 1:min(numel(decomp_list), max_depth)
     saveas( gcf, filename );
     
     % Compute mean and variance for this kernel.
-    decomp_sigma = feval(cur_cov{:}, cur_hyp, X, X);
+    decomp_sigma = feval(cur_cov{:}, cur_hyp, X);
     decomp_sigma_star = feval(cur_cov{:}, cur_hyp, X, xrange);
-    decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange, xrange);
+    decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange);
     decomp_mean = decomp_sigma_star' / complete_sigma * y;
     decomp_sigma_posterior = decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star;
     decomp_var = diag(decomp_sigma_posterior);
@@ -327,9 +327,9 @@ for j = 1:min(numel(decomp_list), max_depth)
     cur_hyp = cum_hyp;
     
     % Compute mean and variance for this kernel.
-    decomp_sigma = feval(cur_cov{:}, cur_hyp, X, X);
+    decomp_sigma = feval(cur_cov{:}, cur_hyp, X);
     decomp_sigma_star = feval(cur_cov{:}, cur_hyp, X, xrange_no_extrap);
-    decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange_no_extrap, xrange_no_extrap);
+    decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange_no_extrap);
     decomp_mean = decomp_sigma_star' / complete_sigma * y;
     decomp_var = diag(decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star);
     
@@ -357,9 +357,9 @@ for j = 1:min(numel(decomp_list), max_depth)
     
     % Compute mean and variance for this kernel.
     
-    decomp_sigma = feval(cur_cov{:}, cur_hyp, X, X);
+    decomp_sigma = feval(cur_cov{:}, cur_hyp, X);
     decomp_sigma_star = feval(cur_cov{:}, cur_hyp, X, xrange);
-    decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange, xrange);
+    decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange);
     decomp_mean = decomp_sigma_star' / complete_sigma * y;
     decomp_var = diag(decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star);
     
@@ -367,10 +367,6 @@ for j = 1:min(numel(decomp_list), max_depth)
     
     data_mean = decomp_sigma' / complete_sigma * y;
     data_var = diag(decomp_sigma - decomp_sigma' / complete_sigma * decomp_sigma);
-    cum_SNRs(j) = 10 * log10(sum(data_mean.^2)/sum(data_var));
-    cum_vars(j) = (1 - var(y - data_mean) / var(y)) * 100;
-    cum_resid_vars(j) = (1 - var(y - data_mean) / var(resid)) * 100;
-    resid = y - data_mean;
     
     figure(i + 1); clf; hold on;
     mean_var_plot( X*X_scale+X_mean, y*y_scale, ...
@@ -509,7 +505,7 @@ function sample_plot( xdata, xrange, forecast_mu, forecast_sigma )
     set(gca,'Layer','top');  % Stop axes from being overridden.
     
     K = forecast_sigma;
-    K = K + 1e-6*eye(size(K))*max(max(K));
+    K = non_singular(K);
     L = chol(K);
  
     sample = forecast_mu + L' * randn(size(forecast_mu));

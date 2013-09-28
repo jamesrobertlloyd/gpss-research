@@ -4328,9 +4328,8 @@ def base_kernel_families(base_kernel_names):
                    FourierKernelFamily(), \
                    ExpKernelFamily(), \
                    NoiseKernelFamily()]:
-        for base_kernel in base_kernel_names.split(','):
-            if family.id_name() == base_kernel:
-                yield family
+        if family.id_name() in base_kernel_names.split(','):
+            yield family
    
 #### FIXME - Do the two functions below get called ever?        
 def test_kernels(ndim=1):

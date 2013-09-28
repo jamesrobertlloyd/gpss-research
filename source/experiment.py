@@ -63,9 +63,10 @@ def remove_duplicates(kernels, X, n_eval=250, local_computation=True, verbose=Tr
     kernels = sorted(kernels, key=ScoredKernel.score, reverse=True)
     return kernels
  
-#### TODO - this is a silently remove errors function i.e. dangerous - at the least it should raise runtime warnings or make a log file 
 def remove_nan_scored_kernels(scored_kernels):    
-    return [k for k in scored_kernels if not np.isnan(k.score())] 
+    not_nan = [k for k in scored_kernels if not np.isnan(k.score())] 
+    eq_nan = [k for k in scored_kernels if np.isnan(k.score())] 
+    return (not_nan, eq_nan)
     
 def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, exp):
     '''Search for the best kernel, in parallel on fear or local machine.'''
@@ -119,6 +120,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     
     all_results = [] # List of scored kernels
     results_sequence = [] # List of lists of results, indexed by level of expansion.
+    nan_sequence = [] # List of list of nan scored results
     
     noise = None # Initially have no guess at noise
     
@@ -177,10 +179,12 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Some of the scores may have failed - remove nans to prevent sorting algorithms messing up
         #### TODO - this should not fail silently like this
-        new_results = remove_nan_scored_kernels(new_results)
+        (new_results, nan_results) = remove_nan_scored_kernels(new_results)
         assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens
         # Sort the new results
         new_results = sorted(new_results, key=ScoredKernel.score, reverse=True)
+
+        nan_sequence.append(nan_results)
         
         #print 'All new results:'
         #for result in new_results:
@@ -271,6 +275,14 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                     #### FIXME - adding in best_predictor like this is hacky - do we even want to record this anymore?
                     for result in best_predictors + sorted(all_results, key=ScoredKernel.score)[0:exp.k]:
                         print >> outfile, result 
+        # Write nan scored kernels to a log file
+        with open(results_filename + '.nans', 'w') as outfile:
+            outfile.write('Experiment nan results for\n datafile = %s\n\n %s \n\n' \
+                          % (experiment_data_file_name, experiment_fields_to_str(exp)))
+            for (i, nan_results) in enumerate(nan_sequence):
+                outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
+                for result in nan_results:
+                    print >> outfile, result  
     
     # Rename temporary results file to actual results file                
     os.rename(results_filename + '.unfinished', results_filename)

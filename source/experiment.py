@@ -120,7 +120,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     
     all_results = [] # List of scored kernels
     results_sequence = [] # List of lists of results, indexed by level of expansion.
-    nan_sequence = [] # List of list of nan scored results
+    nan_sequence = [] # List of list of nan scored results`
     
     noise = None # Initially have no guess at noise
     

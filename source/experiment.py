@@ -120,7 +120,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     
     all_results = [] # List of scored kernels
     results_sequence = [] # List of lists of results, indexed by level of expansion.
-    nan_sequence = [] # List of list of nan scored results`
+    nan_sequence = [] # List of list of nan scored results
+    oob_sequence = [] # List of list of out of bounds results
     
     noise = None # Initially have no guess at noise
     
@@ -172,6 +173,9 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             
         # Remove kernels that were optimised to be out of bounds (this is similar to a 0-1 prior)
         new_results = [sk for sk in new_results if not sk.k_opt.out_of_bounds(data_shape)]
+        oob_results = [sk for sk in new_results if sk.k_opt.out_of_bounds(data_shape)]
+        oob_results = sorted(oob_results, key=ScoredKernel.score, reverse=True)
+        oob_sequence.append(oob_results)
             
         #print 'Removing out of bounds'
         #for result in new_results:
@@ -194,6 +198,16 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         # Remove near duplicates from these all_results (top m results only for efficiency)
         if exp.k > 1: # Only if this affects the search
             new_results = remove_duplicates(new_results, X, local_computation=exp.local_computation, verbose=exp.verbose)
+            
+        #### DEBUG CODE
+
+        #print 'NaNs:'
+        #for result in nan_results:
+        #    print 'BIC=%0.1f' % result.bic_nle, 'AIC=%0.1f' % result.aic_nle, 'Laplace=%0.1f' % result.laplace_nle, 'MAE=%0.1f' % result.mae, result.k_opt.pretty_print()
+            
+        #print 'OOBs:'
+        #for result in oob_results:
+        #    print 'BIC=%0.1f' % result.bic_nle, 'AIC=%0.1f' % result.aic_nle, 'Laplace=%0.1f' % result.laplace_nle, 'MAE=%0.1f' % result.mae, result.k_opt.pretty_print()
 
         print 'All new results after duplicate removal:'
         for result in new_results:
@@ -280,6 +294,14 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             outfile.write('Experiment nan results for\n datafile = %s\n\n %s \n\n' \
                           % (experiment_data_file_name, experiment_fields_to_str(exp)))
             for (i, nan_results) in enumerate(nan_sequence):
+                outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
+                for result in nan_results:
+                    print >> outfile, result  
+        # Write oob kernels to a log file
+        with open(results_filename + '.oob', 'w') as outfile:
+            outfile.write('Experiment oob results for\n datafile = %s\n\n %s \n\n' \
+                          % (experiment_data_file_name, experiment_fields_to_str(exp)))
+            for (i, nan_results) in enumerate(oob_sequence):
                 outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
                 for result in nan_results:
                     print >> outfile, result  

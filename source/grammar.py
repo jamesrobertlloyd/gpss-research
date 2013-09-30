@@ -259,9 +259,12 @@ def expand(kernel, grammar):
                 to_be_expanded = [op for (i, op) in enumerate(kernel.operands) if subset[i]]
                 if len(to_be_expanded) > 1:
                     to_be_expanded = fk.SumKernel(to_be_expanded)
+                    # No need for redundant recursion of expanding sums
+                    expansions = expand_single_tree(to_be_expanded, grammar)
                 else:
                     to_be_expanded = to_be_expanded[0]
-                for expanded in expand_single_tree(to_be_expanded, grammar):
+                    expansions = expand(to_be_expanded, grammar)
+                for expanded in expansions:
                     new_ops = [expanded] + unexpanded
                     result.append(fk.SumKernel(new_ops))
         # This version expands all elements
@@ -279,9 +282,12 @@ def expand(kernel, grammar):
                 to_be_expanded = [op for (i, op) in enumerate(kernel.operands) if subset[i]]
                 if len(to_be_expanded) > 1:
                     to_be_expanded = fk.ProductKernel(to_be_expanded)
+                    # No need for redundant recursion of expanding products
+                    expansions = expand_single_tree(to_be_expanded, grammar)
                 else:
                     to_be_expanded = to_be_expanded[0]
-                for expanded in expand_single_tree(to_be_expanded, grammar):
+                    expansions = expand(to_be_expanded, grammar)
+                for expanded in expansions:
                     new_ops = [expanded] + unexpanded
                     result.append(fk.ProductKernel(new_ops))
         # This version expands all elements
@@ -515,8 +521,47 @@ def remove_redundancy(k, additive_mode=False):
         new_kernel = k.copy()
         new_kernel.operands = ops
         return canonical(new_kernel)
-            
-    elif isinstance(k, fk.SumKernel) or isinstance(k, fk.ChangePointTanhKernel) or isinstance(k, fk.ChangeBurstTanhKernel):
+    elif isinstance(k, fk.SumKernel): 
+        ops = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
+        # Count the number of white noises
+        output_variance = 0
+        WN_count = 0
+        not_WN_ops = []
+        for op in ops:
+            if isinstance(op, fk.NoiseKernel):
+                WN_count += 1
+                output_variance += np.exp(2*op.output_variance)
+            elif isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.NoiseKernel):
+                WN_count += 1
+                output_variance += np.exp(2*op.base_kernel.output_variance)
+            else:
+                not_WN_ops.append(op)
+        # Compactify if necessary
+        if WN_count > 0:
+            #### FIXME - assuming 1d
+            ops = not_WN_ops + [fk.MaskKernel(1, 0, fk.NoiseKernel(output_variance=0.5*np.log(output_variance)))]
+        # Now count the number of constants
+        output_variance = 0
+        const_count = 0
+        not_const_ops = []
+        for op in ops:
+            if isinstance(op, fk.ConstKernel):
+                const_count += 1
+                output_variance += np.exp(2*op.output_variance)
+            elif (isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.ConstKernel)):
+                const_count += 1
+                output_variance += np.exp(2*op.base_kernel.output_variance)
+            else:
+                not_const_ops.append(op)
+         # Compactify if necessary
+        if (const_count > 0):
+            #### FIXME - assuming 1d
+            ops = not_const_ops + [fk.MaskKernel(1, 0, fk.ConstKernel(output_variance=0.5*np.log(output_variance)))]
+        # Finish
+        new_kernel = k.copy()
+        new_kernel.operands = ops
+        return canonical(new_kernel)
+    elif isinstance(k, fk.ChangePointTanhKernel) or isinstance(k, fk.ChangeBurstTanhKernel):
         new_kernel = k.copy()
         new_kernel.operands = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
         return canonical(new_kernel)

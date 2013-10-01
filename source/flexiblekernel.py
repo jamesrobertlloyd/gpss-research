@@ -1263,9 +1263,9 @@ class LinKernel(BaseKernel):
             result[2] = np.random.uniform(low=2*data_shape['input_min']-data_shape['input_max'], high=2*data_shape['input_max']-data_shape['input_min'])
         return result
         
-    def effective_params(self):
-        '''It's linear regression'''  
-        return 2
+    #def effective_params(self):
+    #    '''It's linear regression'''  
+    #    return 2
 
     def copy(self):
         return LinKernel(offset=self.offset, lengthscale=self.lengthscale, location=self.location)
@@ -1286,6 +1286,112 @@ class LinKernel(BaseKernel):
         if cmp(self.__class__, other.__class__):
             return cmp(self.__class__, other.__class__)
         differences = [self.offset - other.offset, self.lengthscale - other.lengthscale, self.location - other.location]
+        differences = map(shrink_below_tolerance, differences)
+        return cmp(differences, [0] * len(differences))
+        
+    def depth(self):
+        return 0  
+        
+    @property    
+    def stationary(self):
+        return False    
+
+class PureLinKernelFamily(BaseKernelFamily):
+    def from_param_vector(self, params):
+        lengthscale, location = params
+        return PureLinKernel(lengthscale=lengthscale, location=location)
+    
+    def num_params(self):
+        return 2
+    
+    def pretty_print(self):
+        return colored('PLN', self.depth())
+    
+    def default(self):
+        return PureLinKernel(0., 0.)
+    
+    def __cmp__(self, other):
+        assert isinstance(other, KernelFamily)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return 0
+    
+    def depth(self):
+        return 0
+    
+    def id_name(self):
+        return 'PureLin'
+
+    @staticmethod    
+    def description():
+        return "Pure Linear"
+
+    @staticmethod    
+    def params_description():
+        return "Lengthscale (inverse scale) and location"
+    
+class PureLinKernel(BaseKernel):
+    #### FIXME - lengthscale is actually an inverse scale
+    #### Also - lengthscale is a silly name even if it is used by GPML
+    def __init__(self, lengthscale=0, location=0):
+        self.lengthscale = lengthscale
+        self.location = location
+        
+    def family(self):
+        return PureLinKernelFamily()
+        
+    def gpml_kernel_expression(self):
+        return '{@covLINscaleshift}'
+    
+    def english_name(self):
+        return 'PLN'
+    
+    def id_name(self):
+        return 'PureLin'
+    
+    def param_vector(self):
+        # order of args matches GPML
+        return np.array([self.lengthscale, self.location])
+        
+    def default_params_replaced(self, sd=1, data_shape=None):
+        result = self.param_vector()
+        if result[0] == 0:
+            # Lengthscale scales inversely with ratio of y std and x std (gradient = delta y / delta x)
+            # Or with gradient or a neutral value
+            rand = np.random.rand()
+            if rand < 1.0/3:
+                result[0] = np.random.normal(loc=-(data_shape['output_scale'] - data_shape['input_scale']), scale=sd)
+            elif rand < 2.0/3:
+                result[0] = np.random.normal(loc=-np.log(np.abs((data_shape['output_max']-data_shape['output_min'])/(data_shape['input_max']-data_shape['input_min']))), scale=sd)
+            else:
+                result[0] = np.random.normal(loc=0, scale=sd)
+        if result[1] == 0:
+            # Uniform over 3 x data range
+            result[1] = np.random.uniform(low=2*data_shape['input_min']-data_shape['input_max'], high=2*data_shape['input_max']-data_shape['input_min'])
+        return result
+        
+    #def effective_params(self):
+    #    return 2
+
+    def copy(self):
+        return PureLinKernel(lengthscale=self.lengthscale, location=self.location)
+    
+    def __repr__(self):
+        return 'PureLinKernel(lengthscale=%f, location=%f)' % \
+            (self.lengthscale, self.location)
+    
+    def pretty_print(self):
+        return colored('PLN(ell=%1.1f, loc=%1.1f)' % (self.offset, self.lengthscale, self.location),
+                       self.depth())
+        
+    def latex_print(self):
+        return 'PureLin'           
+    
+    def __cmp__(self, other):
+        assert isinstance(other, Kernel)
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        differences = [self.lengthscale - other.lengthscale, self.location - other.location]
         differences = map(shrink_below_tolerance, differences)
         return cmp(differences, [0] * len(differences))
         
@@ -4306,6 +4412,7 @@ def base_kernel_families(base_kernel_names):
                    RQKernelFamily(), \
                    ConstKernelFamily(), \
                    LinKernelFamily(), \
+                   PureLinKernelFamily(), \
                    QuadraticKernelFamily(), \
                    CubicKernelFamily(), \
                    PP0KernelFamily(), \

@@ -509,6 +509,8 @@ def remove_redundancy(k, additive_mode=False):
                 if isinstance(ops[0].base_kernel, fk.LinKernel):
                     ops[0].base_kernel.lengthscale -= output_variance
                     ops[0].base_kernel.offset += output_variance
+                elif isinstance(ops[0].base_kernel, fk.PureLinKernel):
+                    ops[0].base_kernel.lengthscale -= output_variance
                 else:
                     #### WARNING - big assumption about the form of the kernel
                     # - no error checking so this will crash if something else happens

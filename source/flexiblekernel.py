@@ -1381,7 +1381,7 @@ class PureLinKernel(BaseKernel):
             (self.lengthscale, self.location)
     
     def pretty_print(self):
-        return colored('PLN(ell=%1.1f, loc=%1.1f)' % (self.offset, self.lengthscale, self.location),
+        return colored('PLN(ell=%1.1f, loc=%1.1f)' % (self.lengthscale, self.location),
                        self.depth())
         
     def latex_print(self):

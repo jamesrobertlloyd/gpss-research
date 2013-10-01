@@ -4414,6 +4414,28 @@ def centre_periodic(k):
         return CentredPeriodicKernel(lengthscale=k.lengthscale, period=k.period, output_variance=k.output_variance) + \
                ConstKernel(output_variance=k.output_variance-0.5*np.exp(-2*k.lengthscale)+0.5*np.log(i0(np.exp(-2*k.lengthscale))))
     else:
+        return k
+        
+def split_linear(k):
+    """Replaces the linear kernel with the constant + linear"""    
+    if isinstance(k, MaskKernel):
+        return split_linear(k.base_kernel)
+    elif isinstance(k, SumKernel):
+        return SumKernel([split_linear(op) for op in k.operands])
+    elif isinstance(k, ProductKernel):
+        return ProductKernel([split_linear(op) for op in k.operands])
+    elif isinstance(k, ChangePointTanhKernel):
+        return ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[split_linear(op) for op in k.operands])
+    elif isinstance(k, ChangeBurstTanhKernel):
+        return ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[split_linear(op) for op in k.operands])
+    elif isinstance(k, BurstTanhKernel):
+        return BurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[split_linear(op) for op in k.operands])
+    elif isinstance(k, BlackoutTanhKernel):
+        return BlackoutTanhKernel(location=k.location, steepness=k.steepness, width=k.width, sf=k.sf, operands=[split_linear(op) for op in k.operands])
+    elif isinstance(k, LinKernel):
+        return LinKernel(offset=-np.Inf, lengthscale=k.lengthscale, location=k.location) + \
+               ConstKernel(output_variance=k.offset)
+    else:
         return k 
         
 def collapse_const_sums(kernel):

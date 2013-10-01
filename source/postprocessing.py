@@ -105,6 +105,8 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_le
             print stripped_kernel.pretty_print()
             stripped_kernel = grammar.canonical(fk.centre_periodic(stripped_kernel))
             print stripped_kernel.pretty_print()
+            #stripped_kernel = grammar.canonical(fk.split_linear(stripped_kernel))
+            #print stripped_kernel.pretty_print()
             stripped_kernel = grammar.canonical(fk.collapse_const_sums(stripped_kernel))
             print stripped_kernel.pretty_print()
             if not max_level is None:

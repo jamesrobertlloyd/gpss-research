@@ -237,7 +237,6 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     per_kernels = []
     cos_kernels = []
     min_period = np.Inf
-    gradient = None
     lin_location = None
     # Count kernels and calculate a variety of summary quantities
     for k in kernels:
@@ -245,7 +244,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             #### FIXME - How accurate is it to assume that SqExp and Matern lengthscales multiply similarly
             los_count += 1
             lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*k.lengthscale))
-        elif isinstance(k, fk.LinKernel):
+        #elif isinstance(k, fk.LinKernel) or isinstance(k, fk.PureLinKernel):
+        elif isinstance(k, fk.PureLinKernel):
             lin_count += 1
             lin_location = k.location
         elif isinstance(k, fk.CentredPeriodicKernel):

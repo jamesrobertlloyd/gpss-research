@@ -1,0 +1,179 @@
+\documentclass[twoside]{article}
+\usepackage{amssymb,amsmath,amsthm}
+\usepackage{graphicx}
+\usepackage{preamble}
+\usepackage{natbib}
+%%%% REMEMBER ME!
+%\usepackage[draft]{hyperref}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{wasysym}
+\usepackage{subfigure}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{bm}
+\definecolor{mydarkblue}{rgb}{0,0.08,0.45}
+\hypersetup{ %
+    pdftitle={},
+    pdfauthor={},
+    pdfsubject={},
+    pdfkeywords={},
+    pdfborder=0 0 0,
+    pdfpagemode=UseNone,
+    colorlinks=true,
+    linkcolor=mydarkblue,
+    citecolor=mydarkblue,
+    filecolor=mydarkblue,
+    urlcolor=mydarkblue,
+    pdfview=FitH}
+
+\newcolumntype{x}[1]{>{\centering\arraybackslash\hspace{0pt}}m{#1}}
+\newcommand{\tabbox}[1]{#1}
+
+\setlength{\marginparwidth}{0.6in}
+\input{include/commenting.tex}
+
+\usepackage[neutral]{format/icml2013}
+%\usepackage[left=1.00in,right=1.00in,bottom=0.25in,top=0.25in]{geometry} %In case we want larger margins for commenting purposes
+
+%% For submission, make all render blank.
+%\renewcommand{\LATER}[1]{}
+%\renewcommand{\fLATER}[1]{}
+%\renewcommand{\TBD}[1]{}
+%\renewcommand{\fTBD}[1]{}
+%\renewcommand{\PROBLEM}[1]{}
+%\renewcommand{\fPROBLEM}[1]{}
+%\renewcommand{\NA}[1]{#1}  %% Note, NA's pass through!
+
+    
+\begin{document}
+
+%\renewcommand{\baselinestretch}{0.99}
+
+\twocolumn[
+\icmltitle{An artificial intelligence that can build and discuss statistical models}
+
+\icmlauthor{James Robert Lloyd}{jrl44@cam.ac.uk}
+\icmladdress{University of Cambridge}
+\icmlauthor{David Duvenaud}{dkd23@cam.ac.uk}
+\icmladdress{University of Cambridge}
+\icmlauthor{Roger Grosse}{rgrosse@mit.edu}
+\icmladdress{Massachussets Institute of Technology}
+\icmlauthor{Joshua B. Tenenbaum}{jbt@mit.edu}
+\icmladdress{Massachussets Institute of Technology}
+\icmlauthor{Zoubin Ghahramani}{zoubin@eng.cam.ac.uk}
+\icmladdress{University of Cambridge}
+%\icmladdress{Brain and Cognitive Sciences, Massachusetts Institute of Technology}    
+            
+\icmlkeywords{nonparametrics, gaussian process, machine learning, ICML, structure learning, extrapolation, regression, kernel learning, equation learning, supervised learning, time series}
+\vskip 0.3in
+]
+
+\begin{abstract}
+Lots of things are automated, but the interpretable discussion of data is not, until now...
+\end{abstract}
+
+\section{Introduction}
+
+Recent wins for AI (from wikipedia and brain)
+\begin{itemize}
+  \item Sometime - Medical diagnosis (see Heckermann 1991)
+  \item Sometime - Robots in surgery
+  \item Sometime - Theorem proving
+  \item 1997 - Deep Blue beets Kasparov
+  \item 2000 - NASA's remote agent program
+  \item 2005 - Stanford win DARPA grand challenge
+  \item 2007 - CMU win DARPA urban challenge
+  \item 2009 - Robot scientist
+  \item 2011 - Watson defeats two greatest Jeopardy!\ champions
+  \item 2013 - Human like theorem proving
+\end{itemize}
+A lot of these are search based.
+
+Remember programming by optimisation.
+
+We have implemented a search based artificial intelligence.
+Fully automating statistics involves a sequence of models, discussion of fit, looking at residuals and other model checks and revising the model based on these problems.
+However, model checks are ultimately used for two purposes
+\begin{itemize}
+  \item Checking whether or not the conclusions of the model can be trusted
+  \item Inspiring new models
+\end{itemize}
+The second of these is just a good search heuristic in the space of models.\fTBD{If we can get some model checks that are useful that would be great - some sort of prior predictive marginal likelihood check \ie is this data (un)likely?}
+
+\section{Related work}
+
+\subsection{Random list of things}
+
+\paragraph{Structure learning in Bayesian networks}
+
+Similar idea of discovering semantics via model search.
+Semantics are more vague though \ie a probability table is not an entirely concise summary
+
+\paragraph{Linear model}
+
+These discover highly interpretable semantics but are limited in expressivity
+
+\paragraph{Nonparametric additive models}
+
+Highly flexible but semantics are vague \ie can only talk about smooth functions
+
+\paragraph{Equation learning}
+
+Very flexible but semantics of equations do not map onto human understanding \eg saw tooth vs Fourier decomposition of a saw tooth - which is more human understandable?
+How would you explain a sensor error with Eureqa style equations.\fTBD{Try Eureqa on the solar dataset}
+
+\paragraph{Deep learning}
+
+Again very flexible but the semantics are not usually human interpretable.
+How can we understand the output of complex representation learning algorithms without human intervention (\eg recognising that your deep net has become a cat classifier).
+
+\paragraph{Kernel search}
+
+Can use the precise semantics of linear models or the vague semantics of nonparametric additive models and other components along this spectrum.
+Flexible modelling with components that a human might use to describe what is going on.
+
+\subsection{What to use when?}
+
+\paragraph{Lots of data and goal is interpolation}
+
+Any smoothing device \eg random forest.
+
+\paragraph{Highly structured and high dimensional input or output}
+
+Use dimensionality reduction or any other method of representation learning.
+The task is then reduced to an easier regression.
+
+\paragraph{Parametric modelling of the regression function}
+
+Linear models, symbolic regression etc.
+
+\paragraph{Nonparametric modelling of the regression function but more structured than a smoothing device}
+
+Various semi-parametric models, GAM
+
+\paragraph{Easily interpretable nonparametric modelling}
+
+This work
+
+\section{Contributions}
+
+\begin{itemize}
+  \item A very expressive language of statistical models with a concise algebraic structure
+  \item Automatic construction of appropriate statistical models (search heuristic based on the structure of the language)
+  \item Automatic discussion of the selected model in natural language with tables, figures and text \ie a full statistical report
+\end{itemize}
+
+\subsection{Things we are not doing}
+
+Producing a system that no human will understand.
+
+\section{Example analyses}
+
+\section{Discussion and conclusions}
+
+A Jaynes quote again.
+
+Refer to philosophy such as Chinese room to emphasise that the language means the system is operating with semantic representation and could therefore be said to understand what it is saying?
+
+\end{document}    

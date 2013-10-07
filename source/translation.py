@@ -191,7 +191,7 @@ def translate_parametric_window(X, unit='', lin_count=0, exp_count=0, lin_locati
             summary += 'with %s given %sby a polynomial of degree %d' % (qualifier, quantity, lin_count)
             description += 'is given %sby a polynomial of degree %d' % (qualifier, lin_count)
     elif (exp_count > 0) and (lin_count == 0):
-        description += 'The %s of the %s ' % (quantity, componenet)
+        description += 'The %s of the %s ' % (quantity, component)
         if exp_rate > 0:
             summary = 'with exponentially %sincreasing %s' % (qualifier, quantity)
             description += 'increases %sexponentially' % qualifier

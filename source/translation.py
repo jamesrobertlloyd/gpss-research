@@ -351,9 +351,9 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     #### FIXME - this correspondence is only approximate
                     per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
                     if k.lengthscale > 2:
-                        descriptions.append('The shape of the function within each period is very smooth and resembles a sinusoid')
+                        descriptions.append('The shape of this function within each period is very smooth and resembles a sinusoid')
                     else:
-                        descriptions.append('The shape of the function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
+                        descriptions.append('The shape of this function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
             elif (lin_count + exp_count == 0) and (los_count > 0):
                 # Approx periodic
                 lower_per = 1.0 / (np.exp(-k.period) + scipy.stats.norm.isf(0.25) / lengthscale)
@@ -371,7 +371,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
                     main_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
                     descriptions.append(main_description)
-                    descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
+                    descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
                     descriptions.append('Since this lengthscale is small relative to the period this component may more closely resemble a non-periodic smooth function')
                 else:
                     summary = 'An approximately '
@@ -386,15 +386,15 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     main_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
                     descriptions.append(main_description)
                     if lengthscale > 0.5 * domain_range:
-                        descriptions.append('Across periods the shape of the function varies very smoothly')
+                        descriptions.append('Across periods the shape of this function varies very smoothly')
                     else:
-                        descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))   
+                        descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))   
                     if per_count == 1:
                         per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
                         if k.lengthscale > 2:
-                            descriptions.append('The shape of the function within each period is very smooth and resembles a sinusoid')
+                            descriptions.append('The shape of this function within each period is very smooth and resembles a sinusoid')
                         else:
-                            descriptions.append('The shape of the function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
+                            descriptions.append('The shape of this function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
             elif (lin_count + exp_count > 0) and (los_count == 0):
                 # Pure periodic but with changing amplitude
                 summary = 'An exactly '
@@ -414,9 +414,9 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 if per_count == 1:
                     per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
                     if k.lengthscale > 2:
-                        descriptions.append('The shape of the function within each period is very smooth and resembles a sinusoid')
+                        descriptions.append('The shape of this function within each period is very smooth and resembles a sinusoid')
                     else:
-                        descriptions.append('The shape of the function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
+                        descriptions.append('The shape of this function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
             else:
                 lower_per = 1.0 / (np.exp(-k.period) + scipy.stats.norm.isf(0.25) / lengthscale)
                 upper_per = 1.0 / (np.exp(-k.period) - scipy.stats.norm.isf(0.25) / lengthscale)
@@ -433,7 +433,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
                     main_description += 'with a period of %s and varying marginal standard deviation' % english_length(np.exp(k.period), unit)
                     descriptions.append(main_description)
-                    descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
+                    descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
                     descriptions.append('Since this lengthscale is small relative to the period this component may more closely resemble a non-periodic smooth function')
                     (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
                     descriptions.append(var_description)
@@ -451,18 +451,18 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     main_description += 'with a period of %s and varying amplitude' % english_length(np.exp(k.period), unit)
                     descriptions.append(main_description)
                     if lengthscale > 0.5 * domain_range:
-                        descriptions.append('Across periods the shape of the function varies very smoothly')
+                        descriptions.append('Across periods the shape of this function varies very smoothly')
                     else:
-                        descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))   
+                        descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))   
                     (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier='approximately ')
                     descriptions.append(var_description)
                     summary += ' and %s' % var_summary
                     if per_count == 1:
                         per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
                         if k.lengthscale > 2:
-                            descriptions.append('The shape of the function within each period is very smooth and resembles a sinusoid')
+                            descriptions.append('The shape of this function within each period is very smooth and resembles a sinusoid')
                         else:
-                            descriptions.append('The shape of the function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
+                            descriptions.append('The shape of this function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
         else: # Several periodic components
             if los_count > 0:
                 summary = 'An approximate product of'
@@ -489,7 +489,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 main_description += ' several sinusoids'
             descriptions.append(main_description)
             if los_count > 0:
-                descriptions.append('Across periods the shape of the function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
+                descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
             if lin_count + exp_count > 0:
                 qualifier = 'approximately ' if (los_count > 0) else ''
                 (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier=qualifier)
@@ -560,10 +560,10 @@ def translate_additive_component(k, X, monotonic, gradient, unit):
         interval_description = 'The combination of changepoint operators is such that this simple AI cannot describe where this component acts; please see visual output or upgrade me'
     elif len(intervals) == 1:
         if not intervals == [(-np.Inf, np.Inf)]: 
-            summary += '. The function applies %s' % translate_interval(intervals[0], unit, X)
+            summary += '. This function applies %s' % translate_interval(intervals[0], unit, X)
         interval_description = 'This component applies %s' % translate_interval(intervals[0], unit, X)
     else:
-        summary += '. The function applies %s and %s' % (', '.join(translate_interval(interval, unit, X) for interval in intervals[:-1]), translate_interval(intervals[-1], unit, X))
+        summary += '. This function applies %s and %s' % (', '.join(translate_interval(interval, unit, X) for interval in intervals[:-1]), translate_interval(intervals[-1], unit, X))
         interval_description = 'This component applies %s and %s' % (', '.join(translate_interval(interval, unit, X) for interval in intervals[:-1]), translate_interval(intervals[-1], unit, X))
     # Combine and return the descriptions
     if not intervals == [(-np.Inf, np.Inf)]: 
@@ -583,6 +583,21 @@ def produce_summary_document(dataset_name, n_components, fit_data, short_descrip
 \usepackage{times}
 \usepackage{hyperref}
 \usepackage{url}
+\usepackage{color}
+\definecolor{mydarkblue}{rgb}{0,0.08,0.45}
+\hypersetup{ %
+    pdftitle={},
+    pdfauthor={},
+    pdfsubject={},
+    pdfkeywords={},
+    pdfborder=0 0 0,
+    pdfpagemode=UseNone,
+    colorlinks=true,
+    linkcolor=mydarkblue,
+    citecolor=mydarkblue,
+    filecolor=mydarkblue,
+    urlcolor=mydarkblue,
+    pdfview=FitH}
 
 \usepackage{graphicx, amsmath, amsfonts, bm, lipsum, capt-of}
 
@@ -595,21 +610,31 @@ def produce_summary_document(dataset_name, n_components, fit_data, short_descrip
 
 \\title{An automatic report for the dataset : %(dataset_name)s}
 
-\\author{
-James Robert Lloyd\\\\
-University of Cambridge
+\author{
+James Robert Lloyd\\
+University of Cambridge\\
+Department of Engineering\\
+\texttt{jrl44@cam.ac.uk}
 \And
-David Duvenaud\\\\
-University of Cambridge
+David Duvenaud\\
+University of Cambridge \\
+Department of Engineering \\
+\texttt{dkd23@cam.ac.uk} \\
 \And
-Roger Grosse\\\\
-Massachussets Institute of Technology
+Roger Grosse\\
+M.I.T.\\
+Brain and Cognitive Sciences \\
+\texttt{rgrosse@mit.edu}
 \And
-Joshua B. Tenenbaum\\\\
-Massachussets Institute of Technology
+Joshua B. Tenenbaum\\
+M.I.T.\\
+Brain and Cognitive Sciences \\
+\texttt{jbt@mit.edu}
 \And
-Zoubin Ghahramani\\\\
-University of Cambridge
+Zoubin Ghahramani\\
+University of Cambridge \\
+Department of Engineering \\
+\texttt{zoubin@eng.cam.ac.uk}
 }
 
 \\newcommand{\\fix}{\marginpar{FIX}}

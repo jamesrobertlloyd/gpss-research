@@ -24,10 +24,10 @@
     
     
 \usepackage{graphicx, amsmath, amsfonts, bm, lipsum, capt-of}
-
 \usepackage{natbib, xcolor, wrapfig, booktabs, multirow, caption}
-
 \usepackage{float}
+
+%\renewcommand{\baselinestretch}{0.99}
 
 \def\ie{i.e.\ }
 \def\eg{e.g.\ }
@@ -86,8 +86,8 @@ University of Cambridge \\
 \begin{abstract}
 To complement a recently introduced automatic model-construction and search method, we demonstrate an automatic model-summarization procedure.
 After automatically building an additive nonparametric regression model, our method constructs a report which visualizes and explains in words the meaning and relevance of each component.
-These reports enable human model-checking and the understanding of complex modeling assumptions and complex structures in the data.
-We demonstrate this procedure on two time-series, showing that the automatically constructed models identify highly interpretable structures that can be automatically described simply in natural language.
+These reports enable human model-checking and the understanding of complex modeling assumptions and structure.
+We demonstrate this procedure on two time-series, showing that the automatically constructed models identify highly interpretable structures that can be automatically described in simple natural language.
 \end{abstract}
 
 \section{Introduction}
@@ -143,31 +143,32 @@ The procedure summarizes properties of this complex distribution to the user thr
 %
 These reports are designed to be intelligible to non-experts, illustrating the assumptions made by the model, describing the model's posterior distribution, and most importantly, enabling model-checking.
 %\subsection{Design goals}
-
+%
 %\begin{itemize}
 %\item {\bf Intelligibility}
 %The procedure was designed to produce reports intelligible to non-experts.  
-
+%
 %\item {\bf Illustrate Model Assumptions}
 %One of the main design criteria when designing our procedure was to make clear what assumptions the model is making, and what these assumptions imply in terms of extrapolation.  Even when simple Gaussian process models are used, it is often unclear what structure was captured by the model and what was not.
-
+%
 %\item {\bf Illustrate Posterior Uncertainty}
 %One of the selling points of Bayesian modeling over point estimates is that they produce a rich posterior distribution over possible explanations of the data.  However, this posterior distribution is often quite a complex object, and is usually difficult to summarize.
-
+%
 %\item {\bf Enable Model-checking}
 %One of the most important reasons to examine a model is to discover flawed assumptions, or structure not captured by the model.  Simply examining residuals, cross-validation or marginal likelihood scores is often not sufficient to notice when the model is failing to capture.
 %\end{itemize}
-
+%
 %\subsection{Report structure}
-Our procedure produces a report with three sections: an executive summary, a detailed discussion of each component, and a section discussing how the model extrapolates beyond the range of the data.
 
+These reports have three sections: an executive summary, a detailed discussion of each component, and a section discussing how the model extrapolates beyond the range of the data.
 
+\vspace{-0.05in}
 \paragraph{Automatic natural language descriptions of functions}
 %Since the individual additive components produced by the GPSS method are produced by an open-ended grammar, it is impossible to write a lookup table to handle every type of component that GPSS might produce.  %  Hence the part of the procedure which summarizes the individual components must be flexible, and also must present enough information that users can see the meaning of each component themselves.  We summarize each component both in writing and in plots.
 %
 %For the written portion, a first paragraph reports the type of component found, and the meaning of all kernel parameters in that component.  
-The compositional nature of kernel structures produced by GPSS allows for simple translation of additive components.
-Each type of kernel in a product of kernels modifies the form of the posterior in a consistent way preventing the need for an infinite lookup table of descriptions.
+The compositional nature of kernel structures produced by GPSS allows for simple translation of individual components.
+Each type of kernel in a product of kernels modifies the form of the posterior in a consistent way, preventing the need for an infinite lookup table of descriptions.
 Table \ref{table:descriptions} gives some examples of high level summaries of functions.
 Since the posterior distribution also depends on the data, our summarizer includes heuristics to describe the shape of the components being modeled, such as ``smooth'' or ``monotonically increasing''.
 
@@ -186,23 +187,14 @@ $\kPer \times \kLin \times \kLin$ & An exactly periodic function with quadratica
 \label{table:descriptions}
 \end{table}
 
-\paragraph{Source Code}
-Python code to perform all experiments is available on github.\footnote{Available at 
-\href{http://www.github.com/jamesrobertlloyd/gpss-research}
-{\texttt{github.com/jamesrobertlloyd/gpss-research}}} ; 
-All \gp{} hyperparameter tuning was performed by automated calls to the GPML toolbox\footnote{Available at 
-\href{http://www.gaussianprocess.org/gpml/code/}
-{\texttt{www.gaussianprocess.org/gpml/code/}}
-}
-
-\section{Example: Summarizing 400 Years of Solar Activity}
+\subsection{Example: Summarizing 400 Years of Solar Activity}
 \label{sec:example}
 
 To give an example of the capabilities of our procedure, we show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011.  This time series has two obvious features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
+%
+The GPSS search procedure and automatic summary clearly identify these two features, as discussed below.
 
-The GPSS search procedure and automatic summary clearly identify these two features as discussed below.
-
-\subsection{Executive Summary}
+\paragraph{Executive Summary}
 
 The first section of each report describes which structures were discovered in the model, and the relative importance of the different components in explaining the data.
 
@@ -240,7 +232,7 @@ Just from the short summaries of the additive components we can see that the mod
 %An interactive version of our procedure could allow users to specify which components are of interest, and group the remaining components into a single noise component.
 
 
-\subsection{Decomposition plots}
+\paragraph{Decomposition plots}
 
 The second section of each report contains a detailed discussion of each component.
 Every component is plotted, and properties of the covariance structure are described.
@@ -254,7 +246,7 @@ shows qualitatively how each component contributes to an overall explanation of 
 
 \begin{figure}[ht]
 \centering
-\fbox{\includegraphics[width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-5}}
+\fbox{\includegraphics[trim=0cm 0cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-5}}
 \caption{Discovering the Maunder minimum.  The kernel found by GPSS contained a pair of changepoints bracketing the period of low solar activity.}
 \label{fig:maunder}
 \end{figure}
@@ -282,7 +274,7 @@ Figure \ref{fig:periodic} shows that GPSS has isolated the approximately 11 year
 
 \begin{figure}[ht]
 \centering
-\fbox{\includegraphics[trim=0cm 0cm 0cm 4.5cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-7}}
+\fbox{\includegraphics[trim=0cm 0cm 0cm 4.7cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-7}}
 \caption{Isolating the periodic component of the dataset.  By isolating this aspect of the statistical structure, we can easily observe additional features, such as the shape of the peaks and troughs, or the fact that the amplitude changes over time.}
 \label{fig:periodic}
 \end{figure}
@@ -294,7 +286,7 @@ Figure \ref{fig:periodic} shows that GPSS has isolated the approximately 11 year
 %and by comparing with figure \ref{fig:smooth}, we can see that it varies roughly in proportion to the overall magnitude of the signal.
 %  This pattern suggests that some sort of log-transform might be appropriate for this dataset, or that the model should be extended in some way to capture this structure.
 
-\subsection{Extrapolation plots}
+\paragraph{Extrapolation plots}
 
 The third section of each report shows extrapolations into the future, as well as posterior samples from each individual component of the model.  These samples help to characterize the uncertainty expressed by the model, and the extent to which different components contribute to predicting the future behavior of a time series.
 %
@@ -302,7 +294,7 @@ The predictive mean and variance of the signals shown in the summary plots are u
 %
 \begin{figure}[ht]
 \centering
-\fbox{\includegraphics[trim=0cm 0cm 0cm 2.5cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-13}}
+\fbox{\includegraphics[trim=0cm 0cm 0cm 2.8cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-13}}
 \caption{Sampling from the posterior.  These samples help show not just the predictive mean and variance, but also the predictive covariance structure.  Note, for example, that the predictive mean (left) does not exhibit periodicity, but the samples (right) do.}
 \label{fig:extrap-full}
 \end{figure}
@@ -348,7 +340,17 @@ it is not clear from the left-hand plot in figure \ref{fig:extrap-full} whether 
 %Can use the precise semantics of linear models or the vague semantics of nonparametric additive models and other components along this spectrum.
 %Flexible modelling with components that a human might use to describe what is going on.
 
-\section{Discussion}
+
+\paragraph{Source Code}
+Python code to perform all experiments is available on github.\footnote{Available at 
+\href{http://www.github.com/jamesrobertlloyd/gpss-research}
+{\texttt{github.com/jamesrobertlloyd/gpss-research}}}
+%All \gp{} hyperparameter tuning was performed by automated calls to the GPML toolbox\footnote{Available at 
+%\href{http://www.gaussianprocess.org/gpml/code/}
+%{\texttt{www.gaussianprocess.org/gpml/code/}}
+%}
+
+%\section{Discussion}
 
 %\begin{quotation}
 %``The availability of 'user-friendly' statistical software has caused authors to become increasingly careless about the logic of interpreting their results, and to rely uncritically on computer output, often using the 'default option' when something a little different (usually, but not always, a little more complicated) is correct, or at least more appropriate.''
@@ -359,8 +361,8 @@ it is not clear from the left-hand plot in figure \ref{fig:extrap-full} whether 
 %\hspace*{\fill}\citetalias{dyke1997avoid}
 %\end{quotation}
 
-In this paper, we exhibited the output of a method for automatically constructing and summarizing a compositional Gaussian process regression model in natural language.
-These summaries can enable human experts and non-experts to understand the implications of a model, check its plausibility, and notice structure not yet captured by the model.
+%In this paper, we exhibited the output of a method for automatically constructing and summarizing a compositional Gaussian process regression model in natural language.
+%These summaries can enable human experts and non-experts to understand the implications of a model, check its plausibility, and notice structure not yet captured by the model.
 
 \bibliographystyle{unsrt}
 \bibliography{gpss}

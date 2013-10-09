@@ -168,7 +168,7 @@ The first section of each report describes which structures were discovered in t
 \centering
 \fbox{\includegraphics[trim=0cm 3.4cm 0cm 6.3cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-2}}
 \caption{
-An example of an automatically-generated summary of a dataset.  The dataset is broken into a set of diverse types of structure, and each structure is explained in simple terms.}
+An example of an automatically-generated summary of a dataset.  The dataset is decomposed into diverse types of structures, and each structure is explained in simple terms.}
 \label{fig:exec}
 \end{figure}
 
@@ -215,8 +215,10 @@ $\kSE \times \kPer \times \kLin$ & A smoothly varying periodic function with gro
 
 %A second paragraph explains the improvement in predictive performance gained by including this component in the model. This is the same informatino as included in the executive summary.
 
-\paragraph{Automatic Plotting}
-In the component plots, each component's posterior is described in two ways.  First, the posterior mean and variance of each component is plotted on its own.  Second, the posterior mean and variance of all components shown so far is plotted against the data.  By contrasting each of these plot with plots of earler components, we can see qualitatively how the current component is contributing to an overall explanation of the data.
+%\paragraph{Automatic Plotting}
+Each component's posterior is plotted in two ways.  First, the posterior mean and variance of each component is plotted on its own.  Second, the posterior mean and variance of all components shown so far is plotted against the data.  This progression of plots 
+%By contrasting each of these plots with plots of earlier components, we can see 
+shows qualitatively how the each component contributes to an overall explanation of the data.
 
 \begin{figure}[h!]
 \centering
@@ -229,7 +231,9 @@ In the component plots, each component's posterior is described in two ways.  Fi
 
 
 %In the history of solar activity, the Maunder minimum is a good example of a local change in covariance.  Specifically, 
-The GPSS grammar allows any expression to be multiplied by a changepoint kernel, which encodes a local change in covariance. For example, foom about 1645 to 1715, solar activity decreased, and very few susnpots were observed, a period called the Maunder Minimum \citep{lean1995reconstruction}. Figure \ref{fig:maunder} shows that GPSS captured this structure with a pair of changepoint kernels.%shows exactly which sort of structure was recovered by this component.
+The GPSS grammar allows any expression to be multiplied by a changepoint kernel, which encodes a local change in covariance. For example, foom about 1645 to 1715, solar activity decreased.
+%, and very few sunspots were observed, a period called the Maunder Minimum \citep{lean1995reconstruction}.
+Figure \ref{fig:maunder} shows that GPSS captured this structure with a pair of changepoint kernels.%shows exactly which sort of structure was recovered by this component.
 
 %\begin{figure}[h!]
 %\centering
@@ -247,7 +251,7 @@ The GPSS grammar allows any expression to be multiplied by a changepoint kernel,
 \label{fig:periodic}
 \end{figure}
 
-Figure \ref{fig:periodic} shows the isolated periodic component of the signal.  Here we see one of the main benefits of isolating individual components: we can now see, by eye, extra structure that was not captured by the model.  Specifically, we can see that the amplitude of the periodic component varies over time.
+Figure \ref{fig:periodic} shows the isolated periodic component of the signal.  demonstrating one benefit of isolating individual components: we can now see, by eye, extra structure that was not explicitly captured by the model.  Specifically, we can see that the amplitude of the periodic component varies over time.
 
 %and by comparing with figure \ref{fig:smooth}, we can see that it varies roughly in proportion to the overall magnitude of the signal.
 %  This pattern suggests that some sort of log-transform might be appropriate for this dataset, or that the model should be extended in some way to capture this structure.

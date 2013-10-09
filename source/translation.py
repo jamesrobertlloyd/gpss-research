@@ -585,12 +585,7 @@ def produce_summary_document(dataset_name, n_components, fit_data, short_descrip
 \usepackage{url}
 \usepackage{color}
 \definecolor{mydarkblue}{rgb}{0,0.08,0.45}
-\hypersetup{ %
-    pdftitle={},
-    pdfauthor={},
-    pdfsubject={},
-    pdfkeywords={},
-    pdfborder=0 0 0,
+\hypersetup{
     pdfpagemode=UseNone,
     colorlinks=true,
     linkcolor=mydarkblue,
@@ -610,31 +605,31 @@ def produce_summary_document(dataset_name, n_components, fit_data, short_descrip
 
 \\title{An automatic report for the dataset : %(dataset_name)s}
 
-\author{
-James Robert Lloyd\\
-University of Cambridge\\
-Department of Engineering\\
-\texttt{jrl44@cam.ac.uk}
+\\author{
+James Robert Lloyd\\\\
+University of Cambridge\\\\
+Department of Engineering\\\\
+\\texttt{jrl44@cam.ac.uk}
 \And
-David Duvenaud\\
-University of Cambridge \\
-Department of Engineering \\
-\texttt{dkd23@cam.ac.uk} \\
+David Duvenaud\\\\
+University of Cambridge \\\\
+Department of Engineering \\\\
+\\texttt{dkd23@cam.ac.uk}
 \And
-Roger Grosse\\
-M.I.T.\\
-Brain and Cognitive Sciences \\
-\texttt{rgrosse@mit.edu}
+Roger Grosse\\\\
+M.I.T.\\\\
+Brain and Cognitive Sciences \\\\
+\\texttt{rgrosse@mit.edu}
 \And
-Joshua B. Tenenbaum\\
-M.I.T.\\
-Brain and Cognitive Sciences \\
-\texttt{jbt@mit.edu}
+Joshua B. Tenenbaum\\\\
+M.I.T.\\\\
+Brain and Cognitive Sciences \\\\
+\\texttt{jbt@mit.edu}
 \And
-Zoubin Ghahramani\\
-University of Cambridge \\
-Department of Engineering \\
-\texttt{zoubin@eng.cam.ac.uk}
+Zoubin Ghahramani\\\\
+University of Cambridge \\\\
+Department of Engineering \\\\
+\\texttt{zoubin@eng.cam.ac.uk}
 }
 
 \\newcommand{\\fix}{\marginpar{FIX}}

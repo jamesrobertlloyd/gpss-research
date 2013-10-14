@@ -48,7 +48,7 @@ K = feval(cov_func{:}, hyp.cov, X);
 %% Fit SE + SE
 
 cov_func = {@covSum, {@covSEiso, @covSEiso, @covNoise}};
-hyp.cov = [0,0,-2,-1,log(std(y) / 10)];
+hyp.cov = [0,0,-1,-1,log(std(y) / 10)];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -179,3 +179,37 @@ colorbar;
 %% Plot qq plot of p values
 
 qqplot(p_dif_square_prior(:), linspace(0,1,10000));
+
+%% Were any differences unlikely under the LTO posterior
+
+p_diff_LTO = nan(size(X));
+p_diff_LTO_list = [];
+for i = 1:length(X)
+    i
+    for j = (i+1):length(X)
+        not_ij = [1:(i-1),(i+1):(j-1),(j+1):length(X)];
+        K_ijij = K(not_ij,not_ij);
+        K_i = K(i,not_ij);
+        K_j = K(j,not_ij);
+        K_ij = [K(i,i), K(i,j);
+                K(j,i), K(j,j)];
+        something_else = [K_i;K_j];
+        y_ij = y(not_ij);
+        mean_i = K_i * (K_ijij \ y_ij);
+        mean_j = K_j * (K_ijij \ y_ij);
+        mean = mean_i - mean_j;
+        var = K_ij - something_else * (K_ijij \ something_else');
+        var = var(1,1) + var(2,2) - 2*var(1,2);
+        standard = ((y(i) - y(j)) - mean) ./ sqrt(var);
+
+        p_diff_LTO(i, j) = normcdf(standard);
+        p_diff_LTO_list = [p_diff_LTO_list; p_diff_LTO(i, j)];
+    end
+end
+
+imagesc(p_diff_LTO);
+colorbar;
+
+%% Plot qq plot of p values
+
+qqplot(p_diff_LTO_list(:), linspace(0,1,10000));

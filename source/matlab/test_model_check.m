@@ -48,7 +48,7 @@ K = feval(cov_func{:}, hyp.cov, X);
 %% Fit SE + SE
 
 cov_func = {@covSum, {@covSEiso, @covSEiso, @covNoise}};
-hyp.cov = [0,0,-1,-1,log(std(y) / 10)];
+hyp.cov = [0,0,-2,-1,log(std(y) / 10)];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -213,3 +213,71 @@ colorbar;
 %% Plot qq plot of p values
 
 qqplot(p_diff_LTO_list(:), linspace(0,1,10000));
+
+%% Plot LOO mean and variance on data
+
+p_point_LOO = nan(size(X));
+mean_LOO = nan(size(X));
+var_LOO = nan(size(X));
+for i = 1:length(p_point_LOO)
+    K_i = K([1:(i-1),(i+1):length(p_point_LOO)],:);
+    K_ii = K_i(:,[1:(i-1),(i+1):length(p_point_LOO)]);
+    K_i = K(i,[1:(i-1),(i+1):length(p_point_LOO)]);
+    y_i = y([1:(i-1),(i+1):length(p_point_LOO)]);
+    mean_LOO(i) = K_i * (K_ii \ y_i);
+    var_LOO(i) = K(i,i) - K_i * (K_ii \ K_i');
+    standard = (y(i) - mean_LOO(i)) ./ sqrt(var_LOO(i));
+    
+    p_point_LOO(i) = normcdf(standard);
+end
+
+plot(X,y,'o');
+hold on;
+plot(X,mean_LOO,'b-');
+plot(X,mean_LOO+2*sqrt(var_LOO),'b--');
+plot(X,mean_LOO-2*sqrt(var_LOO),'b--');
+hold off;
+
+%% Plot LCO mean and variance on data
+
+chunk_size = 0.1;
+
+p_point_LCO = nan(size(X));
+mean_LCO = nan(size(X));
+var_LCO = nan(size(X));
+for i = 1:length(X)
+    not_close = abs(X-X(i)) > ((max(X) - min(X)) * chunk_size * 0.5);
+    
+    K_ii = K(not_close,not_close);
+    K_i = K(i,not_close);
+    y_i = y(not_close);
+    
+    mean_LCO(i) = K_i * (K_ii \ y_i);
+    var_LCO(i) = K(i,i) - K_i * (K_ii \ K_i');
+    standard = (y(i) - mean_LCO(i)) ./ sqrt(var_LCO(i));
+    
+    p_point_LCO(i) = normcdf(standard);
+end
+
+plot(X,y,'o');
+hold on;
+plot(X,mean_LCO,'b-');
+plot(X,mean_LCO+2*sqrt(var_LCO),'b--');
+plot(X,mean_LCO-2*sqrt(var_LCO),'b--');
+hold off;
+
+%% Plot p values
+
+plot(X, p_point_LCO, 'o');
+
+%% Plot qq plot of p values
+
+qqplot(p_point_LCO, linspace(0,1,10000));
+
+%% Overlay
+
+plot(X, y, 'go');
+hold on;
+plot(X(p_point_LCO>0.95), y(p_point_LCO>0.95), 'ro');
+plot(X(p_point_LCO<0.05), y(p_point_LCO<0.05), 'bo');
+hold off;

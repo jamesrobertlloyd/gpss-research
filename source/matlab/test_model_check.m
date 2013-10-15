@@ -33,7 +33,7 @@ plot(X, y, 'o');
 %% Fit SE
 
 cov_func = {@covSum, {@covSEiso, @covNoise}};
-hyp.cov = [0,0,log(std(y) / 10)];
+hyp.cov = [-2,0,log(std(y) / 10)];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -48,7 +48,7 @@ K = feval(cov_func{:}, hyp.cov, X);
 %% Fit SE + SE
 
 cov_func = {@covSum, {@covSEiso, @covSEiso, @covNoise}};
-hyp.cov = [0,0,-2,-1,log(std(y) / 10)];
+hyp.cov = [3,6,0,6,1];
 
 mean_func = @meanZero;
 hyp.mean = [];
@@ -281,3 +281,98 @@ hold on;
 plot(X(p_point_LCO>0.95), y(p_point_LCO>0.95), 'ro');
 plot(X(p_point_LCO<0.05), y(p_point_LCO<0.05), 'bo');
 hold off;
+
+%% Is the radius an interesting statistic in high d Gaussians?
+
+p = nan(100,1);
+r2s = nan(100,1);
+for i = 1:length(p)
+
+    X = linspace(0,1,100)';
+    cov_func = {@covSum, {@covSEiso, @covNoise}};
+    hyp.cov = [-1,0,-2];
+
+    K = feval(cov_func{:}, hyp.cov, X);
+
+    L = chol(K);
+
+    y = L' * randn(size(X));
+
+    z = L' \ y;
+
+    r2 = sum(z.*z);
+    r2s(i) = r2;
+
+    p(i) = chi2cdf(r2, length(z));
+end
+
+%% Plot qq plot of p values
+
+qqplot(p(:), linspace(0,1,10000));
+
+%% What is the radius on real data? Answer: not interesting
+
+L = chol(K);
+z = L' \ y;
+r2 = sum(z.*z);
+p = chi2cdf(r2, length(z));
+
+p
+
+%% Does marginal likelihood show anything interesting - nope, just radius
+
+iters = 100;
+lmls = nan(iters,1);
+L = chol(K);
+for i = 1:iters
+    y_null = L' * randn(size(y));
+    lmls(i) = y_null' * (K \ y_null);
+end
+
+hist(lmls);
+
+lml = y'*(K\y);
+
+p = sum(lmls < lml) / length(lmls)
+
+%% Leave two next to each other out statistic?
+
+p_point_LTO = nan(length(X)-1,1);
+mean_LTO = nan(length(X)-1,1);
+var_LTO = nan(length(X)-1,1);
+X_LTO = nan(length(X)-1,1);
+y_LTO = nan(length(X)-1,1);
+
+for i = 1:(length(X) - 1)
+    not_i = [1:(i-1),(i+2):length(X)];
+    
+    K_ii = K(not_i,not_i);
+    K_i = K([i;i+1],not_i);
+    y_i = y(not_i);
+    
+    little_mean = K_i * (K_ii \ y_i);
+    mean_LTO(i) = little_mean(2) - little_mean(1);
+    little_K = K([i,i+1],[i,i+1]) - K_i * (K_ii \ K_i');
+    var_LTO(i) =little_K(1,1) + little_K(2,2) - 2 * little_K(1,2);
+    standard = ((y(i+1)-y(i)) - mean_LTO(i)) ./ sqrt(var_LTO(i));
+    
+    p_point_LTO(i) = normcdf(standard);
+    
+    X_LTO(i) = mean(X(i:i+1));
+    y_LTO(i) = y(i+1) - y(i);
+end
+
+plot(X_LTO,y_LTO,'o');
+hold on;
+plot(X_LTO,mean_LTO,'b-');
+plot(X_LTO,mean_LTO+2*sqrt(var_LTO),'b--');
+plot(X_LTO,mean_LTO-2*sqrt(var_LTO),'b--');
+hold off;
+
+%% Plot p values
+
+plot(X_LTO, p_point_LTO, 'o');
+
+%% Plot qq plot of p values
+
+qqplot(p_point_LTO, linspace(0,1,10000));

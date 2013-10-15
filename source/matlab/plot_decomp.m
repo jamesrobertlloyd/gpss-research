@@ -395,6 +395,56 @@ for j = 1:min(numel(decomp_list), max_depth)
     saveas( gcf, filename );
 end
 
+% Plot LOO posterior predictive, residuals and QQ
+
+p_point_LOO = nan(size(X));
+mean_LOO = nan(size(X));
+var_LOO = nan(size(X));
+
+K = complete_sigma;
+
+for i = 1:length(X)
+    not_i = [1:(i-1),(i+1):length(X)];
+    
+    K_ii = K(not_i,not_i);
+    K_i = K(i,not_i);
+    y_i = y(not_i);
+    
+    mean_LOO(i) = K_i * (K_ii \ y_i);
+    var_LOO(i) = K(i,i) - K_i * (K_ii \ K_i');
+    standard = (y(i) - mean_LOO(i)) ./ sqrt(var_LOO(i));
+    
+    p_point_LOO(i) = normcdf(standard);
+end
+
+figure(333); clf; hold on;
+mean_var_plot( X*X_scale+X_mean, y*y_scale, ...
+               X*X_scale+X_mean, ...
+               mean_LOO*y_scale, 2.*sqrt(var_LOO)*y_scale);
+           
+title(sprintf('LOO posterior predictive', j));
+filename = sprintf('%s_loo_pp.fig', figname);
+saveas( gcf, filename );
+
+figure(444); clf; hold on;
+mean_var_plot( X*X_scale+X_mean, p_point_LOO, ...
+               X*X_scale+X_mean, ...
+               mean_LOO*y_scale, 2.*sqrt(var_LOO)*y_scale, ...
+               false, true);
+           
+title(sprintf('LOO residuals', j));
+filename = sprintf('%s_loo_resid.fig', figname);
+saveas( gcf, filename );
+
+figure(555); clf; hold on;
+qq_uniform_plot(p_point_LOO);
+           
+title(sprintf('LOO residuals QQ-plot', j));
+filename = sprintf('%s_loo_qq.fig', figname);
+saveas( gcf, filename );
+
+% Plot LCO posterior predictives
+
 % Save data to file
 
 save(sprintf('%s_decomp_data.mat', figname), 'idx', 'SNRs', 'vars', ...
@@ -531,6 +581,30 @@ function sample_plot( xdata, xrange, forecast_mu, forecast_sigma )
         y_lim = get(gca,'ylim');
         line( [min(xdata), min(xdata)], y_lim, 'Linestyle', '--', 'Color', [0.3 0.3 0.3 ]);
     end 
+    
+    set_fig_units_cm( 16,8 );
+end
+
+function qq_uniform_plot( sample )
+    
+    lw = 1.2;
+
+    sample = sort(sample);
+    U = linspace(0,1,length(sample)+2);
+    U = U(2:(end-1));
+    
+    plot(U, U, 'Color', colorbrew(2), 'LineWidth', lw);
+    plot(U, sample, 'k.');
+    
+    xlim([0,1]);
+    ylim([0,1]);
+    
+    % Make plot prettier.
+    set(gcf, 'color', 'white');
+    set(gca, 'TickDir', 'out');
+    
+    xlabel('Uniform quantiles');
+    ylabel('Sample quantiles');
     
     set_fig_units_cm( 16,8 );
 end

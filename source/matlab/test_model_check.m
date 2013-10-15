@@ -319,6 +319,8 @@ p = chi2cdf(r2, length(z));
 
 p
 
+plot(z)
+
 %% Does marginal likelihood show anything interesting - nope, just radius
 
 iters = 100;
@@ -357,6 +359,48 @@ for i = 1:(length(X) - 1)
     standard = ((y(i+1)-y(i)) - mean_LTO(i)) ./ sqrt(var_LTO(i));
     
     p_point_LTO(i) = normcdf(standard);
+    
+    X_LTO(i) = mean(X(i:i+1));
+    y_LTO(i) = y(i+1) - y(i);
+end
+
+plot(X_LTO,y_LTO,'o');
+hold on;
+plot(X_LTO,mean_LTO,'b-');
+plot(X_LTO,mean_LTO+2*sqrt(var_LTO),'b--');
+plot(X_LTO,mean_LTO-2*sqrt(var_LTO),'b--');
+hold off;
+
+%% Plot p values
+
+plot(X_LTO, p_point_LTO, 'o');
+
+%% Plot qq plot of p values
+
+qqplot(p_point_LTO, linspace(0,1,10000));
+
+%% Leave two next to each other out statistic - squared?
+
+p_point_LTO = nan(length(X)-1,1);
+mean_LTO = nan(length(X)-1,1);
+var_LTO = nan(length(X)-1,1);
+X_LTO = nan(length(X)-1,1);
+y_LTO = nan(length(X)-1,1);
+
+for i = 1:(length(X) - 1)
+    not_i = [1:(i-1),(i+2):length(X)];
+    
+    K_ii = K(not_i,not_i);
+    K_i = K([i;i+1],not_i);
+    y_i = y(not_i);
+    
+    little_mean = K_i * (K_ii \ y_i);
+    mean_LTO(i) = little_mean(2) - little_mean(1);
+    little_K = K([i,i+1],[i,i+1]) - K_i * (K_ii \ K_i');
+    var_LTO(i) =little_K(1,1) + little_K(2,2) - 2 * little_K(1,2);
+    standard = (((y(i+1)-y(i)) - mean_LTO(i)) ./ sqrt(var_LTO(i))) .^ 2;
+    
+    p_point_LTO(i) = chi2cdf(standard,1);
     
     X_LTO(i) = mean(X(i:i+1));
     y_LTO(i) = y(i+1) - y(i);

@@ -883,6 +883,54 @@ Some discussion about extrapolation.
                                          'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
                                          'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
                                          'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+                                         
+    text += '''
+\section{Model checking}
+
+\subsection{Interpolation}
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_resid} \\\\
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_qq}
+\end{tabular}
+\caption{LOO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
+\label{fig:loo}
+\end{figure}
+
+\subsection{Extrapolation}
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_resid} \\\\
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_qq}
+\end{tabular}
+\caption{LCO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
+\label{fig:lco}
+\end{figure}
+
+\subsection{Inverse Cholseky thing}
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_resid} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_qq}
+\end{tabular}
+\caption{Inverse Cholesky thing. Standardised values (left) and qq-plot (right)}
+\label{fig:z}
+\end{figure}
+''' % {'dataset_name' : dataset_name}
 
     text += '''
 \end{document}

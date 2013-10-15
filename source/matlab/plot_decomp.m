@@ -443,7 +443,78 @@ title(sprintf('LOO residuals QQ-plot', j));
 filename = sprintf('%s_loo_qq.fig', figname);
 saveas( gcf, filename );
 
-% Plot LCO posterior predictives
+% Plot LCO posterior predictives, residuals and QQ
+
+chunk_size = 0.1;
+
+p_point_LOO = nan(size(X));
+mean_LOO = nan(size(X));
+var_LOO = nan(size(X));
+
+K = complete_sigma;
+
+for i = 1:length(X)
+    not_close = abs(X-X(i)) > ((max(X) - min(X)) * chunk_size * 0.5);
+    
+    K_ii = K(not_close,not_close);
+    K_i = K(i,not_close);
+    y_i = y(not_close);
+    
+    mean_LOO(i) = K_i * (K_ii \ y_i);
+    var_LOO(i) = K(i,i) - K_i * (K_ii \ K_i');
+    standard = (y(i) - mean_LOO(i)) ./ sqrt(var_LOO(i));
+    
+    p_point_LOO(i) = normcdf(standard);
+end
+
+figure(777); clf; hold on;
+mean_var_plot( X*X_scale+X_mean, y*y_scale, ...
+               X*X_scale+X_mean, ...
+               mean_LOO*y_scale, 2.*sqrt(var_LOO)*y_scale);
+           
+title(sprintf('LCO posterior predictive', j));
+filename = sprintf('%s_lco_pp.fig', figname);
+saveas( gcf, filename );
+
+figure(888); clf; hold on;
+mean_var_plot( X*X_scale+X_mean, p_point_LOO, ...
+               X*X_scale+X_mean, ...
+               mean_LOO*y_scale, 2.*sqrt(var_LOO)*y_scale, ...
+               false, true);
+           
+title(sprintf('LCO residuals', j));
+filename = sprintf('%s_lco_resid.fig', figname);
+saveas( gcf, filename );
+
+figure(999); clf; hold on;
+qq_uniform_plot(p_point_LOO);
+           
+title(sprintf('LCO residuals QQ-plot', j));
+filename = sprintf('%s_lco_qq.fig', figname);
+saveas( gcf, filename );
+
+% Plot z score residuals
+
+L = chol(K);
+z = (L') \ y;
+p = normcdf(z);
+
+figure(123); clf; hold on;
+mean_var_plot( X*X_scale+X_mean, p, ...
+               X*X_scale+X_mean, ...
+               mean_LOO*y_scale, 2.*sqrt(var_LOO)*y_scale, ...
+               false, true);
+           
+title(sprintf('z score residuals', j));
+filename = sprintf('%s_z_resid.fig', figname);
+saveas( gcf, filename );
+
+figure(234); clf; hold on;
+qq_uniform_plot(p);
+           
+title(sprintf('z score residuals QQ-plot', j));
+filename = sprintf('%s_z_qq.fig', figname);
+saveas( gcf, filename );
 
 % Save data to file
 

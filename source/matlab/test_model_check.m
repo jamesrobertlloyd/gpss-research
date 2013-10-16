@@ -319,7 +319,7 @@ p = chi2cdf(r2, length(z));
 
 p
 
-plot(z)
+plot(normcdf(z), 'o')
 
 %% Does marginal likelihood show anything interesting - nope, just radius
 
@@ -420,3 +420,63 @@ plot(X_LTO, p_point_LTO, 'o');
 %% Plot qq plot of p values
 
 qqplot(p_point_LTO, linspace(0,1,10000));
+
+%% Some correlated Gaussians
+
+sigma = 0.9;
+K = [1, sigma; sigma, 1];
+L = chol(K);
+
+samples = L' * randn(2, 100);
+X = samples(1, :)';
+Y = samples(2, :)';
+
+plot(X, Y, 'o');
+
+%% Distirbution of standardised variables
+
+X_standard = X - sigma*Y;
+Y_standard = Y - sigma*X;
+
+plot(X_standard, Y, 'o');
+plot(X_standard, X_standard, 'o');
+
+%% One step ahead residuals
+
+p_point_OSA = nan(size(X));
+mean_OSA = nan(size(X));
+var_OSA = nan(size(X));
+for i = 1:length(X)
+    not_close = X < X(i);
+    
+    if i > 1
+        K_ii = K(not_close,not_close);
+        K_i = K(i,not_close);
+        y_i = y(not_close);
+
+        mean_OSA(i) = K_i * (K_ii \ y_i);
+        var_OSA(i) = K(i,i) - K_i * (K_ii \ K_i');
+    else
+        mean_OSA(i) = 0;
+        var_OSA(i) = K(i,i);
+    end
+    standard = (y(i) - mean_OSA(i)) ./ sqrt(var_OSA(i));
+    
+    p_point_OSA(i) = normcdf(standard);
+end
+
+plot(X,y,'o');
+hold on;
+plot(X,mean_OSA,'b-');
+plot(X,mean_OSA+2*sqrt(var_OSA),'b--');
+plot(X,mean_OSA-2*sqrt(var_OSA),'b--');
+ylim([min(y)-0.1*(max(y)-min(y)), max(y)+0.1*(max(y)-min(y))]);
+hold off;
+
+%% Plot p values
+
+plot(X, p_point_OSA, 'o');
+
+%% Plot qq plot of p values
+
+qqplot(p_point_OSA, linspace(0,1,10000));

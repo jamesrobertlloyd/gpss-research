@@ -150,6 +150,56 @@ hold on;
 plot(x, fit);
 hold off;
 
+%% Centered periodic no DC draw
+
+x = linspace(0, 1, 1000)';
+
+cov_func = {@covPeriodicNoDC};
+hyp.cov = [10,log(max(x)/10),0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+hold on;
+plot(x, 0.5*(max(y)-min(y))*sin(x*4*pi) + mean(y), 'r');
+hold off;
+%figure;
+%plot(K(:,1));
+
+%% noDC vs Fourier
+
+x = linspace(0, 1, 1000)';
+
+hyp.cov = [-2,log(max(x)/20),1];
+
+cov_func = {@covPeriodicNoDC};
+K1 = feval(cov_func{:}, hyp.cov, x);
+
+cov_func = {@covFourier};
+K2 = feval(cov_func{:}, hyp.cov, x);
+
+max(max(abs(K2 - K1)))
+
+%% No DC grad check
+
+x = linspace(-10, 10, 1000)';
+
+delta = 0.000000001;
+i = 1;
+
+cov_func = {@covPeriodicNoDC};
+hyp1.cov = [-9, 0, 1];
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
 %% Centered periodic draw
 
 x = linspace(0, 1, 1000)';

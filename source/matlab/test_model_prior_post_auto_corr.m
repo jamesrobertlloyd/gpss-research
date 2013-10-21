@@ -8,6 +8,16 @@ K = feval(cov_func{:}, hyp.cov, X);
 
 y = chol(K)' * randn(size(X));
 
+%% Generate data from SE with linearly growing noise
+
+X = linspace(0,1,250)';
+cov_func = {@covSum, {@covSEiso, {@covProd, {@covLIN, @covNoise}}}};
+hyp.cov = [-2,0,2,0,-2];
+
+temp_K = feval(cov_func{:}, hyp.cov, X);
+
+y = chol(temp_K)' * randn(size(X));
+
 %% Generate data from periodic
 
 X = linspace(0,1,250)';

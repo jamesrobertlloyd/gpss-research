@@ -167,8 +167,12 @@ hold off;
 
 %% Plot prior and posterior qq
 
-prior_samples = chol(non_singular(K1))' * randn(length(y), 100) ./ ...
-                repmat(sqrt(diag(K1)), 1, 100);
+prior_samples = chol(non_singular(K1))' * ...
+                randn(length(y), 100);
+prior_quantiles = quantile(prior_samples(:), linspace(0,1,length(y))');
+% prior_samples = chol(non_singular(K1))' * randn(length(y), 100) ./ ...
+%                 repmat(sqrt(diag(K1)), 1, 100);
+prior_samples = chol(non_singular(K1))' * randn(length(y), 100);
 prior_qq = zeros(length(y), 100);
 for i = 1:100
     a = normcdf(sort(prior_samples(:,i)));

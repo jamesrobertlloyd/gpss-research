@@ -224,7 +224,8 @@ for j = 1:min(numel(decomp_list), max_depth)
     
     data_mean = decomp_sigma' / complete_sigma * y;
     diffs = data_mean(2:end) - data_mean(1:(end-1));
-    data_var = diag(decomp_sigma - decomp_sigma' / complete_sigma * decomp_sigma);
+    data_covar = decomp_sigma - decomp_sigma' / complete_sigma * decomp_sigma;
+    data_var = diag(data_covar);
     SNRs(j) = 10 * log10(sum(data_mean.^2)/sum(data_var));
     vars(j) = (1 - var(y - data_mean) / var(y)) * 100;
     if all(diffs>0)
@@ -253,6 +254,124 @@ for j = 1:min(numel(decomp_list), max_depth)
     fprintf([latex_names{i}, '\n']);
     filename = sprintf('%s_%d.fig', figname, j);
     saveas( gcf, filename );
+    
+    % Plot sample qq
+    
+    %%%% This can be made a lot more efficient
+    
+    %%%% COMPLETE ME
+    
+    %%%% COMPUTE P VALUES TO SEE WHAT HAPPENS - MIGHT BE NONSENSICAL
+    
+    samples = 100;
+    
+    many_prior_samples = chol(non_singular(decomp_sigma))' * ...
+                    randn(length(y), 100);% ./ ...
+                    %repmat(sqrt(diag(decomp_sigma)), 1, samples);
+    prior_quantiles = quantile(many_prior_samples(:), linspace(0,1,length(y))');
+    prior_samples = chol(non_singular(decomp_sigma))' * ...
+                    randn(length(y), samples);% ./ ...
+                    %repmat(sqrt(diag(decomp_sigma)), 1, samples);
+    prior_qq = zeros(length(y), samples);
+    repeated_samples = repmat(many_prior_samples(:)', length(y), 1);
+    repeated_samples = repeated_samples + ... % To break ties
+                       0.001*max(max(many_prior_samples))*randn(size(repeated_samples));
+    for iter = 1:samples
+        %a = normcdf(sort(prior_samples(:,iter)));
+        %a = sort(prior_samples(:,iter));
+        a = sum(repmat(sort(prior_samples(:,iter)), 1, length(repeated_samples)) > repeated_samples, 2) ./ length(repeated_samples);
+        prior_qq(:,iter) = a;
+    end
+
+    post_samples = (repmat(data_mean, 1, samples) + chol(non_singular(data_covar))' * ...
+                    randn(length(y), samples));% ./ ...
+                   %repmat(sqrt(diag(data_covar)), 1, samples);
+    post_qq = zeros(length(y), samples);
+    for iter = 1:samples
+        %a = normcdf(sort(post_samples(:,iter)));
+        %a = sort(post_samples(:,iter));
+        a = sum(repmat(sort(post_samples(:,iter)), 1, length(repeated_samples)) > repeated_samples, 2) ./ length(repeated_samples);
+        post_qq(:,iter) = a;
+    end
+    
+    figure(i + 1); clf; hold on;
+    two_band_plot(linspace(0, 1, length(y))', ...
+                  mean(prior_qq, 2), ...
+                  quantile(prior_qq, 0.95, 2), ...
+                  quantile(prior_qq, 0.05, 2), ...
+                  mean(post_qq, 2), ...
+                  quantile(post_qq, 0.95, 2), ...
+                  quantile(post_qq, 0.05, 2));
+    title(sprintf('QQ uncertainty plot for component %d', j));
+    filename = sprintf('%s_qq_bands_%d.fig', figname, j);
+    saveas( gcf, filename );              
+    %hold off;
+    
+    % Compute kernel at grid to compute acf and periodogram
+    
+    %%%% COMPLETE ME
+    
+    % Plot sample acf
+    
+    samples = 1000;
+    
+    prior_samples = chol(non_singular(decomp_sigma))' * randn(length(y), samples);
+    prior_acf = autocorr(prior_samples(:,1), length(y) -1);
+    prior_acf = zeros(length(prior_acf), samples);
+    for iter = 1:samples
+        prior_acf(:,iter) = autocorr(prior_samples(:,iter), length(y) -1);
+    end
+
+    post_samples = (repmat(data_mean, 1, samples) + chol(non_singular(data_covar))' * ...
+                    randn(length(y), samples));
+    post_acf = autocorr(post_samples(:,1), length(y) -1);
+    post_acf = zeros(length(post_acf), samples);
+    for iter = 1:samples
+        post_acf(:,iter) = autocorr(post_samples(:,iter), length(y) -1);
+    end
+
+    figure(i + 1); clf; hold on;
+    two_band_plot((1:size(post_acf, 1))', ...
+                  mean(prior_acf, 2), ...
+                  quantile(prior_acf, 0.95, 2), ...
+                  quantile(prior_acf, 0.05, 2), ...
+                  mean(post_acf, 2), ...
+                  quantile(post_acf, 0.95, 2), ...
+                  quantile(post_acf, 0.05, 2));
+    title(sprintf('ACF uncertainty plot for component %d', j));
+    filename = sprintf('%s_acf_bands_%d.fig', figname, j);
+    saveas( gcf, filename );
+    
+    % Plot sample periodogram
+    
+    samples = 1000;
+    
+    prior_samples = chol(non_singular(decomp_sigma))' * randn(length(y), samples);
+    prior_pxx = 10 * log10(periodogram(prior_samples(:,1)));
+    prior_pxx = zeros(length(prior_pxx), samples);
+    for iter = 1:samples
+        prior_pxx(:,iter) = 10 * log10(periodogram(prior_samples(:,iter)));
+    end
+
+    post_samples = (repmat(data_mean, 1, samples) + chol(non_singular(data_covar))' * ...
+                    randn(length(y), samples));
+    post_pxx = 10 * log10(periodogram(post_samples(:,1)));
+    post_pxx = zeros(length(post_pxx), samples);
+    for iter = 1:samples
+        post_pxx(:,iter) = 10 * log10(periodogram(post_samples(:,iter)));
+    end
+
+    figure(i + 1); clf; hold on;
+    two_band_plot((1:size(post_pxx, 1))', ...
+                  mean(prior_pxx, 2), ...
+                  quantile(prior_pxx, 0.95, 2), ...
+                  quantile(prior_pxx, 0.05, 2), ...
+                  mean(post_pxx, 2), ...
+                  quantile(post_pxx, 0.95, 2), ...
+                  quantile(post_pxx, 0.05, 2));
+    title(sprintf('Periodogram uncertainty plot for component %d', j));
+    filename = sprintf('%s_pxx_bands_%d.fig', figname, j);
+    saveas( gcf, filename );    
     
     % Compute mean and variance for this kernel.
     decomp_sigma = feval(cur_cov{:}, cur_hyp, X);
@@ -290,7 +409,7 @@ for j = 1:min(numel(decomp_list), max_depth)
     latex_names{i} = strrep(latex_names{i}, '\right', '');
     %title(latex_names{i});
     title(sprintf('Posterior of component %d', j));
-    fprintf([latex_names{i}, '\n']);
+    %fprintf([latex_names{i}, '\n']);
     filename = sprintf('%s_%d_extrap.fig', figname, j);
     saveas( gcf, filename );
     
@@ -302,7 +421,7 @@ for j = 1:min(numel(decomp_list), max_depth)
     latex_names{i} = strrep(latex_names{i}, '\right', '');
     %title(latex_names{i});
     title(sprintf('Random samples from the posterior of component %d', j));
-    fprintf([latex_names{i}, '\n']);
+    %fprintf([latex_names{i}, '\n']);
     filename = sprintf('%s_%d_sample.fig', figname, j);
     saveas( gcf, filename );
 end

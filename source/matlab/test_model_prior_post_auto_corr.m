@@ -28,6 +28,12 @@ K = feval(cov_func{:}, hyp.cov, X);
 
 y = chol(K)' * randn(size(X));
 
+%% Generate data from nearly periodic
+
+X = linspace(0,1,250)';
+y = sin(10*(X+1*X.*X));
+y = y + 0.1*randn(size(y));
+
 %% Load airline
 
 load('01-airline.mat');

@@ -18,6 +18,12 @@ K = feval(cov_func{:}, hyp.cov, X);
 
 y = chol(K)' * randn(size(X));
 
+%% Generate data from nearly periodic
+
+X = linspace(0,1,250)';
+y = sin(10*(X+2*X.*X));
+y = y + 0.1*randn(size(y));
+
 %% Load airline
 
 load('01-airline.mat');
@@ -69,6 +75,26 @@ hyp = minimize(hyp, @gp, -1000, @infDelta, mean_func, cov_func, lik_func, X, y);
 K = feval(cov_func{:}, hyp.cov, X);
 K1 = feval(cov_func_1, hyp.cov(1:3), X);
 K2 = feval(cov_func_2, hyp.cov(4), X);
+
+%% Fit SE*Periodic
+
+cov_func = {@covSum, {{@covProd, {@covSEiso, @covPeriodicCentre}}, @covNoise}};
+hyp.cov = [0,0,2,-1,1,-3];
+
+cov_func_1 = {@covProd, {@covSEiso, @covPeriodicCentre}};
+cov_func_2 = @covNoise;
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likDelta;
+hyp.lik = [];
+
+hyp = minimize(hyp, @gp, -1000, @infDelta, mean_func, cov_func, lik_func, X, y);
+
+K = feval(cov_func{:}, hyp.cov, X);
+K1 = feval(cov_func_1{:}, hyp.cov(1:5), X);
+K2 = feval(cov_func_2, hyp.cov(6), X);
 
 %% Plot from posterior and prior
 

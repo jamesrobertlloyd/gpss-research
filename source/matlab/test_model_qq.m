@@ -33,11 +33,17 @@ y = y + trnd(3, length(y), 1);
 
 X = linspace(0,1,250)';
 cov_func = {@covSum, {@covPeriodicCentre, @covNoise}};
-hyp.cov = [2,-2,1,-3];
+hyp.cov = [2,-1,1,-3];
 
 temp_K = feval(cov_func{:}, hyp.cov, X);
 
 y = chol(temp_K)' * randn(size(X));
+
+%% Generate data from nearly periodic
+
+X = linspace(0,1,250)';
+y = sin(10*(X+0.5*X.*X));
+y = y + 0.1*randn(size(y));
 
 %% Load airline
 
@@ -90,6 +96,26 @@ hyp = minimize(hyp, @gp, -1000, @infDelta, mean_func, cov_func, lik_func, X, y);
 K = feval(cov_func{:}, hyp.cov, X);
 K1 = feval(cov_func_1, hyp.cov(1:3), X);
 K2 = feval(cov_func_2, hyp.cov(4), X);
+
+%% Fit SE*Periodic
+
+cov_func = {@covSum, {{@covProd, {@covSEiso, @covPeriodicCentre}}, @covNoise}};
+hyp.cov = [0,0,2,-1,1,-3];
+
+cov_func_1 = {@covProd, {@covSEiso, @covPeriodicCentre}};
+cov_func_2 = @covNoise;
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likDelta;
+hyp.lik = [];
+
+hyp = minimize(hyp, @gp, -1000, @infDelta, mean_func, cov_func, lik_func, X, y);
+
+K = feval(cov_func{:}, hyp.cov, X);
+K1 = feval(cov_func_1{:}, hyp.cov(1:5), X);
+K2 = feval(cov_func_2, hyp.cov(6), X);
 
 %% Plot from posterior and prior
 
@@ -236,62 +262,6 @@ end
 
 figure(2);
 hist(post_qq_d_loc);
-
-%% Is the location of the maximum deviation extreme?
-
-prior_samples = chol(non_singular(K1))' * randn(length(y), 100) ./ ...
-                repmat(sqrt(diag(K1)), 1, 100);
-prior_qq_d_loc = zeros(100, 1);
-for i = 1:100
-    a = normcdf(sort(prior_samples(:,i)));
-    b = linspace(0, 1, length(y))';
-    max_d = max(abs(a - b));
-    prior_qq_d_loc(i) = find(abs(a-b) == max_d);
-end
-
-post_mean = K1 * (K \ y);
-post_cov  = non_singular(K1 - K1 * (K \ K1));
-post_samples = (repmat(post_mean, 1, 100) + chol(post_cov)' * randn(length(y), 100)) ./ ...
-               repmat(sqrt(diag(K1)), 1, 100);
-post_qq_d_loc = zeros(100, 1);
-for i = 1:100
-    a = normcdf(sort(post_samples(:,i)));
-    b = linspace(0, 1, length(y))';
-    max_d = max(abs(a - b));
-    post_qq_d_loc(i) = find(abs(a-b) == max_d);
-end
-
-% The random normals break ties
-p_value = sum(prior_qq_d_loc > post_qq_d_loc + 0.001*randn(size(post_qq_d_loc))) / length(post_qq_d_loc);
-p_value
-
-%% Is the location of the maximum deviation extreme?
-
-prior_samples = chol(non_singular(K2))' * randn(length(y), 100) ./ ...
-                repmat(sqrt(diag(K2)), 1, 100);
-prior_qq_d_loc = zeros(100, 1);
-for i = 1:100
-    a = normcdf(sort(prior_samples(:,i)));
-    b = linspace(0, 1, length(y))';
-    max_d = max(abs(a - b));
-    prior_qq_d_loc(i) = find(abs(a-b) == max_d);
-end
-
-post_mean = K2 * (K \ y);
-post_cov  = non_singular(K2 - K2 * (K \ K2));
-post_samples = (repmat(post_mean, 1, 100) + chol(post_cov)' * randn(length(y), 100)) ./ ...
-               repmat(sqrt(diag(K2)), 1, 100);
-post_qq_d_loc = zeros(100, 1);
-for i = 1:100
-    a = normcdf(sort(post_samples(:,i)));
-    b = linspace(0, 1, length(y))';
-    max_d = max(abs(a - b));
-    post_qq_d_loc(i) = find(abs(a-b) == max_d);
-end
-
-% The random normals break ties
-p_value = sum(prior_qq_d_loc > post_qq_d_loc + 0.001*randn(size(post_qq_d_loc))) / length(post_qq_d_loc);
-p_value
 
 %% Is the value of the deviation extreme
 

@@ -273,13 +273,13 @@ for j = 1:min(numel(decomp_list), max_depth)
                     randn(length(y), samples);% ./ ...
                     %repmat(sqrt(diag(decomp_sigma)), 1, samples);
     prior_qq = zeros(length(y), samples);
-    repeated_samples = repmat(many_prior_samples(:)', length(y), 1);
-    repeated_samples = repeated_samples + ... % To break ties
-                       0.001*max(max(many_prior_samples))*randn(size(repeated_samples));
+    %repeated_samples = repmat(many_prior_samples(:)', length(y), 1);
+    %repeated_samples = repeated_samples + ... % To break ties
+    %                   0.001*max(max(many_prior_samples))*randn(size(repeated_samples));
     for iter = 1:samples
         %a = normcdf(sort(prior_samples(:,iter)));
-        %a = sort(prior_samples(:,iter));
-        a = sum(repmat(sort(prior_samples(:,iter)), 1, length(repeated_samples)) > repeated_samples, 2) ./ length(repeated_samples);
+        a = sort(prior_samples(:,iter));
+        %a = sum(repmat(sort(prior_samples(:,iter)), 1, length(repeated_samples)) > repeated_samples, 2) ./ length(repeated_samples);
         prior_qq(:,iter) = a;
     end
 
@@ -289,13 +289,13 @@ for j = 1:min(numel(decomp_list), max_depth)
     post_qq = zeros(length(y), samples);
     for iter = 1:samples
         %a = normcdf(sort(post_samples(:,iter)));
-        %a = sort(post_samples(:,iter));
-        a = sum(repmat(sort(post_samples(:,iter)), 1, length(repeated_samples)) > repeated_samples, 2) ./ length(repeated_samples);
+        a = sort(post_samples(:,iter));
+        %a = sum(repmat(sort(post_samples(:,iter)), 1, length(repeated_samples)) > repeated_samples, 2) ./ length(repeated_samples);
         post_qq(:,iter) = a;
     end
     
     figure(i + 1); clf; hold on;
-    two_band_plot(linspace(0, 1, length(y))', ...
+    two_band_plot(prior_quantiles, ...%linspace(0, 1, length(y))', ...
                   mean(prior_qq, 2), ...
                   quantile(prior_qq, 0.95, 2), ...
                   quantile(prior_qq, 0.05, 2), ...

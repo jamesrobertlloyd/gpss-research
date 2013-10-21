@@ -2,7 +2,7 @@ function two_band_plot( x, mu_1, high_1, low_1, mu_2, high_2, low_2 )
 
     % Figure settings.
     lw = 1.2;
-    opacity = 0.5;
+    opacity = 1.0;
     light_blue = [227 237 255]./255;
     light_red = [255 227 237]./255;
     

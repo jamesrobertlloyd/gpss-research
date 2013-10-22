@@ -126,7 +126,12 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_le
             evaluation_data['MAEs'] = evaluation_data['MAEs'].ravel()
             evaluation_data['MAE_reductions'] = evaluation_data['MAE_reductions'].ravel()
             evaluation_data['monotonic'] = evaluation_data['monotonic'].ravel()
-            evaluation_data['gradients'] = evaluation_data['gradients'].ravel()
+            evaluation_data['acf_min_p'] = evaluation_data['acf_min_p'].ravel()
+            evaluation_data['acf_min_loc_p'] = evaluation_data['acf_min_loc_p'].ravel()
+            evaluation_data['pxx_max_p'] = evaluation_data['pxx_max_p'].ravel()
+            evaluation_data['pxx_max_loc_p'] = evaluation_data['pxx_max_loc_p'].ravel()
+            evaluation_data['qq_d_max_p'] = evaluation_data['qq_d_max_p'].ravel()
+            evaluation_data['qq_d_min_p'] = evaluation_data['qq_d_min_p'].ravel()
             i = 1
             short_descriptions = []
             while os.path.isfile(os.path.join(fig_folder, '%s_%d.fig' % (file, i))):

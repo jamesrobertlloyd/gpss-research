@@ -887,6 +887,41 @@ Some discussion about extrapolation.
     text += '''
 \section{Model checking}
 
+\subsection{Some cumulative probabilities and $p$-values}
+'''
+    text += '''
+\\begin{table}[htb]
+\\begin{center}
+{\small
+\\begin{tabular}{|r|rr|rr|rr|}
+\hline
+ & \multicolumn{2}{|c|}{ACF} & \multicolumn{2}{|c|}{Periodogram} & \multicolumn{2}{|c|}{QQ} \\\\
+\\bf{\#} & {min} & {min loc} & {max} & {max loc} & {max} & {min}\\\\
+\hline
+'''
+
+    table_text = '''
+%d & %0.3f & %0.3f & %0.3f & %0.3f & %0.3f & %0.3f\\\\
+'''
+    cum_var_deltas = [fit_data['cum_vars'][0]] + list(np.array(fit_data['cum_vars'][1:]) - np.array(fit_data['cum_vars'][:-1]))
+
+    for i in range(n_components):
+        text += table_text % (i+1, fit_data['acf_min_p'][i], fit_data['acf_min_loc_p'][i], fit_data['pxx_max_p'][i], fit_data['pxx_max_loc_p'][i], fit_data['qq_d_max_p'][i], fit_data['qq_d_min_p'][i])
+        
+    text += '''
+\hline
+\end{tabular}
+\caption{
+Model checking statistics for each component.
+Cumulative probabilities for minimum of autocorrelation function (ACF) and its location.
+Cumulative probabilities for maximum of periodogram and its location.
+$p$-values for maximum and minimum deviations of QQ-plot from straight line.
+}
+\label{table:check}
+}
+\end{center}
+\end{table}
+
 \subsection{Interpolation}
 
 \\begin{figure}[H]
@@ -931,6 +966,32 @@ Some discussion about extrapolation.
 \label{fig:z}
 \end{figure}
 ''' % {'dataset_name' : dataset_name}
+
+    model_check_component_text = '''
+\subsection{Component %(component)d : %(short_description)s}
+
+Some discussion about model checking.
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_acf_bands_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_pxx_bands_%(component)d} \\\\
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_qq_bands_%(component)d}
+\end{tabular}
+\caption{ACF, periodogram and QQ uncertainty plots - more explanation to come\ldots}
+\label{fig:check%(component)d}
+\end{figure}
+'''
+
+    for i in range(n_components):
+        text += model_check_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                              'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                              'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
+                                              'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                              'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
 
     text += '''
 \end{document}

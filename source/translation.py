@@ -544,10 +544,6 @@ def translate_additive_component(k, X, monotonic, gradient, unit):
     Translates this into natural language or explains that why it's translation abilities aren't up to the job
     '''
     #### TODO
-    #     - Frame in terms of total kernel variance
-    #     - Evaluate kernel on data to determine if it is monotonic
-    #     - Evaluate how much this kernel reduces residual variance on training data and on prediction (MAE)
-    #     - The above can be done by plot_decomp MATLAB code saving data files with details about the components (and their order)
     #     - Discuss steepness of changepoints when there is only one / the form is simple enough
     k = grammar.canonical(k) # Just in case
     (intervals, k) = find_region_of_influence(k)
@@ -595,6 +591,75 @@ def translate_cum_prob(p):
 def convert_cum_prob_to_p_value(p):
     '''p-value for two sided tests'''
     return min([p*2, (1-p)*2])
+
+def translate_p_values(fit_data, component):
+    '''Produces sentences describing extreme p-values'''
+    i = component
+    p_values = [convert_cum_prob_to_p_value(fit_data['acf_min_p'][i]),
+                convert_cum_prob_to_p_value(fit_data['acf_min_loc_p'][i]),
+                convert_cum_prob_to_p_value(fit_data['pxx_max_p'][i]),
+                convert_cum_prob_to_p_value(fit_data['pxx_max_loc_p'][i]),
+                fit_data['qq_d_max_p'][i],
+                fit_data['qq_d_min_p'][i]]
+    sort_indices = [el[0] for el in sorted(enumerate(p_values), key=lambda x:x[1])]
+    # Produce descriptions of each p value - even if not significant
+    descriptions = []
+    hypotheses = []
+    if fit_data['acf_min_p'][i] < 0.5:
+        descriptions.append('The minimum value of the ACF is unexpectedly low.')
+        hypotheses.append('')
+    else:
+        descriptions.append('The minimum value of the ACF is unexpectedly high.')
+        hypotheses.append('')
+    if fit_data['acf_min_loc_p'][i] < 0.5:
+        descriptions.append('The location of the minimum value of the ACF is unexpectedly low.')
+        hypotheses.append('')
+    else:
+        descriptions.append('The location of the minimum value of the ACF is unexpectedly high.')
+        hypotheses.append('')
+    if fit_data['pxx_max_p'][i] < 0.5:
+        descriptions.append('The maximum value of the periodogram is unexpectedly low.')
+        hypotheses.append('')
+    else:
+        descriptions.append('The maximum value of the periodogram is unexpectedly high.')
+        hypotheses.append('The large maximum value of the periodogram can indicate periodicity that is not being captured by the model.')
+    if fit_data['pxx_max_loc_p'][i] < 0.5:
+        descriptions.append('The frequency of the maximum value of the periodogram is unexpectedly low.')
+        hypotheses.append('')
+    else:
+        descriptions.append('The frequency of the maximum value of the periodogram is unexpectedly high.')
+        hypotheses.append('')
+    descriptions.append('The qq plot has an unexpectedly large positive deviation from equality ($x = y$).')
+    hypotheses.append('The positive deviation in the qq-plot can indicate heavy positive tails if it occurs at the right of the plot or light negative tails if it occurs as the left.')
+    descriptions.append('The qq plot has an unexpectedly large negative deviation from equality ($x = y$).')
+    hypotheses.append('The negative deviation in the qq-plot can indicate light positive tails if it occurs at the right of the plot or heavy negative tails if it occurs as the left.')
+    # Arrange nicely
+    if np.all(np.array(p_values) > 0.05):
+        text = 'No discrepancies between the prior and posterior of this component have been detected'
+    else:
+        text = '''
+The following discrepancies between the prior and posterior distributions for this component have been detected.
+
+\\begin{itemize}
+'''
+
+        summary_item = '''
+  \item %s This discrepancy has an estimated $p$-value of %s.
+'''
+        for index in sort_indices:
+            if p_values[index] <= 0.05:
+                text += summary_item % (descriptions[index],translate_p_value(p_values[index]))
+    
+        text += '''
+\end{itemize}
+
+'''
+
+    for index in sort_indices:
+        if (p_values[index] <= 0.05) and (not hypotheses[index] == ''):
+            text += '%s\n' % hypotheses[index]
+
+    return text
 
 def produce_summary_document(dataset_name, n_components, fit_data, short_descriptions):
     '''
@@ -912,59 +977,18 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
                                       'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
                                       'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
                                       'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
-
-    text += '''
-\section{Extrapolation}
-\label{sec:extrap}
-
-Summaries of the posterior distribution of the full model are shown in figure~\\ref{fig:extrap}.
-The plot on the left displays the mean of the posterior together with pointwise variance.
-The plot on the right displays three random samples from the posterior.
-
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all_sample}
-\end{tabular}
-\caption{Full model posterior. Mean and pointwise variance (left) and three random samples (right)}
-\label{fig:extrap}
-\end{figure}
-''' % {'dataset_name' : dataset_name}
-
-    extrap_component_text = '''
-\subsection{Component %(component)d : %(short_description)s}
-
-Some discussion about extrapolation.
-
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_sample} \\\\
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_sample}
-\end{tabular}
-\caption{Posterior of component %(component)d. Mean and pointwise variance (left) and three random samples from this distribution (right)}
-\label{fig:extrap%(component)d}
-\end{figure}
-'''
-
-    for i in range(n_components):
-        text += extrap_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
-                                         'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
-                                         'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
-                                         'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
-                                         'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
                                          
     text += '''
 \section{Model checking}
 \label{sec:check}
 
-\subsection{Some cumulative probabilities and $p$-values}
+To test model fit we have performed several posterior predictive checks.
+These tests take the form of comparing statistics evaluated on samples from the prior and posterior distributions for each additive component.
+The statistics are derived from autocorrelation function (ACF) estimates, periodograms and quantile-quantile (qq) plots.
+
+Table~\\ref{table:check} displays cumulative probability and $p$-value estimates for these quantities.
+Cumulative probabilities near 0/1 indicate that the test statistic was lower/higher under the posterior compared to the prior unexpectedly often.
+$p$-values near 0 indicate that the test statistic was larger in magnitude under the posterior compared to the prior unexpectedly often.
 '''
     text += '''
 \\begin{table}[htb]
@@ -980,7 +1004,6 @@ Some discussion about extrapolation.
     table_text = '''
 %d & %s & %s & %s & %s & %s & %s\\\\
 '''
-    cum_var_deltas = [fit_data['cum_vars'][0]] + list(np.array(fit_data['cum_vars'][1:]) - np.array(fit_data['cum_vars'][:-1]))
 
     for i in range(n_components):
         text += table_text % (i+1, translate_cum_prob(fit_data['acf_min_p'][i]), translate_cum_prob(fit_data['acf_min_loc_p'][i]), \
@@ -1001,55 +1024,13 @@ $p$-values for maximum and minimum deviations of QQ-plot from straight line.
 \end{center}
 \end{table}
 
-\subsection{Interpolation}
-
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_resid} \\\\
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_qq}
-\end{tabular}
-\caption{LOO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
-\label{fig:loo}
-\end{figure}
-
-\subsection{Extrapolation}
-
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_resid} \\\\
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_qq}
-\end{tabular}
-\caption{LCO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
-\label{fig:lco}
-\end{figure}
-
-\subsection{Inverse Cholseky thing}
-
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_resid} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_qq}
-\end{tabular}
-\caption{Inverse Cholesky thing. Standardised values (left) and qq-plot (right)}
-\label{fig:z}
-\end{figure}
-''' % {'dataset_name' : dataset_name}
+We now discuss the nature of any observed discrepancies and list potential hypotheses for the patterns in the data that may not be captured by the model.
+'''
 
     model_check_component_text = '''
-\subsection{Component %(component)d : %(short_description)s}
+\subsubsection{Component %(component)d : %(short_description)s}
 
-Some discussion about model checking.
+%(discussion)s
 
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
@@ -1065,12 +1046,153 @@ Some discussion about model checking.
 \end{figure}
 '''
 
+    if len(bad_fits) > 0:
+        text += '''
+\subsection{Severe discrepancies}
+'''
+
     for i in range(n_components):
-        text += model_check_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
-                                              'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
-                                              'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
-                                              'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
-                                              'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+        if (i in bad_fits):
+            text += model_check_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                                  'discussion' : translate_p_values(fit_data, i),
+                                                  'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                                  'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i],
+                                                  'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                                  'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+
+    if len(moderate_bad_fits) > 0:
+        text += '''
+\subsection{Moderate discrepancies}
+'''
+
+    for i in range(n_components):
+        if (i in moderate_bad_fits):
+            text += model_check_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                                  'discussion' : translate_p_values(fit_data, i),
+                                                  'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                                  'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i],
+                                                  'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                                  'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+
+    if len(moderate_bad_fits) + len(bad_fits) < n_components:
+        text += '''
+\subsection{Model checking plots for components without detected discrepancies}
+'''
+
+    for i in range(n_components):
+        if not ((i in moderate_bad_fits) or (i in bad_fits)):
+            text += model_check_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                                  'discussion' : translate_p_values(fit_data, i),
+                                                  'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                                  'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i],
+                                                  'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                                  'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+
+    text += '''
+\\appendix
+'''
+
+    text += '''
+\section{Extrapolation}
+\label{sec:extrap}
+
+Summaries of the posterior distribution of the full model are shown in figure~\\ref{fig:extrap}.
+The plot on the left displays the mean of the posterior together with pointwise variance.
+The plot on the right displays three random samples from the posterior.
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all_sample}
+\end{tabular}
+\caption{Full model posterior. Mean and pointwise variance (left) and three random samples (right)}
+\label{fig:extrap}
+\end{figure}
+
+We now describe the modelling assumptions associated with each additive component.
+''' % {'dataset_name' : dataset_name}
+
+    extrap_component_text = '''
+\subsection{Component %(component)d : %(short_description)s}
+
+%(discussion)s
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_sample} \\\\
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_sample}
+\end{tabular}
+\caption{Posterior of component %(component)d. Mean and pointwise variance (left) and three random samples from this distribution (right)}
+\label{fig:extrap%(component)d}
+\end{figure}
+'''
+
+    for i in range(n_components):
+        text += extrap_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                         'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                         'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : 'Some discussion about this component',
+                                         'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                         'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+
+    text += '''
+\section{Residual style quantities}
+
+This appendix contains plots of residual-like quantities.
+Their utility is still being investigated so there are currently no explanations of their calculation or interpretation.
+'''
+
+    text += '''
+\subsection{Leave one out}
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_resid} \\\\
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_qq}
+\end{tabular}
+\caption{LOO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
+\label{fig:loo}
+\end{figure}
+
+\subsection{Leave chunk out}
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_resid} \\\\
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_qq}
+\end{tabular}
+\caption{LCO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
+\label{fig:lco}
+\end{figure}
+
+\subsection{Next data point}
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_resid} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_qq}
+\end{tabular}
+\caption{Inverse Cholesky thing. Standardised values (left) and qq-plot (right)}
+\label{fig:z}
+\end{figure}
+''' % {'dataset_name' : dataset_name}
 
     text += '''
 \end{document}

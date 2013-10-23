@@ -581,16 +581,20 @@ def translate_p_value(p):
 
 def translate_cum_prob(p):
     '''LaTeX bold for extreme values'''
-    if p >= 0.99:
+    if p >= 0.995:
         return '\\textbf{%0.3f}' % p
-    elif p >= 0.95:
+    elif p >= 0.975:
         return '%0.3f' % p
-    elif p > 0.05:
+    elif p > 0.025:
         return '\\textcolor{gray}{%0.3f}' % p
-    elif p > 0.01:
+    elif p > 0.005:
         return '%0.3f' % p
     else:
         return '\\textbf{%0.3f}' % p
+
+def convert_cum_prob_to_p_value(p):
+    '''p-value for two sided tests'''
+    return min([p*2, (1-p)*2])
 
 def produce_summary_document(dataset_name, n_components, fit_data, short_descriptions):
     '''
@@ -759,6 +763,54 @@ Short summaries of the additive components are as follows:
 '''
     
     text += summary_end
+
+    # Check for lack of model fit
+
+    moderate_bad_fits = []
+    bad_fits = []
+    for i in range(n_components):
+        p_values = [convert_cum_prob_to_p_value(fit_data['acf_min_p'][i]),
+                    convert_cum_prob_to_p_value(fit_data['acf_min_loc_p'][i]),
+                    convert_cum_prob_to_p_value(fit_data['pxx_max_p'][i]),
+                    convert_cum_prob_to_p_value(fit_data['pxx_max_loc_p'][i]),
+                    fit_data['qq_d_max_p'][i],
+                    fit_data['qq_d_min_p'][i]]
+        if np.any(np.array(p_values) <= 0.01):
+            bad_fits.append(i)
+        elif np.any(np.array(p_values) <= 0.05):
+            moderate_bad_fits.append(i)
+
+    if len(bad_fits) + len(moderate_bad_fits) == 0:
+        text += '\nModel checking statistics have not revealed any inconsistencies between the model and observed data.\n'
+    elif len(bad_fits) == 0:
+        text += '\nModel checking statistics have revealed moderate discrepancies between the data and model in '
+        if len(moderate_bad_fits) > 1:
+            text += 'components %s and %d.\n' % (', '.join('%d' % (i+1) for i in moderate_bad_fits[:-1]), moderate_bad_fits[-1] + 1)
+        else:
+            text += 'component %d.\n' % (moderate_bad_fits[0] + 1)
+    else:
+        text += '\nModel checking statistics have revealed severe discrepancies between the data and model in '
+        if len(bad_fits) > 1:
+            text += 'components %s and %d.\n' % (', '.join('%d' % (i+1) for i in bad_fits[:-1]), bad_fits[-1] + 1)
+        else:
+            text += 'component %d.\n' % (bad_fits[0] + 1)
+        if len(moderate_bad_fits) > 0:
+            text += 'Moderate discrepancies have also been detected in '
+            if len(moderate_bad_fits) > 1:
+                text += 'components %s and %d.\n' % (', '.join('%d' % (i+1) for i in moderate_bad_fits[:-1]), moderate_bad_fits[-1] + 1)
+            else:
+                text += 'component %d.\n' % (moderate_bad_fits[0] + 1)
+
+    # Announce structure of document
+
+    text += '''
+The rest of the document is structured as follows.
+In section \\ref{sec:discussion} we describe the forms of the additive components and display their posterior distributions.
+In section \\ref{sec:extrap} we discuss how the modelling assumptions affect the extrapolations made by the model.
+We conclude in section \\ref{sec:check} with a discussion of model checking statistics, with plots showing the form of any detected discrepancies between the model and observed data.
+'''
+
+    # Summary statistic table
     
     text += '''
 \\begin{table}[htb]
@@ -795,6 +847,7 @@ The model is fit using the full data so the MAE values cannot be used reliably a
 \end{table}
 
 \section{Detailed discussion of additive components}
+\label{sec:discussion}
 '''
 
     component_text = '''
@@ -862,6 +915,7 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
 
     text += '''
 \section{Extrapolation}
+\label{sec:extrap}
 
 Summaries of the posterior distribution of the full model are shown in figure~\\ref{fig:extrap}.
 The plot on the left displays the mean of the posterior together with pointwise variance.
@@ -908,6 +962,7 @@ Some discussion about extrapolation.
                                          
     text += '''
 \section{Model checking}
+\label{sec:check}
 
 \subsection{Some cumulative probabilities and $p$-values}
 '''

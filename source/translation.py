@@ -570,6 +570,28 @@ def translate_additive_component(k, X, monotonic, gradient, unit):
         descriptions.append(interval_description)
     return (summary, descriptions)
 
+def translate_p_value(p):
+    '''LaTeX bold for extreme values'''
+    if p > 0.05:
+        return '\\textcolor{gray}{%0.3f}' % p
+    elif p > 0.01:
+        return '%0.3f' % p
+    else:
+        return '\\textbf{%0.3f}' % p
+
+def translate_cum_prob(p):
+    '''LaTeX bold for extreme values'''
+    if p >= 0.99:
+        return '\\textbf{%0.3f}' % p
+    elif p >= 0.95:
+        return '%0.3f' % p
+    elif p > 0.05:
+        return '\\textcolor{gray}{%0.3f}' % p
+    elif p > 0.01:
+        return '%0.3f' % p
+    else:
+        return '\\textbf{%0.3f}' % p
+
 def produce_summary_document(dataset_name, n_components, fit_data, short_descriptions):
     '''
     Summarises the fit to dataset_name
@@ -901,12 +923,14 @@ Some discussion about extrapolation.
 '''
 
     table_text = '''
-%d & %0.3f & %0.3f & %0.3f & %0.3f & %0.3f & %0.3f\\\\
+%d & %s & %s & %s & %s & %s & %s\\\\
 '''
     cum_var_deltas = [fit_data['cum_vars'][0]] + list(np.array(fit_data['cum_vars'][1:]) - np.array(fit_data['cum_vars'][:-1]))
 
     for i in range(n_components):
-        text += table_text % (i+1, fit_data['acf_min_p'][i], fit_data['acf_min_loc_p'][i], fit_data['pxx_max_p'][i], fit_data['pxx_max_loc_p'][i], fit_data['qq_d_max_p'][i], fit_data['qq_d_min_p'][i])
+        text += table_text % (i+1, translate_cum_prob(fit_data['acf_min_p'][i]), translate_cum_prob(fit_data['acf_min_loc_p'][i]), \
+                                   translate_cum_prob(fit_data['pxx_max_p'][i]), translate_cum_prob(fit_data['pxx_max_loc_p'][i]), \
+                                   translate_p_value(fit_data['qq_d_max_p'][i]), translate_p_value(fit_data['qq_d_min_p'][i]))
         
     text += '''
 \hline

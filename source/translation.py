@@ -172,41 +172,53 @@ def translate_parametric_window(X, unit='', lin_count=0, exp_count=0, lin_locati
     '''
     summary = ''
     description = ''
+    extrap_description = ''
     if (lin_count > 0) and (exp_count == 0):
         description += 'The %s of the %s ' % (quantity, component)
+        extrap_description += 'The %s of the %s is assumed to continue to ' % (quantity, component)
         if lin_count == 1:
             if lin_location < np.min(X):
                 summary += 'with %slinearly increasing %s' % (qualifier, quantity)
                 description += 'increases %slinearly' % qualifier
+                extrap_description += 'increase %slinearly' % qualifier
             elif lin_location > np.max(X):
                 summary += 'with %slinearly decreasing %s' % (qualifier, quantity)
                 description += 'decreases %slinearly' % qualifier
+                extrap_description += 'decrease %slinearly until %s after which the %s of the %s is assumed to start increasing %slinearly' % (qualifier, english_point(lin_location, unit, X), quantity, component, qualifier)
             else:
                 summary += 'with %s increasing %slinearly away from %s' % (quantity, qualifier, english_point(lin_location, unit, X))
                 description += 'increases %slinearly away from %s' % (qualifier, english_point(lin_location, unit, X))
+                extrap_description += 'increase %slinearly' % qualifier
         elif lin_count <= len(poly_names):
             summary += 'with %s%sly varying %s' % (qualifier, poly_names[lin_count-1], quantity)
             description += 'varies %s%sly' % (qualifier, poly_names[lin_count-1])
+            extrap_description += 'vary %s%sly' % (qualifier, poly_names[lin_count-1])
         else:
             summary += 'with %s given %sby a polynomial of degree %d' % (qualifier, quantity, lin_count)
             description += 'is given %sby a polynomial of degree %d' % (qualifier, lin_count)
+            extrap_description += '%s vary according to a polynomial of degree %d' % (qualifier, lin_count)
     elif (exp_count > 0) and (lin_count == 0):
         description += 'The %s of the %s ' % (quantity, component)
+        extrap_description += 'The %s of the %s is assumed to continue to ' % (quantity, component)
         if exp_rate > 0:
             summary = 'with exponentially %sincreasing %s' % (qualifier, quantity)
             description += 'increases %sexponentially' % qualifier
+            extrap_description += 'increase %sexponentially' % qualifier
         else:
             summary = 'with exponentially %sdecreasing %s' % (qualifier, quantity)
             description += 'decreases %sexponentially' % (qualifier)
+            extrap_description += 'decrease %sexponentially' % (qualifier)
     else:
         #### TODO - this is the product of lin and exp - explanantions can be made nicer by looking for turning points
         if exp_rate > 0:
-            description += 'The %s of the %s is given %sby the product of a polynomial of degree %d and an increasing exponential function' % (quantity, component, qualifier, lin_count)
             summary += 'with %s given %sby a product of a polynomial of degree %d and an increasing exponential function' % (quantity, qualifier, lin_count)
+            description += 'The %s of the %s is given %sby the product of a polynomial of degree %d and an increasing exponential function' % (quantity, component, qualifier, lin_count)
+            extrap_description += 'The %s of the %s is assumed to continue to be given %sby the product of a polynomial of degree %d and an increasing exponential function' % (quantity, component, qualifier, lin_count)
         else:
-            description += 'The %s of the %s is given %sby the product of a polynomial of degree %d and a decreasing exponential function' % (quantity, component, qualifier, lin_count)
             summary += 'with %s given %sby a product of a polynomial of degree %d and a decreasing exponential function' % (quantity, qualifier, lin_count)
-    return (summary, description)
+            description += 'The %s of the %s is given %sby the product of a polynomial of degree %d and a decreasing exponential function' % (quantity, component, qualifier, lin_count)
+            extrap_description += 'The %s of the %s is assumed to continue to be given %sby the product of a polynomial of degree %d and a decreasing exponential function' % (quantity, component, qualifier, lin_count)
+    return (summary, description, extrap_description)
                     
 def translate_product(prod, X, monotonic, gradient, unit=''):
     '''
@@ -224,6 +236,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
         kernels = prod.operands
     # Initialise
     descriptions = []
+    extrap_descriptions = []
     lengthscale = np.Inf
     exp_rate = 0
     los_count = 0 # Local smooth components
@@ -274,17 +287,21 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     if (unk_count > 0):
         summary = 'This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__()
         descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
+        extrap_descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
         raise RuntimeError('I''m not intelligent enough to describe this kernel in natural language', prod)
     elif (noi_count > 0):
         summary = 'Uncorrelated noise'
         descriptions.append('This component models uncorrelated noise')  
+        extrap_descriptions.append('This component assumes the uncorrelated noise will continue indefinitely')  
         if lin_count + exp_count > 0:
-            (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='standard deviation', component='noise')
+            (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='standard deviation', component='noise')
             descriptions.append(var_description)
+            extrap_descriptions.append(var_extrap_description)
             summary += ' %s' % var_summary
     elif (los_count == 0) and (lin_count == 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
         summary = 'A constant'
-        descriptions.append('This component is constant')      
+        descriptions.append('This component is constant')   
+        extrap_descriptions.append('This component is assumed to stay constant')      
     elif (los_count > 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
         # This is a pure smooth and local component (possibly with parametric variance)
         if lengthscale > 0.5 * domain_range:
@@ -297,9 +314,11 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             else:
                 summary = 'A very smooth function'
                 descriptions.append('This function is very smooth')
+            extrap_descriptions.append('This function is assumed to continue very smoothly but is also assumed to be stationary so its distribution will eventually return to the prior')
         elif lengthscale < domain_range * 0.005:
             summary = 'A rapidly varying smooth function'
             descriptions.append('This function is a rapidly varying but smooth function with a typical lengthscale of %s' % english_length(lengthscale, unit))
+            extrap_descriptions.append('This function is assumed to continue smoothly but its distribution is assumed to quickly return to the prior')
         else:
             if monotonic == 1:
                 summary = 'A smooth monotonically increasing function'
@@ -310,10 +329,14 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             else:
                 summary = 'A smooth function'
                 descriptions.append('This component is a smooth function with a typical lengthscale of %s' % english_length(lengthscale, unit))
+            extrap_descriptions.append('This function is assumed to continue smoothly but is also assumed to be stationary so its distribution will return to the prior')
+        extrap_descriptions.append('The prior distribution places mass on smooth functions with a marginal mean of zero and a typical lengthscale of %s' % english_length(lengthscale, unit))
+        extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble to prior]')
         if lin_count + exp_count > 0:
             # Parametric variance
-            (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
+            (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
             descriptions.append(var_description)
+            extrap_descriptions.append(var_extrap_description)
             summary += ' %s' % var_summary
     elif (los_count == 0) and (lin_count > 0) and (per_count == 0) and (cos_count == 0) and (imt_count == 0):
         # This is a pure polynomial component
@@ -321,16 +344,20 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             if gradient > 0:
                 summary = 'A linearly increasing function'
                 descriptions.append('This component is linearly increasing')
+                extrap_descriptions.append('This component is assumed to continue to increase linearly')
             else:
                 summary = 'A linearly decreasing function'
                 descriptions.append('This component is linearly decreasing')
+                extrap_descriptions.append('This component is assumed to continue to decrease linearly')
         elif lin_count <= len(poly_names):
             # I know a special name for this type of polynomial
             summary = 'A %s polynomial' % poly_names[lin_count-1]
             descriptions.append('This component is a %s polynomial' % poly_names[lin_count-1])
+            extrap_descriptions.append('This component is assumed to conitnue as a %s polynomial' % poly_names[lin_count-1])
         else:
             summary = 'A polynomial of degree %d' % lin_count
             descriptions.append('This component is a polynomial of degree %d' % lin_count)
+            extrap_descriptions.append('This component is assumed to continue as a polynomial of degree %d' % lin_count)
     elif (per_count > 0) or (cos_count > 0) and (imt_count == 0):
         if ((per_count == 1) and (cos_count == 0)) or ((per_count == 0) and (cos_count == 1)):
             k = per_kernels[0] if per_count == 1 else cos_kernels[0]
@@ -338,15 +365,20 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 # Pure periodic
                 summary = 'An exactly '
                 main_description = 'This component is exactly '
+                extrap_description = 'This component is assumed to continue exactly '
                 if per_count == 1:
                     summary += 'periodic function '
                     main_description += 'periodic '
+                    extrap_description += 'periodically '
                 else:
                     summary += 'sinusoidal function '
                     main_description += 'sinusoidal '
+                    extrap_description += 'sinusoidally '
                 summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
                 main_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
+                extrap_description += 'with a period of %s' % english_length(np.exp(k.period), unit)
                 descriptions.append(main_description)
+                extrap_descriptions.append(extrap_description)
                 if per_count == 1:
                     #### FIXME - this correspondence is only approximate
                     per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
@@ -358,6 +390,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 # Approx periodic
                 lower_per = 1.0 / (np.exp(-k.period) + scipy.stats.norm.isf(0.25) / lengthscale)
                 upper_per = 1.0 / (np.exp(-k.period) - scipy.stats.norm.isf(0.25) / lengthscale)
+                extrap_descriptions.append('This component is assumed to continue to be approximately periodic')
                 if upper_per < 0:
                     # This will probably look more like noise
                     summary = 'A very approximately '
@@ -373,6 +406,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     descriptions.append(main_description)
                     descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
                     descriptions.append('Since this lengthscale is small relative to the period this component may more closely resemble a non-periodic smooth function')
+                    extrap_descriptions.append('The shape of the function is assumed to vary smoothly between periods but will quickly return to the prior')
                 else:
                     summary = 'An approximately '
                     main_description = 'This component is approximately '
@@ -387,29 +421,40 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     descriptions.append(main_description)
                     if lengthscale > 0.5 * domain_range:
                         descriptions.append('Across periods the shape of this function varies very smoothly')
+                        extrap_descriptions.append('The shape of the function is assumed to vary very smoothly between periods but will eventually return to the prior')
                     else:
-                        descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))   
+                        descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))  
+                        extrap_descriptions.append('The shape of the function is assumed to vary smoothly between periods but will return to the prior') 
                     if per_count == 1:
                         per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
                         if k.lengthscale > 2:
                             descriptions.append('The shape of this function within each period is very smooth and resembles a sinusoid')
                         else:
                             descriptions.append('The shape of this function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
+                extrap_descriptions.append('The prior is entirely uncertain about the phase of the periodic function')
+                extrap_descriptions.append('Consequently the marginal posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the function')
+                extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble to prior]')
             elif (lin_count + exp_count > 0) and (los_count == 0):
                 # Pure periodic but with changing amplitude
                 summary = 'An exactly '
                 main_description = 'This component is exactly '
+                extrap_description = 'This component is assumed to continue exactly '
                 if per_count == 1:
                     summary += 'periodic function '
                     main_description += 'periodic '
+                    extrap_description += 'periodically '
                 else:
                     summary += 'sinusoidal function '
                     main_description += 'sinusoidal '
+                    extrap_description += 'sinusoidally '
                 summary += 'with a period of %s' % english_length(np.exp(k.period), unit)
                 main_description += 'with a period of %s but with varying amplitude' % english_length(np.exp(k.period), unit)
+                extrap_description += 'with a period of %s but with varying amplitude' % english_length(np.exp(k.period), unit)
                 descriptions.append(main_description)
-                (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function')
+                extrap_descriptions.append(extrap_description)
+                (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function')
                 descriptions.append(var_description)
+                extrap_descriptions.append(var_extrap_description)
                 summary += ' but %s' % var_summary
                 if per_count == 1:
                     per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
@@ -420,6 +465,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             else:
                 lower_per = 1.0 / (np.exp(-k.period) + scipy.stats.norm.isf(0.25) / lengthscale)
                 upper_per = 1.0 / (np.exp(-k.period) - scipy.stats.norm.isf(0.25) / lengthscale)
+                extrap_descriptions.append('This component is assumed to continue to be approximately periodic')
                 if upper_per < 0:
                     # This will probably look more like noise
                     summary = 'A very approximately '
@@ -435,8 +481,10 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     descriptions.append(main_description)
                     descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
                     descriptions.append('Since this lengthscale is small relative to the period this component may more closely resemble a non-periodic smooth function')
-                    (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
+                    extrap_descriptions.append('The shape of the function is assumed to vary smoothly between periods but will quickly return to the prior')
+                    (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
                     descriptions.append(var_description)
+                    extrap_descriptions.append(var_extrap_description)
                     summary += ' and %s' % var_summary
                 else:
                     summary = 'An approximately '
@@ -452,10 +500,13 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     descriptions.append(main_description)
                     if lengthscale > 0.5 * domain_range:
                         descriptions.append('Across periods the shape of this function varies very smoothly')
+                        extrap_descriptions.append('The shape of the function is assumed to vary very smoothly between periods but will eventually return to the prior')
                     else:
                         descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))   
-                    (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier='approximately ')
+                        extrap_descriptions.append('The shape of the function is assumed to vary smoothly between periods but will return to the prior') 
+                    (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier='approximately ')
                     descriptions.append(var_description)
+                    extrap_descriptions.append(var_extrap_description)
                     summary += ' and %s' % var_summary
                     if per_count == 1:
                         per_lengthscale = 0.5*np.exp(k.lengthscale + k.period)/np.pi # This definition of lengthscale fits better with local smooth kernels
@@ -463,37 +514,52 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                             descriptions.append('The shape of this function within each period is very smooth and resembles a sinusoid')
                         else:
                             descriptions.append('The shape of this function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
+                extrap_descriptions.append('The prior is entirely uncertain about the phase of the periodic function')
+                extrap_descriptions.append('Consequently the marginal posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the function')
+                extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble to prior]')
         else: # Several periodic components
             if los_count > 0:
                 summary = 'An approximate product of'
             else:
                 summary = 'A product of'
             main_description = 'This component is a product of'
+            extrap_description = 'This component is assumed to continue as a product of'
             #if los_count > 0:
             #    main_description += 'approximately '
             #main_description += 'like the product of'
             if per_count == 1:
                 summary += ' a periodic function'
                 main_description += ' a periodic function'
+                extrap_description += ' a periodic function'
             elif per_count > 1:
                 summary += ' several periodic functions'
                 main_description += ' several periodic functions'
+                extrap_description += ' several periodic functions'
             if (per_count > 0) and (cos_count > 0):
                 summary += ' and'
                 main_description += ' and'
+                extrap_description += ' and'
             if cos_count == 1:
                 summary += ' a sinusoid'
                 main_description += ' a sinusoid'
+                extrap_description += ' a sinusoid'
             elif cos_count > 1:
                 summary += ' several sinusoids'
                 main_description += ' several sinusoids'
+                extrap_description += ' several sinusoids'
             descriptions.append(main_description)
+            extrap_descriptions.append(main_description)
             if los_count > 0:
                 descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
+                extrap_descriptions.append('Across periods the shape of this function is assumed to continue to vary smoothly but will return to the prior')
+                extrap_descriptions.append('The prior is entirely uncertain about the phase of the periodic functions')
+                extrap_descriptions.append('Consequently the marginal posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the functions')
+                extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble to prior]')
             if lin_count + exp_count > 0:
                 qualifier = 'approximately ' if (los_count > 0) else ''
-                (var_summary, var_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier=qualifier)
+                (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier=qualifier)
                 descriptions.append(var_description)
+                extrap_descriptions.append(var_extrap_description)
                 summary += ' and %s' % var_summary
             for (i, k) in enumerate(per_kernels):
                 description = 'The '
@@ -521,11 +587,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     else:
         descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
         raise RuntimeError('I''m not intelligent enough to describe this kernel in natural language', prod)
-    if exp_count > 0:
-        descriptions.append('There were also some undecribed exponentials')
-        summary += '. There was also some quantity of exp'
     # Return a list of sentences
-    return (summary, descriptions)
+    return (summary, descriptions, extrap_descriptions)
     
 def translate_interval(interval, unit, X):
     '''Describe a 1d interval, including relevant prepositions'''
@@ -548,7 +611,7 @@ def translate_additive_component(k, X, monotonic, gradient, unit):
     k = grammar.canonical(k) # Just in case
     (intervals, k) = find_region_of_influence(k)
     # Calculate the description of the changepoint free part of the kernel
-    (summary, descriptions) = translate_product(k, X, monotonic, gradient, unit)
+    (summary, descriptions, extrap_descriptions) = translate_product(k, X, monotonic, gradient, unit)
     # Describe the intervals this kernel acts upon
     intervals = sorted(intervals)
     if len(intervals) == 0:
@@ -561,10 +624,19 @@ def translate_additive_component(k, X, monotonic, gradient, unit):
     else:
         summary += '. This function applies %s and %s' % (', '.join(translate_interval(interval, unit, X) for interval in intervals[:-1]), translate_interval(intervals[-1], unit, X))
         interval_description = 'This component applies %s and %s' % (', '.join(translate_interval(interval, unit, X) for interval in intervals[:-1]), translate_interval(intervals[-1], unit, X))
+    # Do the intervals contain infinity
+    intervals_contain_positive_infinity = False
+    for interval in intervals:
+        if interval[1] == np.Inf:
+            intervals_contain_positive_infinity = True
+            break
+    if not intervals_contain_positive_infinity:
+        # Component stops - do not need to describe how it would extrapolate
+        extrap_descriptions = ['This component is assumed to stop before the end of the data and will therefore be extrapolated as zero']
     # Combine and return the descriptions
     if not intervals == [(-np.Inf, np.Inf)]: 
         descriptions.append(interval_description)
-    return (summary, descriptions)
+    return (summary, descriptions, extrap_descriptions)
 
 def translate_p_value(p):
     '''LaTeX bold for extreme values'''
@@ -977,6 +1049,55 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
                                       'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
                                       'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
                                       'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+
+    text += '''
+\section{Extrapolation}
+\label{sec:extrap}
+
+Summaries of the posterior distribution of the full model are shown in figure~\\ref{fig:extrap}.
+The plot on the left displays the mean of the posterior together with pointwise variance.
+The plot on the right displays three random samples from the posterior.
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all_sample}
+\end{tabular}
+\caption{Full model posterior. Mean and pointwise variance (left) and three random samples (right)}
+\label{fig:extrap}
+\end{figure}
+
+We now describe the modelling assumptions associated with each additive component.
+''' % {'dataset_name' : dataset_name}
+
+    extrap_component_text = '''
+\subsection{Component %(component)d : %(short_description)s}
+
+\input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_extrap_description.tex}
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_sample} \\\\
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_sample}
+\end{tabular}
+\caption{Posterior of component %(component)d. Mean and pointwise variance (left) and three random samples from this distribution (right)}
+\label{fig:extrap%(component)d}
+\end{figure}
+'''
+
+    for i in range(n_components):
+        text += extrap_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                         'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                         'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : 'Some discussion about this component',
+                                         'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                         'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
                                          
     text += '''
 \section{Model checking}
@@ -1091,55 +1212,6 @@ We now discuss the nature of any observed discrepancies and list potential hypot
     text += '''
 \\appendix
 '''
-
-    text += '''
-\section{Extrapolation}
-\label{sec:extrap}
-
-Summaries of the posterior distribution of the full model are shown in figure~\\ref{fig:extrap}.
-The plot on the left displays the mean of the posterior together with pointwise variance.
-The plot on the right displays three random samples from the posterior.
-
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all_sample}
-\end{tabular}
-\caption{Full model posterior. Mean and pointwise variance (left) and three random samples (right)}
-\label{fig:extrap}
-\end{figure}
-
-We now describe the modelling assumptions associated with each additive component.
-''' % {'dataset_name' : dataset_name}
-
-    extrap_component_text = '''
-\subsection{Component %(component)d : %(short_description)s}
-
-%(discussion)s
-
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_sample} \\\\
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_sample}
-\end{tabular}
-\caption{Posterior of component %(component)d. Mean and pointwise variance (left) and three random samples from this distribution (right)}
-\label{fig:extrap%(component)d}
-\end{figure}
-'''
-
-    for i in range(n_components):
-        text += extrap_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
-                                         'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
-                                         'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : 'Some discussion about this component',
-                                         'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
-                                         'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
 
     text += '''
 \section{Residual style quantities}

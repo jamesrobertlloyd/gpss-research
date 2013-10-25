@@ -307,18 +307,18 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
         if lengthscale > 0.5 * domain_range:
             if monotonic == 1:
                 summary = 'A very smooth monotonically increasing function'
-                descriptions.append('This function is very smooth and monotonically increasing')
+                descriptions.append('This component is a very smooth and monotonically increasing function')
             elif monotonic == -1:
                 summary = 'A very smooth monotonically decreasing function'
-                descriptions.append('This function is very smooth and monotonically decreasing')
+                descriptions.append('This component is a very smooth and monotonically decreasing function')
             else:
                 summary = 'A very smooth function'
-                descriptions.append('This function is very smooth')
-            extrap_descriptions.append('This function is assumed to continue very smoothly but is also assumed to be stationary so its distribution will eventually return to the prior')
+                descriptions.append('This component is a very smooth function')
+            extrap_descriptions.append('This component is assumed to continue very smoothly but is also assumed to be stationary so its distribution will eventually return to the prior')
         elif lengthscale < domain_range * 0.005:
             summary = 'A rapidly varying smooth function'
-            descriptions.append('This function is a rapidly varying but smooth function with a typical lengthscale of %s' % english_length(lengthscale, unit))
-            extrap_descriptions.append('This function is assumed to continue smoothly but its distribution is assumed to quickly return to the prior')
+            descriptions.append('This component is a rapidly varying but smooth function with a typical lengthscale of %s' % english_length(lengthscale, unit))
+            extrap_descriptions.append('This component is assumed to continue smoothly but its distribution is assumed to quickly return to the prior')
         else:
             if monotonic == 1:
                 summary = 'A smooth monotonically increasing function'
@@ -329,9 +329,9 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             else:
                 summary = 'A smooth function'
                 descriptions.append('This component is a smooth function with a typical lengthscale of %s' % english_length(lengthscale, unit))
-            extrap_descriptions.append('This function is assumed to continue smoothly but is also assumed to be stationary so its distribution will return to the prior')
+            extrap_descriptions.append('This component is assumed to continue smoothly but is also assumed to be stationary so its distribution will return to the prior')
         extrap_descriptions.append('The prior distribution places mass on smooth functions with a marginal mean of zero and a typical lengthscale of %s' % english_length(lengthscale, unit))
-        extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble to prior]')
+        extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble the prior]')
         if lin_count + exp_count > 0:
             # Parametric variance
             (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='marginal standard deviation', component='function')
@@ -432,8 +432,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                         else:
                             descriptions.append('The shape of this function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
                 extrap_descriptions.append('The prior is entirely uncertain about the phase of the periodic function')
-                extrap_descriptions.append('Consequently the marginal posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the function')
-                extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble to prior]')
+                extrap_descriptions.append('Consequently the pointwise posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the function')
+                extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble the prior]')
             elif (lin_count + exp_count > 0) and (los_count == 0):
                 # Pure periodic but with changing amplitude
                 summary = 'An exactly '
@@ -515,8 +515,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                         else:
                             descriptions.append('The shape of this function within each period has a typical lengthscale of %s' % english_length(per_lengthscale, unit))
                 extrap_descriptions.append('The prior is entirely uncertain about the phase of the periodic function')
-                extrap_descriptions.append('Consequently the marginal posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the function')
-                extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble to prior]')
+                extrap_descriptions.append('Consequently the pointwise posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the function')
+                extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble the prior]')
         else: # Several periodic components
             if los_count > 0:
                 summary = 'An approximate product of'
@@ -553,8 +553,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))
                 extrap_descriptions.append('Across periods the shape of this function is assumed to continue to vary smoothly but will return to the prior')
                 extrap_descriptions.append('The prior is entirely uncertain about the phase of the periodic functions')
-                extrap_descriptions.append('Consequently the marginal posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the functions')
-                extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble to prior]')
+                extrap_descriptions.append('Consequently the pointwise posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the functions')
+                extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble the prior]')
             if lin_count + exp_count > 0:
                 qualifier = 'approximately ' if (los_count > 0) else ''
                 (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier=qualifier)
@@ -716,8 +716,7 @@ The following discrepancies between the prior and posterior distributions for th
 '''
 
         summary_item = '''
-  \item %s This discrepancy has an estimated $p$-value of %s.
-'''
+    \item %s This discrepancy has an estimated $p$-value of %s.'''
         for index in sort_indices:
             if p_values[index] <= 0.05:
                 text += summary_item % (descriptions[index],translate_p_value(p_values[index]))
@@ -901,52 +900,6 @@ Short summaries of the additive components are as follows:
     
     text += summary_end
 
-    # Check for lack of model fit
-
-    moderate_bad_fits = []
-    bad_fits = []
-    for i in range(n_components):
-        p_values = [convert_cum_prob_to_p_value(fit_data['acf_min_p'][i]),
-                    convert_cum_prob_to_p_value(fit_data['acf_min_loc_p'][i]),
-                    convert_cum_prob_to_p_value(fit_data['pxx_max_p'][i]),
-                    convert_cum_prob_to_p_value(fit_data['pxx_max_loc_p'][i]),
-                    fit_data['qq_d_max_p'][i],
-                    fit_data['qq_d_min_p'][i]]
-        if np.any(np.array(p_values) <= 0.01):
-            bad_fits.append(i)
-        elif np.any(np.array(p_values) <= 0.05):
-            moderate_bad_fits.append(i)
-
-    if len(bad_fits) + len(moderate_bad_fits) == 0:
-        text += '\nModel checking statistics have not revealed any inconsistencies between the model and observed data.\n'
-    elif len(bad_fits) == 0:
-        text += '\nModel checking statistics have revealed moderate discrepancies between the data and model in '
-        if len(moderate_bad_fits) > 1:
-            text += 'components %s and %d.\n' % (', '.join('%d' % (i+1) for i in moderate_bad_fits[:-1]), moderate_bad_fits[-1] + 1)
-        else:
-            text += 'component %d.\n' % (moderate_bad_fits[0] + 1)
-    else:
-        text += '\nModel checking statistics have revealed severe discrepancies between the data and model in '
-        if len(bad_fits) > 1:
-            text += 'components %s and %d.\n' % (', '.join('%d' % (i+1) for i in bad_fits[:-1]), bad_fits[-1] + 1)
-        else:
-            text += 'component %d.\n' % (bad_fits[0] + 1)
-        if len(moderate_bad_fits) > 0:
-            text += 'Moderate discrepancies have also been detected in '
-            if len(moderate_bad_fits) > 1:
-                text += 'components %s and %d.\n' % (', '.join('%d' % (i+1) for i in moderate_bad_fits[:-1]), moderate_bad_fits[-1] + 1)
-            else:
-                text += 'component %d.\n' % (moderate_bad_fits[0] + 1)
-
-    # Announce structure of document
-
-    text += '''
-The rest of the document is structured as follows.
-In section \\ref{sec:discussion} we describe the forms of the additive components and display their posterior distributions.
-In section \\ref{sec:extrap} we discuss how the modelling assumptions affect the extrapolations made by the model.
-We conclude in section \\ref{sec:check} with a discussion of model checking statistics, with plots showing the form of any detected discrepancies between the model and observed data.
-'''
-
     # Summary statistic table
     
     text += '''
@@ -976,13 +929,65 @@ We conclude in section \\ref{sec:check} with a discussion of model checking stat
 Summary statistics for cumulative additive fits to the data.
 The residual coefficient of determination ($R^2$) values are computed using the residuals from the previous fit as the target values; this measures how much of the residual variance is explained by each new component.
 The mean absolute error (MAE) is calculated using 10 fold cross validation with a contiguous block design; this measures the ability of the model to interpolate and extrapolate over moderate distances.
-The model is fit using the full data so the MAE values cannot be used reliably as an estimate of out-of-sample predictive performance.
+The model is fit using the full data and the MAE values are calculated using this model; this double use of data means that the MAE values cannot be used reliably as an estimate of out-of-sample predictive performance.
 }
 \label{table:stats}
 }
 \end{center}
 \end{table}
+'''
 
+    # Check for lack of model fit
+
+    text += '''
+Model checking statistics are summarised in table~\\ref{table:check} in section~\\ref{sec:check}.'''
+
+    moderate_bad_fits = []
+    bad_fits = []
+    for i in range(n_components):
+        p_values = [convert_cum_prob_to_p_value(fit_data['acf_min_p'][i]),
+                    convert_cum_prob_to_p_value(fit_data['acf_min_loc_p'][i]),
+                    convert_cum_prob_to_p_value(fit_data['pxx_max_p'][i]),
+                    convert_cum_prob_to_p_value(fit_data['pxx_max_loc_p'][i]),
+                    fit_data['qq_d_max_p'][i],
+                    fit_data['qq_d_min_p'][i]]
+        if np.any(np.array(p_values) <= 0.01):
+            bad_fits.append(i)
+        elif np.any(np.array(p_values) <= 0.05):
+            moderate_bad_fits.append(i)
+
+    if len(bad_fits) + len(moderate_bad_fits) == 0:
+        text += '\nThese statistics have not revealed any inconsistencies between the model and observed data.\n'
+    elif len(bad_fits) == 0:
+        text += '\nThese statistics have revealed statistically significant discrepancies between the data and model in '
+        if len(moderate_bad_fits) > 1:
+            text += 'components %s and %d.\n' % (', '.join('%d' % (i+1) for i in moderate_bad_fits[:-1]), moderate_bad_fits[-1] + 1)
+        else:
+            text += 'component %d.\n' % (moderate_bad_fits[0] + 1)
+    else:
+        text += '\nThese statistics have revealed highly statistically significant discrepancies between the data and model in '
+        if len(bad_fits) > 1:
+            text += 'components %s and %d.\n' % (', '.join('%d' % (i+1) for i in bad_fits[:-1]), bad_fits[-1] + 1)
+        else:
+            text += 'component %d.\n' % (bad_fits[0] + 1)
+        if len(moderate_bad_fits) > 0:
+            text += 'Moderate discrepancies have also been detected in '
+            if len(moderate_bad_fits) > 1:
+                text += 'components %s and %d.\n' % (', '.join('%d' % (i+1) for i in moderate_bad_fits[:-1]), moderate_bad_fits[-1] + 1)
+            else:
+                text += 'component %d.\n' % (moderate_bad_fits[0] + 1)
+
+    # Announce structure of document
+
+    text += '''
+The rest of the document is structured as follows.
+In section~\\ref{sec:discussion} the forms of the additive components are described and their posterior distributions are displayed.
+In section~\\ref{sec:extrap} the modelling assumptions of each component are discussed with reference to how this affects the extrapolations made by the model.
+Section~\\ref{sec:check} discusses model checking statistics, with plots showing the form of any detected discrepancies between the model and observed data.
+A glossary of terms is provided in section~\\ref{sec:glossary}.
+'''
+
+    text += '''
 \section{Detailed discussion of additive components}
 \label{sec:discussion}
 '''
@@ -1004,7 +1009,7 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum}
 \end{tabular}
-\caption{Posterior of component %(component)d (left) and the posterior of the cumulative sum of components with data (right)}
+\caption{Pointwise posterior of component %(component)d (left) and the posterior of the cumulative sum of components with data (right)}
 \label{fig:comp%(component)d}
 \end{figure}
 '''
@@ -1025,7 +1030,21 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum}
 \end{tabular}
-\caption{Posterior of component %(component)d (left) and the posterior of the cumulative sum of components with data (right)}
+\caption{Pointwise posterior of component %(component)d (left) and the posterior of the cumulative sum of components with data (right)}
+\label{fig:comp%(component)d}
+\end{figure}
+'''
+
+    residual_figure = '''
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_anti_cum}
+\end{tabular}
+\caption{Pointwise posterior of residuals after adding component %(component)d}
 \label{fig:comp%(component)d}
 \end{figure}
 '''
@@ -1049,6 +1068,12 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
                                       'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
                                       'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
                                       'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+        if i+1 < n_components:
+            text += residual_figure % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                       'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                       'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i], 'discussion' : discussion,
+                                       'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                       'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
 
     text += '''
 \section{Extrapolation}
@@ -1066,11 +1091,12 @@ The plot on the right displays three random samples from the posterior.
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all_sample}
 \end{tabular}
-\caption{Full model posterior. Mean and pointwise variance (left) and three random samples (right)}
+\caption{Full model posterior with extrapolation. Mean and pointwise variance (left) and three random samples (right)}
 \label{fig:extrap}
 \end{figure}
 
-We now describe the modelling assumptions associated with each additive component.
+Below are descriptions of the modelling assumptions associated with each additive component and how they affect the predictive posterior.
+Plots of the pointwise posterior and samples from the posterior are also presented, showing extrapolations from each component and the cuulative sum of components.
 ''' % {'dataset_name' : dataset_name}
 
     extrap_component_text = '''
@@ -1087,7 +1113,7 @@ We now describe the modelling assumptions associated with each additive componen
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_sample} \\\\
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum_sample}
 \end{tabular}
-\caption{Posterior of component %(component)d. Mean and pointwise variance (left) and three random samples from this distribution (right)}
+\caption{Posterior of component %(component)d (top) and cumulative sum of components (bottom) with extrapolation. Mean and pointwise variance (left) and three random samples from the posterior distribution (right).}
 \label{fig:extrap%(component)d}
 \end{figure}
 '''
@@ -1103,12 +1129,12 @@ We now describe the modelling assumptions associated with each additive componen
 \section{Model checking}
 \label{sec:check}
 
-To test model fit we have performed several posterior predictive checks.
+Several posterior predictive checks have been performed to assess how well the model describes the observed data.
 These tests take the form of comparing statistics evaluated on samples from the prior and posterior distributions for each additive component.
 The statistics are derived from autocorrelation function (ACF) estimates, periodograms and quantile-quantile (qq) plots.
 
 Table~\\ref{table:check} displays cumulative probability and $p$-value estimates for these quantities.
-Cumulative probabilities near 0/1 indicate that the test statistic was lower/higher under the posterior compared to the prior unexpectedly often.
+Cumulative probabilities near 0/1 indicate that the test statistic was lower/higher under the posterior compared to the prior unexpectedly often \ie they contain the same information as a $p$-value for a two-tailed test and they also express if the test statistic was higher or lower than expected.
 $p$-values near 0 indicate that the test statistic was larger in magnitude under the posterior compared to the prior unexpectedly often.
 '''
     text += '''
@@ -1144,8 +1170,15 @@ $p$-values for maximum and minimum deviations of QQ-plot from straight line.
 }
 \end{center}
 \end{table}
+'''
 
-We now discuss the nature of any observed discrepancies and list potential hypotheses for the patterns in the data that may not be captured by the model.
+    if len(bad_fits) + len(moderate_bad_fits) > 0:
+        text += '''
+The nature of any observed discrepancies is now described and plotted and hypotheses are given for the patterns in the data that may not be captured by the model.
+'''
+    else:
+        text += '''
+No statistically significant discrepancies between the data and model have been detected but model checking plots for each component are presented below.
 '''
 
     model_check_component_text = '''
@@ -1162,14 +1195,17 @@ We now discuss the nature of any observed discrepancies and list potential hypot
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_acf_bands_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_pxx_bands_%(component)d} \\\\
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_qq_bands_%(component)d}
 \end{tabular}
-\caption{ACF, periodogram and QQ uncertainty plots - more explanation to come\ldots}
+\caption{
+ACF (top left), periodogram (top right) and quantile-quantile (bottom left) uncertainty plots.
+The blue line and shading are the pointwise mean and 90\\%% confidence interval of the plots under the prior distribution for component %(component)d.
+The green line and green dashed lines are the corresponding quantities under the posterior.}
 \label{fig:check%(component)d}
 \end{figure}
 '''
 
     if len(bad_fits) > 0:
         text += '''
-\subsection{Severe discrepancies}
+\subsection{Highly statistically significant discrepancies}
 '''
 
     for i in range(n_components):
@@ -1183,7 +1219,7 @@ We now discuss the nature of any observed discrepancies and list potential hypot
 
     if len(moderate_bad_fits) > 0:
         text += '''
-\subsection{Moderate discrepancies}
+\subsection{Moderately statistically significant discrepancies}
 '''
 
     for i in range(n_components):
@@ -1197,7 +1233,7 @@ We now discuss the nature of any observed discrepancies and list potential hypot
 
     if len(moderate_bad_fits) + len(bad_fits) < n_components:
         text += '''
-\subsection{Model checking plots for components without detected discrepancies}
+\subsection{Model checking plots for components without statistically significant discrepancies}
 '''
 
     for i in range(n_components):
@@ -1265,6 +1301,15 @@ Their utility is still being investigated so there are currently no explanations
 \label{fig:z}
 \end{figure}
 ''' % {'dataset_name' : dataset_name}
+
+    text += '''
+\section{Glossary of terms}
+\label{sec:glossary}
+
+\\begin{itemize}
+\item \emph{lengthscale} - A description of what a lengthscale is
+\end{itemize}
+'''
 
     text += '''
 \end{document}

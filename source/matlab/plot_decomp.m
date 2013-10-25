@@ -489,6 +489,14 @@ cum_SNRs = zeros(numel(decomp_list),1);
 cum_vars = zeros(numel(decomp_list),1);
 cum_resid_vars = zeros(numel(decomp_list),1);
 
+anti_cum_kernel = cell(0);
+anti_cum_hyp = [];
+for j = 1:min(numel(decomp_list), max_depth)
+    i = idx(j);
+    anti_cum_kernel{j} = decomp_list{i};
+    anti_cum_hyp = [anti_cum_hyp, decomp_hypers{i}];
+end
+
 for j = 1:min(numel(decomp_list), max_depth)
     i = idx(j);
     cum_kernel{j} = decomp_list{i};
@@ -563,6 +571,30 @@ for j = 1:min(numel(decomp_list), max_depth)
     %fprintf([latex_names{i}, '\n']);
     filename = sprintf('%s_%d_cum_sample.fig', figname, j);
     saveas( gcf, filename );
+    
+    % Now plot posterior of residuals
+    
+    if j < numel(decomp_list)
+        anti_cum_kernel = anti_cum_kernel(2:end);
+        anti_cum_hyp = anti_cum_hyp((length(decomp_hypers{i})+1):end);
+        cur_cov = {@covSum, anti_cum_kernel};
+        cur_hyp = anti_cum_hyp;
+
+        % Compute mean and variance for this kernel.
+        decomp_sigma_star = feval(cur_cov{:}, cur_hyp, X, xrange_no_extrap);
+        decomp_sigma_starstar = feval(cur_cov{:}, cur_hyp, xrange_no_extrap);
+        decomp_mean = decomp_sigma_star' / complete_sigma * y;
+        decomp_var = diag(decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star);
+
+        figure(i + 1); clf; hold on;
+        mean_var_plot( X*X_scale+X_mean, resid*y_scale, ...
+                       xrange_no_extrap*X_scale+X_mean, ...
+                       decomp_mean*y_scale, 2.*sqrt(decomp_var)*y_scale, false, false, false);
+                   
+        title(sprintf('Residuals after component %d', j));
+        filename = sprintf('%s_%d_anti_cum.fig', figname, j);
+        saveas( gcf, filename );
+    end
 end
 
 % Plot LOO posterior predictive, residuals and QQ

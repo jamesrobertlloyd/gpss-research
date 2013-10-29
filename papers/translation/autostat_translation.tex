@@ -68,7 +68,7 @@
 \newcommand{\fix}{\marginpar{FIX}}
 \newcommand{\new}{\marginpar{NEW}}
 
-%\setlength{\marginparwidth}{0.9in}
+\setlength{\marginparwidth}{0.9in}
 \input{include/commenting.tex}
 
 %% For submission, make all render blank.
@@ -104,29 +104,41 @@
 \aistatsaddress{ Unknown Institution 1 \And Unknown Institution 2 \And Unknown Institution 3 } ]
 
 \begin{abstract}
-To complement a recently introduced automatic model-construction and search method, we demonstrate an automatic model-summarization procedure.
-After automatically building an additive nonparametric regression model, our method constructs a report which visualizes and explains in words the meaning and relevance of each component.
-These reports enable human model-checking and the understanding of complex modeling assumptions and structure.
-We demonstrate this procedure on two time-series, showing that the automatically constructed models identify highly interpretable structures that can be automatically described in simple natural language.
+One of the broad aims of statistics is to produce an accurate and concise description of data.
+Parametric regression methods typically produce a very concise description of a data set but can be inaccurate when data deviates from the strong assumptions made by the model.
+In constrast, nonparametric regression methods are typically capable of providing accurate descriptions of many data sets but at the expense of a succinct description.
+To address this apparent antagonism, we demonstrate that a recently introduced nonparametric model-construction method allows for the automatic description of a data set in natural-language.
+With this goal in mind we also extend and modify the class of models that can be produced by this model-construction method, increasing expressivity whilst maintaining interpratibility.
+We demonstrate this procedure on time-series, showing that the automatically constructed models can accurately describe the data and also produce detailed descriptions in simple natural language.
+%To complement a recently introduced statistical model building method, we demonstrate an automatic model-description procedure.
+%After automatically building an additive nonparametric regression model, our method constructs a report which visualizes and explains in words the meaning and relevance of each component.
+%These reports enable human model-checking and the understanding of complex modeling assumptions and structure.
+%We demonstrate this procedure on time-series, showing that the automatically constructed models identify highly interpretable structures that can be automatically described in simple natural language.
 \end{abstract}
 
 \allowdisplaybreaks
 
 \section{Introduction}
 
-%Statistical modeling is often performed in an iterative manner:  First, a simple model is proposed.  Second, the practitioner checks the model fit, often by looking for structure that wasn't captured by the model.
+Simple parametric regression models such as linear regression are usually easily interpretable, requiring only a table of regression coefficients and other parameters to describe the model.
+In constrast, non-parametric models are typically only described through plots of model fit which do not describe the assumptions of the model and how these might affect predictions made by the model.
+%, since their assumptions may be difficult to check, and their predictive implications difficult to explain.
 
-Simple parametric regression models such as linear regression are usually easily interpretable, and have well-established methods for model-checking.
-In constrast, non-parametric models may be reasonably viewed with suspicion by the non-expert, since their assumptions may be difficult to check, and their predictive implications difficult to explain.
+Recently, a method for searching over a large class of structured nonparametric regression models \citep{DuvLloGroetal13} was demonstrated to decompose time series into highly interpretable additive components.
+In this initial work, the fit of the model was described post-hoc by the authors, explaining how the learned structure of the model corresponded to the patterns in the additive components.
+%Recent advances in nonparametric regression have demonstrated the fully automatic construction of structured nonparametric regression models \cite{grosse2012exploiting, DuvLloGroetal13}.
 
-Advances in nonparametric and compositional modeling have allowed fully automatic model search and construction of complex, structured, nonparametric regression models \cite{DuvLloGroetal13}.
-These automatically-constructed models have been used for extrapolation without further human intevention, but for model-checking or dataset exploration, extrapolations alone are insufficient.  
-Fortunately, the generated models are sufficiently structured to capture human-interpretable features in a given dataset, and the compositional nature of this structure allows for simple translation into natural language.
+%These automatically-constructed models have been used for extrapolation without further human intevention, but for model-checking or dataset exploration, extrapolations alone are insufficient.  
+%Fortunately, the generated models are sufficiently structured to capture human-interpretable features in a given dataset, and the compositional nature of this structure allows for simple translation into natural language.
 
-This paper exhibits extracts of the models and human-readable reports which are automatically generated by our procedure.
+We extend this work by demonstrating that the structure of the models searched over allows for the automatic natural-language description of patterns within a data set.
+We also expand and improve the components used in the model-construction process to improve the expressivity and interpretability of the models.
+This allows for the procedure to fit and describe many well established modelling motifs including, linear regression (cite), fourier analysis (cite), gabor analysis (cite), changepoints (cite), heteroskedasiticty (cite), trend periodic short term (cite) and nonparametirc additve (cite).
+
+This manuscript exhibits extracts of the models and natural-language reports which are automatically generated by our procedure.
 The automatically generated text descriptions of the components of the models clearly communicate interpretable features of the data.
 %This paper demonstrates a procedure for automatically generating a human-readable report, examining and explaining the properties of a given nonparametric model on a given dataset.
-The supplementary material to this paper is a pair of complete reports generated by our method (some sections are work in progress).
+The supplementary material to this paper is a pair of complete reports generated by our method (some additional sections are work in progress).
 %These reports summarize and describe datasets modeled by a Gaussian process with a complicated kernel.
 %The different components of the kernel correspond to different features of the dataset, and the report discusses in detail the properties and significance of each component.
 %Detailed descriptions of the model construction and summarization procedure are deferred to future publications.
@@ -134,7 +146,7 @@ The supplementary material to this paper is a pair of complete reports generated
 %Section \ref{sec:gpss} gives an overview of the structure search method which produces the models that our procedure summarizes.  Section \ref{sec:method} describes our method for generating these reports, and section \ref{sec:example} examines in detail the report included in the supplementary material.
 
 
-\section{Gaussian Process Structure Search}
+\section{Background: Gaussian Process Structure Search}
 \label{sec:gpss}
 
 %\subsection{Gaussian process regression}
@@ -142,23 +154,86 @@ Gaussian process (\gp{}) models \cite{rasmussen38gaussian} use a kernel to defin
 %The kernel determines which sorts of structures the model places most of its probability mass upon, and in effect determines the generalization properties of the model.
 The kernel specifies which structures are likely under the \gp{} prior, which in turn determines the generalization properties of the model.
 
-Different kernels can express a wide variety of covariance structures, such as local smoothness, periodicity, and changepoints.
+Different kernels can express a wide variety of covariance structures, such as local smoothness or periodicity.
+%, and changepoints.
 New kernels can be constructuted by taking the product of a set of base kernels to express richer structures, such as functions which are periodic only locally, or functions whose marginal prior variance varies with the input (\ie heteroskedasticity).
 
-The Gaussian process structure search (GPSS) procedure searches over sums and products of a set of simple base kernels, in order to find complex structures in time-series or multidimensional functions \cite{DuvLloGroetal13}.
-To produce the reports exhibited in this paper we used 6 base kernels that represent the following structures : smooth functions (squared-exponential kernel - $\kSE$), periodic functions (periodic kernel - $\kPer$), linear functions (linear kernel - $\kLin$), constant functions, changepoints, and white noise.
-%
+The Gaussian process structure search (GPSS) procedure \citep{DuvLloGroetal13} searches over sums and products of a set of simple base kernels, in order to find complex structures in time-series or multidimensional functions.
 
-%When given a dataset
+\NA{
+To produce the reports exhibited in this paper we used 6 base kernels that represent the following structures : smooth functions (squared-exponential kernel - $\kSE$), periodic functions (periodic kernel - $\kPer$), linear functions (linear kernel - $\kLin$), constant functions, changepoints, and white noise.
+}
+
+\NA{
 The GPSS method produces a composite kernel which can be distributed into a sum of products of the base kernels.
 A sum of kernels directly corresponds to a sum of functions which allows for the models produced by GPSS to be decomposed naturally into a sum of parts.
-
+}
 % One property of Gaussian process models is that a sum of kernels is equivalent to a sum of functions.  This means that the models produced by GPSS can typically be decomposed into a sum of parts.
 
 %Each part of the kernel defines a covariance function, which in turn describes a prior probability distribution over functions.  Conditioned on the dataset, the covariance functions also define a 
 
-\section{Automatic Report Generation}
+\subsection{A language of statistical models or a hierarchical model for covariance structure}
+
+\section{An improved and expanded language of statistical models}
+\label{sec:improvements}
+
+\subsection{Changepoints}
+
+In the initial work of \cite{DuvLloGroetal13} it was demonstrated that their language of statistical models was incapable of accurately describing the covariance structure exhibited in a solar irradiance data set (refer to later sections and pictures).
+Apart from the linear kernel, all kernels assumed stationarity which is clearly violated by the Maunder minimum.
+
+A succinct extension to the modelling language to capture this structure is to include changepoints (cite Mike).
+This idea can be achieved by multiplying by appropriate sigmoids
+\[
+Maths.
+\]
+
+We represent this in the grammar as an operator to indicate the parameter tieing, and to represent one semantic concept by one kernel and to make it clear there is nothing special about semi-rings.
+
+\subsection{Heteroskedasticity}
+
+We choose to represent noise as part of the kernel as represented by a white noise kernel.
+This means we can multiply 
+
+\subsection{Improved periodic kernel}
+
+Talk about anticorrelation between constant and long lengthscale components.
+Talk about the original development of the periodic kernel and how this has introduced a delta function at zero frequency
+\[
+Integral yielding Bessel function.
+\]
+Removing this produces a kernel which makes more sense for additive modelling - demonstrate this with discussion of posterior uncertainty on airline data set.
+
+Cite the recent work by Sheffield on construction of orthogonal periodic RKHS.
+
+\subsubsection{Completeness in a Bochner sense}
+
+This new periodic kernel limits to cosine.
+This means that we can succinctly get spectral kernels without having to introduce sinusoids as a special kernel.
+This means we are complete in a Bochner theorem sense.
+
+\subsection{A highly expressive space of kernels}
+
+\section{Translation of statistical models}
 \label{sec:method}
+
+\subsection{What to talk about first}
+
+Discuss the subjectivity of signal versus noise.
+Discuss the heuristic for ordering components - focusing on the block cross validation as being more interesting than random sampling.
+
+\subsection{Helpful redundancy}
+
+\subsection{Multiplication by parametric kernels}
+
+\subsection{Multiplication by squared exponential}
+
+\subsection{Products of periodic kernels}
+
+\subsection{Things the automatic statistician says - put this in an appendix?}
+
+\section{Natural-language description of time series}
+\label{sec:examples}
 
 Our report generation procedure takes as its starting point a dataset and a composite kernel, which together define a joint posterior probability distribution over a sum of functions.
 The procedure summarizes properties of this complex distribution to the user through a comprehensive report.
@@ -362,6 +437,14 @@ it is not clear from the left-hand plot in figure \ref{fig:extrap-full} whether 
 %Can use the precise semantics of linear models or the vague semantics of nonparametric additive models and other components along this spectrum.
 %Flexible modelling with components that a human might use to describe what is going on.
 
+\subsection{Straw men comparisons}
+
+Nothing really quite compares to this work, the closest would be equation learning and trend-periodicity-short-term models.
+Easy to show that equation learning can fit data but does not provide neat descriptions interpretable at a human level.
+
+\subsection{Deficiencies of the modelling langauge}
+
+Show humility with another failure mode (\eg variable period).
 
 \paragraph{Source Code}
 Python code to perform all experiments is available on github.\footnote{Available at 

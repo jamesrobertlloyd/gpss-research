@@ -145,7 +145,7 @@ The supplementary material to this paper is a pair of complete reports generated
 
 %Section \ref{sec:gpss} gives an overview of the structure search method which produces the models that our procedure summarizes.  Section \ref{sec:method} describes our method for generating these reports, and section \ref{sec:example} examines in detail the report included in the supplementary material.
 
-\section{Background: Gaussian Process Structure Search}
+\section{Background: Gaussian Process Structure Search (GPSS)}
 \label{sec:gpss}
 
 %\subsection{Gaussian process regression}
@@ -186,88 +186,208 @@ In the following sections we describe how the kernel syntax and parameter values
 
 %\subsection{A language of statistical models or a hierarchical model for covariance structure}
 
+\section{An improved and expanded language of statistical models}
+\label{sec:improvements}
+
+The initial work of \cite{DuvLloGroetal13} constructed the search space of GPSS via four base kernels and a generative grammar applying addition and multiplication operators.
+Together, they define a language of kernels which in turn defines a language of regression models.
+
+In this section we extend and modify this language.
+In section~\ref{sec:translation} we demonstrate how all sentences in this language can be translated into natural-language, using elementary properties of kernels to reduce this task to simple and finite sub-problems.
+
+\subsection{Changepoints}
+
+It was demonstrated in \cite{DuvLloGroetal13} that their language of statistical models was incapable of accurately describing the covariance structure exhibited in a solar irradiance data set (refer to later sections and pictures).
+The data set shows a clear non-linear non-stationarity called the Maunder minimum (cite).
+The original language of GPSS had no way of expressing this covariance structure.
+
+A succinct extension to the modelling language to capture this phenomenon is to include the concept of changepoints (cite Mike).
+Suppose that $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ and define
+\begin{equation}
+f(x) = (1-\sigma(x))f_1(x) + \sigma(x)f_2(x)
+\end{equation}
+where $\sigma(x)$ is a sigmoid function \ie the function $f$ transitions between functions $f_1$ and $f_2$.
+Then $f(x) \dist \gp{}(0,\kernel)$ where
+\begin{equation}
+\kernel(x,x') = (1-\sigma(x))k_1(x,x')(1-\sigma(x')) + \sigma(x)k_2(x)\sigma(x')
+\label{eq:cp}
+\end{equation}
+(see section~\ref{sec:translation} for the necessary properties to prove this identity).
+
+We represent this new operation in the grammar as the changepoint operator $\kCP(\kernel_1, \kernel_2)$.
+For the purposes of translation, we use equation \eqref{eq:cp} to represent the kernel using elementary operators.
+We also introduce a change window operator, $\kCW(.,.)$, by replacing the sigmoids with hat functions (constructed as products of sigmoids).
+
+\subsection{Heteroskedasticity}
+
+Typical usage of Gaussian processes to perform regression is to assume
+\begin{eqnarray}
+f &\dist& \gp{}(0, k) \\
+y_i &\dist& \Normal(f(x_i), \sigma^2) \quad \forall\,i
+\end{eqnarray}
+which can be written as
+\begin{equation}
+y \dist \gp{}(0, k + \sigma^2I).
+\end{equation}
+GPSS originally searched over $k$ alone, but by introducing a Kronecker delta function as a kernel, $\kWN$ (for white noise), we can include the noise model in the search as well.
+
+This allows for heteroskedasticity when multiplying $\kWN$ by linear kernels or applying change point/window operators.
+
+\subsection{Periodic kernel without constant offset}
+
+The periodic kernel used in \cite{DuvLloGroetal13} (cite others - maybe give history) induces a prior over exactly periodic functions.
+However, these functions also contain a zero-frequency component \ie the Fourier transform of the kernel has a delta function at zero whose integral is given by
+\begin{equation}
+Integral yielding Bessel function.
+\end{equation}
+This means that the prior induced by this kernel can be split into a prior on constant functions and a prior on zero-mean periodic functions.
+
+Many time series can be explained as a long term trend and local periodicity (cite - hence the model of this form).
+This could be modelled succinctly using a kernel of the form $\kSE \times \kPer$, but often the lengthscale of the trend is different to that modelling the locality of the peirodicity resulting in $\kSE + \kSE \times \kPer$ being a more reasonable model.
+However, this introduces large anti-correlation between the two $\kSE$ components.
+
+We therefore subtract this constant to define a new periodic kernel
+\[
+Maths
+\]
+
+Cite the recent work by Sheffield on construction of orthogonal periodic RKHS.
+
+\subsubsection{A basis for any stationary kernel}
+
+A desirable feature of this newly defined kernel is that it limits to cosine as its lengthscale parameter tends to infinity.
+Recent work by (cite Andrew) has shown that any stationary kernel can be arbitrarily well approximated by kernels of the form $\sum \kSE \times \textrm{Cosine}$.
+Introducing the new periodic kernel means that our language also has this completeness property.
+
+\subsection{No rational quadratic}
+
+The work of \cite{DuvLloGroetal13} also included the rational quadratic kernel which can be thought of as a mixture of $\kSE$ with different lengthscales.
+In preliminary investigations we found that this mixture of lengthscales could result in displeasing posterior inferences.
+\NA{
+Show a picture of a strange draw from a RQ prior.
+}
+
+\subsection{A broad language of statistical models}
+
+Draw a table representing
+
+linear regression (cite), fourier analysis (cite), changepoints (cite), heteroskedasiticty (cite), trend periodic short term (cite) and nonparametirc additve (cite) and andrews work (cite).
+
+Note that is certainly not exhaustive.
+
 \section{Translation of kernel functions}
 \label{sec:translation}
 
-The generative grammar of GPSS defines a language of kernel functions which in turn defines a language of statistical models.
-In this section we recall some elementary facts about kernels and show how they allow for easy translation of kernel functions into natural-language descriptions of the functions they encode for.
+The structure search algorithm can return an arbitrary kernel expression.
+In this section we recall some elementary facts about kernels and show how they can be applied to reduce the problem of translation to simple or finite subproblems.
 
-\subsection{Base kernels}
+\paragraph{Distributivity}
 
-Recall what the base kernels encode for.
+Multiplication is distributive over addition so we can convert any kernel expression into a sum of products.
 
-\subsection{Multiplication by parametric kernels}
+\paragraph{Additive kernels}
 
-Appropriate maths
+If $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ then $f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)$.
+Therefore, a sum of kernels can be described as a sum of independent functions.
+We now only need to describe arbitrary products of kernels.
 
-\subsection{Multiplication by squared exponential}
+\paragraph{Multiplication by determinstic functions}
 
-\[
-SE \times SE = SE
-\]
+Suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
+Then $a(x)f(x) \dist \gp{}(0, g)$ where $g(x, x') = a(x)a(x')k(x, x')$.
 
-and local periodicity
+The linear kernel, $\kLin$, has the form $\kLin(x, x') = c(x-a)(x'-a)$.
+Setting $a(x) = \sqrt{c}(x-a)$ we see that multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $\gp{}(0, k)$ by a linear function.
 
-\subsection{Products of periodic kernels}
+From this we see that products of linear kernels will give rise to polynomials.
+Also, we can separate the descriptions of an arbitrary product into a deterministic function envelope and a stationary kernel.
+This makes change points easy to talk about as well.
 
-Talk about covariance structure of products of functions so therefore the functions will resemble products of periodic functions.
+We now only need to describe arbitrary products of stationary kernels.
 
-\subsection{What to talk about first}
+\paragraph{Redundancy}
+
+At a syntactic level, $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$.
+For stationary kernels, $\kWN$ behaves like zero \ie $\kWN \times \kSE = \kWN \times \kPer =  \kWN$.
+
+\paragraph{Base kernels}
+
+The priors induced by the base kernels are well understood, with simple descriptions of typical functions.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{c|c}
+Kernel & Function description \\
+\midrule
+$\kWN$ & White noise \\
+$\kC$ & Constant \\
+$\kLin$ & Linear \\
+$\kSE$ & Smooth \\
+$\kPer$ & Periodic \\
+\end{tabular}
+\label{table:base-kernels}
+\end{table}
+
+We have now reduced the problem to that of describing products of periodic kernels and SE times products of periodic.
+
+\paragraph{Multiplication by squared exponential}
+
+It was noted in \cite{DuvLloGroetal13} that $\kSE \times \kPer$ gives rise to locally periodic functions.
+Indeed, if the input space is restricted to a grid with spacing equal to the period of some periodic kernel then $\kSE \times \kPer = \kSE$.
+We therefore see that the functional form of the periodicity varies like a $\kSE$, giving rise to the local nature of the periodicity.
+
+\paragraph{Products of periodic kernels}
+
+Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
+Then
+\begin{equation}
+{\textrm{Covar}(f_1(x)f_2(x), f_1(x')f_2(x')) = k_1(x,x')k_2(x,x')}
+\end{equation}
+\ie the product of functions gives rise to functions whose covariance structure is the same as the product of kernels.
+
+\NA{
+Therefore products of periodic kernels will look like products of periodic functions maybe.
+Need to make this more exact.
+}
+
+\paragraph{Ordering additive components}
 
 Discuss the subjectivity of signal versus noise.
 Discuss the heuristic for ordering components - focusing on the block cross validation as being more interesting than random sampling.
 
-\subsection{Things the automatic statistician says - put this in an appendix?}
+\paragraph{Things the automatic statistician says - put this in an appendix?}
 
-\section{An improved and expanded language of statistical models}
-\label{sec:improvements}
+Make a better version of this
 
-\subsection{Changepoints}
-
-In the initial work of \cite{DuvLloGroetal13} it was demonstrated that their language of statistical models was incapable of accurately describing the covariance structure exhibited in a solar irradiance data set (refer to later sections and pictures).
-Apart from the linear kernel, all kernels assumed stationarity which is clearly violated by the Maunder minimum.
-
-A succinct extension to the modelling language to capture this structure is to include changepoints (cite Mike).
-This idea can be achieved by multiplying by appropriate sigmoids
-\[
-Maths.
-\]
-
-We represent this in the grammar as an operator to indicate the parameter tieing, and to represent one semantic concept by one kernel and to make it clear there is nothing special about semi-rings.
-
-\subsection{Heteroskedasticity}
-
-We choose to represent noise as part of the kernel as represented by a white noise kernel.
-This means we can multiply 
-
-\subsection{Improved periodic kernel}
-
-Talk about anticorrelation between constant and long lengthscale components.
-Talk about the original development of the periodic kernel and how this has introduced a delta function at zero frequency
-\[
-Integral yielding Bessel function.
-\]
-Removing this produces a kernel which makes more sense for additive modelling - demonstrate this with discussion of posterior uncertainty on airline data set.
-
-Cite the recent work by Sheffield on construction of orthogonal periodic RKHS.
-
-\subsubsection{Completeness in a Bochner sense}
-
-This new periodic kernel limits to cosine.
-This means that we can succinctly get spectral kernels without having to introduce sinusoids as a special kernel.
-This means we are complete in a Bochner theorem sense.
-
-\subsection{No rational quadratic or Matern}
-
-\subsection{A highly expressive space of kernels}
+\begin{table}[ht]
+\begin{tabular}{l|l}
+Kernel & Description \\
+\midrule
+$\kPer$ & An exactly periodic function \\
+$\kPer \times \kSE$ & An approximately periodic function \\
+$\kPer \times \kSE \times \kLin$ & An approximately periodic function with linearly varying amplitude \\
+$\kLin$ & A linear function \\
+$\kLin \times \kLin$ & A quadratic function \\
+$\kPer \times \kLin \times \kLin$ & An exactly periodic function with quadratically varying amplitude\\
+\end{tabular}
+\caption{A demonstration of how it is possible to write an open-ended summarizer.  Different kernel structures modify the overall statistical structure of each component in independent ways.}
+\label{table:descriptions}
+\end{table}
 
 \section{Natural-language description of time series}
 \label{sec:examples}
 
-Our report generation procedure takes as its starting point a dataset and a composite kernel, which together define a joint posterior probability distribution over a sum of functions.
-The procedure summarizes properties of this complex distribution to the user through a comprehensive report.
+We demonstrate this procedure on a number of time series (full automatically produced reports in supplementary material).
+These examples serve two purposes
+\begin{itemize}
+  \item Demonstrating the automatic natral-language description of complex time series
+  \item Showing that the model search procedure is finding sensible models
+\end{itemize}
+
+%Our report generation procedure takes as its starting point a dataset and a composite kernel, which together define a joint posterior probability distribution over a sum of functions.
+%The procedure summarizes properties of this complex distribution to the user through a comprehensive report.
 %
-These reports are designed to be intelligible to non-experts, illustrating the assumptions made by the model, describing the model's posterior distribution, and most importantly, enabling model-checking.
+%These reports are designed to be intelligible to non-experts, illustrating the assumptions made by the model, describing the model's posterior distribution, and most importantly, enabling model-checking.
 %\subsection{Design goals}
 %
 %\begin{itemize}
@@ -286,35 +406,12 @@ These reports are designed to be intelligible to non-experts, illustrating the a
 %
 %\subsection{Report structure}
 
-These reports have three sections: an executive summary, a detailed discussion of each component, and a section discussing how the model extrapolates beyond the range of the data.
+%These reports have three sections: an executive summary, a detailed discussion of each component, and a section discussing how the model extrapolates beyond the range of the data.
 
-\vspace{-0.05in}
-\paragraph{Automatic natural language descriptions of functions}
-%Since the individual additive components produced by the GPSS method are produced by an open-ended grammar, it is impossible to write a lookup table to handle every type of component that GPSS might produce.  %  Hence the part of the procedure which summarizes the individual components must be flexible, and also must present enough information that users can see the meaning of each component themselves.  We summarize each component both in writing and in plots.
-%
-%For the written portion, a first paragraph reports the type of component found, and the meaning of all kernel parameters in that component.  
-The compositional nature of kernel structures produced by GPSS allows for simple translation of individual components.
-Each type of kernel in a product of kernels modifies the form of the posterior in a consistent way, preventing the need for an infinite lookup table of descriptions.
-Table \ref{table:descriptions} gives some examples of high level summaries of functions.
-Since the posterior distribution also depends on the data, our summarizer includes heuristics to describe the shape of the components being modeled, such as ``smooth'' or ``monotonically increasing''.
+%\vspace{-0.05in}
 
-\begin{table}[ht]
-\begin{tabular}{l|l}
-Kernel & Description \\
-\midrule
-$\kPer$ & An exactly periodic function \\
-$\kPer \times \kSE$ & An approximately periodic function \\
-$\kPer \times \kSE \times \kLin$ & An approximately periodic function with linearly varying amplitude \\
-$\kLin$ & A linear function \\
-$\kLin \times \kLin$ & A quadratic function \\
-$\kPer \times \kLin \times \kLin$ & An exactly periodic function with quadratically varying amplitude\\
-\end{tabular}
-\caption{A demonstration of how it is possible to write an open-ended summarizer.  Different kernel structures modify the overall statistical structure of each component in independent ways.}
-\label{table:descriptions}
-\end{table}
-
-\subsection{Example: Summarizing 400 Years of Solar Activity}
-\label{sec:example}
+\subsection{Summarizing 400 Years of Solar Activity}
+\label{sec:solar}
 
 To give an example of the capabilities of our procedure, we show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011.  This time series has two obvious features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
 %
@@ -465,6 +562,10 @@ it is not clear from the left-hand plot in figure \ref{fig:extrap-full} whether 
 %\paragraph{Kernel search}
 %Can use the precise semantics of linear models or the vague semantics of nonparametric additive models and other components along this spectrum.
 %Flexible modelling with components that a human might use to describe what is going on.
+
+\subsection{Reporting heteroskedasticity}
+
+Give the same treatment to the airline data set.
 
 \subsection{Straw men comparisons}
 

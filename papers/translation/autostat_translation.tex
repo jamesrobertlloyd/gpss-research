@@ -1,12 +1,43 @@
-%\documentclass{article} % For LaTeX2e
-\documentclass[twoside]{article}
-%\usepackage{format/nips13submit_e}
-%\nipsfinalcopy % Uncomment for camera-ready version
-\usepackage{aistats2014}
-%\nipsfinalcopy % Uncomment for camera-ready version
+% Use the following line _only_ if you're still using LaTeX 2.09.
+%\documentstyle[icml2014,epsf,natbib]{article}
+% If you rely on Latex2e packages, like most modern people use this:
+\documentclass{article}
+
+% use Times
+\usepackage{times}
+% For figures
+\usepackage{graphicx} % more modern
+%\usepackage{epsfig} % less modern
+\usepackage{subfigure} 
+
+% For citations
+\usepackage{natbib}
+
+% For algorithms
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% As of 2011, we use the hyperref package to produce hyperlinks in the
+% resulting PDF.  If this breaks your system, please commend out the
+% following usepackage line and replace \usepackage{icml2014} with
+% \usepackage[nohyperref]{icml2014} above.
+\usepackage{hyperref}
+
+% Packages hyperref and algorithmic misbehave sometimes.  We can fix
+% this with the following command.
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Employ the following version of the ``usepackage'' statement for
+% submitting the draft version of the paper for review.  This will set
+% the note in the first column to ``Under review.  Do not distribute.''
+\usepackage{format/icml2014} 
+% Employ this version of the ``usepackage'' statement after the paper has
+% been accepted, when creating the final version.  This will set the
+% note in the first column to ``Proceedings of the...''
+%\usepackage[accepted]{icml2014}
+
 \usepackage{times}
 \usepackage{hyperref}
-\usepackage[pdftex]{graphicx}
 \usepackage{url}
 \usepackage{color}
 \usepackage{preamble}
@@ -26,17 +57,15 @@
     pdfview=FitH}
     
     
-\usepackage{graphicx, amsmath, amsfonts, bm, lipsum, capt-of}
+\usepackage{amsmath, amsfonts, bm, lipsum, capt-of}
 \usepackage{natbib, xcolor, wrapfig, booktabs, multirow, caption}
+\DeclareCaptionType{copyrightbox}
 \usepackage{float}
 
 %\renewcommand{\baselinestretch}{0.99}
 
 \def\ie{i.e.\ }
 \def\eg{e.g.\ }
-
-%\title{Automatic Summarization of Composite Nonparametric Time-Series Models}
-%\title{Automatic construction and natural-language summarization of additive nonparametric models}
 
 %\author{
 %James Robert Lloyd\\
@@ -81,40 +110,42 @@
 %\renewcommand{\NA}[1]{#1}  % Note, NA's pass through!
 
 
-%%%%%%%%%%%%%%%%%
-%%%% WARNING %%%%
-%%%%%%%%%%%%%%%%%
-%% The below should not be here
-%% I need to upgrade an appropriate package to get the AIStats copyright to appear
-\makeatletter
-\let\@copyrightspace\relax
-\makeatother
-%%%%%%%%%%%%%%%%%
-%%%% WARNING %%%%
-%%%%%%%%%%%%%%%%%
+% The \icmltitle you define below is probably too long as a header.
+% Therefore, a short form for the running title is supplied here:
+\icmltitlerunning{Automatic natural-language descriptions of time-series}
 
-\begin{document}
+\begin{document} 
 
 \twocolumn[
+\icmltitle{Automatic natural-language descriptions of time-series}
 
-\aistatstitle{Automatic natural-language descriptions of time-series}
+% It is OKAY to include author information, even for blind
+% submissions: the style file will automatically remove it for you
+% unless you've provided the [accepted] option to the icml2014
+% package.
+\icmlauthor{Your Name}{email@yourdomain.edu}
+\icmladdress{Your Fantastic Institute,
+            314159 Pi St., Palo Alto, CA 94306 USA}
+\icmlauthor{Your CoAuthor's Name}{email@coauthordomain.edu}
+\icmladdress{Their Fantastic Institute,
+            27182 Exp St., Toronto, ON M6H 2T1 CANADA}
 
-\aistatsauthor{ Anonymous Author 1 \And Anonymous Author 2 \And Anonymous Author 3 }
+% You may provide any keywords that you 
+% find helpful for describing your paper; these are used to populate 
+% the "keywords" metadata in the PDF but will not be shown in the document
+\icmlkeywords{}
 
-\aistatsaddress{ Unknown Institution 1 \And Unknown Institution 2 \And Unknown Institution 3 } ]
+\vskip 0.3in
+]
 
-\begin{abstract}
+\begin{abstract} 
 One of the broad aims of statistics is to produce an accurate and concise description of data.
 Parametric regression methods typically produce a very concise description of a data set but can be inaccurate when data deviates from the strong assumptions made by the model.
 In contrast, nonparametric regression methods are typically capable of providing accurate descriptions of many data sets but at the expense of a succinct description.
 To address this apparent antagonism, we demonstrate that a recently introduced nonparametric model-construction method allows for the automatic description of a data set in natural-language.
 We also extend and modify the class of models that can be produced by this model-construction method, increasing expressivity whilst maintaining interpretability.
 We demonstrate this procedure on time-series, showing that the automatically constructed models can accurately describe the data and also produce detailed descriptions in simple natural language.
-%To complement a recently introduced statistical model building method, we demonstrate an automatic model-description procedure.
-%After automatically building an additive nonparametric regression model, our method constructs a report which visualizes and explains in words the meaning and relevance of each component.
-%These reports enable human model-checking and the understanding of complex modeling assumptions and structure.
-%We demonstrate this procedure on time-series, showing that the automatically constructed models identify highly interpretable structures that can be automatically described in simple natural language.
-\end{abstract}
+\end{abstract} 
 
 \allowdisplaybreaks
 
@@ -603,7 +634,7 @@ Python code to perform all experiments is available on github.\footnote{Availabl
 %In this paper, we exhibited the output of a method for automatically constructing and summarizing a compositional Gaussian process regression model in natural language.
 %These summaries can enable human experts and non-experts to understand the implications of a model, check its plausibility, and notice structure not yet captured by the model.
 
-\bibliographystyle{unsrt}
 \bibliography{gpss}
+\bibliographystyle{format/icml2014}
 
-\end{document}
+\end{document} 

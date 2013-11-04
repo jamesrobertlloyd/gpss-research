@@ -112,12 +112,12 @@
 
 % The \icmltitle you define below is probably too long as a header.
 % Therefore, a short form for the running title is supplied here:
-\icmltitlerunning{Automatic natural-language descriptions of time-series}
+\icmltitlerunning{Automatically generated natural-language descriptions of time-series}
 
 \begin{document} 
 
 \twocolumn[
-\icmltitle{Automatic natural-language descriptions of time-series}
+\icmltitle{Automatically generated natural-language descriptions of time-series}
 
 % It is OKAY to include author information, even for blind
 % submissions: the style file will automatically remove it for you
@@ -190,7 +190,7 @@ Different kernels can express a wide variety of covariance structures, such as l
 New kernels can be constructed by taking the product of a set of base kernels to express richer structures, such as functions which are locally periodic, or heteroskedastic.
 
 The Gaussian process structure search (GPSS) procedure \citep{DuvLloGroetal13} searches over sums and products of a set of simple base kernels to produce an appropriate model for a given data set.
-It was demonstrated that when applied to time series the learned kernel structures could be used to decompose the learned regression function into interpretable components.
+It was demonstrated that when applied to time-series the learned kernel structures could be used to decompose the learned regression function into interpretable components.
 
 For example, when applied to airline passenger data (cite Box, see section~\ref{sec:airline}), the syntax of the learned kernel structure was (refer to description of acronyms)
 \begin{equation}
@@ -206,9 +206,11 @@ It should not be surprising that this description could have been deduced from t
 Building upon this observation we demonstrate how to translate arbitrary sums and products of kernels in section~\ref{sec:translation}.
 Before that, we introduce some extensions and improvements to the base kernels and generative grammar.
 
-\subsection{Notation}
+\subsection{Notation and remarks}
 
 Introduce standard notation here to avoid confusion later.
+
+Mention that we restrict to 1-$d$ mostly for simplicity, but the idea has already been shown to work on higher dimensional data.
 
 \section{An improved and expanded language of statistical models}
 \label{sec:improvements}
@@ -287,7 +289,7 @@ Cite the recent work by Sheffield on construction of orthogonal periodic RKHS fo
 
 \subsection{A separate constant kernel}
 
-Following the a posteriori anti-correlation observation above, we also remove the constant component from $\kLin$ and introduce the constant function as a separate base kernel, $\kC$.
+Following the a posteriori anti-correlation observation above, we also remove the constant component from $\kLin$ and introduce the constant function as a separate base kernel.
 
 \subsection{No rational quadratic}
 
@@ -309,17 +311,13 @@ In section~\ref{sec:example_translation} we demonstrate the natural-language des
 The extended GPSS language produces sentences composed of (some number) base kernels (refer to a table) and the arbitrary application of addition, multiplication, change point and change window operators. 
 In this section we recall some elementary facts about kernels and show how they reduce the problem of translation to simple or finite subproblems.
 
-\NA{
-Need to mention somewhere that we have restricted to one dimension for simplicity of exposition.
-}
-
 \paragraph{Changepoints}
 
-We use equation \eqref{eq:cp} to represent changepoints using sums, products, elementary kernels and determinstic functions.
+We use equation \eqref{eq:cp} to represent changepoints (and similarly change windows) using sums, products, elementary kernels and univariate functions.
 
 \paragraph{Distributivity}
 
-Multiplication is distributive over addition so we can convert any kernel expression into a sum of products.
+Multiplication is distributive over addition for univariate and kernel functions so we can convert any kernel expression into a sum of products.
 
 \paragraph{Additive kernels}
 
@@ -327,17 +325,17 @@ If $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ the
 Therefore, a sum of kernels can be described as a sum of independent functions.
 We now only need to describe arbitrary products of kernels.
 
-\paragraph{Multiplication by determinstic functions}
+\paragraph{Multiplication by univariate functions}
 
-Suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
+Suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic univariate function.
 Then $a(x)f(x) \dist \gp{}(0, g)$ where $g(x, x') = a(x)a(x')k(x, x')$.
 
 The linear kernel, $\kLin$, has the form $\kLin(x, x') = c(x-a)(x'-a)$.
 Setting $a(x) = \sqrt{c}(x-a)$ we see that multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $\gp{}(0, k)$ by a linear function.
+Similarly, changepoint and change window operators are equivalent to multiplying \gp{}s by sigmoids and hat functions respectively.
 
-From this we see that products of linear kernels will give rise to polynomials.
-Also, we can separate the descriptions of an arbitrary product into a deterministic function envelope and a stationary kernel.
-This makes change points easy to talk about as well.
+Therefore we can separate the descriptions of an arbitrary product into a deterministic univariate function envelope and a stationary kernel.
+The univariate envelopes can be arbitrary products of linear functions and sigmoids which can be simply described by their parameters.
 
 We now only need to describe arbitrary products of stationary kernels.
 
@@ -345,6 +343,9 @@ We now only need to describe arbitrary products of stationary kernels.
 
 At a syntactic level, $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$.
 For stationary kernels, $\kWN$ behaves like zero \ie $\kWN \times \kSE = \kWN \times \kPer =  \kWN$.
+All stationary base kernels have a scale parameter; multiplying by the constant kernel $\kC$ is equivalent to changing this parameter.
+
+We now only need to describe the base kernels and products of the form $\kSE \times \prod \kPer$.
 
 \paragraph{Base kernels}
 
@@ -364,15 +365,13 @@ $\kPer$ & Periodic \\
 \label{table:base-kernels}
 \end{table}
 
-We have now reduced the problem to that of describing products of periodic kernels and SE times products of periodic.
+\paragraph{$\kSE \times \kPer$}
 
-\paragraph{Multiplication by squared exponential}
+It was noted in \cite{DuvLloGroetal13} that this kernel gives rise to locally periodic functions.
+Indeed, if the input space is restricted to a grid with spacing equal to the period of the periodic kernel then $\kSE \times \kPer = \kSE$.
+We therefore see that the functional form of the periodicity varies like $\kSE$, giving rise to the local nature of the periodicity.
 
-It was noted in \cite{DuvLloGroetal13} that $\kSE \times \kPer$ gives rise to locally periodic functions.
-Indeed, if the input space is restricted to a grid with spacing equal to the period of some periodic kernel then $\kSE \times \kPer = \kSE$.
-We therefore see that the functional form of the periodicity varies like a $\kSE$, giving rise to the local nature of the periodicity.
-
-\paragraph{Products of periodic kernels}
+\paragraph{$\prod \kPer$}
 
 Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
 Then
@@ -388,8 +387,9 @@ Need to make this more exact.
 
 \subsection{Ordering additive components}
 
-Discuss the subjectivity of signal versus noise.
-Discuss the heuristic for ordering components - focusing on the block cross validation as being more interesting than random sampling.
+An automatic regression system would ideally report the most interesting or important features of the data first.
+However, measuring importance is subjective.
+We make the choice that additive components are important if they produce accurate extrapolations an order the components by this metric (see an appendix for details).
 
 \subsection{Things the automatic statistician says - put this in an appendix?}
 \label{sec:example_translation}
@@ -411,17 +411,48 @@ $\kPer \times \kLin \times \kLin$ & An exactly periodic function with quadratica
 \label{table:descriptions}
 \end{table}
 
+\subsection{When is a description `correct'}
+
+In the above we have described how to produce a description of the prior of a \gp{} described by an arbitrary kernel.
+However, when describing a particular data set we are interested in the posterior of the function describing the data.
+
+For example, when fitting a linear regression model, the fit to the data will always be linear, for any data set.
+One can test the assumptions of linear regression by model checking.
+For example, one can test the prior independence assumption of the residuals by computing statistics of the posterior residuals and comparing to those expected under the prior \ie comparing the prior and posterior of parts of the model.
+
+In the same way, one must also check the models produced by GPSS; this can take the form of testing whether the posterior of each component resembles its prior as measured by a variety of statistics.
+The plots in the later sections allow human model checking of this form, but ideally this process should be automated as well.
+We are actively researching model checking methods for \gp{} models.
+
+\NA{
+Some thoughts\ldots
+Optimising marginal likelihood is attempting to maximise the probability of a data set given the model.
+The components can still be anti-correlated which is a problem - but model checking can see this if necessary.
+A small amount of descriptions are about the posterior (\eg increasing / decreasing linear functions).
+}
+
 \section{Related work}
 
-Equation learning is clearly related.
-The broad idea is to define a large space of models which we can search and perform inference in.
-In our work we express as much as we can with Gaussian processes - therefore inference is easy.
-Roger has done this.
-Can we also cite some sort of graphical model work?
-At the extreme end of things is probabilistic programming - we see automatic model construction using automatic inference engines as a profitable area of study.
+\paragraph{Equation learning}
+
+In this work we have defined a search space of statistical models, where each model is characterised by a parametric covariance function.
+Previous work has considered searching over parametric functions (cite equation learning).
+Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
+It is our opinion that equation learning and covariance learning should ultimately be combined.
+
+\paragraph{Searching over statistical models}
+
+The original motivation for this line of work was the search over matrix factorisation models by (cite Roger).
+This work and ours is possible since we can define a large space of models through a succinct langauge, inference can be performed for all sentences in this language and a basic search procedure is sufficient to find interesting models.
+This is also true of - can we also cite some sort of graphical model work?
+
+Defining infernce schemes that work for a very large class of models is also a research area - at the extreme end it is called probabilistic program (cite cite cite).
+
+\paragraph{Natural-language descriptions of data}
 
 Translation is not really done.
 Perhaps cite Gowers as someone else who thinks communication is important.
+Or perhaps grammar based understanding of natural scenes.
 
 \section{Natural-language description of time series}
 \label{sec:examples}
@@ -627,6 +658,9 @@ Easy to show that equation learning can fit data but does not provide neat descr
 Can try interpolation and extrapolation (maybe just extrapolation since it is the harder task - explain how the various algorithms would perform at interpolation).
 Can compare to SE, equation learning, Spectral, MKL, SE + change points, Trend + period + short-term (we can do all of these with current code - except for equation learning).
 Mention that the data sets are chosen to highlight what features can be modelled by various techniques and which cannot rather than the traditional, my model rules the world.
+
+Should probably compare to ARIMA class models - they will probably do fine for stationarity.
+Or am I opening a huge can of worms here - should the actual comparison be with structure search for time series models?
 
 %\subsection{Deficiencies of the modelling language}
 

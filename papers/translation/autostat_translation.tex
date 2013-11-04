@@ -181,9 +181,9 @@ The supplementary material to this paper is a pair of complete reports generated
 
 %\subsection{Gaussian process regression}
 Gaussian processes (\gp{}) \citep{rasmussen38gaussian} can be used to perform a Bayesian nonparametric regression analysis.
-A \gp{} regression model uses a kernel function, $\kernel$ to define the covariance between any two function values, $\outputVar, \outputVar'$ evaluated at two inputs, $\inputVar,\inputVar'$ \ie ${\textrm{Cov}(\outputVar, \outputVar') = \kernel(\inputVar,\inputVar')}$.
+A \gp{} regression model uses a kernel function, $\kernel$, to define the covariance between any two function values, $\outputVar, \outputVar'$ evaluated at two inputs, $\inputVar,\inputVar'$ \ie ${\textrm{Cov}(\outputVar, \outputVar') = \kernel(\inputVar,\inputVar')}$.
 %The kernel determines which sorts of structures the model places most of its probability mass upon, and in effect determines the generalization properties of the model.
-The kernel specifies which structures are likely under the \gp{} prior, which in turn determines the generalization properties of the model.
+The kernel specifies which structures are likely under the \gp{} prior, which in turn determines the generalisation properties of the model.
 
 Different kernels can express a wide variety of covariance structures, such as local smoothness or periodicity.
 %, and changepoints.
@@ -192,30 +192,23 @@ New kernels can be constructed by taking the product of a set of base kernels to
 The Gaussian process structure search (GPSS) procedure \citep{DuvLloGroetal13} searches over sums and products of a set of simple base kernels to produce an appropriate model for a given data set.
 It was demonstrated that when applied to time series the learned kernel structures could be used to decompose the learned regression function into interpretable components.
 
-For example, when applied to airline passenger data (cite me and include a picture), the syntax of the learned kernel structure was
-\[
+For example, when applied to airline passenger data (cite Box, see section~\ref{sec:airline}), the syntax of the learned kernel structure was (refer to description of acronyms)
+\begin{equation}
 \kSE \times \big( \kLin + \kLin \times ( \kPer + \kRQ ) \big)
-\]
+\end{equation}
 which can be distributed into a sum of products
-\[
+\begin{equation}
 (\kSE \times \kLin) + (\kSE \times \kLin \times \kPer) + (\kSE \times \kLin \times \kRQ).
-\]
+\end{equation}
 It was noted that this sum decomposed the regression function into three additive components and the second component was described as periodic with linearly increasing amplitude.
-In the following sections we describe how the kernel syntax and parameter values could have been used to produce a far more detailed description of each of the components.
+It should not be surprising that this description could have been deduced from the $\kLin$ and $\kPer$ kernels comprising the second product above.
 
-%\NA{
-%To produce the reports exhibited in this paper we used 6 base kernels that represent the following structures : smooth functions (squared-exponential kernel - $\kSE$), periodic functions (periodic kernel - $\kPer$), linear functions (linear kernel - $\kLin$), constant functions, changepoints, and white noise.
-%}
+Building upon this observation we demonstrate how to translate arbitrary sums and products of kernels in section~\ref{sec:translation}.
+Before that, we introduce some extensions and improvements to the base kernels and generative grammar.
 
-%\NA{
-%The GPSS method produces a composite kernel which can be distributed into a sum of products of the base kernels.
-%A sum of kernels directly corresponds to a sum of functions which allows for the models produced by GPSS to be decomposed naturally into a sum of parts.
-%}
-% One property of Gaussian process models is that a sum of kernels is equivalent to a sum of functions.  This means that the models produced by GPSS can typically be decomposed into a sum of parts.
+\subsection{Notation}
 
-%Each part of the kernel defines a covariance function, which in turn describes a prior probability distribution over functions.  Conditioned on the dataset, the covariance functions also define a 
-
-%\subsection{A language of statistical models or a hierarchical model for covariance structure}
+Introduce standard notation here to avoid confusion later.
 
 \section{An improved and expanded language of statistical models}
 \label{sec:improvements}
@@ -224,20 +217,19 @@ The initial work of \cite{DuvLloGroetal13} constructed the search space of GPSS 
 Together, they define a language of kernels which in turn defines a language of regression models.
 
 In this section we extend and modify this language.
-In section~\ref{sec:translation} we demonstrate how all sentences in this language can be translated into natural-language, using elementary properties of kernels to reduce this task to simple and finite sub-problems.
+In section~\ref{sec:translation} we demonstrate how all sentences in this language can be translated into natural-language, using elementary properties of kernels to reduce this task to finite or simple sub-problems.
 
 \subsection{Changepoints}
 
-It was demonstrated in \cite{DuvLloGroetal13} that their language of statistical models was incapable of accurately describing the covariance structure exhibited in a solar irradiance data set (refer to later sections and pictures).
-The data set shows a clear non-linear non-stationarity called the Maunder minimum (cite).
-The original language of GPSS had no way of expressing this covariance structure.
+The original language of statistical models used by GPSS was incapable of accurately describing the covariance structure exhibited in a solar irradiance data set (see section~\ref{sec:solar}).
+The data set shows a clear non-linear non-stationarity; the original language of GPSS had no way of expressing this covariance structure.
 
-A succinct extension to the modelling language to capture this phenomenon is to include the concept of changepoints (cite Mike).
+A succinct extension to the modelling language to capture this phenomenon is to include the concept of changepoints (cite Mike Osbourne + others more generic papers?).
 Suppose that $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ and define
 \begin{equation}
 f(x) = (1-\sigma(x))f_1(x) + \sigma(x)f_2(x)
 \end{equation}
-where $\sigma(x)$ is a sigmoid function \ie the function $f$ transitions between functions $f_1$ and $f_2$.
+where $\sigma(x)$ is a sigmoid function varying between 0 and 1 \ie the function $f$ transitions between functions $f_1$ and $f_2$.
 Then $f(x) \dist \gp{}(0,\kernel)$ where
 \begin{equation}
 \kernel(x,x') = (1-\sigma(x))k_1(x,x')(1-\sigma(x')) + \sigma(x)k_2(x)\sigma(x')
@@ -246,79 +238,82 @@ Then $f(x) \dist \gp{}(0,\kernel)$ where
 (see section~\ref{sec:translation} for the necessary properties to prove this identity).
 
 We represent this new operation in the grammar as the changepoint operator $\kCP(\kernel_1, \kernel_2)$.
-For the purposes of translation, we use equation \eqref{eq:cp} to represent the kernel using elementary operators.
-We also introduce a change window operator, $\kCW(.,.)$, by replacing the sigmoids with hat functions (constructed as products of sigmoids).
+We also introduce a change window operator, $\kCW(.,.)$, by replacing the sigmoids with products of sigmoids (resulting in a smooth `hat' function).
 
 \subsection{Heteroskedasticity}
 
-Typical usage of Gaussian processes to perform regression is to assume
-\begin{eqnarray}
-f &\dist& \gp{}(0, k) \\
-y_i &\dist& \Normal(f(x_i), \sigma^2) \quad \forall\,i
-\end{eqnarray}
-which can be written as
+We introduce the white noise kernel, $\kWN$, as a base kernel.
+When multiplied by linear kernels and changepoints this can express polynomially varying standard deviation as well as switching between different noise regimes.
+The original GPSS procedure always assumed homoscedastic noise.
+
+\subsection{An improved periodic kernel}
+
+We introduce a new periodic kernel defined by
 \begin{equation}
-y \dist \gp{}(0, k + \sigma^2I).
+\kernel_\kPer(x, x') = \kernel_\kPer(\tau) =  \sigma^2\frac{\exp\left(\frac{\cos\frac{2 \pi \tau}{p}}{\ell^2}\right) - I_0\left(\frac{1}{\ell^2}\right)}{\exp\left(\frac{1}{\ell^2}\right) - I_0\left(\frac{1}{\ell^2}\right)}
+\label{eq:periodic}
 \end{equation}
-GPSS originally searched over $k$ alone, but by introducing a Kronecker delta function as a kernel, $\kWN$ (for white noise), we can include the noise model in the search as well.
+where $\tau := x - x'$ and $I_0$ is the modified Bessel function of the first kind of order 0.
+It is linearly related to the original periodic kernel (cite various) but has the following elegant properties.
 
-This allows for heteroskedasticity when multiplying $\kWN$ by linear kernels or applying change point/window operators.
+\paragraph{Cosine limit}
 
-\subsection{Periodic kernel without constant offset}
-
-\NA{We modify the periodic kernel on grounds of interpretability and mathematical elegance (the limit). Be maths about it - state the kernel and its properties and then show how it was discovered}
-
-The periodic kernel used in \cite{DuvLloGroetal13} (cite others - maybe give history) induces a prior over exactly periodic functions.
-However, these functions also contain a zero-frequency component \ie the Fourier transform of the kernel has a delta function at zero whose integral is given by
+A simple application of l'H\^opital's rule shows that
 \begin{equation}
-Integral yielding Bessel function.
+\kernel_\kPer(\tau) \to \sigma^2\cos\left(\frac{2 \pi \tau}{p}\right) \quad \textrm{as} \quad\ell \to \infty.
 \end{equation}
-This means that the prior induced by this kernel can be split into a prior on constant functions and a prior on zero-mean periodic functions.
+It was recently demonstrated (cite Andrew) that any stationary kernel can be arbitrarily well approximated by kernels with syntax
+\begin{equation}
+\sum \kSE \times \cos
+\end{equation}
+by appealing to Bochner's theorem (cite).
+By using this new periodic kernel our language of kernels also attains this completeness property.
 
-Many time series can be explained as a long term trend and local periodicity (cite - hence the model of this form).
-This could be modelled succinctly using a kernel of the form $\kSE \times \kPer$, but often the lengthscale of the trend is different to that modelling the locality of the peirodicity resulting in $\kSE + \kSE \times \kPer$ being a more reasonable model.
-However, this introduces large anti-correlation between the two $\kSE$ components.
+\paragraph{No power at zero frequency}
 
-We therefore subtract this constant to define a new periodic kernel
-\[
-Maths
-\]
+The kernel defined by equation~\eqref{eq:periodic} has a Fourier transform of zero when evaluated at zero.
+This means that functions drawn from a \gp{} with this kernel will have zero mean.
+In particular,
+\begin{equation}
+\kernel^\textrm{Old}_\kPer(\tau) = c + m\kernel_\kPer(\tau)
+\end{equation}
+where $c$ and $m$ are constants.
+This shows that the previous periodic kernel defined a prior over zero mean periodic function plus an independent constant function.
 
-Cite the recent work by Sheffield on construction of orthogonal periodic RKHS.
+In preliminary testing it was noticed that this a priori independent constant could result in near perfect anti-correlation with other components a posteriori, introducing unnecessary uncertainty about individual components.
+Indeed, using this new kernel, the large posterior variance of the periodic component in the airline data seen in \cite{DuvLloGroetal13} is seen to be an artefact of the constant component in the periodic kernel when compared to (refer to decompositions in this paper).
 
-\subsubsection{A basis for any stationary kernel}
-
-A desirable feature of this newly defined kernel is that it limits to cosine as its lengthscale parameter tends to infinity.
-Recent work by (cite Andrew) has shown that any stationary kernel can be arbitrarily well approximated by kernels of the form $\sum \kSE \times \textrm{Cosine}$.
-Introducing the new periodic kernel means that our language also has this completeness property.
+Cite the recent work by Sheffield on construction of orthogonal periodic RKHS for comparison.
 
 \subsection{A separate constant kernel}
 
-Added to language, removed from $\kPer$ and $\kLin$.
+Following the a posteriori anti-correlation observation above, we also remove the constant component from $\kLin$ and introduce the constant function as a separate base kernel, $\kC$.
 
 \subsection{No rational quadratic}
 
-The work of \cite{DuvLloGroetal13} also included the rational quadratic kernel which can be thought of as a mixture of $\kSE$ with different lengthscales.
-In preliminary investigations we found that this mixture of lengthscales could result in displeasing posterior inferences.
-\NA{
-Show a picture of a strange draw from a RQ prior.
-}
+The work of \cite{DuvLloGroetal13} also included the rational quadratic kernel which can be represented as a mixture of $\kSE$ with different lengthscales.
+In preliminary investigations we found that this mixture of lengthscales could result in individual components expressing smooth trends and noise like components simultaneously.
+We have therefore removed this kernel on the grounds of interpretability.
 
 \subsection{A broad language of statistical models}
 
-Draw a table representing
+With these additions to the modelling language we can express a wide variety of regression motifs
 
-linear regression (cite), fourier analysis (cite), changepoints (cite), heteroskedasiticty (cite), trend periodic short term (cite) and nonparametirc additve (cite) and andrews work (cite).
+linear regression (cite), fourier analysis (cite), changepoints (cite), heteroskedasiticty (cite), trend periodic short term (cite) and nonparametirc additve (cite) and andrews work (cite) - do we also want multidimensional things?
 
-Note that is certainly not exhaustive.
-
-\TBD{Produce automatic descriptions of these models}
+In section~\ref{sec:example_translation} we demonstrate the natural-language descriptions of some of these kernel forms.
 
 \section{Translation of kernel functions}
 \label{sec:translation}
 
 The structure search algorithm can return an arbitrary kernel expression.
 In this section we recall some elementary facts about kernels and show how they can be applied to reduce the problem of translation to simple or finite subproblems.
+
+Mention that we restrict attention to single dimension, but extension is easy enough.
+
+\paragraph{Changepoints}
+
+We use equation \eqref{eq:cp} to represent changepoints using sums, products, elementary kernels and determinstic functions.
 
 \paragraph{Distributivity}
 
@@ -389,14 +384,15 @@ Therefore products of periodic kernels will look like products of periodic funct
 Need to make this more exact.
 }
 
-\paragraph{Ordering additive components}
+\subsection{Ordering additive components}
 
 Discuss the subjectivity of signal versus noise.
 Discuss the heuristic for ordering components - focusing on the block cross validation as being more interesting than random sampling.
 
-\paragraph{Things the automatic statistician says - put this in an appendix?}
+\subsection{Things the automatic statistician says - put this in an appendix?}
+\label{sec:example_translation}
 
-Make a better version of this
+Make a better version of this - perhaps describing some of the classical regression motifs.
 
 \begin{table}[ht]
 \begin{tabular}{l|l}
@@ -412,6 +408,18 @@ $\kPer \times \kLin \times \kLin$ & An exactly periodic function with quadratica
 \caption{A demonstration of how it is possible to write an open-ended summarizer.  Different kernel structures modify the overall statistical structure of each component in independent ways.}
 \label{table:descriptions}
 \end{table}
+
+\section{Related work}
+
+Equation learning is clearly related.
+The broad idea is to define a large space of models which we can search and perform inference in.
+In our work we express as much as we can with Gaussian processes - therefore inference is easy.
+Roger has done this.
+Can we also cite some sort of graphical model work?
+At the extreme end of things is probabilistic programming - we see automatic model construction using automatic inference engines as a profitable area of study.
+
+Translation is not really done.
+Perhaps cite Gowers as someone else who thinks communication is important.
 
 \section{Natural-language description of time series}
 \label{sec:examples}
@@ -603,6 +611,7 @@ Figure \ref{fig:periodic} shows that GPSS has isolated the approximately 11 year
 %Flexible modelling with components that a human might use to describe what is going on.
 
 \subsection{Describing heteroskedasticity}
+\label{sec:airline}
 
 Give the same treatment to the airline data set.
 
@@ -611,15 +620,15 @@ Give the same treatment to the airline data set.
 Nothing really quite compares to this work, the closest would be equation learning and trend-periodicity-short-term models.
 Easy to show that equation learning can fit data but does not provide neat descriptions interpretable at a human level.
 
-\subsection{Numerical comparison}
+\section{Numerical evaluation}
 
 Can try interpolation and extrapolation (maybe just extrapolation since it is the harder task - explain how the various algorithms would perform at interpolation).
 Can compare to SE, equation learning, Spectral, MKL, SE + change points, Trend + period + short-term (we can do all of these with current code - except for equation learning).
 Mention that the data sets are chosen to highlight what features can be modelled by various techniques and which cannot rather than the traditional, my model rules the world.
 
-\subsection{Deficiencies of the modelling language}
+%\subsection{Deficiencies of the modelling language}
 
-Show humility with another failure mode (\eg variable period).
+%Show humility with another failure mode (\eg variable period).
 
 \section{Discussion}
 

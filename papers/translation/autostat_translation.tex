@@ -66,6 +66,8 @@
 
 \def\ie{i.e.\ }
 \def\eg{e.g.\ }
+\let\oldemptyset\emptyset
+\let\emptyset\varnothing
 
 %\author{
 %James Robert Lloyd\\
@@ -434,6 +436,7 @@ Optimising marginal likelihood is attempting to maximise the probability of a da
 The components can still be anti-correlated which is a problem - but model checking can see this if necessary.
 A small amount of descriptions are about the posterior (\eg increasing / decreasing linear functions).
 Posterior predictive checks compare posterior and prior (of the not parameters), so we believe our model is reasonable when prior and posterior align and we have a greater chance of this happening when we search over a large space of models.
+What are consistency results about additive \gp{}s, or other additive nonparametric models - clearly there can be non-identifiability.
 }
 
 \section{Related work}
@@ -462,8 +465,8 @@ Or perhaps grammar based understanding of natural scenes.
 \section{Natural-language description of time series}
 \label{sec:examples}
 
-We demonstrate the ability of our procedure to describe a variety of patterns on two time series (full automatically produced reports for a greater number of data sets are in supplementary material).
-Since it is difficult to quantify the quality of a verbal description, we also provide numerical evidence in support of our procedure in section~\ref{sec:numerical}.
+We demonstrate the ability of our procedure to describe a variety of patterns on two time series (full automatically produced reports for a greater number of data sets are provided as supplementary material).
+The natural-language descriptions are clearly sensible, but since it is difficult to quantify the quality of a verbal description we also provide numerical evidence in support of our procedure in section~\ref{sec:numerical}.
 
 %Our report generation procedure takes as its starting point a dataset and a composite kernel, which together define a joint posterior probability distribution over a sum of functions.
 %The procedure summarizes properties of this complex distribution to the user through a comprehensive report.
@@ -495,13 +498,13 @@ Since it is difficult to quantify the quality of a verbal description, we also p
 \label{sec:solar}
 
 We show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011.
-This time series has two obvious features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
+This time series has two interesting features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
 %
 The GPSS search procedure and automatic summary clearly identify these two features, as discussed below.
 
 \paragraph{Executive Summary}
 
-The first section of each report describes which structures were discovered in the model, and the relative importance of the different components in explaining the data.
+The first section of each report gives short summaries about each component in the model, and statistics describing the relative importance of the different components in explaining the data.
 
 \begin{figure}[h]
 \centering
@@ -511,9 +514,19 @@ An example of an automatically-generated summary of a dataset.  The dataset is d
 \label{fig:exec}
 \end{figure}
 
-
+The syntax of the kernels corresponding to the first four components are as follows
+\begin{itemize}
+  \item $\kC$
+  \item $\kCW(\emptyset, \kC)$
+  \item $\kCW(\kSE, \emptyset)$
+  \item $\kCW(\kSE \times \kPer, \emptyset)$
+\end{itemize}
+where $\emptyset$ is the zero function.
 Figure \ref{fig:exec} shows the automatically-generated summary of the solar dataset.
-The model uses 9 additive components to explain the data, and reports that the first 4 components explain more than 90\% of the variance in the data.
+The short descriptions demonstrate how the kernel is split into univariate enveloping functions (from the change windows) and base stationary kernels.
+%
+%
+%The model uses 9 additive components to explain the data, and reports that the first 4 components explain more than 90\% of the variance in the data.
 %This might seem incongruous with the observation that there are two main features of the data, but if we examine the first four components, we see that the first component is describing the mean of the dataset, the second is the Maunder minimum, the third describes the long-term trend, and the fourth describes the 11-year periodicity.
 Just from the short summaries of the additive components we can see that the model has identified the Maunder minimum (second component) and 11-year solar cycle (fourth component).
 %This might seem incongruous with the observation that there are two main features of the data, but if we examine the first four components, we see that the first component is describing the mean of the dataset, the second is the Maunder minimum, the third describes the long-term trend, and the fourth describes the 11-year periodicity.
@@ -535,7 +548,6 @@ Just from the short summaries of the additive components we can see that the mod
 
 %Because the user may be interested in local or noisy components, we report all components to the user.  
 %An interactive version of our procedure could allow users to specify which components are of interest, and group the remaining components into a single noise component.
-
 
 \paragraph{Decomposition plots}
 

@@ -523,7 +523,7 @@ The syntax of the kernels corresponding to the first four components are as foll
 \end{itemize}
 where $\emptyset$ is the zero function.
 Figure \ref{fig:exec} shows the automatically-generated summary of the solar dataset.
-The short descriptions demonstrate how the kernel is split into univariate enveloping functions (from the change windows) and base stationary kernels.
+The short descriptions demonstrate how the kernel is split into univariate enveloping functions (from the change windows) and stationary kernels.
 %
 %
 %The model uses 9 additive components to explain the data, and reports that the first 4 components explain more than 90\% of the variance in the data.
@@ -552,20 +552,38 @@ Just from the short summaries of the additive components we can see that the mod
 \paragraph{Decomposition plots}
 
 The second section of each report contains a detailed discussion of each component.
-Every component is plotted, and properties of the covariance structure are described.
+%Every component is plotted, and properties of the covariance structure are described.
 %Some components are not meaningful when plotted on their own, so we also include plots of the cumulative sum of components.
 %\paragraph{Automatic Plotting}
-Each component's posterior is plotted in two ways.  First, the posterior mean and variance of each component is plotted on its own.  Second, the posterior mean and variance of all components shown so far is plotted against the data.  This progression of plots 
+The posterior of the individual component and sum of all components so far is visualised by plots of the posterior mean and variance.
+%First, the posterior mean and variance of each component is plotted on its own.
+%Second, the posterior mean and variance of all components shown so far is plotted against the data.
+%This progression of plots 
 %By contrasting each of these plots with plots of earlier components, we can see 
-shows qualitatively how each component contributes to an overall explanation of the data.
+%shows qualitatively how each component contributes to an overall explanation of the data.
 
 %A second paragraph explains the improvement in predictive performance gained by including this component in the model. This is the same informatino as included in the executive summary.
+
+\paragraph{Maunder minimum}
+
+Figure \ref{fig:maunder} shows that GPSS has captured the unusual period of decreased solar activity from about 1645 to 1715 and is able to report this in natural language.
 
 \begin{figure}[ht]
 \centering
 \fbox{\includegraphics[trim=0cm 0cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-5}}
 \caption{Discovering the Maunder minimum.  The kernel found by GPSS contained a pair of changepoints bracketing the period of low solar activity.}
 \label{fig:maunder}
+\end{figure}
+
+\paragraph{Long term trend}
+
+Having isolated the Maunder minimum, the model captures the long term trend of the rest of the data, shown in figure~\ref{fig:smooth}.
+
+\begin{figure}[h!]
+\centering
+\fbox{\includegraphics[width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-6}}
+\caption{Characterizing the medium-term smoothness of solar activity levels.  By allowing other components to explain the periodicity, noise, and he Maunder minimum, we can isolate the part of the signal best explained by a slowly-varying trend.}
+\label{fig:smooth}
 \end{figure}
 
 % is a good example of a meaningful component discovered by GPSS, whose meaning would be unclear without an individual plot.  
@@ -575,11 +593,15 @@ shows qualitatively how each component contributes to an overall explanation of 
 %The changepoint kernels used by GPSS encode changes in covariance structure.
 %For example, from about 1645 to 1715, solar activity decreased.
 %, and very few sunspots were observed, a period called the Maunder Minimum \citep{lean1995reconstruction}.
-Figure \ref{fig:maunder} shows that GPSS has captured the unusual period of decreased solar activity from about 1645 to 1715 and is able to report this in natural language.
-This feature was captured by the model by multiplying a constant kernel by two changepoint kernels.
-Figure \ref{fig:periodic} shows that GPSS has isolated the approximately 11 year solar cycle.
-%with a pair of changepoint kernels.%shows exactly which sort of structure was recovered by this component.
+%This feature was captured by the model by multiplying a constant kernel by two changepoint kernels.
 
+\paragraph{Solar cycles}
+
+Figure \ref{fig:periodic} shows that GPSS has isolated the approximately 11 year solar cycle.
+By examining the parameters of the kernels comprising this component the description 
+
+%with a pair of changepoint kernels.%shows exactly which sort of structure was recovered by this component.
+%
 %\begin{figure}[h!]
 %\centering
 %\fbox{\includegraphics[width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-6}}
@@ -591,7 +613,7 @@ Figure \ref{fig:periodic} shows that GPSS has isolated the approximately 11 year
 
 \begin{figure}[ht]
 \centering
-\fbox{\includegraphics[trim=0cm 0cm 0cm 4.7cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-7}}
+\fbox{\includegraphics[trim=0cm 0cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-7}}
 \caption{Isolating the periodic component of the dataset.  By isolating this aspect of the statistical structure, we can easily observe additional features, such as the shape of the peaks and troughs, or the fact that the amplitude changes over time.}
 \label{fig:periodic}
 \end{figure}

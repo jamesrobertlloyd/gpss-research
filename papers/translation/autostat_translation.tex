@@ -305,6 +305,10 @@ linear regression (cite), fourier analysis (cite), changepoints (cite), heterosk
 
 In section~\ref{sec:example_translation} we demonstrate the natural-language descriptions of some of these kernel forms.
 
+\section{Inference}
+
+Mention that we are using the same inference method, but that we have expanded the set of local search operators (to accommodate change points and in response to observations).
+
 \section{Translation of kernel functions}
 \label{sec:translation}
 
@@ -429,6 +433,7 @@ Some thoughts\ldots
 Optimising marginal likelihood is attempting to maximise the probability of a data set given the model.
 The components can still be anti-correlated which is a problem - but model checking can see this if necessary.
 A small amount of descriptions are about the posterior (\eg increasing / decreasing linear functions).
+Posterior predictive checks compare posterior and prior (of the not parameters), so we believe our model is reasonable when prior and posterior align and we have a greater chance of this happening when we search over a large space of models.
 }
 
 \section{Related work}
@@ -457,12 +462,8 @@ Or perhaps grammar based understanding of natural scenes.
 \section{Natural-language description of time series}
 \label{sec:examples}
 
-We demonstrate this procedure on a number of time series (full automatically produced reports in supplementary material).
-These examples serve two purposes
-\begin{itemize}
-  \item Demonstrating the automatic natral-language description of complex time series
-  \item Showing that the model search procedure is finding sensible models
-\end{itemize}
+We demonstrate the ability of our procedure to describe a variety of patterns on two time series (full automatically produced reports for a greater number of data sets are in supplementary material).
+Since it is difficult to quantify the quality of a verbal description, we also provide numerical evidence in support of our procedure in section~\ref{sec:numerical}.
 
 %Our report generation procedure takes as its starting point a dataset and a composite kernel, which together define a joint posterior probability distribution over a sum of functions.
 %The procedure summarizes properties of this complex distribution to the user through a comprehensive report.
@@ -493,7 +494,8 @@ These examples serve two purposes
 \subsection{Summarizing 400 Years of Solar Activity}
 \label{sec:solar}
 
-To give an example of the capabilities of our procedure, we show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011.  This time series has two obvious features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
+We show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011.
+This time series has two obvious features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
 %
 The GPSS search procedure and automatic summary clearly identify these two features, as discussed below.
 
@@ -654,6 +656,7 @@ Nothing really quite compares to this work, the closest would be equation learni
 Easy to show that equation learning can fit data but does not provide neat descriptions interpretable at a human level.
 
 \section{Numerical evaluation}
+\label{sec:numerical}
 
 Can try interpolation and extrapolation (maybe just extrapolation since it is the harder task - explain how the various algorithms would perform at interpolation).
 Can compare to SE, equation learning, Spectral, MKL, SE + change points, Trend + period + short-term (we can do all of these with current code - except for equation learning).

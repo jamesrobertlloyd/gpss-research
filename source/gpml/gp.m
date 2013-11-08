@@ -132,7 +132,8 @@ else
         ms = feval(mean{:}, hyp.mean, xs(id,:));
         fmu(id) = ms + Ks'*full(alpha(nz));                       % predictive means
         if true              % L is not triangular => use alternative parametrisation
-          fs2(id) = kss + sum(Ks.*(L*Ks),1)';                 % predictive variances
+          %fs2(id) = kss + sum(Ks.*(L*Ks),1)';                 % predictive variances
+          fs2(id) = kss - diag(Ks'*solve_chol(L,Ks));
         end
         fs2(id) = max(fs2(id),0);   % remove numerical noise i.e. negative variances
         if nargin<9

@@ -689,10 +689,10 @@ likfunc = @likGauss
 hyp.lik = %(noise)s
 
 %% Optimize a little anyways.
-[hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infExact, meanfunc, covfunc, likfunc, X, y);
-best_nll = nlls(end)
+%%[hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infExact, meanfunc, covfunc, likfunc, X, y);
+%%best_nll = nlls(end)
 
-model.hypers = hyp_opt;
+model.hypers = hyp;
 
 %% Evaluate a test points.
 [ymu, ys2, predictions, fs2, loglik] = gp(model.hypers, @infExact, meanfunc, covfunc, likfunc, X, y, Xtest, ytest)
@@ -737,10 +737,10 @@ likfunc = @likGauss
 hyp.lik = %(noise)s
 
 %% Optimize a little anyways.
-[hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infExact, meanfunc, covfunc, likfunc, X, y);
-best_nll = nlls(end)
+%%[hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infExact, meanfunc, covfunc, likfunc, X, y);
+%%best_nll = nlls(end)
 
-model.hypers = hyp_opt;
+model.hypers = hyp;
 
 %% Evaluate a test points.
 [ymu, ys2, predictions, fs2, loglik] = gp(model.hypers, @infExact, meanfunc, covfunc, likfunc, X, y, Xtest, ytest)
@@ -754,6 +754,51 @@ save('%(writefile)s', 'loglik', 'predictions', 'actuals', 'model', 'timestamp');
 
 pwd
 %% save('/home/dkd23/Dropbox/results/r_pumadyn512_fold_3_of_10_result.txt'
+
+a='Supposedly finished writing file'
+
+%% exit();
+"""
+
+PREDICT_AND_SAVE_CODE_ZERO_MEAN_NO_NOISE = r"""
+rand('twister', %(seed)s);
+randn('state', %(seed)s);
+
+a='Load the data, it should contain X and y.'
+load '%(datafile)s'
+X = double(X)
+y = double(y)
+Xtest = double(Xtest)
+ytest = double(ytest)
+
+%% Load GPML
+addpath(genpath('%(gpml_path)s'));
+
+%% Set up model.
+meanfunc = {@meanZero}
+hyp.mean = []
+
+covfunc = %(kernel_family)s
+hyp.cov = %(kernel_params)s
+
+likfunc = @likDelta
+hyp.lik = []
+
+%% Optimize a little anyways.
+%%[hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infDelta, meanfunc, covfunc, likfunc, X, y);
+%%best_nll = nlls(end)
+
+model.hypers = hyp;
+
+%% Evaluate a test points.
+[ymu, ys2, predictions, fs2, loglik] = gp(model.hypers, @infDelta, meanfunc, covfunc, likfunc, X, y, Xtest, ytest)
+
+actuals = ytest;
+timestamp = now
+
+'%(writefile)s'
+
+save('%(writefile)s', 'loglik', 'predictions', 'actuals', 'model', 'timestamp');
 
 a='Supposedly finished writing file'
 

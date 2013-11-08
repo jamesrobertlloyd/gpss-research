@@ -195,7 +195,7 @@ def evaluate_kernels(kernels, X, y, verbose=True, noise=None, iters=300, local_c
     return results     
 
    
-def make_predictions(X, y, Xtest, ytest, best_scored_kernel, local_computation=False, max_jobs=500, verbose=True, zero_mean=False, random_seed=0):
+def make_predictions(X, y, Xtest, ytest, best_scored_kernel, local_computation=False, max_jobs=500, verbose=True, zero_mean=False, random_seed=0, no_noise=False):
     '''
     Evaluates a kernel on held out data
     Input:
@@ -235,7 +235,10 @@ def make_predictions(X, y, Xtest, ytest, best_scored_kernel, local_computation=F
                  'iters': str(30),
                  'seed': str(random_seed)}
     if zero_mean:
-        code = gpml.PREDICT_AND_SAVE_CODE_ZERO_MEAN % parameters
+        if no_noise:
+            code = gpml.PREDICT_AND_SAVE_CODE_ZERO_MEAN_NO_NOISE % parameters
+        else:
+            code = gpml.PREDICT_AND_SAVE_CODE_ZERO_MEAN % parameters
     else:
         code = gpml.PREDICT_AND_SAVE_CODE % parameters
     code = re.sub('% ', '%% ', code) # HACK - cblparallel currently does not like % signs

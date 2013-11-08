@@ -689,8 +689,8 @@ likfunc = @likGauss
 hyp.lik = %(noise)s
 
 %% Optimize a little anyways.
-%%[hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infExact, meanfunc, covfunc, likfunc, X, y);
-%%best_nll = nlls(end)
+%% [hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infExact, meanfunc, covfunc, likfunc, X, y);
+%% best_nll = nlls(end)
 
 model.hypers = hyp;
 
@@ -737,8 +737,8 @@ likfunc = @likGauss
 hyp.lik = %(noise)s
 
 %% Optimize a little anyways.
-%%[hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infExact, meanfunc, covfunc, likfunc, X, y);
-%%best_nll = nlls(end)
+%% [hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infExact, meanfunc, covfunc, likfunc, X, y);
+%% best_nll = nlls(end)
 
 model.hypers = hyp;
 
@@ -785,8 +785,8 @@ likfunc = @likDelta
 hyp.lik = []
 
 %% Optimize a little anyways.
-%%[hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infDelta, meanfunc, covfunc, likfunc, X, y);
-%%best_nll = nlls(end)
+%% [hyp_opt, nlls] = minimize(hyp, @gp, -%(iters)s, @infDelta, meanfunc, covfunc, likfunc, X, y);
+%% best_nll = nlls(end)
 
 model.hypers = hyp;
 

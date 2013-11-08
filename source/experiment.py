@@ -468,7 +468,7 @@ def perform_experiment(data_file, output_file, exp):
     best_scored_kernel = parse_results(output_file)
     
     if exp.make_predictions:
-        predictions = jc.make_predictions(X, y, Xtest, ytest, best_scored_kernel, local_computation=exp.local_computation,
+        predictions = jc.make_predictions(X, y, Xtest, ytest, best_scored_kernel, local_computation=True,
                                           max_jobs=exp.max_jobs, verbose=exp.verbose, zero_mean=exp.zero_mean, random_seed=exp.random_seed,
                                           no_noise=exp.no_noise)
         scipy.io.savemat(prediction_file, predictions, appendmat=False)

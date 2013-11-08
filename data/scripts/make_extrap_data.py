@@ -18,5 +18,5 @@ for data_file_name in os.listdir(raw_data_folder):
         y_test = y[X > cut_off]
         y = y[X <= cut_off]
         X = X[X <= cut_off]
-        data = {'X' : X, 'y' : y, 'X_test' : X_test, 'y_test' : y_test}
+        data = {'X' : X, 'y' : y, 'Xtest' : X_test, 'ytest' : y_test}
         scipy.io.savemat(os.path.join(extrap_data_folder, data_file_name), data)

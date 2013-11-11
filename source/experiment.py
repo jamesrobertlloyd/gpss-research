@@ -82,7 +82,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #### FIXME - no need in principle for the mask kernel
         current_kernels = [fk.MaskKernel(D,0,fk.NoiseKernelFamily().default())]
         # And then expand as per usual
-        current_kernels = grammar.expand_kernels(D, current_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels)
+        current_kernels = grammar.expand_kernels(D, current_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels, rules=exp.search_operators)
         # Convert to additive form if desired
         if exp.additive_form:
             current_kernels = [grammar.additive_form(k) for k in current_kernels]
@@ -260,7 +260,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Expand the best kernels
         #### Question : Does the grammar expand kernels or is this really a search object?
-        current_kernels = grammar.expand_kernels(D, best_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels)
+        current_kernels = grammar.expand_kernels(D, best_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels, rules=exp.search_operators)
         
         # Convert to additive form if desired
         if exp.additive_form:
@@ -348,7 +348,12 @@ def gen_all_datasets(dir):
 
 # Defines a class that keeps track of all the options for an experiment.
 # Maybe more natural as a dictionary to handle defaults - but named tuple looks nicer with . notation
-class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size')):
+class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, ' + \
+                             'n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, ' + \
+                             'iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, ' + \
+                             'random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, ' + \
+                             'lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, ' + \
+                             'search_operators')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
                 results_dir,                  # Where to write the results.
@@ -381,8 +386,14 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 subset=False,                 # Optimise on a subset of the data?
                 subset_size=250,              # Size of data subset
                 full_iters=0,                 # Number of iterations to perform on full data after subset optimisation
-                bundle_size=1):               # Number of kernel evaluations per job sent to cluster 
-        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, lengthscale_heuristic, subset, subset_size, full_iters, bundle_size)
+                bundle_size=1,                # Number of kernel evaluations per job sent to cluster 
+                search_operators=None):               
+        return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, \
+                                              n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, \
+                                              iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, \
+                                              random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, \
+                                              lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, \
+                                              search_operators)
 
 def experiment_fields_to_str(exp):
     str = "Running experiment:\n"

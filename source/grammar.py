@@ -45,8 +45,10 @@ MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),
                  ]
     
 class MultiDGrammar:
-    def __init__(self, ndim, debug=False, base_kernels='SE'):
-        self.rules = MULTI_D_RULES
+    def __init__(self, ndim, debug=False, base_kernels='SE', rules=MULTI_D_RULES):
+        if (rules is None) or (rules == []):
+            rules = MULTI_D_RULES
+        self.rules = rules
         self.ndim = ndim
         self.debug = debug
         if not debug:
@@ -574,9 +576,9 @@ def remove_duplicates(kernels):
     # This is possible since kernels are now hashable
     return list(set(kernels))
     
-def expand_kernels(D, seed_kernels, verbose=False, debug=False, base_kernels='SE'):    
+def expand_kernels(D, seed_kernels, verbose=False, debug=False, base_kernels='SE', rules=None):    
     '''Makes a list of all expansions of a set of kernels in D dimensions.'''
-    g = MultiDGrammar(D, debug=debug, base_kernels=base_kernels)
+    g = MultiDGrammar(D, debug=debug, base_kernels=base_kernels, rules=rules)
     if verbose:
         print 'Seed kernels :'
         for k in seed_kernels:

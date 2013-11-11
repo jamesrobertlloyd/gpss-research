@@ -24,6 +24,11 @@ import re
 import grammar
 import translation
 
+def comparse_mse_nll(folders, data_folder):
+    if not isinstance(folders, list):
+        folders = [folders] # Backward compatibility with specifying one folder
+    #### CODE GOES HERE
+
 def parse_all_results(folder, save_file='kernels.tex', one_d=False):
     """
     Creates a list of results, then sends them to be formatted into latex.
@@ -61,10 +66,10 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', max_le
     prefix is an optional string prepended to the output directory
     """    
     
-    #### Quick fix to axis scaling
-    #### TODO - Ultimately this and the shunt below should be removed / made elegant
     if not isinstance(folders, list):
         folders = [folders] # Backward compatibility with specifying one folder
+    #### Quick fix to axis scaling
+    #### TODO - Ultimately this and the shunt below should be removed / made elegant
     if rescale:
         data_sets = list(exp.gen_all_datasets("../data/1d_data_rescaled/"))
     else:

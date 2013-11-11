@@ -26,42 +26,6 @@ import cblparallel
 from cblparallel.util import mkstemp_safe
 import job_controller as jc
 import utils.misc
-
-#### Explanation : This is not used anymore
-FROBENIUS_CUTOFF = 0.01; # How different two matrices have to be to be considered different.
-
-#### Explanation : This is no longer used - but a potentially useful idea if using non-greedy searches
-def remove_duplicates(kernels, X, n_eval=250, local_computation=True, verbose=True):
-    '''
-    Test the top n_eval performing kernels for equivalence, in terms of their covariance matrix evaluated on training inputs
-    Assumes kernels is a list of ScoredKernel objects
-    '''
-    # Because this is slow, we can do it locally.
-    #### Explanation : This is often high memory which makes it inappropriate for the cluster
-    local_computation = True
-
-    kernels = sorted(kernels, key=ScoredKernel.score, reverse=False)
-    
-    # Find covariance distance for top n_eval
-    n_eval = min(n_eval, len(kernels))
-    distance_matrix = jc.covariance_distance(kernels[:n_eval], X, local_computation=local_computation, verbose=verbose)
-    
-    # Remove similar kernels
-    #### TODO - What is a good heuristic for determining equivalence?
-    ####      - Currently using Frobenius norm - truncate if Frobenius norm is below a fraction of the average
-    cut_off = distance_matrix.mean() * FROBENIUS_CUTOFF
-    equivalence_graph = distance_matrix < cut_off
-    # For all kernels (best first)
-    for i in range(n_eval):
-        # For all other worse kernels
-        for j in range(i+1, n_eval):
-            if equivalence_graph[i,j]:
-                # Destroy the inferior duplicate
-                kernels[j] = None
-
-    kernels = [k for k in kernels if k is not None] # Pack the list
-    kernels = sorted(kernels, key=ScoredKernel.score, reverse=True)
-    return kernels
  
 def remove_nan_scored_kernels(scored_kernels):    
     not_nan = [k for k in scored_kernels if not np.isnan(k.score())] 
@@ -174,7 +138,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         # Remove kernels that were optimised to be out of bounds (this is similar to a 0-1 prior)
         new_results = [sk for sk in new_results if not sk.k_opt.out_of_bounds(data_shape)]
         oob_results = [sk for sk in new_results if sk.k_opt.out_of_bounds(data_shape)]
-        oob_results = sorted(oob_results, key=ScoredKernel.score, reverse=True)
+        oob_results = sorted(oob_results, key=lambda sk : ScoredKernel.score(sk, exp.score), reverse=True)
         oob_sequence.append(oob_results)
             
         #print 'Removing out of bounds'
@@ -186,7 +150,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         (new_results, nan_results) = remove_nan_scored_kernels(new_results)
         assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens
         # Sort the new results
-        new_results = sorted(new_results, key=ScoredKernel.score, reverse=True)
+        new_results = sorted(new_results, key=lambda sk : ScoredKernel.score(sk, exp.score), reverse=True)
 
         nan_sequence.append(nan_results)
         
@@ -232,7 +196,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
 
         all_results = all_results + new_results
-        all_results = sorted(all_results, key=ScoredKernel.score, reverse=True)
+        all_results = sorted(all_results, key=lambda sk : ScoredKernel.score(sk, exp.score), reverse=True)
 
         results_sequence.append(all_results)
         #if exp.verbose:
@@ -242,7 +206,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #        print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
         
         # Extract the best k kernels from the new all_results
-        best_results = sorted(new_results, key=ScoredKernel.score)[0:exp.k]
+        best_results = sorted(new_results, key=lambda sk : ScoredKernel.score(sk, exp.score))[0:exp.k]
         #### Explanation : This would be fixed if kernel objects know their noise - rather than just scored kernels
         ####               Ultimately we have to decide if we really want all kernels to have the form K + sigma^2*I
         ####               The answer is probably - but I don't think noise should be treated in a special way as it is currently
@@ -275,7 +239,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             current_kernels = current_kernels[0:4]
 
         # Write all_results to a temporary file at each level.
-        all_results = sorted(all_results, key=ScoredKernel.score, reverse=True)
+        all_results = sorted(all_results, key=lambda sk : ScoredKernel.score(sk, exp.score), reverse=True)
         with open(results_filename + '.unfinished', 'w') as outfile:
             outfile.write('Experiment all_results for\n datafile = %s\n\n %s \n\n' \
                           % (experiment_data_file_name, experiment_fields_to_str(exp)))
@@ -286,7 +250,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                         print >> outfile, result  
                 else:
                     # Only print top k kernels - i.e. those used to seed the next level of the search
-                    for result in sorted(all_results, key=ScoredKernel.score)[0:exp.k]:
+                    for result in sorted(all_results, key=lambda sk : ScoredKernel.score(sk, exp.score))[0:exp.k]:
                         print >> outfile, result 
         # Write nan scored kernels to a log file
         with open(results_filename + '.nans', 'w') as outfile:
@@ -320,15 +284,21 @@ def parse_results( results_filenames, max_level=None ):
     for results_filename in results_filenames:
         lines = []
         with open(results_filename) as results_file:
+            score = None
             for line in results_file:
-                if line.startswith("ScoredKernel"):
+                if line.startswith('score = '):
+                    score = line[9:-1] # BIC / AIC / etc.
+                elif line.startswith("ScoredKernel"):
                     lines.append(line)
                 elif (not max_level is None) and (len(re.findall('Level [0-9]+', line)) > 0):
                     level = int(line.split(' ')[2])
                     if level > max_level:
                         break
         result_tuples += [fk.repr_string_to_kernel(line.strip()) for line in lines]
-    best_tuple = sorted(result_tuples, key=ScoredKernel.score)[0]
+    if not score is None:
+        best_tuple = sorted(result_tuples, key=lambda sk : ScoredKernel.score(sk, exp.score))[0]
+    else:
+        best_tuple = sorted(result_tuples, key=ScoredKernel.score)[0]
     return best_tuple
 
 def gen_all_datasets(dir):
@@ -353,7 +323,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                              'iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, ' + \
                              'random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, ' + \
                              'lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, ' + \
-                             'search_operators')):
+                             'search_operators, score')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
                 results_dir,                  # Where to write the results.
@@ -387,13 +357,14 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 subset_size=250,              # Size of data subset
                 full_iters=0,                 # Number of iterations to perform on full data after subset optimisation
                 bundle_size=1,                # Number of kernel evaluations per job sent to cluster 
-                search_operators=None):               
+                search_operators=None,
+                score='BIC'):               
         return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, \
                                               n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, \
                                               iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, \
                                               random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, \
                                               lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, \
-                                              search_operators)
+                                              search_operators, score)
 
 def experiment_fields_to_str(exp):
     str = "Running experiment:\n"

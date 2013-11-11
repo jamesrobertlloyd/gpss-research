@@ -4705,7 +4705,7 @@ class ScoredKernel:
                 'npll': self.npll,
                 'pic': self.pic_nle,
                 'mae': self.mae
-                }[criterion]
+                }[criterion.lower()]
                 
     @staticmethod
     def from_printed_outputs(nll, laplace, BIC, AIC, npll, PIC, mae, std_ratio, noise=None, kernel=None):

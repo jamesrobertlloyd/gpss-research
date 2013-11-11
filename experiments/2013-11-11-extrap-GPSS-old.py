@@ -14,7 +14,7 @@ Experiment(description='First attempt at GPSS without changepoint extrapolation 
            skip_complete=True,
            results_dir='../results/2013-11-11-extrap-GPSS-old/',
            iters=250,
-           base_kernels='SE,PureLin,Const,Fourier',
+           base_kernels='SE,PureLin,Const,Fourier,Noise',
            zero_mean=True,
            random_seed=1,
            period_heuristic=2,
@@ -23,8 +23,8 @@ Experiment(description='First attempt at GPSS without changepoint extrapolation 
            full_iters=10,
            bundle_size=5,
            additive_form=True,
-           model_noise=False,
-           no_noise=False,
+           model_noise=True,
+           no_noise=True,
            search_operators=[('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}), \
                              ('A', ('*', 'A', 'B'), {'A': 'multi', 'B': 'mask-not-const'}), \
                              ('A', 'B', {'A': 'multi', 'B': 'mask'})],

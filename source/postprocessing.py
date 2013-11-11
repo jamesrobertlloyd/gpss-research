@@ -24,10 +24,24 @@ import re
 import grammar
 import translation
 
-def comparse_mse_nll(folders, data_folder):
+def compare_mse(folders, data_folder):
     if not isinstance(folders, list):
         folders = [folders] # Backward compatibility with specifying one folder
-    #### CODE GOES HERE
+    data_sets = list(exp.gen_all_datasets(data_folder))
+    for folder in folders:
+        print ''
+        print folder
+        print ''
+        # Load predictions file
+        for r, data_file in data_sets:
+            print '%s : ' % data_file,
+            results_file = os.path.join(folder, data_file + "_predictions.mat")
+            if os.path.isfile(results_file):
+                data = scipy.io.loadmat(results_file)
+                RMSE = np.sqrt(np.mean(np.power(data['predictions'].ravel() - data['actuals'].ravel(), 2)))
+                print '%f' % RMSE
+            else:
+                print ''
 
 def parse_all_results(folder, save_file='kernels.tex', one_d=False):
     """

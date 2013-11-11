@@ -159,10 +159,6 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #    #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
         #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
             
-        # Remove near duplicates from these all_results (top m results only for efficiency)
-        if exp.k > 1: # Only if this affects the search
-            new_results = remove_duplicates(new_results, X, local_computation=exp.local_computation, verbose=exp.verbose)
-            
         #### DEBUG CODE
 
         #print 'NaNs:'

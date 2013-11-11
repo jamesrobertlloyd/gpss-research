@@ -287,7 +287,9 @@ def parse_results( results_filenames, max_level=None ):
             score = None
             for line in results_file:
                 if line.startswith('score = '):
-                    score = line[9:-1] # BIC / AIC / etc.
+                    first_quote = line.index("'")
+                    second_quote = first_quote + line[(first_quote+1):].index("'") + 1
+                    score = line[(first_quote+1):(second_quote)]
                 elif line.startswith("ScoredKernel"):
                     lines.append(line)
                 elif (not max_level is None) and (len(re.findall('Level [0-9]+', line)) > 0):

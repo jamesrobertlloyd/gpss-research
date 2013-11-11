@@ -286,8 +286,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                         print >> outfile, result  
                 else:
                     # Only print top k kernels - i.e. those used to seed the next level of the search
-                    #### FIXME - adding in best_predictor like this is hacky - do we even want to record this anymore?
-                    for result in best_predictors + sorted(all_results, key=ScoredKernel.score)[0:exp.k]:
+                    for result in sorted(all_results, key=ScoredKernel.score)[0:exp.k]:
                         print >> outfile, result 
         # Write nan scored kernels to a log file
         with open(results_filename + '.nans', 'w') as outfile:

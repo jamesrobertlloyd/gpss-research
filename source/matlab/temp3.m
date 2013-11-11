@@ -41,3 +41,10 @@ plot(big_X, big_y, 'o');
 hold on;
 plot(X_test, big_y_fit_test, 'ro');
 hold off;
+
+%% Something else entirely
+
+plot(double(actuals), 'g');
+hold on;
+plot(double(predictions), 'r');
+hold off;

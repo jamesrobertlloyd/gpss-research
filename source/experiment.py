@@ -272,7 +272,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     # Rename temporary results file to actual results file                
     os.rename(results_filename + '.unfinished', results_filename)
 
-def parse_results( results_filenames, max_level=None ):
+def parse_results(results_filenames, max_level=None):
     '''
     Returns the best kernel in an experiment output file as a ScoredKernel
     '''
@@ -287,9 +287,7 @@ def parse_results( results_filenames, max_level=None ):
             score = None
             for line in results_file:
                 if line.startswith('score = '):
-                    first_quote = line.index("'")
-                    second_quote = first_quote + line[(first_quote+1):].index("'") + 1
-                    score = line[(first_quote+1):(second_quote)]
+                    score = line[8:-2]
                 elif line.startswith("ScoredKernel"):
                     lines.append(line)
                 elif (not max_level is None) and (len(re.findall('Level [0-9]+', line)) > 0):
@@ -298,7 +296,7 @@ def parse_results( results_filenames, max_level=None ):
                         break
         result_tuples += [fk.repr_string_to_kernel(line.strip()) for line in lines]
     if not score is None:
-        best_tuple = sorted(result_tuples, key=lambda sk : ScoredKernel.score(sk, exp.score))[0]
+        best_tuple = sorted(result_tuples, key=lambda sk : ScoredKernel.score(sk, score))[0]
     else:
         best_tuple = sorted(result_tuples, key=ScoredKernel.score)[0]
     return best_tuple

@@ -706,16 +706,18 @@ class CosineKernel(BaseKernel):
         '''Overwrites base method, using min period to prevent Nyquist errors'''
         result = self.param_vector()
         if result[0] == -2:
-            #### FIXME - Caution, magic numbers
-            #### Explanation : This is centered on about 20 periods
-            # Min period represents a minimum sensible scale
-            # Scale with data_scale
-            if data_shape['min_period'] is None:
-                result[0] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+            if np.random.rand() < 0.5:
+                if data_shape['min_period'] is None:
+                    result[0] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+                else:
+                    result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
             else:
-                result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
+                if data_shape['min_period'] is None:
+                    result[0] = np.random.normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd)
+                else:
+                    result[0] = utils.misc.sample_truncated_normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd, min_value=data_shape['min_period'])
         if result[1] == 0:
-            # Set scale factor with output scale
+            # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
                 result[1] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
             else:
@@ -813,21 +815,31 @@ class SpectralKernel(BaseKernel):
         '''Overwrites base method, using min period to prevent Nyquist errors'''
         result = self.param_vector()
         if result[0] == 0:
-            # Min period represents a minimum sensible scale - use it for lengthscale as well
-            # Scale with data_scale though
-            if data_shape['min_period'] is None:
+            # Set lengthscale with input scale or neutrally
+            if np.random.rand() < 0.5:
                 result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
             else:
-                result[0] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale'], scale=sd, min_value=data_shape['min_period'])
+                # Long lengthscale ~ infty = neutral
+                result[0] = np.random.normal(loc=np.log(2*(data_shape['input_max']-data_shape['input_min'])), scale=sd)
         if result[2] == -2:
             #### FIXME - Caution, magic numbers
-            #### Explanation : This is centered on about 20 periods
+            #### Explanation : This is centered on about 25 periods
             # Min period represents a minimum sensible scale
-            # Scale with data_scale
-            if data_shape['min_period'] is None:
-                result[2] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+            # Scale with data_scale or data range
+            if np.random.rand() < 0.66:
+                if np.random.rand() < 0.5:
+                    if data_shape['min_period'] is None:
+                        result[2] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
+                    else:
+                        result[2] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
+                else:
+                    if data_shape['min_period'] is None:
+                        result[2] = np.random.normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd)
+                    else:
+                        result[2] = utils.misc.sample_truncated_normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd, min_value=data_shape['min_period'])
             else:
-                result[2] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
+                # Spectral kernel can also approximate SE with long period
+                result[2] = np.log(data_shape['input_max']-data_shape['input_min'])
         if result[1] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
@@ -863,8 +875,7 @@ class SpectralKernel(BaseKernel):
             
     def out_of_bounds(self, constraints):
         return (self.period < constraints['min_period']) or \
-               (self.lengthscale < constraints['min_lengthscale']) or \
-               (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
+               (self.lengthscale < constraints['min_lengthscale'])
 
 class RQKernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):

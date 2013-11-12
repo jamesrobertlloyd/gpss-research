@@ -69,9 +69,15 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     data_shape['min_integral_lengthscale'] = np.log(data_shape['input_max'] - data_shape['input_min']) - 2.5
     # Initialise period at a multiple of the shortest / average distance between points, to prevent Nyquist problems.
     if exp.use_min_period:
-        data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
-        # This heuristic works with evenly spaced data even when subsampled
-        #data_shape['min_period'] = np.log([exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]) for i in range(X.shape[1])])
+        if exp.period_heuristic_type == 'min':
+            data_shape['min_period'] = np.log([exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]) for i in range(X.shape[1])])
+        elif exp.period_heuristic_type == 'average':
+            data_shape['min_period'] = np.log([exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0] for i in range(X.shape[1])])
+        elif exp.period_heuristic_type == 'both':
+            data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
+        else:
+            warnings.warn('Unrecognised period heuristic type : using most conservative heuristic')
+            data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
     else:
         data_shape['min_period'] = None
     #### TODO - delete these constraints unless you have thought of a reason to keep them - not currently used
@@ -319,7 +325,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                              'iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, ' + \
                              'random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, ' + \
                              'lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, ' + \
-                             'search_operators, score')):
+                             'search_operators, score, period_heuristic_type')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
                 results_dir,                  # Where to write the results.
@@ -354,13 +360,14 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 full_iters=0,                 # Number of iterations to perform on full data after subset optimisation
                 bundle_size=1,                # Number of kernel evaluations per job sent to cluster 
                 search_operators=None,
-                score='BIC'):               
+                score='BIC',
+                period_heuristic_type='both'):               
         return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, \
                                               n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, \
                                               iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, \
                                               random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, \
                                               lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, \
-                                              search_operators, score)
+                                              search_operators, score, period_heuristic_type)
 
 def experiment_fields_to_str(exp):
     str = "Running experiment:\n"

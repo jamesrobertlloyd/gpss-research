@@ -1,0 +1,79 @@
+Experiment all_results for
+ datafile = ../data/tsdlr_9010/monthly-us-male-1619-years-unemp.mat
+
+ Running experiment:
+description = First attempt at MKL extrapolation experiment,
+data_dir = ../data/tsdlr_9010/,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 600,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2013-11-11-extrap-MKL/,
+iters = 250,
+base_kernels = SE,
+additive_form = True,
+zero_mean = True,
+model_noise = True,
+no_noise = True,
+verbose_results = False,
+random_seed = 1,
+use_min_period = True,
+period_heuristic = 2,
+use_constraints = False,
+alpha_heuristic = -2,
+lengthscale_heuristic = -4.5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}), ('A', 'B', {'A': 'multi', 'B': 'mask'}), ('A', ('None',), {'A': 'multi'})],
+ 
+
+
+%%%%% Level 0 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=NoiseKernel(output_variance=4.720246)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=0.853903, output_variance=6.023169)) ]), nll=2291.440475, laplace_nle=2295.161253, bic_nle=4600.597036, aic_nle=4588.880951, npll=2277.668595, pic_nle=4573.053276, mae=109.828003, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 1 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=NoiseKernel(output_variance=0.861826)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.694032, output_variance=4.777870)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.974987, output_variance=6.124111)) ]), nll=2233.350366, laplace_nle=nan, bic_nle=4496.227542, aic_nle=4476.700732, npll=2220.706376, pic_nle=4470.939562, mae=100.002123, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 2 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.694599, output_variance=4.777924)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.977483, output_variance=6.143331)) ]), nll=2233.347558, laplace_nle=2238.517998, bic_nle=4490.316564, aic_nle=4474.695116, npll=2220.740487, pic_nle=4465.102421, mae=100.096292, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 3 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.694599, output_variance=4.777924)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.977483, output_variance=6.143331)) ]), nll=2233.347558, laplace_nle=2238.517998, bic_nle=4490.316564, aic_nle=4474.695116, npll=2220.740487, pic_nle=4465.102421, mae=100.096292, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 4 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.694599, output_variance=4.777924)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.977483, output_variance=6.143331)) ]), nll=2233.347558, laplace_nle=2238.517998, bic_nle=4490.316564, aic_nle=4474.695116, npll=2220.740487, pic_nle=4465.102421, mae=100.096292, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 5 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.694527, output_variance=4.778075)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.977866, output_variance=6.146083)) ]), nll=2233.347498, laplace_nle=2238.898184, bic_nle=4490.316443, aic_nle=4474.694996, npll=2220.744264, pic_nle=4465.109976, mae=100.107838, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 6 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.694527, output_variance=4.778075)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.977866, output_variance=6.146083)) ]), nll=2233.347498, laplace_nle=2238.898184, bic_nle=4490.316443, aic_nle=4474.694996, npll=2220.744264, pic_nle=4465.109976, mae=100.107838, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 7 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.694527, output_variance=4.778075)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.977866, output_variance=6.146083)) ]), nll=2233.347498, laplace_nle=2238.898184, bic_nle=4490.316443, aic_nle=4474.694996, npll=2220.744264, pic_nle=4465.109976, mae=100.107838, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 8 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.694527, output_variance=4.778075)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.977866, output_variance=6.146083)) ]), nll=2233.347498, laplace_nle=2238.898184, bic_nle=4490.316443, aic_nle=4474.694996, npll=2220.744264, pic_nle=4465.109976, mae=100.107838, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 9 %%%%%
+
+ScoredKernel(k_opt=SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-2.694527, output_variance=4.778075)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=1.977866, output_variance=6.146083)) ]), nll=2233.347498, laplace_nle=2238.898184, bic_nle=4490.316443, aic_nle=4474.694996, npll=2220.744264, pic_nle=4465.109976, mae=100.107838, std_ratio=nan, noise=[-inf])

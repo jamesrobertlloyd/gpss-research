@@ -11,6 +11,13 @@ function [ new_K ] = non_singular( K )
         catch
             success = false;
             i = i - 1;
+            if i == -1
+                % Things have gone very wrong
+                % Return identity to prevent errors
+                new_K = eye(size(K));
+                success = true;
+                warning('Could not make matrix non-singular - aborting');
+            end
         end
     end
 end

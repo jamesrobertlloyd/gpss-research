@@ -937,8 +937,12 @@ class RQKernel(BaseKernel):
     def default_params_replaced(self, sd=1, data_shape=None):
         result = self.param_vector()
         if result[0] == 0:
-            # Set lengthscale with input scale
-            result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
+            # Set lengthscale with input scale or neutrally
+            if np.random.rand() < 0.5:
+                result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
+            else:
+                # Long lengthscale ~ infty = neutral
+                result[0] = np.random.normal(loc=np.log(2*(data_shape['input_max']-data_shape['input_min'])), scale=sd)
         if result[1] == 0:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:

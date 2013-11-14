@@ -359,8 +359,8 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 subset_size=250,              # Size of data subset
                 full_iters=0,                 # Number of iterations to perform on full data after subset optimisation
                 bundle_size=1,                # Number of kernel evaluations per job sent to cluster 
-                search_operators=None,
-                score='BIC',
+                search_operators=None,        # Search operators used in grammar.py
+                score='BIC',                  # Search criterion
                 period_heuristic_type='both'):               
         return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, \
                                               n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, \

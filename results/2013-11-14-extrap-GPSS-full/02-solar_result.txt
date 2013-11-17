@@ -1,0 +1,81 @@
+Experiment all_results for
+ datafile = ../data/tsdlr_9010/02-solar.mat
+
+ Running experiment:
+description = Allowing products as well,
+data_dir = ../data/tsdlr_9010/,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 750,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2013-11-14-extrap-GPSS-full/,
+iters = 250,
+base_kernels = SE,PureLin,Const,Fourier,Noise,RQ,
+additive_form = False,
+zero_mean = True,
+model_noise = True,
+no_noise = True,
+verbose_results = False,
+random_seed = 1,
+use_min_period = True,
+period_heuristic = 4,
+use_constraints = False,
+alpha_heuristic = -2,
+lengthscale_heuristic = -4.5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = None,
+score = bic,
+period_heuristic_type = min,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+ScoredKernel(k_opt=MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=8.978785, output_variance=7.171504, alpha=-18.814883)), nll=-222.154988, laplace_nle=-220.089389, bic_nle=-426.643342, aic_nle=-438.309976, npll=-221.157645, pic_nle=-424.648657, mae=0.278234, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 1 %%%%%
+
+ScoredKernel(k_opt=ChangeBurstTanhKernel(location=1679.138742, steepness=-1.724504, width=4.206132, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=10.139990, output_variance=8.444747, alpha=-21.098968)), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=-8.488862, output_variance=7.682990, alpha=-30.632116)) ]), nll=-385.490453, laplace_nle=nan, bic_nle=-717.981004, aic_nle=-752.980906, npll=-348.733189, pic_nle=-644.466476, mae=0.212215, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 2 %%%%%
+
+ScoredKernel(k_opt=ChangeBurstTanhKernel(location=1679.565028, steepness=-1.733132, width=4.201741, operands=[ SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=0.853963, output_variance=-1.557556)), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=9.543095, output_variance=7.923337, alpha=-21.522051)) ]), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=-8.338571, output_variance=7.581289, alpha=-30.603938)) ]), nll=-401.632023, laplace_nle=nan, bic_nle=-738.486389, aic_nle=-781.264047, npll=-386.397604, pic_nle=-708.017550, mae=0.212462, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 3 %%%%%
+
+ScoredKernel(k_opt=ChangeBurstTanhKernel(location=1679.207707, steepness=-1.791151, width=4.204739, operands=[ SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=9.287601, output_variance=7.619006, alpha=-20.528359)), ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.323286, output_variance=-1.998963)), MaskKernel(ndim=1, active_dimension=0, base_kernel=FourierKernel(lengthscale=2.425900, period=2.376286, output_variance=0.120878)) ]) ]), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=-8.320171, output_variance=7.405279, alpha=-30.210882)) ]), nll=-425.693592, laplace_nle=nan, bic_nle=-774.831770, aic_nle=-825.387184, npll=-412.944546, pic_nle=-749.333678, mae=0.211687, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 4 %%%%%
+
+ScoredKernel(k_opt=ChangeBurstTanhKernel(location=1679.544118, steepness=-2.157583, width=4.334698, operands=[ SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=9.537741, output_variance=7.417581, alpha=-20.130517)), ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=FourierKernel(lengthscale=1.955906, period=2.370407, output_variance=0.228656)), ChangePointTanhKernel(location=1751.724517, steepness=-3.131263, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-0.349107, output_variance=-1.910123)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.494388, output_variance=-1.814380)) ]) ]) ]), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=-8.257167, output_variance=7.224797, alpha=-30.012008)) ]), nll=-452.665109, laplace_nle=nan, bic_nle=-805.219292, aic_nle=-871.330217, npll=-443.000702, pic_nle=-785.890478, mae=0.200256, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 5 %%%%%
+
+ScoredKernel(k_opt=ChangeBurstTanhKernel(location=1679.492246, steepness=-2.091544, width=4.307853, operands=[ SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=9.513226, output_variance=7.392369, alpha=-20.100204)), ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=FourierKernel(lengthscale=1.856769, period=2.373973, output_variance=0.127619)), ChangePointTanhKernel(location=1751.738140, steepness=-3.190565, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-0.488327, output_variance=-1.948234)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.399208, output_variance=-1.766494)) ]) ]) ]), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=-8.123166, output_variance=7.259524, alpha=-30.041508)) ]), nll=-453.027672, laplace_nle=nan, bic_nle=-805.944419, aic_nle=-872.055344, npll=-443.931406, pic_nle=-787.751887, mae=0.202771, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 6 %%%%%
+
+ScoredKernel(k_opt=ChangeBurstTanhKernel(location=1680.039671, steepness=-2.167915, width=4.327655, operands=[ SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=9.475758, output_variance=7.354955, alpha=-19.994672)), ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=FourierKernel(lengthscale=2.641043, period=2.370312, output_variance=0.116308)), ChangePointTanhKernel(location=1751.620590, steepness=-3.506704, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-0.506971, output_variance=-1.932135)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.364643, output_variance=-1.793903)) ]) ]) ]), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=-8.132637, output_variance=7.211850, alpha=-29.984400)) ]), nll=-453.395291, laplace_nle=nan, bic_nle=-806.679657, aic_nle=-872.790582, npll=-445.130222, pic_nle=-790.149519, mae=0.200767, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 7 %%%%%
+
+ScoredKernel(k_opt=ChangeBurstTanhKernel(location=1680.039671, steepness=-2.167915, width=4.327655, operands=[ SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=9.475758, output_variance=7.354955, alpha=-19.994672)), ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=FourierKernel(lengthscale=2.641043, period=2.370312, output_variance=0.116308)), ChangePointTanhKernel(location=1751.620590, steepness=-3.506704, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-0.506971, output_variance=-1.932135)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.364643, output_variance=-1.793903)) ]) ]) ]), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=-8.132637, output_variance=7.211850, alpha=-29.984400)) ]), nll=-453.395291, laplace_nle=nan, bic_nle=-806.679657, aic_nle=-872.790582, npll=-445.130222, pic_nle=-790.149519, mae=0.200767, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 8 %%%%%
+
+ScoredKernel(k_opt=ChangeBurstTanhKernel(location=1680.039671, steepness=-2.167915, width=4.327655, operands=[ SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=9.475758, output_variance=7.354955, alpha=-19.994672)), ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=FourierKernel(lengthscale=2.641043, period=2.370312, output_variance=0.116308)), ChangePointTanhKernel(location=1751.620590, steepness=-3.506704, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-0.506971, output_variance=-1.932135)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.364643, output_variance=-1.793903)) ]) ]) ]), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=-8.132637, output_variance=7.211850, alpha=-29.984400)) ]), nll=-453.395291, laplace_nle=nan, bic_nle=-806.679657, aic_nle=-872.790582, npll=-445.130222, pic_nle=-790.149519, mae=0.200767, std_ratio=nan, noise=[-inf])
+
+%%%%% Level 9 %%%%%
+
+ScoredKernel(k_opt=ChangeBurstTanhKernel(location=1680.093102, steepness=-2.157917, width=4.327657, operands=[ SumKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=9.506066, output_variance=7.411149, alpha=-20.090476)), ProductKernel([ MaskKernel(ndim=1, active_dimension=0, base_kernel=FourierKernel(lengthscale=2.617065, period=2.367252, output_variance=-0.995878)), ChangePointTanhKernel(location=1751.488241, steepness=-2.291735, operands=[ MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=-0.383585, output_variance=-0.815448)), MaskKernel(ndim=1, active_dimension=0, base_kernel=SqExpKernel(lengthscale=3.437675, output_variance=-0.674884)) ]) ]) ]), MaskKernel(ndim=1, active_dimension=0, base_kernel=RQKernel(lengthscale=-8.170507, output_variance=7.263137, alpha=-30.051745)) ]), nll=-453.399305, laplace_nle=nan, bic_nle=-806.687685, aic_nle=-872.798610, npll=-444.527875, pic_nle=-788.944825, mae=0.200859, std_ratio=nan, noise=[-inf])

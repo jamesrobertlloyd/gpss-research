@@ -71,11 +71,14 @@ class Kernel:
             return ProductKernel([self, other])
             
     def __hash__(self):
-        # Really simple hash - presumably there is something better?
+        # Really simple hash - presumably there is something better - any computer scientists out there?
         return hash(self.__repr__())
 
 class BaseKernelFamily(KernelFamily):
-    pass
+       
+    @property    
+    def is_thunk(self):
+        return False
 
 class BaseKernel(Kernel):
     def effective_params(self):
@@ -93,8 +96,25 @@ class BaseKernel(Kernel):
     @property    
     def stationary(self):
         return True
+       
+    @property    
+    def is_operator(self):
+        return False
+       
+    @property    
+    def is_thunk(self):
+        return False
+
+class KernelOperatorFamily(BaseKernelFamily):
+    pass
+
+class KernelOperator(Kernel):
+       
+    @property    
+    def is_operator(self):
+        return True
         
-class NoiseKernelFamily(BaseKernelFamily):
+class NoiseKernelFamily(KernelFamily):
     def from_param_vector(self, params):
         output_variance, = params # N.B. - expects list input
         return NoiseKernel(output_variance)
@@ -105,7 +125,8 @@ class NoiseKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('WN', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return NoiseKernel(0.)
     
     def __cmp__(self, other):
@@ -197,7 +218,8 @@ class SqExpKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('SqExp', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return SqExpKernel(0., 0.)
     
     def __cmp__(self, other):
@@ -301,8 +323,9 @@ class SqExpPeriodicKernelFamily(BaseKernelFamily):
         return colored('PE', self.depth())
     
     #### FIXME - Caution - magic numbers!
-    #### Explanation : This is centered on about 20 periods
-    def default(self):
+    
+    @staticmethod#### Explanation : This is centered on about 20 periods
+    def default():
         return SqExpPeriodicKernel(0., -2.0, 0.)
     
     def __cmp__(self, other):
@@ -421,8 +444,9 @@ class CentredPeriodicKernelFamily(BaseKernelFamily):
         return colored('CPE', self.depth())
     
     #### FIXME - Caution - magic numbers!
-    #### Explanation : This is centered on about 20 periods
-    def default(self):
+    
+    @staticmethod#### Explanation : This is centered on about 20 periods
+    def default():
         return CentredPeriodicKernel(0., -2.0, 0.)
     
     def __cmp__(self, other):
@@ -539,8 +563,9 @@ class FourierKernelFamily(BaseKernelFamily):
         return colored('FT', self.depth())
     
     #### FIXME - Caution - magic numbers!
-    #### Explanation : This is centered on about 20 periods
-    def default(self):
+    
+    @staticmethod#### Explanation : This is centered on about 20 periods
+    def default():
         return FourierKernel(0., -2.0, 0.)
     
     def __cmp__(self, other):
@@ -657,8 +682,9 @@ class CosineKernelFamily(BaseKernelFamily):
         return colored('Cos', self.depth())
     
     # FIXME - Caution - magic numbers!
-    #### Explanation : This is centered on about 20 periods
-    def default(self):
+    
+    @staticmethod#### Explanation : This is centered on about 20 periods
+    def default():
         return CosineKernel(-2.0, 0.)
     
     def __cmp__(self, other):
@@ -765,8 +791,9 @@ class SpectralKernelFamily(BaseKernelFamily):
         return colored('SP', self.depth())
     
     # FIXME - Caution - magic numbers!
-    #### Explanation : This is centered on about 20 periods
-    def default(self):
+    
+    @staticmethod#### Explanation : This is centered on about 20 periods
+    def default():
         return SpectralKernel(0., -2.0, 0.)
     
     def __cmp__(self, other):
@@ -888,7 +915,8 @@ class RQKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('RQ', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return RQKernel(0., 0., 0.)
     
     def __cmp__(self, other):
@@ -998,7 +1026,8 @@ class ConstKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('CS', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return ConstKernel(0.)
     
     def __cmp__(self, other):
@@ -1094,7 +1123,8 @@ class ZeroKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('NIL', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return ZeroKernel()
     
     def __cmp__(self, other):
@@ -1203,7 +1233,8 @@ class LinKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('LN', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return LinKernel(-0., 0., 0.)
     
     def __cmp__(self, other):
@@ -1322,7 +1353,8 @@ class PureLinKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('PLN', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return PureLinKernel(0., 0.)
     
     def __cmp__(self, other):
@@ -1428,7 +1460,8 @@ class ExpKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('EXP', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return ExpKernel(0., 0., 0.)
     
     def __cmp__(self, other):
@@ -1536,7 +1569,8 @@ class StepKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('ST', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return StepKernel(0., 0., 0., 0.)
     
     def __cmp__(self, other):
@@ -1655,7 +1689,8 @@ class StepTanhKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('STT', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return StepTanhKernel(0., 0., 0., 0.)
     
     def __cmp__(self, other):
@@ -1774,7 +1809,8 @@ class IBMKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('IBM', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return IBMKernel(0., 0.)
     
     def __cmp__(self, other):
@@ -1871,7 +1907,8 @@ class IBMLinKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('IBMLin', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return IBMLinKernel(0., 0., 0., 0.)
     
     def __cmp__(self, other):
@@ -1983,7 +2020,8 @@ class IMT1KernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('IMT1', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return IMT1Kernel(0., 0., 0.)
     
     def __cmp__(self, other):
@@ -2092,7 +2130,8 @@ class IMT1LinKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('IMT1Lin', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return IMT1LinKernel(0., 0., 0., 0., 0.)
     
     def __cmp__(self, other):
@@ -2215,7 +2254,8 @@ class IMT3KernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('IMT3', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return IMT3Kernel(0., 0., 0.)
     
     def __cmp__(self, other):
@@ -2324,7 +2364,8 @@ class IMT3LinKernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('IMT3Lin', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return IMT3LinKernel(0., 0., 0., 0., 0.)
     
     def __cmp__(self, other):
@@ -2434,183 +2475,7 @@ class IMT3LinKernel(BaseKernel):
         
     @property    
     def stationary(self):
-        return False
-
-#### TODO - Will we ever use this - else remove  
-class QuadraticKernelFamily(BaseKernelFamily):
-    def from_param_vector(self, params):
-        offset, output_variance = params
-        return QuadraticKernel(offset, output_variance)
-    
-    def num_params(self):
-        return 2
-    
-    def pretty_print(self):
-        return colored('QD', self.depth())
-    
-    def default(self):
-        return QuadraticKernel(0., 0.)
-    
-    def __cmp__(self, other):
-        assert isinstance(other, KernelFamily)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return 0
-    
-    def depth(self):
-        return 0
-    
-    def id_name(self):
-        return 'Quad'
-    
-    @staticmethod    
-    def description():
-        return "Quadratic"
-
-    @staticmethod    
-    def params_description():
-        return "offset"     
-    
-#### TODO - Will we ever use this - else remove    
-class QuadraticKernel(BaseKernel):
-    def __init__(self, offset, output_variance):
-        #### FIXME - Should the offset defauly to something small? Or will we never use this kernel
-        #### If using this kernel we should also add the default params replaced function
-        self.offset = offset
-        self.output_variance = output_variance
-        
-    def family(self):
-        return QuadraticKernelFamily()
-        
-    def gpml_kernel_expression(self):
-        return '{@covPoly, 2}'
-    
-    def english_name(self):
-        return 'QD'
-    
-    def id_name(self):
-        return 'Quad'
-    
-    def param_vector(self):
-        # order of args matches GPML
-        return np.array([self.offset, self.output_variance])
-
-    def copy(self):
-        return QuadraticKernel(self.offset, self.output_variance)
-    
-    def __repr__(self):
-        return 'QuadraticKernel(offset=%f, output_variance=%f)' % \
-            (self.offset, self.output_variance)
-    
-    def pretty_print(self):
-        return colored('QD(off=%1.1f, sf=%1.1f)' % (self.offset, self.output_variance),
-                       self.depth())
-        
-    def latex_print(self):
-        return 'QD'           
-    
-    def __cmp__(self, other):
-        assert isinstance(other, Kernel)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        differences = [self.offset - other.offset, self.output_variance - other.output_variance]
-        differences = map(shrink_below_tolerance, differences)
-        return cmp(differences, [0] * len(differences))
-        
-    def depth(self):
-        return 0   
-        
-    @property    
-    def stationary(self):
-        return False
-
-#### TODO - Will we ever use this - else remove  
-class CubicKernelFamily(BaseKernelFamily):
-    def from_param_vector(self, params):
-        offset, output_variance = params
-        return CubicKernel(offset, output_variance)
-    
-    def num_params(self):
-        return 2
-    
-    def pretty_print(self):
-        return colored('CB', self.depth())
-    
-    def default(self):
-        return CubicKernel(0., 0.)
-    
-    def __cmp__(self, other):
-        assert isinstance(other, KernelFamily)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return 0
-    
-    def depth(self):
-        return 0
-    
-    def id_name(self):
-        return 'Cubic'
-    
-    @staticmethod    
-    def description():
-        return "Cubic"
-
-    @staticmethod    
-    def params_description():
-        return "offset"     
-    
-#### TODO - Will we ever use this - else remove  
-class CubicKernel(BaseKernel):
-    def __init__(self, offset, output_variance):
-        #### FIXME - Should the offset defauly to something small? Or will we never use this kernel
-        #### If using this kernel we should also add the default params replaced function
-        self.offset = offset
-        self.output_variance = output_variance
-        
-    def family(self):
-        return CubicKernelFamily()
-        
-    def gpml_kernel_expression(self):
-        return '{@covPoly, 3}'
-    
-    def english_name(self):
-        return 'CB'
-    
-    def id_name(self):
-        return 'Cubic'
-    
-    def param_vector(self):
-        # order of args matches GPML
-        return np.array([self.offset, self.output_variance])
-
-    def copy(self):
-        return CubicKernel(self.offset, self.output_variance)
-    
-    def __repr__(self):
-        return 'CubicKernel(offset=%f, output_variance=%f)' % \
-            (self.offset, self.output_variance)
-    
-    def pretty_print(self):
-        return colored('CB(off=%1.1f, sf=%1.1f)' % (self.offset, self.output_variance),
-                       self.depth())
-        
-    def latex_print(self):
-        return 'CB'           
-    
-    def __cmp__(self, other):
-        assert isinstance(other, Kernel)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        differences = [self.offset - other.offset, self.output_variance - other.output_variance]
-        differences = map(shrink_below_tolerance, differences)
-        return cmp(differences, [0] * len(differences))
-        
-    def depth(self):
-        return 0   
-        
-    @property    
-    def stationary(self):
-        return False
+        return False 
 
 class PP0KernelFamily(BaseKernelFamily):
     def from_param_vector(self, params):
@@ -2623,7 +2488,8 @@ class PP0KernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('P0', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return PP0Kernel(0., 0.)
     
     def __cmp__(self, other):
@@ -2719,7 +2585,8 @@ class PP1KernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('P1', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return PP1Kernel(0., 0.)
     
     def __cmp__(self, other):
@@ -2814,7 +2681,8 @@ class PP2KernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('P2', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return PP2Kernel(0., 0.)
     
     def __cmp__(self, other):
@@ -2909,7 +2777,8 @@ class PP3KernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('P3', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return PP3Kernel(0., 0.)
     
     def __cmp__(self, other):
@@ -3003,7 +2872,8 @@ class Matern1KernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('MT1', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return Matern1Kernel(0., 0.)
     
     def __cmp__(self, other):
@@ -3097,7 +2967,8 @@ class Matern3KernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('MT3', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return Matern3Kernel(0., 0.)
     
     def __cmp__(self, other):
@@ -3191,7 +3062,8 @@ class Matern5KernelFamily(BaseKernelFamily):
     def pretty_print(self):
         return colored('MT5', self.depth())
     
-    def default(self):
+    @staticmethod
+    def default():
         return Matern5Kernel(0., 0.)
     
     def __cmp__(self, other):
@@ -3276,7 +3148,7 @@ class Matern5Kernel(BaseKernel):
         
 class MaskKernelFamily(KernelFamily):
     def __init__(self, ndim, active_dimension, base_kernel_family):
-        assert 0 <= active_dimension < ndim
+        assert (0 <= active_dimension < ndim) or ((ndim is None) and (active_dimension is None))
         self.ndim = ndim
         self.active_dimension = active_dimension    # first dimension is 0
         self.base_kernel_family = base_kernel_family
@@ -3287,10 +3159,10 @@ class MaskKernelFamily(KernelFamily):
     def num_params(self):
         return self.base_kernel_family.num_params()
     
-    def pretty_print(self):
-        return colored('M(%d, ' % self.active_dimension, self.depth()) + \
-            self.base_kernel_family.pretty_print() + \
-            colored(')', self.depth())
+    def pretty_print(self):i
+        return colored('M(%s, ' % self.active_dimension, self.depth()) + \
+                self.base_kernel_family.pretty_print() + \
+                colored(')', self.depth())
     
     def default(self):
         return MaskKernel(self.ndim, self.active_dimension, self.base_kernel_family.default())
@@ -3308,7 +3180,7 @@ class MaskKernelFamily(KernelFamily):
     
 class MaskKernel(Kernel):
     def __init__(self, ndim, active_dimension, base_kernel):
-        assert 0 <= active_dimension < ndim
+        assert (0 <= active_dimension < ndim) or ((ndim is None) and (active_dimension is None))
         self.ndim = ndim
         self.active_dimension = active_dimension    # first dimension is 0
         self.base_kernel = base_kernel
@@ -3330,7 +3202,7 @@ class MaskKernel(Kernel):
             return self.base_kernel.gpml_kernel_expression()
     
     def pretty_print(self):
-        return colored('M(%d, ' % self.active_dimension, self.depth()) + \
+        return colored('M(%s, ' % self.active_dimension, self.depth()) + \
             self.base_kernel.pretty_print() + \
             colored(')', self.depth())
             
@@ -3342,7 +3214,7 @@ class MaskKernel(Kernel):
             return self.base_kernel.latex_print()
             
     def __repr__(self):
-        return 'MaskKernel(ndim=%d, active_dimension=%d, base_kernel=%s)' % \
+        return 'MaskKernel(ndim=%s, active_dimension=%s, base_kernel=%s)' % \
             (self.ndim, self.active_dimension, self.base_kernel.__repr__())            
     
     def param_vector(self):
@@ -3356,16 +3228,17 @@ class MaskKernel(Kernel):
         # If parameters are already 1-d then it does nothing
         #### FIXME - this should iterate over all keys in data_shape
         ####         This might break things so smattering assert statements will be very important
-        if isinstance(data_shape['input_location'], (list, tuple, np.ndarray)):
-            data_shape['input_location'] = data_shape['input_location'][self.active_dimension]
-        if isinstance(data_shape['input_scale'], (list, tuple, np.ndarray)):
-            data_shape['input_scale'] = data_shape['input_scale'][self.active_dimension]
-        if isinstance(data_shape['min_period'], (list, tuple, np.ndarray)):
-            data_shape['min_period'] = data_shape['min_period'][self.active_dimension]
-        if isinstance(data_shape['input_min'], (list, tuple, np.ndarray)):
-            data_shape['input_min'] = data_shape['input_min'][self.active_dimension]
-        if isinstance(data_shape['input_max'], (list, tuple, np.ndarray)):
-            data_shape['input_max'] = data_shape['input_max'][self.active_dimension]
+        if not self.active_dimension is None:
+            if isinstance(data_shape['input_location'], (list, tuple, np.ndarray)):
+                data_shape['input_location'] = data_shape['input_location'][self.active_dimension]
+            if isinstance(data_shape['input_scale'], (list, tuple, np.ndarray)):
+                data_shape['input_scale'] = data_shape['input_scale'][self.active_dimension]
+            if isinstance(data_shape['min_period'], (list, tuple, np.ndarray)):
+                data_shape['min_period'] = data_shape['min_period'][self.active_dimension]
+            if isinstance(data_shape['input_min'], (list, tuple, np.ndarray)):
+                data_shape['input_min'] = data_shape['input_min'][self.active_dimension]
+            if isinstance(data_shape['input_max'], (list, tuple, np.ndarray)):
+                data_shape['input_max'] = data_shape['input_max'][self.active_dimension]
         return self.base_kernel.default_params_replaced(sd=sd, data_shape=data_shape)
     
     def __cmp__(self, other):
@@ -3399,338 +3272,8 @@ class MaskKernel(Kernel):
     @property    
     def stationary(self):
         return self.base_kernel.stationary
-    
-
-class ChangePointKernelFamily(KernelFamily):
-    def __init__(self, operands):
-        self.operands = operands
-        assert len(operands) == 2
-        
-    def from_param_vector(self, params):
-        location = params[0]
-        steepness = params[1]
-        start = 2
-        ops = []
-        for e in self.operands:
-            end = start + e.num_params()
-            ops.append(e.from_param_vector(params[start:end]))
-            start = end
-        return ChangePointKernel(location, steepness, ops)
-    
-    def num_params(self):
-        return 2 + sum([e.num_params() for e in self.operands])
-    
-    def pretty_print(self):        
-        return colored('CP(', self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(', ', self.depth()) + \
-            self.operands[1].pretty_print() + \
-            colored(')', self.depth())
-    
-    def default(self):
-        return ChangePointKernel(0., 0., [op.default() for op in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, KernelFamily)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp(self.operands, other.operands)
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-
-class ChangePointKernel(Kernel):
-    def __init__(self, location, steepness, operands):
-        self.location = location
-        self.steepness = steepness
-        self.operands = operands
-        
-    def family(self):
-        return ChangePointKernelFamily([e.family() for e in self.operands])
-        
-    def pretty_print(self): 
-        return colored('CP(loc=%1.1f, steep=%1.1f, ' % (self.location, self.steepness), self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(', ', self.depth()) + \
-            self.operands[1].pretty_print() + \
-            colored(')', self.depth())
-            
-    def latex_print(self):
-        return 'CP\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
-            
-    def __repr__(self):
-        return 'ChangePointKernel(location=%f, steepness=%f, operands=%s)' % \
-            (self.location, self.steepness, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
-    
-    def gpml_kernel_expression(self):
-        return '{@covChangePoint, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
-    
-    def copy(self):
-        return ChangePointKernel(self.location, self.steepness, [e.copy() for e in self.operands])
-
-    def param_vector(self):
-        return np.concatenate([np.array([self.location, self.steepness])] + [e.param_vector() for e in self.operands])
-        
-    def effective_params(self):
-        return 2 + sum([o.effective_params() for o in self.operands])
-        
-    def default_params_replaced(self, sd=1, data_shape=None):
-        '''Returns the parameter vector with any default values replaced with random Gaussian'''
-        result = self.param_vector()[:2]
-        if result[0] == 0:
-            # Location uniform in data range
-            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
-        if result[1] == 0:
-            #### FIXME - Caution, magic numbers
-            #### Explanation - larger than constraint
-            # Set steepness with inverse input scale
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
-        return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, Kernel)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp((self.location, self.steepness, self.operands),
-                   (other.location, other.steepness, other.operands))
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-            
-    def out_of_bounds(self, constraints):
-        #### Explanation - Decays to 10% after 10% of data
-        return (self.location < constraints['input_min']) or \
-               (self.location > constraints['input_max']) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
-               (any([o.out_of_bounds(constraints) for o in self.operands])) 
-        
-class BurstSEKernelFamily(KernelFamily):
-    def __init__(self):
-        pass
-    
-    def default(self):
-        return BurstKernel(0., 0., 0., [SqExpKernelFamily().default()])
-        
-    def id_name(self):
-        return 'BurstSE'
-        
-class BurstKernelFamily(KernelFamily):
-    def __init__(self, operands):
-        self.operands = operands
-        assert len(operands) == 1
-        
-    def from_param_vector(self, params):
-        location = params[0]
-        steepness = params[1]
-        width = params[2]
-        start = 3
-        ops = []
-        for e in self.operands:
-            end = start + e.num_params()
-            ops.append(e.from_param_vector(params[start:end]))
-            start = end
-        return BurstKernel(location, steepness, width, ops)
-    
-    def num_params(self):
-        return 3 + sum([e.num_params() for e in self.operands])
-    
-    def pretty_print(self):        
-        return colored('B(', self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(')', self.depth())
-    
-    def default(self):
-        return BurstKernel(0., 0., 0., [op.default() for op in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, KernelFamily)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp(self.operands, other.operands)
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-
-class BurstKernel(Kernel):
-    def __init__(self, location, steepness, width, operands):
-        self.location = location
-        self.steepness = steepness
-        self.width = width
-        self.operands = operands
-        
-    def family(self):
-        return BurstKernelFamily([e.family() for e in self.operands])
-        
-    def pretty_print(self): 
-        return colored('B(loc=%1.1f, steep=%1.1f, width=%1.1f, ' % (self.location, self.steepness, self.width), self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(')', self.depth())
-            
-    def latex_print(self):
-        return 'B\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
-            
-    def __repr__(self):
-        return 'BurstKernel(location=%f, steepness=%f, width=%f, operands=%s)' % \
-            (self.location, self.steepness, self.width, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
-    
-    def gpml_kernel_expression(self):
-        return '{@covBurst, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
-    
-    def copy(self):
-        return BurstKernel(self.location, self.steepness, self.width, [e.copy() for e in self.operands])
-
-    def param_vector(self):
-        return np.concatenate([np.array([self.location, self.steepness, self.width])] + [e.param_vector() for e in self.operands])
-        
-    def effective_params(self):
-        return 3 + sum([o.effective_params() for o in self.operands])
-        
-    def default_params_replaced(self, sd=1, data_shape=None):
-        '''Returns the parameter vector with any default values replaced with random Gaussian'''
-        result = self.param_vector()[:3]
-        if result[0] == 0:
-            # Location uniform in input
-            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
-        if result[1] == 0:
-            # Set steepness with inverse input scale
-            #### FIXME - Caution, magic numbers
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
-        if result[2] == 0:
-            # Set width with input scale - but expecting small widths
-            #### FIXME - Caution, magic numbers
-            result[2] = np.random.normal(loc=np.log(0.1*(data_shape['input_max'] - data_shape['input_min'])), scale=1)
-        return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, Kernel)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp((self.location, self.steepness, self.width, self.operands),
-                   (other.location, other.steepness, other.width, other.operands))
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-            
-    def out_of_bounds(self, constraints):
-        return (self.location - np.exp(self.width)/2 < constraints['input_min'] + 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location + np.exp(self.width)/2 > constraints['input_max'] - 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.width > np.log(0.25*(constraints['input_max'] - constraints['input_min']))) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
-               (any([o.out_of_bounds(constraints) for o in self.operands])) 
                
-class BlackoutKernelFamily(KernelFamily):
-    def __init__(self, operands):
-        self.operands = operands
-        assert len(operands) == 1
-        
-    def from_param_vector(self, params):
-        location = params[0]
-        steepness = params[1]
-        width = params[2]
-        sf = params[3]
-        start = 4
-        ops = []
-        for e in self.operands:
-            end = start + e.num_params()
-            ops.append(e.from_param_vector(params[start:end]))
-            start = end
-        return BlackoutKernel(location, steepness, width, sf, ops)
-    
-    def num_params(self):
-        return 4 + sum([e.num_params() for e in self.operands])
-    
-    def pretty_print(self):        
-        return colored('BL(', self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(')', self.depth())
-    
-    def default(self):
-        return BlackoutKernel(0., 0., 0., 0., [op.default() for op in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, KernelFamily)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp(self.operands, other.operands)
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-
-class BlackoutKernel(Kernel):
-    def __init__(self, location, steepness, width, sf, operands):
-        self.location = location
-        self.steepness = steepness
-        self.width = width
-        self.sf = sf
-        self.operands = operands
-        
-    def family(self):
-        return BlackoutKernelFamily([e.family() for e in self.operands])
-        
-    def pretty_print(self): 
-        return colored('BL(loc=%1.1f, steep=%1.1f, width=%1.1f, sf=%1.1f, ' % (self.location, self.steepness, self.width, self.sf), self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(')', self.depth())
-            
-    def latex_print(self):
-        return 'BL\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
-            
-    def __repr__(self):
-        return 'BlackoutKernel(location=%f, steepness=%f, width=%f, sf=%f, operands=%s)' % \
-            (self.location, self.steepness, self.width, self.sf, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
-    
-    def gpml_kernel_expression(self):
-        return '{@covBlackout, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
-    
-    def copy(self):
-        return BlackoutKernel(self.location, self.steepness, self.width, self.sf, [e.copy() for e in self.operands])
-
-    def param_vector(self):
-        return np.concatenate([np.array([self.location, self.steepness, self.width, self.sf])] + [e.param_vector() for e in self.operands])
-        
-    def effective_params(self):
-        return 4 + sum([o.effective_params() for o in self.operands])
-        
-    def default_params_replaced(self, sd=1, data_shape=None):
-        '''Returns the parameter vector with any default values replaced with random Gaussian'''
-        result = self.param_vector()[:4]
-        if result[0] == 0:
-            # Location uniform in input
-            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
-        if result[1] == 0:
-            # Set steepness with inverse input scale
-            #### FIXME - Caution, magic numbers
-            result[1] = np.random.normal(loc=4-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
-        if result[2] == 0:
-            # Set width with input scale - but expecting small widths
-            #### FIXME - Caution, magic numbers
-            result[2] = np.random.normal(loc=np.log(0.1*(data_shape['input_max'] - data_shape['input_min'])), scale=1)
-        if result[3] == 0:
-            # Set sf with output location or neutral
-            if np.random.rand() < 0.5:
-                result[3] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
-            else:
-                result[3] = np.random.normal(loc=0, scale=sd)
-        return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, Kernel)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp((self.location, self.steepness, self.width, self.sf, self.operands),
-                   (other.location, other.steepness, other.width, other.sf, other.operands))
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-            
-    def out_of_bounds(self, constraints):
-        return (self.location - np.exp(self.width)/2 < constraints['input_min'] + 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location + np.exp(self.width)/2 > constraints['input_max'] - 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.width > np.log(0.5*(constraints['input_max'] -constraints['input_min']))) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 3) or \
-               (any([o.out_of_bounds(constraints) for o in self.operands])) 
-               
-class ChangePointTanhKernelFamily(KernelFamily):
+class ChangePointTanhKernelFamily(KernelOperatorFamily):
     def __init__(self, operands):
         self.operands = operands
         assert len(operands) == 2
@@ -3755,7 +3298,7 @@ class ChangePointTanhKernelFamily(KernelFamily):
             colored(', ', self.depth()) + \
             self.operands[1].pretty_print() + \
             colored(')', self.depth())
-    
+
     def default(self):
         return ChangePointTanhKernel(0., 0., [op.default() for op in self.operands])
     
@@ -3768,7 +3311,7 @@ class ChangePointTanhKernelFamily(KernelFamily):
     def depth(self):
         return max([op.depth() for op in self.operands]) + 1
 
-class ChangePointTanhKernel(Kernel):
+class ChangePointTanhKernel(KernelOperator):
     def __init__(self, location, steepness, operands):
         self.location = location
         self.steepness = steepness
@@ -3831,7 +3374,7 @@ class ChangePointTanhKernel(Kernel):
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
                
-class ChangeBurstTanhKernelFamily(KernelFamily):
+class ChangeBurstTanhKernelFamily(KernelOperatorFamily):
     def __init__(self, operands):
         self.operands = operands
         assert len(operands) == 2
@@ -3870,7 +3413,7 @@ class ChangeBurstTanhKernelFamily(KernelFamily):
     def depth(self):
         return max([op.depth() for op in self.operands]) + 1
 
-class ChangeBurstTanhKernel(Kernel):
+class ChangeBurstTanhKernel(KernelOperator):
     def __init__(self, location, steepness, width, operands):
         self.location = location
         self.steepness = steepness
@@ -3939,233 +3482,7 @@ class ChangeBurstTanhKernel(Kernel):
                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
         
-class BurstTanhSEKernelFamily(KernelFamily):
-    def __init__(self):
-        pass
-    
-    def default(self):
-        return BurstTanhKernel(0., 0., 0., [SqExpKernelFamily().default()])
-        
-    def id_name(self):
-        return 'BurstTanhSE'
-        
-class BurstTanhKernelFamily(KernelFamily):
-    def __init__(self, operands):
-        self.operands = operands
-        assert len(operands) == 1
-        
-    def from_param_vector(self, params):
-        location = params[0]
-        steepness = params[1]
-        width = params[2]
-        start = 3
-        ops = []
-        for e in self.operands:
-            end = start + e.num_params()
-            ops.append(e.from_param_vector(params[start:end]))
-            start = end
-        return BurstTanhKernel(location, steepness, width, ops)
-    
-    def num_params(self):
-        return 3 + sum([e.num_params() for e in self.operands])
-    
-    def pretty_print(self):        
-        return colored('BT(', self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(')', self.depth())
-    
-    def default(self):
-        return BurstTanhKernel(0., 0., 0., [op.default() for op in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, KernelFamily)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp(self.operands, other.operands)
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-
-class BurstTanhKernel(Kernel):
-    def __init__(self, location, steepness, width, operands):
-        self.location = location
-        self.steepness = steepness
-        self.width = width
-        self.operands = operands
-        
-    def family(self):
-        return BurstTanhKernelFamily([e.family() for e in self.operands])
-        
-    def pretty_print(self): 
-        return colored('BT(loc=%1.1f, steep=%1.1f, width=%1.1f, ' % (self.location, self.steepness, self.width), self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(')', self.depth())
-            
-    def latex_print(self):
-        return 'BT\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
-            
-    def __repr__(self):
-        return 'BurstTanhKernel(location=%f, steepness=%f, width=%f, operands=%s)' % \
-            (self.location, self.steepness, self.width, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
-    
-    def gpml_kernel_expression(self):
-        return '{@covBurstTanh, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
-    
-    def copy(self):
-        return BurstTanhKernel(self.location, self.steepness, self.width, [e.copy() for e in self.operands])
-
-    def param_vector(self):
-        return np.concatenate([np.array([self.location, self.steepness, self.width])] + [e.param_vector() for e in self.operands])
-        
-    def effective_params(self):
-        return 3 + sum([o.effective_params() for o in self.operands])
-        
-    def default_params_replaced(self, sd=1, data_shape=None):
-        '''Returns the parameter vector with any default values replaced with random Gaussian'''
-        result = self.param_vector()[:3]
-        if result[0] == 0:
-            # Location uniform in input
-            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
-        if result[1] == 0:
-            # Set steepness with inverse input scale
-            #### FIXME - Caution, magic numbers
-            result[1] = np.random.normal(loc=3.3-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
-        if result[2] == 0:
-            # Set width with input scale - but expecting small widths
-            #### FIXME - Caution, magic numbers
-            result[2] = np.random.normal(loc=np.log(0.1*(data_shape['input_max'] - data_shape['input_min'])), scale=1)
-        return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, Kernel)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp((self.location, self.steepness, self.width, self.operands),
-                   (other.location, other.steepness, other.width, other.operands))
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-            
-    def out_of_bounds(self, constraints):
-        return (self.location - np.exp(self.width)/2 < constraints['input_min'] + 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location + np.exp(self.width)/2 > constraints['input_max'] - 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.width > np.log(0.25*(constraints['input_max'] - constraints['input_min']))) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
-               (any([o.out_of_bounds(constraints) for o in self.operands])) 
-               
-class BlackoutTanhKernelFamily(KernelFamily):
-    def __init__(self, operands):
-        self.operands = operands
-        assert len(operands) == 1
-        
-    def from_param_vector(self, params):
-        location = params[0]
-        steepness = params[1]
-        width = params[2]
-        sf = params[3]
-        start = 4
-        ops = []
-        for e in self.operands:
-            end = start + e.num_params()
-            ops.append(e.from_param_vector(params[start:end]))
-            start = end
-        return BlackoutTanhKernel(location, steepness, width, sf, ops)
-    
-    def num_params(self):
-        return 4 + sum([e.num_params() for e in self.operands])
-    
-    def pretty_print(self):        
-        return colored('BLT(', self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(')', self.depth())
-    
-    def default(self):
-        return BlackoutTanhKernel(0., 0., 0., 0., [op.default() for op in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, KernelFamily)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp(self.operands, other.operands)
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-
-class BlackoutTanhKernel(Kernel):
-    def __init__(self, location, steepness, width, sf, operands):
-        self.location = location
-        self.steepness = steepness
-        self.width = width
-        self.sf = sf
-        self.operands = operands
-        
-    def family(self):
-        return BlackoutTanhKernelFamily([e.family() for e in self.operands])
-        
-    def pretty_print(self): 
-        return colored('BLT(loc=%1.1f, steep=%1.1f, width=%1.1f, sf=%1.1f, ' % (self.location, self.steepness, self.width, self.sf), self.depth()) + \
-            self.operands[0].pretty_print() + \
-            colored(')', self.depth())
-            
-    def latex_print(self):
-        return 'BLT\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
-            
-    def __repr__(self):
-        return 'BlackoutTanhKernel(location=%f, steepness=%f, width=%f, sf=%f, operands=%s)' % \
-            (self.location, self.steepness, self.width, self.sf, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
-    
-    def gpml_kernel_expression(self):
-        return '{@covBlackoutTanh, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
-    
-    def copy(self):
-        return BlackoutTanhKernel(self.location, self.steepness, self.width, self.sf, [e.copy() for e in self.operands])
-
-    def param_vector(self):
-        return np.concatenate([np.array([self.location, self.steepness, self.width, self.sf])] + [e.param_vector() for e in self.operands])
-        
-    def effective_params(self):
-        return 4 + sum([o.effective_params() for o in self.operands])
-        
-    def default_params_replaced(self, sd=1, data_shape=None):
-        '''Returns the parameter vector with any default values replaced with random Gaussian'''
-        result = self.param_vector()[:4]
-        if result[0] == 0:
-            # Location uniform in input
-            result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
-        if result[1] == 0:
-            # Set steepness with inverse input scale
-            #### FIXME - Caution, magic numbers
-            result[1] = np.random.normal(loc=3.3-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
-        if result[2] == 0:
-            # Set width with input scale - but expecting small widths
-            #### FIXME - Caution, magic numbers
-            result[2] = np.random.normal(loc=np.log(0.1*(data_shape['input_max'] - data_shape['input_min'])), scale=1)
-        if result[3] == 0:
-            # Set sf with output location or neutral
-            if np.random.rand() < 0.5:
-                result[3] = np.random.normal(loc=np.max([np.log(np.abs(data_shape['output_location'])), data_shape['output_scale']]), scale=sd)
-            else:
-                result[3] = np.random.normal(loc=0, scale=sd)
-        return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
-    
-    def __cmp__(self, other):
-        assert isinstance(other, Kernel)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp((self.location, self.steepness, self.width, self.sf, self.operands),
-                   (other.location, other.steepness, other.width, other.sf, other.operands))
-    
-    def depth(self):
-        return max([op.depth() for op in self.operands]) + 1
-            
-    def out_of_bounds(self, constraints):
-        return (self.location - np.exp(self.width)/2 < constraints['input_min'] + 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.location + np.exp(self.width)/2 > constraints['input_max'] - 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-               (self.width > np.log(0.5*(constraints['input_max'] -constraints['input_min']))) or \
-               (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
-               (any([o.out_of_bounds(constraints) for o in self.operands])) 
-        
-class SumKernelFamily(KernelFamily):
+class SumKernelFamily(KernelOperatorFamily):
     def __init__(self, operands):
         self.operands = operands
         
@@ -4199,7 +3516,7 @@ class SumKernelFamily(KernelFamily):
     def depth(self):
         return max([op.depth() for op in self.operands]) + 1
 
-class SumKernel(Kernel):
+class SumKernel(KernelOperator):
     def __init__(self, operands):
         self.operands = operands
         
@@ -4255,37 +3572,7 @@ class SumKernel(Kernel):
     def out_of_bounds(self, constraints):
         return any([o.out_of_bounds(constraints) for o in self.operands]) 
     
-    def english(self):
-        return string.join(["a " + variance_descriptor(e) + ", " + e.english() + " component" for e in self.operands], "\nplus\n")
-    
-def variance_descriptor(k):
-    # First, find the overall magnitude of the kernel.
-    output_variance = getattr(k, 'output_variance', None)
-    if output_variance is not None:
-        if callable(output_variance):
-            output_variance = k.output_variance()
-        if output_variance < 1:
-            return "small"
-        else:
-            if output_variance > 4:
-                return "large"
-            else:
-                return "medium-sized"
-    return ""
-
-def lengthscale_description(lengthscale):
-    if lengthscale < 0.1:
-        return "noise"
-    elif lengthscale < 1:
-        return "quickly-varying"  
-    elif lengthscale < 5:
-        return "smoothly-varying"
-    elif lengthscale < 15:
-        return "slowly-varying"
-    else:
-        return "almost constant"
-    
-class ProductKernelFamily(KernelFamily):
+class ProductKernelFamily(KernelOperatorFamily):
     def __init__(self, operands):
         self.operands = operands
         
@@ -4320,7 +3607,7 @@ class ProductKernelFamily(KernelFamily):
         return max([op.depth() for op in self.operands]) + 1
         
         
-class ProductKernel(Kernel):
+class ProductKernel(KernelOperator):
     def __init__(self, operands):
         self.operands = operands
         
@@ -4379,40 +3666,13 @@ class ProductKernel(Kernel):
     
     @property
     def output_variance(self):
-        return sum([e.output_variance for e in self.operands])
-    
-    def english(self):
-        """Produces an english description of a product of kernels"""
-        return string.join([e.english() for e in self.operands], ", ")    
-
-def prod(iterable):
-    return reduce(operator.mul, iterable, 1)
-
-def debug_descriptions():
-    print "The function can be decomposed into a sum of"
-    ck = Carls_Mauna_kernel()
-    print ck.english()
-
+        return sum([e.output_variance for e in self.operands])  
 
 #### FIXME - Sort out the naming of the two functions below            
 def base_kernels(ndim=1, base_kernel_names='SE'):
     '''
     Generator of all base kernels for a certain dimensionality of data
     '''
-    
-    #### FIXME - special behaviour
-    if 'BurstSE' in base_kernel_names:
-        for dim in range(ndim):
-            #yield MaskKernel(ndim, dim, BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default())
-            #### FIXME - only works in 1d
-            yield BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default()
-            
-    if 'BurstTanhSE' in base_kernel_names:
-        for dim in range(ndim):
-            #yield MaskKernel(ndim, dim, BurstKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default())
-            #### FIXME - only works in 1d
-            yield BurstTanhKernelFamily([MaskKernelFamily(ndim, dim, SqExpKernelFamily())]).default()
-    
     for dim in range(ndim):
         for fam in base_kernel_families(base_kernel_names):
             yield MaskKernel(ndim, dim, fam.default())
@@ -4428,8 +3688,6 @@ def base_kernel_families(base_kernel_names):
                    ConstKernelFamily(), \
                    LinKernelFamily(), \
                    PureLinKernelFamily(), \
-                   QuadraticKernelFamily(), \
-                   CubicKernelFamily(), \
                    PP0KernelFamily(), \
                    PP1KernelFamily(), \
                    PP2KernelFamily(), \
@@ -4550,10 +3808,6 @@ def split_linear(k):
         return ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[split_linear(op) for op in k.operands])
     elif isinstance(k, ChangeBurstTanhKernel):
         return ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[split_linear(op) for op in k.operands])
-    elif isinstance(k, BurstTanhKernel):
-        return BurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[split_linear(op) for op in k.operands])
-    elif isinstance(k, BlackoutTanhKernel):
-        return BlackoutTanhKernel(location=k.location, steepness=k.steepness, width=k.width, sf=k.sf, operands=[split_linear(op) for op in k.operands])
     elif isinstance(k, LinKernel):
         return LinKernel(offset=-np.Inf, lengthscale=k.lengthscale, location=k.location) + \
                ConstKernel(output_variance=k.offset)
@@ -4567,25 +3821,10 @@ def collapse_const_sums(kernel):
         return kernel.copy()
     elif isinstance(kernel, MaskKernel):
         return MaskKernel(kernel.ndim, kernel.active_dimension, collapse_const_sums(kernel.base_kernel))
-    elif isinstance(kernel, ChangePointKernel):
-        canop = [collapse_const_sums(o) for o in kernel.operands]
-        return ChangePointKernel(kernel.location, kernel.steepness, canop)
-    elif isinstance(kernel, BurstKernel):
-        canop = [collapse_const_sums(o) for o in kernel.operands]
-        return BurstKernel(kernel.location, kernel.steepness, kernel.width, canop)
-    elif isinstance(kernel, BlackoutKernel):
-        canop = [collapse_const_sums(o) for o in kernel.operands]
-        return BlackoutKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, canop)
     elif isinstance(kernel, ChangePointTanhKernel):
         canop = [collapse_const_sums(o) for o in kernel.operands]
         return ChangePointTanhKernel(kernel.location, kernel.steepness, canop)
     elif isinstance(kernel, ChangeBurstTanhKernel):
-        canop = [collapse_const_sums(o) for o in kernel.operands]
-        return ChangeBurstTanhKernel(kernel.location, kernel.steepness, kernel.width, canop)
-    elif isinstance(kernel, BurstTanhKernel):
-        canop = [collapse_const_sums(o) for o in kernel.operands]
-        return BurstTanhKernel(kernel.location, kernel.steepness, kernel.width, canop)
-    elif isinstance(kernel, BlackoutTanhKernel):
         canop = [collapse_const_sums(o) for o in kernel.operands]
         return BlackoutTanhKernel(kernel.location, kernel.steepness, kernel.width, kernel.sf, canop)
     elif isinstance(kernel, SumKernel):
@@ -4665,25 +3904,12 @@ def distribute_products(k):
     elif isinstance(k, SumKernel):
         # Recursively distribute each the operands to be summed, then combine them back into a new SumKernel.
         return SumKernel([subop for op in k.operands for subop in break_kernel_into_summands(op)])
-    elif isinstance(k, ChangePointKernel):
-        return SumKernel([ChangePointKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
-                         [ChangePointKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
-    elif isinstance(k, BurstKernel):
-        return SumKernel([BurstKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op]) for op in break_kernel_into_summands(k.operands[0])])
-    elif isinstance(k, BlackoutKernel):
-        return SumKernel([BlackoutKernel(location=k.location, steepness=k.steepness, width=k.width, sf=-np.inf, operands=[op]) for op in break_kernel_into_summands(k.operands[0])] + \
-                         [BlackoutKernel(location=k.location, steepness=k.steepness, width=k.width, sf=k.sf, operands=[ZeroKernel()])])
     elif isinstance(k, ChangePointTanhKernel):
         return SumKernel([ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
                          [ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
     elif isinstance(k, ChangeBurstTanhKernel):
         return SumKernel([ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
                          [ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
-    elif isinstance(k, BurstTanhKernel):
-        return SumKernel([BurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op]) for op in break_kernel_into_summands(k.operands[0])])
-    elif isinstance(k, BlackoutTanhKernel):
-        return SumKernel([BlackoutTanhKernel(location=k.location, steepness=k.steepness, width=k.width, sf=-np.inf, operands=[op]) for op in break_kernel_into_summands(k.operands[0])] + \
-                         [BlackoutTanhKernel(location=k.location, steepness=k.steepness, width=k.width, sf=k.sf, operands=[ZeroKernel()])])
     else:
         # Base case: A kernel that's just, like, a kernel, man.
         return k
@@ -4716,7 +3942,7 @@ class ScoredKernel:
     def score(self, criterion='bic'):
         return {'bic': self.bic_nle,
                 'aic': self.aic_nle,
-                'pl2': self.pl2_nle,
+                'pl2': self.pl2,
                 'nll': self.nll,
                 'laplace': self.laplace_nle,
                 'npll': self.npll,

@@ -27,9 +27,9 @@ from cblparallel.util import mkstemp_safe
 import job_controller as jc
 import utils.misc
  
-def remove_nan_scored_kernels(scored_kernels):    
-    not_nan = [k for k in scored_kernels if not np.isnan(k.score())] 
-    eq_nan = [k for k in scored_kernels if np.isnan(k.score())] 
+def remove_nan_scored_kernels(scored_kernels, score):    
+    not_nan = [k for k in scored_kernels if not np.isnan(k.score(criterion=score))] 
+    eq_nan = [k for k in scored_kernels if np.isnan(k.score(criterion=score))] 
     return (not_nan, eq_nan)
     
 def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, exp):
@@ -153,7 +153,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Some of the scores may have failed - remove nans to prevent sorting algorithms messing up
         #### TODO - this should not fail silently like this
-        (new_results, nan_results) = remove_nan_scored_kernels(new_results)
+        (new_results, nan_results) = remove_nan_scored_kernels(new_results, exp.score)
         assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens
         # Sort the new results
         new_results = sorted(new_results, key=lambda sk : ScoredKernel.score(sk, exp.score), reverse=True)

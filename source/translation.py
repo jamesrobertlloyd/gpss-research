@@ -124,7 +124,7 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
     Returns (intervals, base_kernel) where intervals is a list of tuple intervals
     '''
     #### TODO - what extensions will this need in multi-d?
-    if isinstance(k, fk.ChangePointTanhKernel) or isinstance(k, fk.ChangePointKernel):
+    if isinstance(k, fk.ChangePointTanhKernel):
         if isinstance(k.operands[0], fk.ZeroKernel) or isinstance(k.operands[0], fk.NoneKernel):
             local_intervals = [(k.location, np.Inf)]
             base_kernel = k.operands[1]

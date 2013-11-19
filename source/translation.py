@@ -13,6 +13,7 @@ September 2013
 import numpy as np
 import scipy.stats
 import time
+import warnings
 
 import flexiblekernel as fk
 import grammar
@@ -86,8 +87,8 @@ def english_length(val, unit):
         else: 
             return '%0.1f seconds' % (val * (60 * 60 * 24 * 365))
     else:
+        warnings.warn('I do not know about this unit of measurement : %s' % unit)
         return 'Unrecognised format'
-        raise RuntimeError('I do not know about this unit of measurement', unit)
         
 english_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -107,8 +108,8 @@ def english_point(val, unit, X):
         else:
             return '%02d:%02d:%02d %02d %s %4d' % (time_val.tm_hour, time_val.tm_min, time_val.tm_sec, time_val.tm_mday, english_months[time_val.tm_mon-1], time_val.tm_year)
     else:
+        warnings.warn('I do not know about this unit of measurement : %s' % unit)
         return 'Unrecognised format'
-        raise RuntimeError('I do not know about this unit of measurement', unit)
 
 def interval_intersection(int1, int2):
     '''Finds the intersection of two intervals'''
@@ -288,7 +289,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
         summary = 'This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__()
         descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
         extrap_descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
-        raise RuntimeError('I''m not intelligent enough to describe this kernel in natural language', prod)
+        warnings.warn('I''m not intelligent enough to describe this kernel in natural language : %s' % prod.__repr__())
     elif (noi_count > 0):
         summary = 'Uncorrelated noise'
         descriptions.append('This component models uncorrelated noise')  
@@ -586,7 +587,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     descriptions.append('The %dth sinusoid has a period of %s' % (i+1, english_length(np.exp(k.period), unit)))
     else:
         descriptions.append('This simple AI is not capable of describing the component who''s python representation is %s' % prod.__repr__())
-        raise RuntimeError('I''m not intelligent enough to describe this kernel in natural language', prod)
+        warnings.warn('I''m not intelligent enough to describe this kernel in natural language : %s', prod.__repr__())
     # Return a list of sentences
     return (summary, descriptions, extrap_descriptions)
     

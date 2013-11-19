@@ -91,7 +91,7 @@ We demonstrate this procedure on two time-series, showing that the automatically
 \end{abstract}
 
 \section{Introduction}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 %Statistical modeling is often performed in an iterative manner:  First, a simple model is proposed.  Second, the practitioner checks the model fit, often by looking for structure that wasn't captured by the model.
 
@@ -122,7 +122,7 @@ The supplementary material to this paper is a pair of complete reports generated
 
 \section{Gaussian Process Structure Search}
 \label{sec:gpss}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 The family of models described by our procedure are Gaussian process (\gp{}) models \cite{rasmussen38gaussian}.
 %
@@ -141,12 +141,12 @@ To produce the reports exhibited in this paper we used 6 base kernels that repre
 %When given a dataset
 
 \section{Description of kernel compositions}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 For a given dataset, the GPSS method produces a compound kernel composed of sums and products of the 6 base kernels.  In this section, we describe how the properties of \gp{} models allow us to reduce the task of english-language summarization into relatively simple subproblems.
 
 \subsection{Taking advantage of distributivity}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 By distributivity, we can convert any compound kernel expression into a sum of products of base kernels.
 For example, when the first version of {\sc GPSS} \citep{DuvLloGroetal13} was applied to airline passenger data, the syntax of the learned kernel structure was
@@ -165,7 +165,7 @@ Therefore, a sum of kernels can be described as a sum of independent functions.
 Thus, if we can automatically describe any product of base kernels, we can exactly describe our model as a sum of these components.  Thus, we only need to produce a procedure for describing products of base kernels.
 
 \subsection{Description of products of base kernels}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 Since the individual additive components produced by the GPSS method are produced by an open-ended grammar, it is impossible to write a lookup table to handle every type of component that GPSS might produce.  
 
@@ -175,15 +175,13 @@ Since the individual additive components produced by the GPSS method are produce
 We now examine the properties of products of base kernels.  We'll show that each kernel we multiply by modifies the properties of the resulting prior on functions in a consistent way.  This means that, for most cases, multiplying by another base kernel means we can simply append a set of adjectives to the description of the resulting function.
 
 \subsubsection{Multiplication by a Squared-Exp Kernel}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 Multiplying by an $\kSE$ kernel means that the resulting prior over functions now varies smoothly.  The degree of smoothness depends on the lengthscale of the kernel.%  We describe a kernel that has been multiplied by a $\kSE$ as a function ``that varies smoothly with a characteristic lengthscale
 %
 A product of two $\kSE$ kernels is exactly equivalent to a single $\kSE$ with different parameters.  This means that multiplication by an $\kSE$ kernel is an idempotent operation.  
 
-
-
-For example ,
+For example,
 the kernel $\kSE \times \kPer$ gives rise to functions which are \emph{locally} periodic: they only approximately repeat.
 If the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
 We therefore see that the functional form of the periodicity varies like $\kSE$, giving rise to the local nature of the periodicity.
@@ -192,25 +190,25 @@ We therefore see that the functional form of the periodicity varies like $\kSE$,
 %At a syntactic level, mutliplication by $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$.
 
 \subsubsection{Multiplication by a White Noise kernel}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 For stationary kernels, $\kWN$ behaves like zero.  For example, $\kWN \times \kSE = \kWN \times \kPer = \kWN$.  Thus the product of white noise with any kernel is simply white noise.
 
 
 \subsubsection{Multiplication by the constant kernel}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 The constant kernel $\kC$ behaves like the identity: $\kC \times k = k$.
 
 %We now only need to describe the base kernels and products of the form $\kSE \times \prod \kPer$.
 
 \subsubsection{Multiplication by a periodic kernel}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 Multiplication by a periodic kernel means that each $f(x)$ will only covary with points near $f(x + n \tau)$, where $n$ is an integer and $\tau$ is the period of the kernel.
-
+%
 %\paragraph{ Products of Periodic Kernels}
-This property applies to products of periodic kernels.
+This property also applies to products of periodic kernels.
 Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
 Then
 \begin{equation}
@@ -228,7 +226,7 @@ Therefore $\kPer \times \kPer$ defines a prior on functions whose covariance is 
 %\subsubsection{Non-Stationary Kernels}
 
 \subsubsection{Multiplication by linear and changepoint kernels}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 The linear ($\kLin$) and changepoint ($\kCP$) kernels both have the form $k(x,x') = a(x)a(x')$.  We can interpret kernels of this form in the following way:
 Suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a known function.
@@ -239,7 +237,7 @@ Setting $a(x) = \sqrt{c}(x-a)$ we see that multiplying a kernel, $\kernel$, by t
 Similarly, multiplying by a changepoint kernel is equivalent to multiplying a \gp{} by a sigmoid function.
 
 This interpretation means that we can separately describe the properties of the model arising from multiplication with kernels of the form $k(x,x') = a(x)a(x')$.
-
+%
 For example, multiplying by a linear kernel means that the amplitude of the function grows linearly away from a central point.  Multiplication by two kernels impplies quadratic growth, etc.
 
 Changepoints are expressed in a similar manner:  By multiplying our function by a sigmoid, we can modulate the condtribution of any given kernel to go to zero in certain regions.  This modulation can be expressed through language such as ``this component applies from 1700 to 1800''.
@@ -312,13 +310,13 @@ Changepoints are expressed in a similar manner:  By multiplying our function by 
 %The corresponding automatically generated description is able to give a more nuanced description
 
 
-
-
-
+\subsection{Summary}  
+\vspace{-0.08in}
+We have broken down the problem of describing arbitary compositions of kernels into two manageable parts.  First, we distribute the composite kernel into a sum of products.  Second, for each product of kernels, we describe the properties of products of kernels $\kSE$, $\kPer$, $\kC$ and $\kWN$, and then append descriptions of the properties of the modulating functions implied by products of $\kLin$ and $\kCP$.
 
 \section{Automatic Report Generation}
 \label{sec:method}
-\vspace{-0.1in}
+\vspace{-0.08in}
 
 Our report generation procedure takes as its starting point a dataset and a composite kernel, which together define a joint posterior probability distribution over a sum of functions.
 The procedure summarizes properties of this complex distribution to the user through a comprehensive report.
@@ -375,7 +373,7 @@ The GPSS search procedure and automatic summary clearly identify these two featu
 
 
 
-\begin{figure}[h]
+\begin{figure}[h!]
 \centering
 \fbox{\includegraphics[trim=0cm 3.4cm 0cm 6.3cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-2}}
 \caption{
@@ -411,7 +409,7 @@ Just from the short summaries of the additive components we can see that the mod
 
 
 
-\begin{figure}[ht]
+\begin{figure}[h!]
 \centering
 \fbox{\includegraphics[trim=0cm 0cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-5}}
 \caption{Discovering the Maunder minimum.  The kernel found by GPSS contained a pair of changepoints bracketing the period of low solar activity.}
@@ -439,7 +437,7 @@ Figure \ref{fig:periodic} shows that GPSS has isolated the approximately 11 year
 
 %\paragraph{Isolating the smoothly-varying component} Examining the dataset by eye, overall solar activity seems to change slowly over decades.  However, this intuition seems difficult to formalize.  Linear or quadratic regression is clearly inappropriate, and methods based on local smoothing would need to control for the periodic component.  Luckily, the GPSS procedure does exactly this, allowing us to isolate the slowly-varying component of the data, without having to forecast either the Maunder minimum or the periodic variation.  Figure \ref{fig:smooth} shows the automatically-generated summary of this component.
 
-\begin{figure}[ht]
+\begin{figure}[h!]
 \centering
 \fbox{\includegraphics[trim=0cm 0cm 0cm 4.7cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-7}}
 \caption{Isolating the periodic component of the dataset.  By isolating this aspect of the statistical structure, we can easily observe additional features, such as the shape of the peaks and troughs, or the fact that the amplitude changes over time.}

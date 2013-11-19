@@ -91,6 +91,7 @@ We demonstrate this procedure on two time-series, showing that the automatically
 \end{abstract}
 
 \section{Introduction}
+\vspace{-0.1in}
 
 %Statistical modeling is often performed in an iterative manner:  First, a simple model is proposed.  Second, the practitioner checks the model fit, often by looking for structure that wasn't captured by the model.
 
@@ -121,6 +122,7 @@ The supplementary material to this paper is a pair of complete reports generated
 
 \section{Gaussian Process Structure Search}
 \label{sec:gpss}
+\vspace{-0.1in}
 
 The family of models described by our procedure are Gaussian process (\gp{}) models \cite{rasmussen38gaussian}.
 %
@@ -134,71 +136,81 @@ New kernels can be constructed by taking the product of a set of base kernels to
 
 The Gaussian process structure search (GPSS) procedure \citep{DuvLloGroetal13} searches over sums and products of a set of simple base kernels to produce an appropriate model for a given data set.
 To produce the reports exhibited in this paper we used 6 base kernels that represent the following structures: smooth functions ($\kSE$), periodic functions ($\kPer$), linear functions ($\kLin$), constant functions ($\kC$), changepoints ($\kCP$), and white noise ($\kWN$).
-%
+
 
 %When given a dataset
 
-\section{Translation of kernel functions}
+\section{Description of kernel compositions}
+\vspace{-0.1in}
 
-The GPSS method produces kernels composed of the 6 base kernels and the arbitrary application of addition and multiplication.
-In this section, we briefly state elementary facts about kernels, and demonstrate how they allow us to reduce the task of english-language summarization into relatively simple subproblems.
+For a given dataset, the GPSS method produces a compound kernel composed of sums and products of the 6 base kernels.  In this section, we describe how the properties of \gp{} models allow us to reduce the task of english-language summarization into relatively simple subproblems.
 
-\paragraph{Additive kernels}
+\subsection{Taking advantage of distributivity}
+\vspace{-0.1in}
 
+By distributivity, we can convert any compound kernel expression into a sum of products of base kernels.
+For example, when the first version of {\sc GPSS} \citep{DuvLloGroetal13} was applied to airline passenger data, the syntax of the learned kernel structure was
+\begin{equation}
+\kSE \times \big( \kLin + \kLin \times ( \kPer + \kSE ) \big) + \kWN
+\end{equation}
+which can be distributed into a sum of products
+\begin{equation}
+(\kSE \times \kLin) + (\kSE \times \kLin \times \kPer) + (\kSE \times \kLin) + \kWN.
+\end{equation}
+
+%\paragraph{Additivity}
 If $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ then $f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)$.
 Therefore, a sum of kernels can be described as a sum of independent functions.
-%We now only need to describe arbitrary products of kernels.
+%
+Thus, if we can automatically describe any product of base kernels, we can exactly describe our model as a sum of these components.  Thus, we only need to produce a procedure for describing products of base kernels.
+
+\subsection{Description of products of base kernels}
+\vspace{-0.1in}
+
+Since the individual additive components produced by the GPSS method are produced by an open-ended grammar, it is impossible to write a lookup table to handle every type of component that GPSS might produce.  
 
 
-\paragraph{Distributivity}
+%\subsubsection{Stationary Kernels}
 
-By distributivity, we can convert any complicated kernel expression into a sum of products of base kernels.  Thus, if we can automatically describe any product of base kernels, we can exactly describe our model as a sum of these components.
+We now examine the properties of products of base kernels.  We'll show that each kernel we multiply by modifies the properties of the resulting prior on functions in a consistent way.  This means that, for most cases, multiplying by another base kernel means we can simply append a set of adjectives to the description of the resulting function.
+
+\subsubsection{Multiplication by a Squared-Exp Kernel}
+\vspace{-0.1in}
+
+Multiplying by an $\kSE$ kernel means that the resulting prior over functions now varies smoothly.  The degree of smoothness depends on the lengthscale of the kernel.%  We describe a kernel that has been multiplied by a $\kSE$ as a function ``that varies smoothly with a characteristic lengthscale
+%
+A product of two $\kSE$ kernels is exactly equivalent to a single $\kSE$ with different parameters.  This means that multiplication by an $\kSE$ kernel is an idempotent operation.  
 
 
-\paragraph{Multiplication by univariate functions}
 
-Suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic univariate function.
-Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
-
-For example, the linear kernel, $\kLin$, has the form $\kLin(x, x') = c(x-a)(x'-a)$.
-Setting $a(x) = \sqrt{c}(x-a)$ we see that multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $\gp{}(0, k)$ by a linear function.
-Similarly, multiplying by a changepoint kernel is equivalent to multiplying a \gp{} by a sigmoid function.
-
-Therefore we can separate the descriptions of an arbitrary product into a deterministic univariate function envelope and a stationary kernel.
-The univariate envelopes can be arbitrary products of linear functions and sigmoids which can be simply described by their parameters.
-
-We now only need to describe arbitrary products of stationary kernels.
-
-\paragraph{Redundancy}
+For example ,
+the kernel $\kSE \times \kPer$ gives rise to functions which are \emph{locally} periodic: they only approximately repeat.
+If the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
+We therefore see that the functional form of the periodicity varies like $\kSE$, giving rise to the local nature of the periodicity.
+%This observation extends similarly to kernels of the form $\kSE \times \prod \kPer$.
 
 %At a syntactic level, mutliplication by $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$.
-A product of two $\kSE$ kernels is exactly equivalent to a single $\kSE$ with different parameters.  
 
-For stationary kernels, $\kWN$ behaves like zero \eg $\kWN \times \kSE = \kWN \times \kPer =  \kWN$.
-The constant kernel $\kC$ behaves like the identity \eg $\kC \times \kLin = \kLin$.
+\subsubsection{Multiplication by a White Noise kernel}
+\vspace{-0.1in}
 
-We now only need to describe the base kernels and products of the form $\kSE \times \prod \kPer$.
+For stationary kernels, $\kWN$ behaves like zero.  For example, $\kWN \times \kSE = \kWN \times \kPer = \kWN$.  Thus the product of white noise with any kernel is simply white noise.
 
-\paragraph{Base kernels}
 
-The priors induced by the base kernels are well understood, with simple descriptions of typical functions.
+\subsubsection{Multiplication by the constant kernel}
+\vspace{-0.1in}
 
-\begin{table}[ht]
-\centering
-\begin{tabular}{c|cc}
-Kernel & Function type & Description \\
-\midrule
-$\kWN$ & White noise & Each $f(x)$ is \iid\\
-$\kC$ & Constant & Every $f(x)$ is identical \\
-$\kLin$ & Linear & $f(x)$ is a straight line \\
-$\kSE$ & Smooth & samples of $f(x)$ are infinitely differentiable \\
-$\kPer$ & Periodic & samples of $f(x)$ are smooth but repeat exactly every period\\
-$\kCP$ & Sigmoid & $f(x)$ becomes exactly zero in part of the space \\
-\end{tabular}
-\label{table:base-kernels}
-\end{table}
+The constant kernel $\kC$ behaves like the identity: $\kC \times k = k$.
 
-\paragraph{ Product of $\kPer$s}
+%We now only need to describe the base kernels and products of the form $\kSE \times \prod \kPer$.
+
+\subsubsection{Multiplication by a periodic kernel}
+\vspace{-0.1in}
+
+Multiplication by a periodic kernel means that each $f(x)$ will only covary with points near $f(x + n \tau)$, where $n$ is an integer and $\tau$ is the period of the kernel.
+
+%\paragraph{ Products of Periodic Kernels}
+This property applies to products of periodic kernels.
 Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
 Then
 \begin{equation}
@@ -206,15 +218,56 @@ Then
 \end{equation}
 Therefore $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.  However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
 
+%\subsubsection{Example}
 
-\paragraph{$\kSE \times \kPer$}
-This kernel gives rise to locally periodic functions.
-Indeed, if the input space is restricted to a grid with spacing equal to the period of the periodic kernel then $\kSE \times \kPer = \kSE$.
-We therefore see that the functional form of the periodicity varies like $\kSE$, giving rise to the local nature of the periodicity.
-This observation extends similarly to kernels of the form $\kSE \times \prod \kPer$.
+%\begin{quotation}
+%``This component is approximately periodic with a period of 1.0 years and varying amplitude. Across periods the shape of this function varies very smoothly. The amplitude of the function increases approximately linearly. The shape of this function within each period has a typical lengthscale of 6.1 weeks.''
+%\end{quotation}
 
 
-\paragraph{Changepoints}
+%\subsubsection{Non-Stationary Kernels}
+
+\subsubsection{Multiplication by linear and changepoint kernels}
+\vspace{-0.1in}
+
+The linear ($\kLin$) and changepoint ($\kCP$) kernels both have the form $k(x,x') = a(x)a(x')$.  We can interpret kernels of this form in the following way:
+Suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a known function.
+Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
+
+For example, the linear kernel, $\kLin$, has the form $\kLin(x, x') = c(x-a)(x'-a)$.
+Setting $a(x) = \sqrt{c}(x-a)$ we see that multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) sim \gp{}(0, k)$ by a linear function.
+Similarly, multiplying by a changepoint kernel is equivalent to multiplying a \gp{} by a sigmoid function.
+
+This interpretation means that we can separately describe the properties of the model arising from multiplication with kernels of the form $k(x,x') = a(x)a(x')$.
+
+For example, multiplying by a linear kernel means that the amplitude of the function grows linearly away from a central point.  Multiplication by two kernels impplies quadratic growth, etc.
+
+Changepoints are expressed in a similar manner:  By multiplying our function by a sigmoid, we can modulate the condtribution of any given kernel to go to zero in certain regions.  This modulation can be expressed through language such as ``this component applies from 1700 to 1800''.
+
+%The univariate envelopes can be arbitrary products of linear functions and sigmoids which can be simply described by their parameters.
+
+
+
+%\paragraph{Base kernels}
+
+%The priors induced by the base kernels are well understood, with simple descriptions of typical functions.
+
+%\begin{table}[ht]
+%\centering
+%\begin{tabular}{c|cc}
+%Kernel & Function type & Description \\
+%\midrule
+%$\kWN$ & White noise & Each $f(x)$ is \iid\\
+%$\kC$ & Constant & Every $f(x)$ is identical \\
+%$\kSE$ & Smooth & samples of $f(x)$ are infinitely differentiable \\
+%$\kPer$ & Periodic & samples of $f(x)$ are smooth but repeat exactly every period\\
+%$\kLin$ & Linear & $f(x)$ is a straight line \\
+%$\kCP$ & Sigmoid & Allows different covariance in different parts of the input space \\
+%\end{tabular}
+%\label{table:base-kernels}
+%\end{table}
+
+
 
 
 
@@ -226,10 +279,10 @@ This observation extends similarly to kernels of the form $\kSE \times \prod \kP
 
 %Each part of the kernel defines a covariance function, which in turn describes a prior probability distribution over functions.  Conditioned on the dataset, the covariance functions also define a 
 
-\paragraph{Example}
+%\paragraph{Example}
 
 
-%Since the individual additive components produced by the GPSS method are produced by an open-ended grammar, it is impossible to write a lookup table to handle every type of component that GPSS might produce.  %  Hence the part of the procedure which summarizes the individual components must be flexible, and also must present enough information that users can see the meaning of each component themselves.  We summarize each component both in writing and in plots.
+%  Hence the part of the procedure which summarizes the individual components must be flexible, and also must present enough information that users can see the meaning of each component themselves.  We summarize each component both in writing and in plots.
 %
 %For the written portion, a first paragraph reports the type of component found, and the meaning of all kernel parameters in that component.  
 %The compositional nature of kernel structures produced by GPSS allows for simple translation of individual components.
@@ -252,27 +305,20 @@ This observation extends similarly to kernels of the form $\kSE \times \prod \kP
 %\label{table:descriptions}
 %\end{table}
 
-When the orignal version of {\sc GPSS} \citep{DuvLloGroetal13} was applied to airline passenger data, the syntax of the learned kernel structure was
-\begin{equation}
-\kSE \times \big( \kLin + \kLin \times ( \kPer + \kSE ) \big) + \kWN
-\end{equation}
-which can be distributed into a sum of products
-\begin{equation}
-(\kSE \times \kLin) + (\kSE \times \kLin \times \kPer) + (\kSE \times \kLin) + \kWN.
-\end{equation}
-This sum decomposed the regression function into three additive components and additive noise.
-The second component was described by the authors as periodic ($\kPer$) with linearly ($\kLin$) increasing amplitude.
-The corresponding automatically generated description is able to give a more nuanced description
 
-\begin{quotation}
-``This component is approximately periodic with a period of 1.0 years and varying amplitude. Across
-periods the shape of this function varies very smoothly. The amplitude of the function increases
-approximately linearly. The shape of this function within each period has a typical lengthscale of
-6.1 weeks.''
-\end{quotation}
+
+%This sum decomposed the regression function into three additive components and additive noise.
+%The second component was described by the authors as periodic ($\kPer$) with linearly ($\kLin$) increasing amplitude.
+%The corresponding automatically generated description is able to give a more nuanced description
+
+
+
+
+
 
 \section{Automatic Report Generation}
 \label{sec:method}
+\vspace{-0.1in}
 
 Our report generation procedure takes as its starting point a dataset and a composite kernel, which together define a joint posterior probability distribution over a sum of functions.
 The procedure summarizes properties of this complex distribution to the user through a comprehensive report.
@@ -321,6 +367,7 @@ An additional section that automatically describes model-checking procedures is 
 
 \subsection{Example: Summarizing 400 Years of Solar Activity}
 \label{sec:example}
+\vspace{-0.1in}
 
 To give an example of the capabilities of our procedure, we show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011.  This time series has two obvious features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
 %
@@ -466,19 +513,21 @@ Python code to perform all experiments is available on github.\footnote{Availabl
 %{\texttt{www.gaussianprocess.org/gpml/code/}}
 %}
 
-\section{Discussion and Future Work}
+%\section{Discussion and Future Work}
 
-\begin{quotation}
-``The availability of 'user-friendly' statistical software has caused authors to become increasingly careless about the logic of interpreting their results, and to rely uncritically on computer output, often using the 'default option' when something a little different (usually, but not always, a little more complicated) is correct, or at least more appropriate.''
+%\begin{quotation}
+%``The availability of 'user-friendly' statistical software has caused authors to become increasingly careless about the logic of interpreting their results, and to rely uncritically on computer output, often using the 'default option' when something a little different (usually, but not always, a little more complicated) is correct, or at least more appropriate.''
 % In trying to practice this art, the Bayesian has the advantage because his formal apparatus already developed gives him a clearer picture of what to expect, and therefore a sharper perception for recognizing the unexpected.
 
-\defcitealias{dyke1997avoid}{G. Dyke, 1997}
+%\defcitealias{dyke1997avoid}{G. Dyke, 1997}
 %\hspace*{\fill}\citet{Jaynes85highlyinformative}
-\hspace*{\fill}\citetalias{dyke1997avoid}
-\end{quotation}
+%\hspace*{\fill}\citetalias{dyke1997avoid}
+%\end{quotation}
 
 %In this paper, we exhibited the output of a method for automatically constructing and summarizing a compositional Gaussian process regression model in natural language.
 %These summaries can enable human experts and non-experts to understand the implications of a model, check its plausibility, and notice structure not yet captured by the model.
+
+%\pagebreak
 
 \bibliographystyle{unsrt}
 \bibliography{gpss}

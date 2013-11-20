@@ -3,20 +3,77 @@ import unittest
 import numpy as np
 
 #import experiment
-import flexiblekernel as fk
+import model
 #import grammar
 #import translation
 
-class kernel_testcase(unittest.TestCase):
+class model_testcase(unittest.TestCase):
 
     def test_noise_kernel(self):
-        k = fk.NoiseKernel()
+        k = model.NoiseKernel()
         print '\n', k.pretty_print(), '\n'
         print '\n', k.syntax, '\n'
         print '\n', k, '\n'
         print '\n', k.get_gpml_expression(dimensions=3), '\n'
-        k.initialise_params(data_shape = {'output_scale' : 0})
+        k.initialise_params(data_shape = {'y_sd' : 0})
         print '\n', k, '\n'
+        k = k.copy()
+        print '\n', k, '\n'
+        assert k == k.copy()
+        k.load_param_vector(k.param_vector)
+        print '\n', k, '\n'
+
+    def test_sq_exp(self):
+        k = model.SqExpKernel()
+        print '\n', k.pretty_print(), '\n'
+        print '\n', k.syntax, '\n'
+        print '\n', k, '\n'
+        k.dimension = 1
+        print '\n', k.get_gpml_expression(dimensions=3), '\n'
+        k.initialise_params(data_shape = {'y_sd' : 0, 'x_sd' : [0,2], 'x_min' : [-10,-100], 'x_max' : [10,100]})
+        print '\n', k, '\n'
+        assert k == k.copy()
+        k = k.copy()
+        print '\n', k, '\n'
+        assert k == k.copy()
+        k.load_param_vector(k.param_vector)
+        print '\n', k, '\n'
+
+    def test_sum(self):
+        k = model.SqExpKernel()
+        k1 = k.copy()
+        k2 = k.copy()
+        k = k1 + k2
+        print '\n', k.pretty_print(), '\n'
+        print '\n', k.syntax, '\n'
+        print '\n', k, '\n'
+        k1.dimension = 0
+        k2.dimension = 1
+        print '\n', k.pretty_print(), '\n'
+        print '\n', k.syntax, '\n'
+        print '\n', k, '\n'
+        print '\n', k.get_gpml_expression(dimensions=3), '\n'
+        k.initialise_params(data_shape = {'y_sd' : 0, 'x_sd' : [0,2], 'x_min' : [-10,-100], 'x_max' : [10,100]})
+        print '\n', k, '\n'
+        assert k == k.copy()
+        k = k.copy()
+        print '\n', k, '\n'
+        assert k == k.copy()
+        k.load_param_vector(k.param_vector)
+        print '\n', k, '\n'
+        k = k + k.copy()
+        print '\n', k.pretty_print(), '\n'
+        print '\n', k.syntax, '\n'
+        print '\n', k, '\n'
+        k1.dimension = 0
+        k2.dimension = 1
+        print '\n', k.pretty_print(), '\n'
+        print '\n', k.syntax, '\n'
+        print '\n', k, '\n'
+        print '\n', k.get_gpml_expression(dimensions=3), '\n'
+        k.initialise_params(data_shape = {'y_sd' : 0, 'x_sd' : [0,2], 'x_min' : [-10,-100], 'x_max' : [10,100]})
+        print '\n', k, '\n'
+        assert k == k.copy()
         k = k.copy()
         print '\n', k, '\n'
         assert k == k.copy()

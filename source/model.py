@@ -9,108 +9,50 @@ Created Nov 2012
 import itertools
 import numpy as np
 inf = np.inf
-try:
-    import termcolor
-    has_termcolor = True
-except:
-    has_termcolor = False
-
-try:
-    import config
-    color_scheme = config.COLOR_SCHEME
-except:
-    color_scheme = 'dark'
 
 import operator
 from utils import psd_matrices
 import utils.misc
+from utils.misc import colored, format_if_possible
 import re
 from scipy.special import i0 # 0th order Bessel function of the first kind
 
-# Pretty printing - move this to utils
+##############################################
+#                                            #
+#               Base classes                 #
+#                                            #
+##############################################
 
-def paren_colors():
-    if color_scheme == 'dark':
-        return ['red', 'green', 'cyan', 'magenta', 'yellow']
-    elif color_scheme == 'light':
-        return ['blue', 'red', 'magenta', 'green', 'cyan']
-    else:
-        raise RuntimeError('Unknown color scheme: %s' % color_scheme)
+# Base mean / kernel / likelihood function class
 
-def colored(text, depth):
-    if has_termcolor:
-        colors = paren_colors()
-        color = colors[depth % len(colors)]
-        return termcolor.colored(text, color, attrs=['bold'])
-    else:
-        return text
-
-def format_if_possible(format, value):
-    try:
-        return format % value
-    except:
-        return '%s' % value
-
-
-# Base kernel class with default properties and methods - many need to be overwritten
-
-class Kernel:
-    # Syntactic sugar e.g. k1 + k2
-    def __add__(self, other):
-        assert isinstance(other, Kernel)
-        if isinstance(other, SumKernel):
-            return SumKernel([self] + other.operands).copy()
-        else:
-            return SumKernel([self, other]).copy()
-    
-    # Syntactic sugar e.g. k1 * k2
-    def __mul__(self, other):
-        assert isinstance(other, Kernel)
-        if isinstance(other, ProductKernel):
-            return ProductKernel([self] + other.operands).copy()
-        else:
-            return ProductKernel([self, other])
+class FunctionWrapper:
             
-    def __hash__(self):
-        return hash(self.__repr__())
+    def __hash__(self): return hash(self.__repr__())
 
     # Properties
 
     @property
-    def gpml_function(self):
-        raise RuntimeError('This property must be overriden')
+    def gpml_function(self): raise RuntimeError('This property must be overriden')
        
     @property    
-    def is_stationary(self):
-        return True
-       
-    @property    
-    def is_operator(self):
-        return False
-       
-    @property    
-    def is_thunk(self):
-        return False
-    
+    def is_operator(self): return False
+
     @property
-    def id(self):
-        raise RuntimeError('This property must be overriden')
+    def id(self): raise RuntimeError('This property must be overriden')
 
     @property
     def effective_params(self):
         if not self.is_operator:
-            '''This is true of all base kernels, hence definition here'''  
+            '''This is true of all base functions, hence definition here'''  
             return len(self.param_vector())
         else:
             raise RuntimeError('Operators must override this property')
     
     @property
-    def param_vector(self):
-        raise RuntimeError('This property must be overriden')
+    def param_vector(self): raise RuntimeError('This property must be overriden')
 
     @property
-    def latex(self):
-        raise RuntimeError('This property must be overriden') 
+    def latex(self): raise RuntimeError('This property must be overriden') 
 
     @property
     def depth(self):
@@ -120,17 +62,157 @@ class Kernel:
             raise RuntimeError('Operators must override this property')
     
     @property
-    def num_params(self):
-        raise RuntimeError('This property must be overriden') 
+    def num_params(self): return len(self.param_vector)
 
     @property
-    def syntax(self):
-        raise RuntimeError('This property must be overriden') 
+    def syntax(self): raise RuntimeError('This property must be overriden') 
 
     # Methods
 
-    def copy(self):
-        raise RuntimeError('This method must be overriden')
+    def copy(self): raise RuntimeError('This method must be overriden')
+
+    def initialise_params(self, sd=1, data_shape=None): raise RuntimeError('This method must be overriden')
+
+    def __repr__(self): return 'FunctionWrapper()'
+    
+    def pretty_print(self): return RuntimeError('This method must be overriden')
+        
+    def out_of_bounds(self, constraints): return False
+
+    def load_param_vector(self, params): return RuntimeError('This method must be overriden')
+
+    def __cmp__(self, other):
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        return cmp(list(self.param_vector), list(other.param_vector))  
+
+# Base mean function class with default properties and methods
+
+class MeanFunction(FunctionWrapper):
+    # Syntactic sugar e.g. f1 + f2
+    def __add__(self, other):
+        assert isinstance(other, MeanFunction)
+        if isinstance(other, SumFunction):
+            if isinstance(self, SumFunction):
+                self.operands = self.operands + other.operands
+                return self
+            else:
+                other.operands = [self] + other.operands
+                return other
+        else:
+            return SumFunction([self, other])
+    
+    # Syntactic sugar e.g. f1 * f2
+    def __mul__(self, other):
+        assert isinstance(other, MeanFunction)
+        if isinstance(other, ProductFunction):
+            if isinstance(self, ProductFunction):
+                self.operands = self.operands + other.operands
+                return self
+            else:
+                other.operands = [self] + other.operands
+                return other
+        else:
+            return ProductFunction([self, other])
+
+    # Properties
+       
+    @property    
+    def is_thunk(self): return False
+
+    # Methods
+
+    def get_gpml_expression(self, dimensions):
+        if not self.is_operator:
+            if self.is_thunk or (dimensions == 1):
+                return self.gpml_function
+            else:
+                # Need to screen out dimensions
+                assert (self.dimension < dimensions) and (not self.dimension is None)
+                dim_vec = np.zeros(dimensions, dtype=int)
+                dim_vec[self.dimension] = 1
+                dim_vec_str = '[' + ' '.join(map(str, dim_vec)) + ']'
+                return '{@meanMask, {%s, %s}}' % (dim_vec_str, self.gpml_function)
+        else:
+            raise RuntimeError('Operators must override this method')
+
+    def __repr__(self): return 'MeanFunction()'
+
+# Base kernel class with default properties and methods
+
+class Kernel(FunctionWrapper):
+    # Syntactic sugar e.g. k1 + k2
+    def __add__(self, other):
+        assert isinstance(other, Kernel)
+        if isinstance(other, SumKernel):
+            if isinstance(self, SumKernel):
+                self.operands = self.operands + other.operands
+                return self
+            else:
+                other.operands = [self] + other.operands
+                return other
+        else:
+            return SumKernel([self, other])
+    
+    # Syntactic sugar e.g. k1 * k2
+    def __mul__(self, other):
+        assert isinstance(other, Kernel)
+        if isinstance(other, ProductKernel):
+            if isinstance(self, ProductKernel):
+                self.operands = self.operands + other.operands
+                return self
+            else:
+                other.operands = [self] + other.operands
+                return other
+        else:
+            return ProductKernel([self, other])
+
+    # Properties
+       
+    @property    
+    def is_stationary(self): return True
+       
+    @property    
+    def is_thunk(self): return False
+
+    # Methods
+
+    def get_gpml_expression(self, dimensions):
+        if not self.is_operator:
+            if self.is_thunk or (dimensions == 1):
+                return self.gpml_function
+            else:
+                # Need to screen out dimensions
+                assert (self.dimension < dimensions) and (not self.dimension is None)
+                dim_vec = np.zeros(dimensions, dtype=int)
+                dim_vec[self.dimension] = 1
+                dim_vec_str = '[' + ' '.join(map(str, dim_vec)) + ']'
+                return '{@covMask, {%s, %s}}' % (dim_vec_str, self.gpml_function)
+        else:
+            raise RuntimeError('Operators must override this method')
+
+    def __repr__(self): return 'Kernel()'
+
+# Base likelihood function class with default properties and methods
+
+class Likelihood(FunctionWrapper):
+    # Syntactic sugar e.g. l1 + l2
+    def __add__(self, other):
+        assert isinstance(other, Likelihood)
+        if isinstance(other, SumLikelihood):
+            return SumLikelihood([self] + other.operands).copy()
+        else:
+            return SumLikelihood([self, other]).copy()
+    
+    # Syntactic sugar e.g. l1 * l2
+    def __mul__(self, other):
+        assert isinstance(other, Likelihood)
+        if isinstance(other, ProductLikelihood):
+            return ProductLikelihood([self] + other.operands).copy()
+        else:
+            return ProductLikelihood([self, other])
+
+    # Methods
 
     def get_gpml_expression(self, dimensions):
         if not self.is_operator:
@@ -142,25 +224,176 @@ class Kernel:
                 dim_vec = np.zeros(dimensions, dtype=int)
                 dim_vec[self.dimension] = 1
                 dim_vec_str = '[' + ' '.join(map(str, dim_vec)) + ']'
-                return '{@covMask, {%s, %s}}' % (dim_vec_str, self.gpml_function)
+                return '{@meanMask, {%s, %s}}' % (dim_vec_str, self.gpml_function)
         else:
             raise RuntimeError('Operators must override this method')
 
-    def initialise_params(self, sd=1, data_shape=None):
-        raise RuntimeError('This method must be overriden')
+    def __repr__(self): return 'Likelihood()'
+
+# Model class - this will take over from ScoredKernel
+
+class RegressionModel:
+
+    def __init__(self, mean=None, kernel=None, likelihood=None):
+        assert isinstance(mean, MeanFunction) or (mean is None)
+        assert isinstance(kernel, Kernel) or (kernel is None)
+        assert isinstance(likelihood, Likelihood) or (likelihood is None)
+        self.mean = mean
+        self.kernel = kernel
+        self.likelihood = likelihood
 
     def __repr__(self):
-        return 'Kernel()'
+        # Remember all the various scoring criteria
+        return 'RegressionModel(mean=%s, kernel=%s, likelihood=%s)' % \
+               (self.mean.__repr__(), self.kernel.__repr__(), self.likelihood.__repr__())
+
+##############################################
+#                                            #
+#              Mean functions                #
+#                                            #
+##############################################
+
+class MeanZero(MeanFunction):
+    def __init__(self):
+        pass
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@meanZero}'
+
+    @property    
+    def is_thunk(self): return True
+    
+    @property
+    def id(self): return 'Zero'
+    
+    @property
+    def param_vector(self): return np.array([])
+        
+    @property
+    def latex(self): return '{\\emptyset}' 
+    
+    @property
+    def syntax(self): return colored('MZ', self.depth)
+
+    # Methods
+
+    def copy(self): return MeanZero()
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        pass
+    
+    def __repr__(self):
+        return 'MeanZero()'
     
     def pretty_print(self):
-        return RuntimeError('This method must be overriden')
-        
-    def out_of_bounds(self, constraints):
-        '''Most kernels are allowed to have any parameter value'''
-        return False
+        return colored('MZ', self.depth)   
 
     def load_param_vector(self, params):
-        return RuntimeError('This method must be overriden')
+        assert len(params) == 0
+
+class MeanConst(MeanFunction):
+    def __init__(self, c=None):
+        self.c = c
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@meanConst}'
+
+    @property    
+    def is_thunk(self): return True
+    
+    @property
+    def id(self): return 'Const'
+    
+    @property
+    def param_vector(self): return np.array([self.c])
+        
+    @property
+    def latex(self): return '{\\sc C}' 
+    
+    @property
+    def syntax(self): return colored('C', self.depth)
+
+    # Methods
+
+    def copy(self): return MeanConst(c=self.c)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.c == None:
+            # Set offset with data
+            if np.random.rand() < 0.5:
+                self.c = np.random.normal(loc=data_shape['y_mean'], scale=sd*data_shape['y_sd'])
+            else:
+                self.c = np.random.normal(loc=0, scale=sd*data_shape['y_sd'])
+    
+    def __repr__(self):
+        return 'MeanConst(c=%s)' % (self.c)
+    
+    def pretty_print(self):
+        return colored('C(c=%s)' % (format_if_possible('%1.1f', self.c)), self.depth)    
+
+    def load_param_vector(self, params):
+        c, = params # N.B. - expects list input
+        self.c = c   
+
+##############################################
+#                                            #
+#             Kernel functions               #
+#                                            #
+##############################################
+
+# I hope this class can be deleted one day
+class NoneKernel(Kernel):
+    def __init__(self):
+        pass
+
+    def copy(self): return NoneKernel()
+    
+    def __repr__(self):
+        return 'NoneKernel()'
+
+class ZeroKernel(Kernel):
+    def __init__(self):
+        pass
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@covZero}'
+
+    @property    
+    def is_thunk(self): return True
+    
+    @property
+    def id(self): return 'Zero'
+    
+    @property
+    def param_vector(self): return np.array([self.sf])
+        
+    @property
+    def latex(self): return '{\\sc Z}' 
+    
+    @property
+    def syntax(self): return colored('Z', self.depth)
+
+    # Methods
+
+    def copy(self): return ZeroKernel()
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        pass
+    
+    def __repr__(self):
+        return 'ZeroKernel()'
+    
+    def pretty_print(self):
+        return colored('Z', self.depth)   
+
+    def load_param_vector(self, params):
+        pass
 
 class NoiseKernel(Kernel):
     def __init__(self, sf=None):
@@ -169,44 +402,32 @@ class NoiseKernel(Kernel):
     # Properties
         
     @property
-    def gpml_function(self):
-        return '{@covNoise}'
+    def gpml_function(self): return '{@covNoise}'
 
     @property    
-    def is_thunk(self):
-        return True
+    def is_thunk(self): return True
     
     @property
-    def id(self):
-        return 'Noise'
+    def id(self): return 'Noise'
     
     @property
-    def param_vector(self):
-        # order of args matches GPML
-        return np.array([self.sf])
+    def param_vector(self): return np.array([self.sf])
         
     @property
-    def latex(self):
-        return '{\\sc WN}' 
+    def latex(self): return '{\\sc WN}' 
     
     @property
-    def num_params(self):
-        return 1
-    
-    @property
-    def syntax(self):
-        return colored('WN', self.depth)
+    def syntax(self): return colored('WN', self.depth)
 
     # Methods
 
-    def copy(self):
-        return NoiseKernel(self.sf)
+    def copy(self): return NoiseKernel(sf=self.sf)
         
     def initialise_params(self, sd=1, data_shape=None):
         if self.sf == None:
             # Set scale factor with 1/10 data std or neutrally
             if np.random.rand() < 0.5:
-                self.sf = np.random.normal(loc=data_shape['output_scale']-np.log(10), scale=sd)
+                self.sf = np.random.normal(loc=data_shape['y_sd']-np.log(10), scale=sd)
             else:
                 self.sf = np.random.normal(loc=0, scale=sd)
     
@@ -215,12 +436,246 @@ class NoiseKernel(Kernel):
     
     def pretty_print(self):
         return colored('WN(sf=%s)' % (format_if_possible('%1.1f', self.sf)), self.depth)   
+
+    def load_param_vector(self, params):
+        sf, = params # N.B. - expects list input
+        self.sf = sf  
+
+class ConstKernel(Kernel):
+    def __init__(self, sf=None):
+        self.sf = sf
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@covConst}'
+
+    @property    
+    def is_thunk(self): return True
     
-    def __cmp__(self, other):
-        assert isinstance(other, Kernel)
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp(self.sf, other.sf)  
+    @property
+    def id(self): return 'Const'
+    
+    @property
+    def param_vector(self): return np.array([self.sf])
+        
+    @property
+    def latex(self): return '{\\sc C}' 
+    
+    @property
+    def syntax(self): return colored('C', self.depth)
+
+    # Methods
+
+    def copy(self): return ConstKernel(sf=self.sf)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.sf == None:
+            # Set scale factor with output location, scale or neutrally
+            if rand < 1.0 / 3:
+                self.sf = np.random.normal(loc=np.log(np.abs(data_shape['y_mean'])), scale=sd)
+            elif rand < 2.0 / 3:
+                self.sf = np.random.normal(loc=data_shape['y_sd'], scale=sd)
+            else:
+                self.sf = np.random.normal(loc=0, scale=sd)             
+    
+    def __repr__(self):
+        return 'ConstKernel(sf=%s)' % (self.sf)
+    
+    def pretty_print(self):
+        return colored('C(sf=%s)' % (format_if_possible('%1.1f', self.sf)), self.depth)   
+
+    def load_param_vector(self, params):
+        sf, = params # N.B. - expects list input
+        self.sf = sf  
+
+class SqExpKernel(Kernel):
+    def __init__(self, dimension=None, lengthscale=None, sf=None):
+        self.dimension = dimension
+        self.lengthscale = lengthscale
+        self.sf = sf
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@covSEiso}'
+    
+    @property
+    def id(self): return 'SE'
+    
+    @property
+    def param_vector(self): return np.array([self.lengthscale, self.sf])
+        
+    @property
+    def latex(self): return '{\\sc SE}' 
+    
+    @property
+    def syntax(self): return colored('SE_%s' % self.dimension, self.depth)
+
+    # Methods
+
+    def copy(self): return SqExpKernel(dimension=self.dimension, lengthscale=self.lengthscale, sf=self.sf)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.lengthscale == None:
+            # Set lengthscale with input scale or neutrally
+            if np.random.rand() < 0.5:
+                self.lengthscale = np.random.normal(loc=data_shape['x_sd'][self.dimension], scale=sd)
+            else:
+                # Long lengthscale ~ infty = neutral
+                self.lengthscale = np.random.normal(loc=np.log(2*(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])), scale=sd)
+        if self.sf == None:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                self.sf = np.random.normal(loc=data_shape['y_sd'], scale=sd)
+            else:
+                self.sf = np.random.normal(loc=0, scale=sd)         
+    
+    def __repr__(self):
+        return 'SqExpKernel(dimension=%s, lengthscale=%s, sf=%s)' % \
+               (self.dimension, self.lengthscale, self.sf)
+    
+    def pretty_print(self):
+        return colored('SE(dim=%s, ell=%s, sf=%s)' % \
+               (self.dimension, \
+                format_if_possible('%1.1f', self.lengthscale), \
+                format_if_possible('%1.1f', self.sf)), \
+               self.depth)   
+
+    def load_param_vector(self, params):
+        lengthscale, sf = params # N.B. - expects list input
+        self.lengthscale = lengthscale  
+        self.sf = sf  
+
+##############################################
+#                                            #
+#             Kernel operators               #
+#                                            #
+##############################################
+
+class SumKernel(Kernel):
+    def __init__(self, operands=None):
+        if operands is None:
+            self.operands = []
+        else:
+            self.operands  = operands
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@covSum}'
+    
+    @property
+    def id(self): return 'Sum'
+    
+    @property
+    def param_vector(self):
+        return np.concatenate([o.param_vector for o in self.operands])
+        
+    @property
+    def latex(self):
+        return '\\left( ' + ' + '.join([o.latex for o in self.operands]) + ' \\right)'  
+    
+    @property
+    def syntax(self): 
+        op = colored(' + ', self.depth)
+        return colored('( ', self.depth) + \
+            op.join([o.syntax for o in self.operands]) + \
+            colored(' ) ', self.depth)
+       
+    @property    
+    def is_operator(self): return True
+
+    @property
+    def effective_params(self):
+        return sum([o.effective_params for o in self.operands])
+
+    @property
+    def depth(self):
+        return max([o.depth for o in self.operands]) + 1
+
+    # Methods
+
+    def copy(self):
+        return SumKernel(operands=[o.copy() for o in self.operands])
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        for o in self.operands:
+            o.initialise_params(sd=sd, data_shape=data_shape)
+    
+    def __repr__(self):
+        return 'SumKernel(operands=[%s])' % ', '.join(o.__repr__() for o in self.operands)
+    
+    def pretty_print(self):
+        op = colored(' + ', self.depth)
+        return colored('( ', self.depth) + \
+            op.join([o.pretty_print() for o in self.operands]) + \
+            colored(' ) ', self.depth)
+
+    def load_param_vector(self, params):
+        start = 0
+        for o in self.operands:
+            end = start + o.num_params
+            o.load_param_vector(params[start:end])
+            start = end
+
+    def get_gpml_expression(self, dimensions):
+        return '{@covSum, {%s}}' % ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands)
+
+##############################################
+#                                            #
+#           Likelihood functions             #
+#                                            #
+##############################################
+
+class LikGauss(Likelihood):
+    def __init__(self, sf=None):
+        self.sf = sf
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@likGauss}'
+
+    @property    
+    def is_thunk(self): return True
+    
+    @property
+    def id(self): return 'Gauss'
+    
+    @property
+    def param_vector(self): return np.array([self.sf])
+        
+    @property
+    def latex(self): return '{\\sc GS}' 
+    
+    @property
+    def syntax(self): return colored('GS', self.depth)
+
+    @property
+    def effective_params(self):
+        if self.sf == -np.Inf:
+            return 0
+        else:
+            return 1
+
+    # Methods
+
+    def copy(self): return LikGauss(sf=self.sf)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.sf == None:
+            # Set scale factor with 1/10 data std or neutrally
+            if np.random.rand() < 0.5:
+                self.sf = np.random.normal(loc=data_shape['y_sd']-np.log(10), scale=sd)
+            else:
+                self.sf = np.random.normal(loc=0, scale=sd)
+    
+    def __repr__(self):
+        return 'LikGauss(sf=%s)' % (self.sf)
+    
+    def pretty_print(self):
+        return colored('GS(sf=%s)' % (format_if_possible('%1.1f', self.sf)), self.depth)   
 
     def load_param_vector(self, params):
         sf, = params # N.B. - expects list input
@@ -235,7 +690,7 @@ class NoiseKernel(Kernel):
 #         return 2
     
 #     def pretty_print(self):
-#         return colored('SqExp', self.depth())
+#         return colored('SqExp', self.depth)
     
 #     @staticmethod
 #     def default():
@@ -294,7 +749,7 @@ class NoiseKernel(Kernel):
 #         if result[1] == 0:
 #             # Set scale factor with output scale or neutrally
 #             if np.random.rand() < 0.5:
-#                 result[1] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+#                 result[1] = np.random.normal(loc=data_shape['y_sd'], scale=sd)
 #             else:
 #                 result[1] = np.random.normal(loc=0, scale=sd)
 #         return result
@@ -306,7 +761,7 @@ class NoiseKernel(Kernel):
 #         return 'SqExpKernel(lengthscale=%f, output_variance=%f)' % (self.lengthscale, self.output_variance)
     
 #     def pretty_print(self):
-#         return colored('SE(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth())
+#         return colored('SE(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth)
     
 #     def latex_print(self):
 #         #return 'SE(\\ell=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.output_variance)    
@@ -340,7 +795,7 @@ class NoiseKernel(Kernel):
 #         return 3
     
 #     def pretty_print(self):
-#         return colored('FT', self.depth())
+#         return colored('FT', self.depth)
     
 #     #### FIXME - Caution - magic numbers!
     
@@ -414,7 +869,7 @@ class NoiseKernel(Kernel):
 #         if result[2] == 0:
 #             # Set scale factor with output scale or neutrally
 #             if np.random.rand() < 0.5:
-#                 result[2] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+#                 result[2] = np.random.normal(loc=data_shape['y_sd'], scale=sd)
 #             else:
 #                 result[2] = np.random.normal(loc=0, scale=sd)
 #         return result
@@ -428,7 +883,7 @@ class NoiseKernel(Kernel):
     
 #     def pretty_print(self):
 #         return colored('FT(ell=%1.1f, p=%1.1f, sf=%1.1f)' % (self.lengthscale, self.period, self.output_variance),
-#                        self.depth())
+#                        self.depth)
         
 #     def latex_print(self):
 #         # return 'PE(\\ell=%1.1f, p=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.period, self.output_variance)
@@ -459,7 +914,7 @@ class NoiseKernel(Kernel):
 #         return 2
     
 #     def pretty_print(self):
-#         return colored('Cos', self.depth())
+#         return colored('Cos', self.depth)
     
 #     # FIXME - Caution - magic numbers!
     
@@ -525,7 +980,7 @@ class NoiseKernel(Kernel):
 #         if result[1] == 0:
 #             # Set scale factor with output scale or neutrally
 #             if np.random.rand() < 0.5:
-#                 result[1] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+#                 result[1] = np.random.normal(loc=data_shape['y_sd'], scale=sd)
 #             else:
 #                 result[1] = np.random.normal(loc=0, scale=sd)
 #         return result
@@ -539,7 +994,7 @@ class NoiseKernel(Kernel):
     
 #     def pretty_print(self):
 #         return colored('Cos(p=%1.1f, sf=%1.1f)' % (self.period, self.output_variance),
-#                        self.depth())
+#                        self.depth)
         
 #     def latex_print(self):    
 #         return 'Cos'
@@ -568,7 +1023,7 @@ class NoiseKernel(Kernel):
 #         return 3
     
 #     def pretty_print(self):
-#         return colored('SP', self.depth())
+#         return colored('SP', self.depth)
     
 #     # FIXME - Caution - magic numbers!
     
@@ -650,7 +1105,7 @@ class NoiseKernel(Kernel):
 #         if result[1] == 0:
 #             # Set scale factor with output scale or neutrally
 #             if np.random.rand() < 0.5:
-#                 result[1] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+#                 result[1] = np.random.normal(loc=data_shape['y_sd'], scale=sd)
 #             else:
 #                 result[1] = np.random.normal(loc=0, scale=sd)
 #         return result
@@ -664,7 +1119,7 @@ class NoiseKernel(Kernel):
     
 #     def pretty_print(self):
 #         return colored('SP(ell=%1.1f, p=%1.1f, sf=%1.1f)' % (self.lengthscale, self.period, self.output_variance),
-#                        self.depth())
+#                        self.depth)
         
 #     def latex_print(self):         
 #         return 'Spec'
@@ -693,7 +1148,7 @@ class NoiseKernel(Kernel):
 #         return 1
     
 #     def pretty_print(self):
-#         return colored('CS', self.depth())
+#         return colored('CS', self.depth)
     
 #     @staticmethod
 #     def default():
@@ -748,9 +1203,9 @@ class NoiseKernel(Kernel):
 #             # Set scale factor with output location, scale or neutrally
 #             rand = np.random.rand()
 #             if rand < 1.0 / 3:
-#                 result[0] = np.random.normal(loc=np.log(np.abs(data_shape['output_location'])), scale=sd)
+#                 result[0] = np.random.normal(loc=np.log(np.abs(data_shape['y_mean'])), scale=sd)
 #             elif rand < 2.0 / 3:
-#                 result[0] = np.random.normal(loc=data_shape['output_scale'], scale=sd)
+#                 result[0] = np.random.normal(loc=data_shape['y_sd'], scale=sd)
 #             else:
 #                 result[0] = np.random.normal(loc=0, scale=sd)
 #         return result
@@ -761,7 +1216,7 @@ class NoiseKernel(Kernel):
     
 #     def pretty_print(self):
 #         return colored('CS(sf=%1.1f)' % (self.output_variance),
-#                        self.depth())
+#                        self.depth)
         
 #     def latex_print(self):
 #         return 'CS'    
@@ -790,7 +1245,7 @@ class NoiseKernel(Kernel):
 #         return 0
     
 #     def pretty_print(self):
-#         return colored('NIL', self.depth())
+#         return colored('NIL', self.depth)
     
 #     @staticmethod
 #     def default():
@@ -845,7 +1300,7 @@ class NoiseKernel(Kernel):
 #         return 'ZeroKernel()'
     
 #     def pretty_print(self):
-#         return colored('NIL', self.depth())
+#         return colored('NIL', self.depth)
         
 #     def latex_print(self):
 #         return 'NIL'       
@@ -866,7 +1321,7 @@ class NoiseKernel(Kernel):
 #         return 2
     
 #     def pretty_print(self):
-#         return colored('PLN', self.depth())
+#         return colored('PLN', self.depth)
     
 #     @staticmethod
 #     def default():
@@ -922,7 +1377,7 @@ class NoiseKernel(Kernel):
 #             # Or with gradient or a neutral value
 #             rand = np.random.rand()
 #             if rand < 1.0/3:
-#                 result[0] = np.random.normal(loc=-(data_shape['output_scale'] - data_shape['input_scale']), scale=sd)
+#                 result[0] = np.random.normal(loc=-(data_shape['y_sd'] - data_shape['input_scale']), scale=sd)
 #             elif rand < 2.0/3:
 #                 result[0] = np.random.normal(loc=-np.log(np.abs((data_shape['output_max']-data_shape['output_min'])/(data_shape['input_max']-data_shape['input_min']))), scale=sd)
 #             else:
@@ -944,7 +1399,7 @@ class NoiseKernel(Kernel):
     
 #     def pretty_print(self):
 #         return colored('PLN(ell=%1.1f, loc=%1.1f)' % (self.lengthscale, self.location),
-#                        self.depth())
+#                        self.depth)
         
 #     def latex_print(self):
 #         return 'PureLin'           
@@ -984,11 +1439,11 @@ class NoiseKernel(Kernel):
 #         return 2 + sum([e.num_params() for e in self.operands])
     
 #     def pretty_print(self):        
-#         return colored('CPT(', self.depth()) + \
+#         return colored('CPT(', self.depth) + \
 #             self.operands[0].pretty_print() + \
-#             colored(', ', self.depth()) + \
+#             colored(', ', self.depth) + \
 #             self.operands[1].pretty_print() + \
-#             colored(')', self.depth())
+#             colored(')', self.depth)
 
 #     def default(self):
 #         return ChangePointTanhKernel(0., 0., [op.default() for op in self.operands])
@@ -1000,7 +1455,7 @@ class NoiseKernel(Kernel):
 #         return cmp(self.operands, other.operands)
     
 #     def depth(self):
-#         return max([op.depth() for op in self.operands]) + 1
+#         return max([op.depth for op in self.operands]) + 1
 
 # class ChangePointTanhKernel(KernelOperator):
 #     def __init__(self, location, steepness, operands):
@@ -1012,11 +1467,11 @@ class NoiseKernel(Kernel):
 #         return ChangePointTanhKernelFamily([e.family() for e in self.operands])
         
 #     def pretty_print(self): 
-#         return colored('CPT(loc=%1.1f, steep=%1.1f, ' % (self.location, self.steepness), self.depth()) + \
+#         return colored('CPT(loc=%1.1f, steep=%1.1f, ' % (self.location, self.steepness), self.depth) + \
 #             self.operands[0].pretty_print() + \
-#             colored(', ', self.depth()) + \
+#             colored(', ', self.depth) + \
 #             self.operands[1].pretty_print() + \
-#             colored(')', self.depth())
+#             colored(')', self.depth)
             
 #     def latex_print(self):
 #         return 'CPT\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
@@ -1057,7 +1512,7 @@ class NoiseKernel(Kernel):
 #                    (other.location, other.steepness, other.operands))
     
 #     def depth(self):
-#         return max([op.depth() for op in self.operands]) + 1
+#         return max([op.depth for op in self.operands]) + 1
             
 #     def out_of_bounds(self, constraints):
 #         return (self.location < constraints['input_min']) or \
@@ -1086,11 +1541,11 @@ class NoiseKernel(Kernel):
 #         return 3 + sum([e.num_params() for e in self.operands])
     
 #     def pretty_print(self):        
-#         return colored('CBT(', self.depth()) + \
+#         return colored('CBT(', self.depth) + \
 #             self.operands[0].pretty_print() + \
-#             colored(', ', self.depth()) + \
+#             colored(', ', self.depth) + \
 #             self.operands[1].pretty_print() + \
-#             colored(')', self.depth())
+#             colored(')', self.depth)
     
 #     def default(self):
 #         return ChangeBurstTanhKernel(0., 0., 0., [op.default() for op in self.operands])
@@ -1102,7 +1557,7 @@ class NoiseKernel(Kernel):
 #         return cmp(self.operands, other.operands)
     
 #     def depth(self):
-#         return max([op.depth() for op in self.operands]) + 1
+#         return max([op.depth for op in self.operands]) + 1
 
 # class ChangeBurstTanhKernel(KernelOperator):
 #     def __init__(self, location, steepness, width, operands):
@@ -1115,11 +1570,11 @@ class NoiseKernel(Kernel):
 #         return ChangeBurstTanhKernelFamily([e.family() for e in self.operands])
         
 #     def pretty_print(self): 
-#         return colored('CBT(loc=%1.1f, steep=%1.1f, width=%1.1f, ' % (self.location, self.steepness, self.width), self.depth()) + \
+#         return colored('CBT(loc=%1.1f, steep=%1.1f, width=%1.1f, ' % (self.location, self.steepness, self.width), self.depth) + \
 #             self.operands[0].pretty_print() + \
-#             colored(', ', self.depth()) + \
+#             colored(', ', self.depth) + \
 #             self.operands[1].pretty_print() + \
-#             colored(')', self.depth())
+#             colored(')', self.depth)
             
 #     def latex_print(self):
 #         return 'CBT\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
@@ -1164,7 +1619,7 @@ class NoiseKernel(Kernel):
 #                    (other.location, other.steepness, self.width, other.operands))
     
 #     def depth(self):
-#         return max([op.depth() for op in self.operands]) + 1
+#         return max([op.depth for op in self.operands]) + 1
             
 #     def out_of_bounds(self, constraints):
 #         return (self.location - np.exp(self.width)/2 < constraints['input_min'] + 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
@@ -1190,10 +1645,10 @@ class NoiseKernel(Kernel):
 #         return sum([e.num_params() for e in self.operands])
     
 #     def pretty_print(self):
-#         op = colored(' + ', self.depth())
-#         return colored('( ', self.depth()) + \
+#         op = colored(' + ', self.depth)
+#         return colored('( ', self.depth) + \
 #             op.join([e.pretty_print() for e in self.operands]) + \
-#             colored(' ) ', self.depth())
+#             colored(' ) ', self.depth)
     
 #     def default(self):
 #         return SumKernel([op.default() for op in self.operands])
@@ -1205,7 +1660,7 @@ class NoiseKernel(Kernel):
 #         return cmp(self.operands, other.operands)
     
 #     def depth(self):
-#         return max([op.depth() for op in self.operands]) + 1
+#         return max([op.depth for op in self.operands]) + 1
 
 # class SumKernel(KernelOperator):
 #     def __init__(self, operands):
@@ -1216,10 +1671,10 @@ class NoiseKernel(Kernel):
         
 #     def pretty_print(self):
 #         #### TODO - Should this call the family method?
-#         op = colored(' + ', self.depth())
-#         return colored('( ', self.depth()) + \
+#         op = colored(' + ', self.depth)
+#         return colored('( ', self.depth) + \
 #             op.join([e.pretty_print() for e in self.operands]) + \
-#             colored(' ) ', self.depth())
+#             colored(' ) ', self.depth)
             
 #     def latex_print(self):
 #         return '\\left( ' + ' + '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
@@ -1251,7 +1706,7 @@ class NoiseKernel(Kernel):
 #         return cmp(self.operands, other.operands)
     
 #     def depth(self):
-#         return max([op.depth() for op in self.operands]) + 1
+#         return max([op.depth for op in self.operands]) + 1
     
 #     def __add__(self, other):
 #         assert isinstance(other, Kernel)
@@ -1280,10 +1735,10 @@ class NoiseKernel(Kernel):
 #         return sum([e.num_params() for e in self.operands])
     
 #     def pretty_print(self):
-#         op = colored(' x ', self.depth())
-#         return colored('( ', self.depth()) + \
+#         op = colored(' x ', self.depth)
+#         return colored('( ', self.depth) + \
 #             op.join([e.pretty_print() for e in self.operands]) + \
-#             colored(' ) ', self.depth())
+#             colored(' ) ', self.depth)
     
 #     def default(self):
 #         return ProductKernel([op.default() for op in self.operands])
@@ -1295,7 +1750,7 @@ class NoiseKernel(Kernel):
 #         return cmp(self.operands, other.operands)
     
 #     def depth(self):
-#         return max([op.depth() for op in self.operands]) + 1
+#         return max([op.depth for op in self.operands]) + 1
         
         
 # class ProductKernel(KernelOperator):
@@ -1307,10 +1762,10 @@ class NoiseKernel(Kernel):
         
 #     def pretty_print(self):
 #         #### TODO - Should this call the family method?
-#         op = colored(' x ', self.depth())
-#         return colored('( ', self.depth()) + \
+#         op = colored(' x ', self.depth)
+#         return colored('( ', self.depth) + \
 #             op.join([e.pretty_print() for e in self.operands]) + \
-#             colored(' ) ', self.depth())
+#             colored(' ) ', self.depth)
 
 #     def latex_print(self):
 #         return ' \\times '.join([e.latex_print() for e in self.operands])
@@ -1343,7 +1798,7 @@ class NoiseKernel(Kernel):
 #         return cmp(self.operands, other.operands)
     
 #     def depth(self):
-#         return max([op.depth() for op in self.operands]) + 1
+#         return max([op.depth for op in self.operands]) + 1
     
 #     def __mul__(self, other):
 #         assert isinstance(other, Kernel)

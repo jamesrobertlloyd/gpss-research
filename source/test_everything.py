@@ -80,6 +80,46 @@ class model_testcase(unittest.TestCase):
         k.load_param_vector(k.param_vector)
         print '\n', k, '\n'
 
+    def test_model(self):
+        m = model.MeanZero()
+        k = model.SqExpKernel()
+        l = model.LikGauss()
+        regression_model = model.RegressionModel(mean=m, kernel=k, likelihood=l)
+        print '\n', regression_model.pretty_print(), '\n'
+        print '\n', regression_model.__repr__(), '\n'
+
+    def test_base(self):
+        kernels = model.base_kernels_without_dimension('SE,Const,Noise')
+        for k in kernels:
+            print '\n', k.pretty_print(), '\n'
+        kernels = model.base_kernels(3, 'SE,Const,Noise')
+        for k in kernels:
+            print '\n', k.pretty_print(), '\n'
+
+    def test_repr(self):
+        m = model.MeanZero()
+        k = model.SqExpKernel()
+        l = model.LikGauss()
+        regression_model = model.RegressionModel(mean=m, kernel=k, likelihood=l)
+        print regression_model
+        print  model.repr_to_model(regression_model.__repr__())
+        assert regression_model == model.repr_to_model(regression_model.__repr__())
+
+    def test_collapse_add_idempotent(self):
+        k = model.SqExpKernel()
+        k1 = k.copy()
+        k2 = k.copy()
+        k = model.NoiseKernel(sf=-1)
+        k3 = k.copy()
+        k4 = k.copy()
+        k = model.ConstKernel(sf=1)
+        k5 = k.copy()
+        k6 = k.copy()
+        k = k1 + k2 + k3 + k4 + k5 + k6
+        print '\n', k.pretty_print(), '\n'
+        k = model.collapse_additive_idempotency(k)
+        print '\n', k.pretty_print(), '\n'
+
     # def test_wrong_dimension(self):
     #     try:
     #         k = fk.MaskKernelFamily(1,1,fk.SqExpKernelFamily())

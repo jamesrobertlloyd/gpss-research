@@ -4716,7 +4716,7 @@ class ScoredKernel:
     def score(self, criterion='bic'):
         return {'bic': self.bic_nle,
                 'aic': self.aic_nle,
-                'pl2': self.pl2_nle,
+                'pl2': self.pl2,
                 'nll': self.nll,
                 'laplace': self.laplace_nle,
                 'npll': self.npll,

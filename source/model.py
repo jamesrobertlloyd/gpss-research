@@ -582,6 +582,20 @@ class SumKernel(Kernel):
             self.operands  = operands
 
     # Properties
+
+    @property    
+    def is_stationary(self):
+        return all(o.is_stationary for o in self.operands)
+
+    @property
+    def sf(self):
+        if self.is_stationary:
+            sf = 0
+            for o in self.operands:
+                sf += np.exp(2*o.sf)
+            return 0.5*np.log(sf)
+        else:
+            raise RuntimeError('Cannot ask for scale factor of non-stationary kernel')
         
     @property
     def arity(self): return 'n'
@@ -645,6 +659,89 @@ class SumKernel(Kernel):
 
     def get_gpml_expression(self, dimensions):
         return '{@covSum, {%s}}' % ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands)
+
+class ProductKernel(Kernel):
+    def __init__(self, operands=None):
+        if operands is None:
+            self.operands = []
+        else:
+            self.operands  = operands
+
+    # Properties
+
+    @property    
+    def is_stationary(self):
+        return all(o.is_stationary for o in self.operands)
+
+    @property
+    def sf(self):
+        if self.is_stationary:
+            return sum(o.sf for o in self.operands)
+        else:
+            raise RuntimeError('Cannot ask for scale factor of non-stationary kernel')
+        
+    @property
+    def arity(self): return 'n'
+        
+    @property
+    def gpml_function(self): return '{@covProd}'
+    
+    @property
+    def id(self): return 'Product'
+    
+    @property
+    def param_vector(self):
+        return np.concatenate([o.param_vector for o in self.operands])
+        
+    @property
+    def latex(self):
+        return ' \\times '.join([o.latex for o in self.operands])  
+    
+    @property
+    def syntax(self): 
+        op = colored(' x ', self.depth)
+        return colored('( ', self.depth) + \
+            op.join([o.syntax for o in self.operands]) + \
+            colored(' ) ', self.depth)
+       
+    @property    
+    def is_operator(self): return True
+
+    @property
+    def effective_params(self):
+        return sum([o.effective_params for o in self.operands])
+
+    @property
+    def depth(self):
+        return max([o.depth for o in self.operands]) + 1
+
+    # Methods
+
+    def copy(self):
+        return ProductKernel(operands=[o.copy() for o in self.operands])
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        for o in self.operands:
+            o.initialise_params(sd=sd, data_shape=data_shape)
+    
+    def __repr__(self):
+        return 'ProductKernel(operands=[%s])' % ', '.join(o.__repr__() for o in self.operands)
+    
+    def pretty_print(self):
+        op = colored(' x ', self.depth)
+        return colored('( ', self.depth) + \
+            op.join([o.pretty_print() for o in self.operands]) + \
+            colored(' ) ', self.depth)
+
+    def load_param_vector(self, params):
+        start = 0
+        for o in self.operands:
+            end = start + o.num_params
+            o.load_param_vector(params[start:end])
+            start = end
+
+    def get_gpml_expression(self, dimensions):
+        return '{@covProd, {%s}}' % ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands)
 
 ##############################################
 #                                            #
@@ -711,58 +808,6 @@ class LikGauss(Likelihood):
 #                                            #
 ##############################################
 
-# # This removes additively idempotent redundancy        
-# def collapse_const_sums(kernel):
-#     '''Replaces sums of constants with a single constant'''
-#     if not kernel.is_operator:
-#         return kernel
-#     else if kernel.arity == 'n':    
-#         if isinstance(kernel, SumKernel):
-#             new_ops = []
-#             for op in kernel.operands:
-#                 op_canon = collapse_const_sums(op)
-#                 if isinstance(op_canon, SumKernel):
-#                     new_ops += op_canon.operands
-#                 elif not isinstance(op_canon, NoneKernel):
-#                     new_ops.append(op_canon)
-#             # Check for multiple const kernels
-#             new_ops_wo_multi_const = []
-#             sf = 0
-#             for op in new_ops:
-#                 if isinstance(op, MaskKernel) and isinstance(op.base_kernel, ConstKernel):
-#                     sf += np.exp(2*op.base_kernel.output_variance)
-#                 elif isinstance(op, ConstKernel):
-#                     sf += np.exp(2*op.output_variance)
-#                 else:
-#                     new_ops_wo_multi_const.append(op)
-#             if sf > 0:
-#                 new_ops_wo_multi_const.append(ConstKernel(output_variance=np.log(sf)*0.5))
-#             new_ops = new_ops_wo_multi_const
-#             if len(new_ops) == 0:
-#                 return NoneKernel()
-#             elif len(new_ops) == 1:
-#                 return new_ops[0]
-#             else:
-#                 return SumKernel(sorted(new_ops))
-#         elif isinstance(kernel, ProductKernel):
-#             new_ops = []
-#             for op in kernel.operands:
-#                 op_canon = collapse_const_sums(op)
-#                 if isinstance(op_canon, ProductKernel):
-#                     new_ops += op_canon.operands
-#                 elif not isinstance(op_canon, NoneKernel):
-#                     new_ops.append(op_canon)
-#             if len(new_ops) == 0:
-#                 return NoneKernel()
-#             elif len(new_ops) == 1:
-#                 return new_ops[0]
-#             else:
-#                 return ProductKernel(sorted(new_ops))
-#     else:
-#         for o in kernel.operands:
-#             o = collapse_const_sums(o)
-#         return kernel
-
 def canonical(k):
     '''Sorts a kernel tree into a canonical form.'''
     if not k.is_operator:
@@ -790,8 +835,8 @@ def canonical(k):
             k.operands = new_ops
             return k
 
-# TODO - these can likely be abstracted in the future
 def collapse_additive_idempotency(k):
+    # TODO - abstract this behaviour
     k = canonical(k)
     if not k.is_operator:
         return k
@@ -829,6 +874,64 @@ def collapse_additive_idempotency(k):
     else:
         for o in k.operands:
             o = collapse_additive_idempotency(o)
+        return k
+
+def collapse_multiplicative_idempotency(k):
+    # TODO - abstract this behaviour
+    k = canonical(k)
+    if not k.is_operator:
+        return k
+    elif isinstance(k, ProductKernel):
+        ops = [collapse_multiplicative_idempotency(o) for o in k.operands]
+        # Count the number of SEs in different dimensions
+        lengthscales = {}
+        sfs = {}
+        not_SE_ops = []
+        for op in ops:
+            if isinstance(op, SqExpKernel):
+                if not lengthscales.has_key(op.dimension):
+                    lengthscales[op.dimension] = np.Inf
+                    sfs[op.dimension] = 0
+                lengthscales[op.dimension] = -0.5 * np.log(np.exp(-2*lengthscales[op.dimension]) + np.exp(-2*op.lengthscale))
+                sfs[op.dimension] += op.sf
+            else:
+                not_SE_ops.append(op)
+        # Compactify if necessary
+        ops = not_SE_ops
+        for dimension in lengthscales:
+            ops += [SqExpKernel(dimension=dimension, lengthscale=lengthscales[dimension], sf=sfs[dimension])]
+        # Count the number of white noises
+        sf = 0
+        WN_count = 0
+        not_WN_ops = []
+        for op in ops:
+            if isinstance(op, NoiseKernel):
+                WN_count += 1
+                sf += op.sf
+            else:
+                not_WN_ops.append(op)
+        # Compactify if necessary
+        if WN_count > 0:
+            ops = not_WN_ops + [NoiseKernel(sf=sf)]
+        # Now count the number of constants
+        sf = 0
+        const_count = 0
+        not_const_ops = []
+        for op in ops:
+            if isinstance(op, ConstKernel):
+                const_count += 1
+                sf += op.sf
+            else:
+                not_const_ops.append(op)
+         # Compactify if necessary
+        if const_count > 0:
+            ops = not_const_ops + [ConstKernel(sf=sf)]
+        # Finish
+        k.operands = ops
+        return canonical(k)
+    else:
+        for o in k.operands:
+            o = collapse_multiplicative_idempotency(o)
         return k
 
 

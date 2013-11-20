@@ -79,6 +79,49 @@ class model_testcase(unittest.TestCase):
         assert k == k.copy()
         k.load_param_vector(k.param_vector)
         print '\n', k, '\n'
+        k.sf
+
+    def test_prod(self):
+        k = model.SqExpKernel()
+        k1 = k.copy()
+        k2 = k.copy()
+        k = k1 * k2
+        print '\n', k.pretty_print(), '\n'
+        print '\n', k.syntax, '\n'
+        print '\n', k, '\n'
+        k1.dimension = 0
+        k2.dimension = 1
+        print '\n', k.pretty_print(), '\n'
+        print '\n', k.syntax, '\n'
+        print '\n', k, '\n'
+        print '\n', k.get_gpml_expression(dimensions=3), '\n'
+        k.initialise_params(data_shape = {'y_sd' : 0, 'x_sd' : [0,2], 'x_min' : [-10,-100], 'x_max' : [10,100]})
+        print '\n', k, '\n'
+        assert k == k.copy()
+        k = k.copy()
+        print '\n', k, '\n'
+        assert k == k.copy()
+        k.load_param_vector(k.param_vector)
+        print '\n', k, '\n'
+        k = k + k.copy()
+        print '\n', k.pretty_print(), '\n'
+        print '\n', k.syntax, '\n'
+        print '\n', k, '\n'
+        k1.dimension = 0
+        k2.dimension = 1
+        print '\n', k.pretty_print(), '\n'
+        print '\n', k.syntax, '\n'
+        print '\n', k, '\n'
+        print '\n', k.get_gpml_expression(dimensions=3), '\n'
+        k.initialise_params(data_shape = {'y_sd' : 0, 'x_sd' : [0,2], 'x_min' : [-10,-100], 'x_max' : [10,100]})
+        print '\n', k, '\n'
+        assert k == k.copy()
+        k = k.copy()
+        print '\n', k, '\n'
+        assert k == k.copy()
+        k.load_param_vector(k.param_vector)
+        print '\n', k, '\n'
+        k.sf
 
     def test_model(self):
         m = model.MeanZero()
@@ -118,6 +161,32 @@ class model_testcase(unittest.TestCase):
         k = k1 + k2 + k3 + k4 + k5 + k6
         print '\n', k.pretty_print(), '\n'
         k = model.collapse_additive_idempotency(k)
+        print '\n', k.pretty_print(), '\n'
+
+    def test_collapse_mult_idempotent(self):
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        k = k1 * k2
+        print '\n', k.pretty_print(), '\n'
+        k = model.collapse_multiplicative_idempotency(k)
+        assert (isinstance(k, model.SqExpKernel)) and (k.dimension == 0)
+        print '\n', k.pretty_print(), '\n'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        k = model.SqExpKernel(dimension=1, lengthscale=2, sf=2)
+        k3 = k.copy()
+        k4 = k.copy()
+        k5 = model.NoiseKernel(sf=-1)
+        k6 = model.ConstKernel(sf=1)
+        k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy()
+        print '\n', k.pretty_print(), '\n'
+        k = model.collapse_multiplicative_idempotency(k)
+        print '\n', k.pretty_print(), '\n'
+        k = k1 * k2 * k3 * k4 * k5 * k5.copy() * k6 * k6.copy()
+        print '\n', k.pretty_print(), '\n'
+        k = model.collapse_multiplicative_idempotency(k)
         print '\n', k.pretty_print(), '\n'
 
     # def test_wrong_dimension(self):

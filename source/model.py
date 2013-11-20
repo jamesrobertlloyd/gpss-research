@@ -191,6 +191,15 @@ class Kernel(FunctionWrapper):
         else:
             raise RuntimeError('Operators must override this method')
 
+    def multiply_by_const(self, sf):
+        if not self.is_operator:
+            if self.is_stationary:
+                self.sf += sf
+            else:
+                raise RuntimeError('Non-stationary kernels must override this method')
+        else:
+            raise RuntimeError('Operators must override this method')
+
     def __repr__(self): return 'Kernel()'
 
 # Base likelihood function class with default properties and methods
@@ -376,6 +385,9 @@ class NoneKernel(Kernel):
     def __repr__(self):
         return 'NoneKernel()'
 
+    def multiply_by_const(self, sf):
+        pass
+
 class ZeroKernel(Kernel):
     def __init__(self):
         pass
@@ -414,6 +426,9 @@ class ZeroKernel(Kernel):
         return colored('Z', self.depth)   
 
     def load_param_vector(self, params):
+        pass
+
+    def multiply_by_const(self, sf):
         pass
 
 class NoiseKernel(Kernel):
@@ -660,6 +675,10 @@ class SumKernel(Kernel):
     def get_gpml_expression(self, dimensions):
         return '{@covSum, {%s}}' % ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands)
 
+    def multiply_by_const(self, sf):
+        for o in self.operands:
+            o.multiply_by_const(sf=sf)
+
 class ProductKernel(Kernel):
     def __init__(self, operands=None):
         if operands is None:
@@ -742,6 +761,9 @@ class ProductKernel(Kernel):
 
     def get_gpml_expression(self, dimensions):
         return '{@covProd, {%s}}' % ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands)
+
+    def multiply_by_const(self, sf):
+        self.operands[0].multiply_by_const(sf=sf)
 
 ##############################################
 #                                            #
@@ -934,275 +956,62 @@ def collapse_multiplicative_idempotency(k):
             o = collapse_multiplicative_idempotency(o)
         return k
 
-
-    # if isinstance(k, fk.ProductKernel):
-    #     ops = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
-    #     # Count the number of SEs
-    #     lengthscale = np.Inf
-    #     output_variance = 0
-    #     SE_count = 0
-    #     not_SE_ops = []
-    #     for op in ops:
-    #         if isinstance(op, fk.SqExpKernel):
-    #             SE_count += 1
-    #             lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*op.lengthscale))
-    #             output_variance += op.output_variance
-    #         elif isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.SqExpKernel):
-    #             SE_count += 1
-    #             lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*op.base_kernel.lengthscale))
-    #             output_variance += op.base_kernel.output_variance
-    #         else:
-    #             not_SE_ops.append(op)
-    #     # Compactify if necessary
-    #     if SE_count > 1:
-    #         #### FIXME - assuming 1d
-    #         ops = not_SE_ops + [fk.MaskKernel(1, 0, fk.SqExpKernel(lengthscale=lengthscale, output_variance=output_variance))]
-    #     # Count the number of white noises - and remove any stationary kernels
-    #     output_variance = 0
-    #     WN_count = 0
-    #     not_WN_ops = []
-    #     for op in ops:
-    #         if isinstance(op, fk.NoiseKernel):
-    #             WN_count += 1
-    #             output_variance += op.output_variance
-    #         elif isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.NoiseKernel):
-    #             WN_count += 1
-    #             output_variance += op.base_kernel.output_variance
-    #         else:
-    #             if op.stationary:
-    #                 # Stationary kernel - merge with base kernel
-    #                 output_variance += op.base_kernel.output_variance
-    #             else:
-    #                 not_WN_ops.append(op)
-    #     # Compactify if necessary
-    #     if WN_count > 0:
-    #         #### FIXME - assuming 1d
-    #         ops = not_WN_ops + [fk.MaskKernel(1, 0, fk.NoiseKernel(output_variance=output_variance))]
-    #     # Now count the number of constants
-    #     output_variance = 0
-    #     const_count = 0
-    #     not_const_ops = []
-    #     for op in ops:
-    #         if isinstance(op, fk.ConstKernel):
-    #             const_count += 1
-    #             output_variance += op.output_variance
-    #         elif (isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.ConstKernel)):
-    #             const_count += 1
-    #             output_variance += op.base_kernel.output_variance
-    #         else:
-    #             not_const_ops.append(op)
-    #      # Compactify if necessary
-    #     if (const_count > 0) and len(not_const_ops) > 0:
-    #         if not additive_mode:
-    #             #### FIXME - this reduces expressions to one multiplicative const
-    #             ####       - this was much simpler to code, and is hinting that our expressions should
-    #             ####       - explicitly separate all multiplicative factors into a special term
-    #             ops = not_const_ops + [fk.MaskKernel(1,0,fk.ConstKernel(output_variance=output_variance))]
-    #         else:
-    #             #### BROKEN - does not work with sum kernels
-    #             #### WARNING - this assumes a small set of base kernels and additive form (i.e. multiplicative changepoints already dealt with)
-    #             ops = not_const_ops
-    #             if isinstance(ops[0].base_kernel, fk.LinKernel):
-    #                 ops[0].base_kernel.lengthscale -= output_variance
-    #                 ops[0].base_kernel.offset += output_variance
-    #             elif isinstance(ops[0].base_kernel, fk.PureLinKernel):
-    #                 ops[0].base_kernel.lengthscale -= output_variance
-    #             else:
-    #                 #### WARNING - big assumption about the form of the kernel
-    #                 # - no error checking so this will crash if something else happens
-    #                 ops[0].base_kernel.output_variance += output_variance
-    #     elif const_count > 1:
-    #         # Just constants
-    #         #### FIXME - assuming 1d and masks
-    #         return fk.MaskKernel(1,0,fk.ConstKernel(output_variance=output_variance))
-    #     # Finish
-    #     new_kernel = k.copy()
-    #     new_kernel.operands = ops
-    #     return canonical(new_kernel)
-    # elif isinstance(k, fk.SumKernel): 
-    #     ops = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
-    #     # Count the number of white noises
-    #     output_variance = 0
-    #     WN_count = 0
-    #     not_WN_ops = []
-    #     for op in ops:
-    #         if isinstance(op, fk.NoiseKernel):
-    #             WN_count += 1
-    #             output_variance += np.exp(2*op.output_variance)
-    #         elif isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.NoiseKernel):
-    #             WN_count += 1
-    #             output_variance += np.exp(2*op.base_kernel.output_variance)
-    #         else:
-    #             not_WN_ops.append(op)
-    #     # Compactify if necessary
-    #     if WN_count > 0:
-    #         #### FIXME - assuming 1d
-    #         ops = not_WN_ops + [fk.MaskKernel(1, 0, fk.NoiseKernel(output_variance=0.5*np.log(output_variance)))]
-    #     # Now count the number of constants
-    #     output_variance = 0
-    #     const_count = 0
-    #     not_const_ops = []
-    #     for op in ops:
-    #         if isinstance(op, fk.ConstKernel):
-    #             const_count += 1
-    #             output_variance += np.exp(2*op.output_variance)
-    #         elif (isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.ConstKernel)):
-    #             const_count += 1
-    #             output_variance += np.exp(2*op.base_kernel.output_variance)
-    #         else:
-    #             not_const_ops.append(op)
-    #      # Compactify if necessary
-    #     if (const_count > 0):
-    #         #### FIXME - assuming 1d
-    #         ops = not_const_ops + [fk.MaskKernel(1, 0, fk.ConstKernel(output_variance=0.5*np.log(output_variance)))]
-    #     # Finish
-    #     new_kernel = k.copy()
-    #     new_kernel.operands = ops
-    #     return canonical(new_kernel)
-    # elif isinstance(k, fk.ChangePointTanhKernel) or isinstance(k, fk.ChangeBurstTanhKernel):
-    #     new_kernel = k.copy()
-    #     new_kernel.operands = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
-    #     return canonical(new_kernel)
-    # else:
-    #     return canonical(k) # Just to make it clear that the output is always canonical
-
-def collapse_kernel(k, additive_mode=False):
-    '''
-    Removes syntactic identites, zeros and idempotency
-    '''
-    #### WARNING - assumes 1d
-    #### TODO - for initial testing this function assumes additive form of kernel 
-    ####      - i.e. it isn't guaranteed to remove all redundancy
-    if isinstance(k, fk.ProductKernel):
-        ops = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
-        # Count the number of SEs
-        lengthscale = np.Inf
-        output_variance = 0
-        SE_count = 0
-        not_SE_ops = []
-        for op in ops:
-            if isinstance(op, fk.SqExpKernel):
-                SE_count += 1
-                lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*op.lengthscale))
-                output_variance += op.output_variance
-            elif isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.SqExpKernel):
-                SE_count += 1
-                lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*op.base_kernel.lengthscale))
-                output_variance += op.base_kernel.output_variance
-            else:
-                not_SE_ops.append(op)
-        # Compactify if necessary
-        if SE_count > 1:
-            #### FIXME - assuming 1d
-            ops = not_SE_ops + [fk.MaskKernel(1, 0, fk.SqExpKernel(lengthscale=lengthscale, output_variance=output_variance))]
-        # Count the number of white noises - and remove any stationary kernels
-        output_variance = 0
+def collapse_multiplicative_zero(k):
+    # TODO - abstract this behaviour
+    k = canonical(k)
+    if not k.is_operator:
+        return k
+    elif isinstance(k, ProductKernel):
+        ops = [collapse_multiplicative_zero(o) for o in k.operands]
+        sf = 0
         WN_count = 0
         not_WN_ops = []
         for op in ops:
-            if isinstance(op, fk.NoiseKernel):
+            if isinstance(op, NoiseKernel):
                 WN_count += 1
-                output_variance += op.output_variance
-            elif isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.NoiseKernel):
-                WN_count += 1
-                output_variance += op.base_kernel.output_variance
-            else:
-                if op.stationary:
-                    # Stationary kernel - merge with base kernel
-                    output_variance += op.base_kernel.output_variance
-                else:
-                    not_WN_ops.append(op)
-        # Compactify if necessary
-        if WN_count > 0:
-            #### FIXME - assuming 1d
-            ops = not_WN_ops + [fk.MaskKernel(1, 0, fk.NoiseKernel(output_variance=output_variance))]
-        # Now count the number of constants
-        output_variance = 0
-        const_count = 0
-        not_const_ops = []
-        for op in ops:
-            if isinstance(op, fk.ConstKernel):
-                const_count += 1
-                output_variance += op.output_variance
-            elif (isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.ConstKernel)):
-                const_count += 1
-                output_variance += op.base_kernel.output_variance
-            else:
-                not_const_ops.append(op)
-         # Compactify if necessary
-        if (const_count > 0) and len(not_const_ops) > 0:
-            if not additive_mode:
-                #### FIXME - this reduces expressions to one multiplicative const
-                ####       - this was much simpler to code, and is hinting that our expressions should
-                ####       - explicitly separate all multiplicative factors into a special term
-                ops = not_const_ops + [fk.MaskKernel(1,0,fk.ConstKernel(output_variance=output_variance))]
-            else:
-                #### BROKEN - does not work with sum kernels
-                #### WARNING - this assumes a small set of base kernels and additive form (i.e. multiplicative changepoints already dealt with)
-                ops = not_const_ops
-                if isinstance(ops[0].base_kernel, fk.LinKernel):
-                    ops[0].base_kernel.lengthscale -= output_variance
-                    ops[0].base_kernel.offset += output_variance
-                elif isinstance(ops[0].base_kernel, fk.PureLinKernel):
-                    ops[0].base_kernel.lengthscale -= output_variance
-                else:
-                    #### WARNING - big assumption about the form of the kernel
-                    # - no error checking so this will crash if something else happens
-                    ops[0].base_kernel.output_variance += output_variance
-        elif const_count > 1:
-            # Just constants
-            #### FIXME - assuming 1d and masks
-            return fk.MaskKernel(1,0,fk.ConstKernel(output_variance=output_variance))
-        # Finish
-        new_kernel = k.copy()
-        new_kernel.operands = ops
-        return canonical(new_kernel)
-    elif isinstance(k, fk.SumKernel): 
-        ops = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
-        # Count the number of white noises
-        output_variance = 0
-        WN_count = 0
-        not_WN_ops = []
-        for op in ops:
-            if isinstance(op, fk.NoiseKernel):
-                WN_count += 1
-                output_variance += np.exp(2*op.output_variance)
-            elif isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.NoiseKernel):
-                WN_count += 1
-                output_variance += np.exp(2*op.base_kernel.output_variance)
+                sf += op.sf
+            elif op.is_stationary:
+                sf += op.sf
             else:
                 not_WN_ops.append(op)
         # Compactify if necessary
         if WN_count > 0:
-            #### FIXME - assuming 1d
-            ops = not_WN_ops + [fk.MaskKernel(1, 0, fk.NoiseKernel(output_variance=0.5*np.log(output_variance)))]
-        # Now count the number of constants
-        output_variance = 0
+            ops = not_WN_ops + [NoiseKernel(sf=sf)]
+        # Finish
+        k.operands = ops
+        return canonical(k)
+    else:
+        for o in k.operands:
+            o = collapse_multiplicative_zero(o)
+        return k
+
+def collapse_multiplicative_identity(k):
+    # TODO - abstract this behaviour
+    k = canonical(k)
+    if not k.is_operator:
+        return k
+    elif isinstance(k, ProductKernel):
+        ops = [collapse_multiplicative_identity(o) for o in k.operands]
+        sf = 0
         const_count = 0
         not_const_ops = []
         for op in ops:
-            if isinstance(op, fk.ConstKernel):
+            if isinstance(op, ConstKernel):
                 const_count += 1
-                output_variance += np.exp(2*op.output_variance)
-            elif (isinstance(op, fk.MaskKernel) and isinstance(op.base_kernel, fk.ConstKernel)):
-                const_count += 1
-                output_variance += np.exp(2*op.base_kernel.output_variance)
+                sf += op.sf
             else:
                 not_const_ops.append(op)
-         # Compactify if necessary
-        if (const_count > 0):
-            #### FIXME - assuming 1d
-            ops = not_const_ops + [fk.MaskKernel(1, 0, fk.ConstKernel(output_variance=0.5*np.log(output_variance)))]
+        # Compactify if necessary
+        if const_count > 0:
+            ops = not_const_ops
+            ops[0].multiply_by_const(sf=sf)
         # Finish
-        new_kernel = k.copy()
-        new_kernel.operands = ops
-        return canonical(new_kernel)
-    elif isinstance(k, fk.ChangePointTanhKernel) or isinstance(k, fk.ChangeBurstTanhKernel):
-        new_kernel = k.copy()
-        new_kernel.operands = [remove_redundancy(op, additive_mode=additive_mode) for op in k.operands]
-        return canonical(new_kernel)
+        k.operands = ops
+        return canonical(k)
     else:
-        return canonical(k) # Just to make it clear that the output is always canonical
+        for o in k.operands:
+            o = collapse_multiplicative_identity(o)
+        return k
 
 ##############################################
 #                                            #
@@ -1234,121 +1043,121 @@ def base_kernels_without_dimension(base_kernel_names):
         if kernel.id in base_kernel_names.split(','):
             yield kernel     
 
-def break_kernel_into_summands(k):
-    '''Takes a kernel, expands it into a polynomial, and breaks terms up into a list.
+# def break_kernel_into_summands(k):
+#     '''Takes a kernel, expands it into a polynomial, and breaks terms up into a list.
     
-    Mutually Recursive with distribute_products().
-    Always returns a list.
-    '''    
-    # First, recursively distribute all products within the kernel.
-    k_dist = distribute_products(k)
+#     Mutually Recursive with distribute_products().
+#     Always returns a list.
+#     '''    
+#     # First, recursively distribute all products within the kernel.
+#     k_dist = distribute_products(k)
     
-    if isinstance(k_dist, SumKernel):
-        # Break the summands into a list of kernels.
-        return list(k_dist.operands)
-    else:
-        return [k_dist]
+#     if isinstance(k_dist, SumKernel):
+#         # Break the summands into a list of kernels.
+#         return list(k_dist.operands)
+#     else:
+#         return [k_dist]
 
-def distribute_products(k):
-    """Distributes products to get a polynomial.
+# def distribute_products(k):
+#     """Distributes products to get a polynomial.
     
-    Mutually recursive with break_kernel_into_summands().
-    Always returns a sumkernel.
-    """
+#     Mutually recursive with break_kernel_into_summands().
+#     Always returns a sumkernel.
+#     """
 
-    if isinstance(k, ProductKernel):
-        # Recursively distribute each of the terms to be multiplied.
-        distributed_ops = [break_kernel_into_summands(op) for op in k.operands]
+#     if isinstance(k, ProductKernel):
+#         # Recursively distribute each of the terms to be multiplied.
+#         distributed_ops = [break_kernel_into_summands(op) for op in k.operands]
         
-        # Now produce a sum of all combinations of terms in the products. Itertools is awesome.
-        new_prod_ks = [ProductKernel( prod ) for prod in itertools.product(*distributed_ops)]
-        return SumKernel(new_prod_ks)
+#         # Now produce a sum of all combinations of terms in the products. Itertools is awesome.
+#         new_prod_ks = [ProductKernel( prod ) for prod in itertools.product(*distributed_ops)]
+#         return SumKernel(new_prod_ks)
     
-    elif isinstance(k, SumKernel):
-        # Recursively distribute each the operands to be summed, then combine them back into a new SumKernel.
-        return SumKernel([subop for op in k.operands for subop in break_kernel_into_summands(op)])
-    elif isinstance(k, ChangePointTanhKernel):
-        return SumKernel([ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
-                         [ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
-    elif isinstance(k, ChangeBurstTanhKernel):
-        return SumKernel([ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
-                         [ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
-    else:
-        # Base case: A kernel that's just, like, a kernel, man.
-        return k
+#     elif isinstance(k, SumKernel):
+#         # Recursively distribute each the operands to be summed, then combine them back into a new SumKernel.
+#         return SumKernel([subop for op in k.operands for subop in break_kernel_into_summands(op)])
+#     elif isinstance(k, ChangePointTanhKernel):
+#         return SumKernel([ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
+#                          [ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
+#     elif isinstance(k, ChangeBurstTanhKernel):
+#         return SumKernel([ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
+#                          [ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
+#     else:
+#         # Base case: A kernel that's just, like, a kernel, man.
+#         return k
         
-from numpy import nan
+# from numpy import nan
 
-class ScoredKernel:
-    '''
-    Wrapper around a kernel with various scores and noise parameter
-    '''
-    def __init__(self, k_opt, nll=nan, laplace_nle=nan, bic_nle=nan, aic_nle=nan, pl2=nan, npll=nan, pic_nle=nan, mae=nan, std_ratio=nan, noise=nan):
-        self.k_opt = k_opt
-        self.nll = nll
-        self.laplace_nle = laplace_nle
-        self.bic_nle = bic_nle
-        self.aic_nle = aic_nle
-        self.pl2 = pl2
-        self.npll = npll
-        self.pic_nle = pic_nle
-        self.mae = mae
-        self.std_ratio = std_ratio
-        self.noise = noise
+# class ScoredKernel:
+#     '''
+#     Wrapper around a kernel with various scores and noise parameter
+#     '''
+#     def __init__(self, k_opt, nll=nan, laplace_nle=nan, bic_nle=nan, aic_nle=nan, pl2=nan, npll=nan, pic_nle=nan, mae=nan, std_ratio=nan, noise=nan):
+#         self.k_opt = k_opt
+#         self.nll = nll
+#         self.laplace_nle = laplace_nle
+#         self.bic_nle = bic_nle
+#         self.aic_nle = aic_nle
+#         self.pl2 = pl2
+#         self.npll = npll
+#         self.pic_nle = pic_nle
+#         self.mae = mae
+#         self.std_ratio = std_ratio
+#         self.noise = noise
         
-    #### CAUTION - the default keeps on changing!
-    def score(self, criterion='bic'):
-        return {'bic': self.bic_nle,
-                'aic': self.aic_nle,
-                'pl2': self.pl2,
-                'nll': self.nll,
-                'laplace': self.laplace_nle,
-                'npll': self.npll,
-                'pic': self.pic_nle,
-                'mae': self.mae
-                }[criterion.lower()]
+#     #### CAUTION - the default keeps on changing!
+#     def score(self, criterion='bic'):
+#         return {'bic': self.bic_nle,
+#                 'aic': self.aic_nle,
+#                 'pl2': self.pl2,
+#                 'nll': self.nll,
+#                 'laplace': self.laplace_nle,
+#                 'npll': self.npll,
+#                 'pic': self.pic_nle,
+#                 'mae': self.mae
+#                 }[criterion.lower()]
                 
-    @staticmethod
-    def from_printed_outputs(nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise=None, kernel=None):
-        return ScoredKernel(kernel, nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise)
+#     @staticmethod
+#     def from_printed_outputs(nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise=None, kernel=None):
+#         return ScoredKernel(kernel, nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise)
     
-    def __repr__(self):
-        return 'ScoredKernel(k_opt=%s, nll=%f, laplace_nle=%f, bic_nle=%f, aic_nle=%f, pl2=%f, npll=%f, pic_nle=%f, mae=%f, std_ratio=%f, noise=%s)' % \
-            (self.k_opt, self.nll, self.laplace_nle, self.bic_nle, self.aic_nle, self.pl2, self.npll, self.pic_nle, self.mae, self.std_ratio, self.noise)
+#     def __repr__(self):
+#         return 'ScoredKernel(k_opt=%s, nll=%f, laplace_nle=%f, bic_nle=%f, aic_nle=%f, pl2=%f, npll=%f, pic_nle=%f, mae=%f, std_ratio=%f, noise=%s)' % \
+#             (self.k_opt, self.nll, self.laplace_nle, self.bic_nle, self.aic_nle, self.pl2, self.npll, self.pic_nle, self.mae, self.std_ratio, self.noise)
 
-    def pretty_print(self):
-        return self.k_opt.pretty_print()
+#     def pretty_print(self):
+#         return self.k_opt.pretty_print()
 
-    def latex_print(self):
-        return self.k_opt.latex_print()
+#     def latex_print(self):
+#         return self.k_opt.latex_print()
 
-    @staticmethod 
-    def from_matlab_output(output, kernel_family, ndata):
-        '''Computes Laplace marginal lik approx and BIC - returns scored Kernel'''
-        #### TODO - this check should be within the psd_matrices code
-        if np.any(np.isnan(output.hessian)):
-            laplace_nle = np.nan
-        else:
-            laplace_nle, problems = psd_matrices.laplace_approx_stable_no_prior(output.nll, output.hessian)
-        k_opt = kernel_family.from_param_vector(output.kernel_hypers)
-        BIC = 2 * output.nll + k_opt.effective_params() * np.log(ndata)
-        PIC = 2 * output.npll + k_opt.effective_params() * np.log(ndata)
-        AIC = 2 * output.nll + k_opt.effective_params() * 2
-        PL2 = output.nll / ndata + k_opt.effective_params() / (2 * ndata)
-        return ScoredKernel(k_opt, output.nll, laplace_nle, BIC, AIC, PL2, output.npll, PIC, output.mae, output.std_ratio, output.noise_hyp)  
+#     @staticmethod 
+#     def from_matlab_output(output, kernel_family, ndata):
+#         '''Computes Laplace marginal lik approx and BIC - returns scored Kernel'''
+#         #### TODO - this check should be within the psd_matrices code
+#         if np.any(np.isnan(output.hessian)):
+#             laplace_nle = np.nan
+#         else:
+#             laplace_nle, problems = psd_matrices.laplace_approx_stable_no_prior(output.nll, output.hessian)
+#         k_opt = kernel_family.from_param_vector(output.kernel_hypers)
+#         BIC = 2 * output.nll + k_opt.effective_params() * np.log(ndata)
+#         PIC = 2 * output.npll + k_opt.effective_params() * np.log(ndata)
+#         AIC = 2 * output.nll + k_opt.effective_params() * 2
+#         PL2 = output.nll / ndata + k_opt.effective_params() / (2 * ndata)
+#         return ScoredKernel(k_opt, output.nll, laplace_nle, BIC, AIC, PL2, output.npll, PIC, output.mae, output.std_ratio, output.noise_hyp)  
 
-def add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape):
-    '''Returns a list of kernels with random restarts for default values'''
-    return [kernel] + list(map(lambda unused : kernel.family().from_param_vector(kernel.default_params_replaced(sd=sd, data_shape=data_shape)), [None] * n_rand))
+# def add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape):
+#     '''Returns a list of kernels with random restarts for default values'''
+#     return [kernel] + list(map(lambda unused : kernel.family().from_param_vector(kernel.default_params_replaced(sd=sd, data_shape=data_shape)), [None] * n_rand))
 
-def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):    
-    '''Augments the list to include random restarts of all default value parameters'''
-    return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape)]
+# def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):    
+#     '''Augments the list to include random restarts of all default value parameters'''
+#     return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape)]
 
-def add_jitter(kernels, sd=0.1, data_shape=None):    
-    '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
-    #### FIXME - this is ok for log transformed parameters - for other parameters the scale of jitter might be completely off
-    return [k.family().from_param_vector(k.param_vector() + np.random.normal(loc=0., scale=sd, size=k.param_vector().size)) for k in kernels]
+# def add_jitter(kernels, sd=0.1, data_shape=None):    
+#     '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
+#     #### FIXME - this is ok for log transformed parameters - for other parameters the scale of jitter might be completely off
+#     return [k.family().from_param_vector(k.param_vector() + np.random.normal(loc=0., scale=sd, size=k.param_vector().size)) for k in kernels]
 
 # class SqExpKernelFamily(BaseKernelFamily):
 #     def from_param_vector(self, params):

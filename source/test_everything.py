@@ -189,6 +189,43 @@ class model_testcase(unittest.TestCase):
         k = model.collapse_multiplicative_idempotency(k)
         print '\n', k.pretty_print(), '\n'
 
+    def test_collapse_zero(self):
+        k1 = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k2 = model.NoiseKernel(sf=-1)
+        k = k1 * k2
+        print '\n', k.pretty_print(), '\n'
+        k = model.collapse_multiplicative_zero(k)
+        assert isinstance(k, model.NoiseKernel)
+        print '\n', k.pretty_print(), '\n'
+        k = (k1 + k1.copy() + k1.copy() * k2.copy()) * k2
+        print (k1 + k1.copy()).sf
+        print (k1.copy() * k2.copy()).sf
+        print (k1 + k1.copy() + k1.copy() * k2.copy()).sf
+        print k.sf
+        print '\n', k.pretty_print(), '\n'
+        k = model.collapse_multiplicative_zero(k)
+        assert isinstance(k, model.NoiseKernel)
+        print '\n', k.pretty_print(), '\n'
+
+    def test_collapse_identity(self):
+        print 'collapse identity'
+        k1 = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k2 = model.ConstKernel(sf=-1)
+        k = k1 * k2
+        print '\n', k.pretty_print(), '\n'
+        k = model.collapse_multiplicative_identity(k)
+        assert isinstance(k, model.SqExpKernel)
+        print '\n', k.pretty_print(), '\n'
+        k1 = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k = (k1 + k1.copy() + k1.copy() * k2.copy()) * k2
+        print (k1 + k1.copy()).sf
+        print (k1.copy() * k2.copy()).sf
+        print (k1 + k1.copy() + k1.copy() * k2.copy()).sf
+        print k.sf
+        print '\n', k.pretty_print(), '\n'
+        k = model.collapse_multiplicative_identity(k)
+        print '\n', k.pretty_print(), '\n'
+
     # def test_wrong_dimension(self):
     #     try:
     #         k = fk.MaskKernelFamily(1,1,fk.SqExpKernelFamily())

@@ -226,6 +226,84 @@ class model_testcase(unittest.TestCase):
         k = model.collapse_multiplicative_identity(k)
         print '\n', k.pretty_print(), '\n'
 
+    def test_simplify(self):
+        print 'simplify'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        k = k1 * k2
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        k = model.SqExpKernel(dimension=1, lengthscale=2, sf=2)
+        k3 = k.copy()
+        k4 = k.copy()
+        k5 = model.NoiseKernel(sf=-1)
+        k6 = model.ConstKernel(sf=1)
+        k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy() + k1.copy() * k1.copy() * k3.copy()
+        print '\n', k.pretty_print(), '\n'
+        k = model.simplify(k)
+        print '\n', k.pretty_print(), '\n'
+
+    def test_distribute_products(self):
+        print 'distribute'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        k = model.SqExpKernel(dimension=1, lengthscale=2, sf=2)
+        k3 = k.copy()
+        k4 = k.copy()
+        k5 = model.NoiseKernel(sf=-1)
+        k6 = model.ConstKernel(sf=1)
+        k = (k1 + k2 + k3) * (k4 + k5)
+        print '\n', k.pretty_print(), '\n'
+        components = model.simplify(model.distribute_products(k))
+        print components
+        print model.collapse_additive_idempotency(components)
+        for k in components.operands:
+            print '\n', k.pretty_print(), '\n'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        k = model.SqExpKernel(dimension=1, lengthscale=2, sf=2)
+        k3 = k.copy()
+        k4 = k.copy()
+        k5 = model.NoiseKernel(sf=-1)
+        k6 = model.ConstKernel(sf=1)
+        k = (k1 * (k2 + k3)) + (k4 * k5)
+        print '\n', k.pretty_print(), '\n'
+        components = model.simplify(model.distribute_products(k))
+        print components
+        print model.collapse_additive_idempotency(components)
+        for k in components.operands:
+            print '\n', k.pretty_print(), '\n'
+
+    def test_jitter(self):
+        print 'jitter'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        print [k,k1,k2]
+        assert (k == k1) and (k == k2) and (k1 == k2)
+        model.add_jitter([k1, k2])
+        assert (not k == k1) and (not k == k2) and (not k1 == k2)
+        print [k,k1,k2]
+
+    def test_restarts(self):
+        print 'restart'
+        data_shape = {'y_sd' : 0, 'x_sd' : [0,2], 'x_min' : [-10,-100], 'x_max' : [10,100]}
+        k = model.SqExpKernel(dimension=0)
+        k1 = k.copy()
+        k2 = k.copy()
+        k2.dimension = 1
+        print [k,k1,k2]
+        assert (k == k1) and (k == k2) and (k1 == k2)
+        kernel_list = model.add_random_restarts([k1, k2], data_shape=data_shape, sd=1)
+        k1 = kernel_list[0]
+        k2 = kernel_list[1]
+        assert (not k == k1) and (not k == k2) and (not k1 == k2)
+        print [k,k1,k2]
+
     # def test_wrong_dimension(self):
     #     try:
     #         k = fk.MaskKernelFamily(1,1,fk.SqExpKernelFamily())

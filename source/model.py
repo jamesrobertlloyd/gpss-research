@@ -8,13 +8,14 @@ Created Nov 2012
 
 import itertools
 import numpy as np
-inf = np.inf
+import re
+
+from numpy import nan, inf
 
 import operator
 from utils import psd_matrices
 import utils.misc
 from utils.misc import colored, format_if_possible
-import re
 from scipy.special import i0 # 0th order Bessel function of the first kind
 
 ##############################################
@@ -276,6 +277,64 @@ class RegressionModel:
     def pretty_print(self):
         return 'RegressionModel(mean=%s, kernel=%s, likelihood=%s)' % \
                 (self.mean.pretty_print(), self.kernel.pretty_print(), self.likelihood.pretty_print())
+
+# class ScoredKernel:
+#     '''
+#     Wrapper around a kernel with various scores and noise parameter
+#     '''
+#     def __init__(self, k_opt, nll=nan, laplace_nle=nan, bic_nle=nan, aic_nle=nan, pl2=nan, npll=nan, pic_nle=nan, mae=nan, std_ratio=nan, noise=nan):
+#         self.k_opt = k_opt
+#         self.nll = nll
+#         self.laplace_nle = laplace_nle
+#         self.bic_nle = bic_nle
+#         self.aic_nle = aic_nle
+#         self.pl2 = pl2
+#         self.npll = npll
+#         self.pic_nle = pic_nle
+#         self.mae = mae
+#         self.std_ratio = std_ratio
+#         self.noise = noise
+        
+#     #### CAUTION - the default keeps on changing!
+#     def score(self, criterion='bic'):
+#         return {'bic': self.bic_nle,
+#                 'aic': self.aic_nle,
+#                 'pl2': self.pl2,
+#                 'nll': self.nll,
+#                 'laplace': self.laplace_nle,
+#                 'npll': self.npll,
+#                 'pic': self.pic_nle,
+#                 'mae': self.mae
+#                 }[criterion.lower()]
+                
+#     @staticmethod
+#     def from_printed_outputs(nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise=None, kernel=None):
+#         return ScoredKernel(kernel, nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise)
+    
+#     def __repr__(self):
+#         return 'ScoredKernel(k_opt=%s, nll=%f, laplace_nle=%f, bic_nle=%f, aic_nle=%f, pl2=%f, npll=%f, pic_nle=%f, mae=%f, std_ratio=%f, noise=%s)' % \
+#             (self.k_opt, self.nll, self.laplace_nle, self.bic_nle, self.aic_nle, self.pl2, self.npll, self.pic_nle, self.mae, self.std_ratio, self.noise)
+
+#     def pretty_print(self):
+#         return self.k_opt.pretty_print()
+
+#     def latex_print(self):
+#         return self.k_opt.latex_print()
+
+#     @staticmethod 
+#     def from_matlab_output(output, kernel_family, ndata):
+#         '''Computes Laplace marginal lik approx and BIC - returns scored Kernel'''
+#         #### TODO - this check should be within the psd_matrices code
+#         if np.any(np.isnan(output.hessian)):
+#             laplace_nle = np.nan
+#         else:
+#             laplace_nle, problems = psd_matrices.laplace_approx_stable_no_prior(output.nll, output.hessian)
+#         k_opt = kernel_family.from_param_vector(output.kernel_hypers)
+#         BIC = 2 * output.nll + k_opt.effective_params() * np.log(ndata)
+#         PIC = 2 * output.npll + k_opt.effective_params() * np.log(ndata)
+#         AIC = 2 * output.nll + k_opt.effective_params() * 2
+#         PL2 = output.nll / ndata + k_opt.effective_params() / (2 * ndata)
+#         return ScoredKernel(k_opt, output.nll, laplace_nle, BIC, AIC, PL2, output.npll, PIC, output.mae, output.std_ratio, output.noise_hyp) 
 
 ##############################################
 #                                            #
@@ -857,6 +916,19 @@ def canonical(k):
             k.operands = new_ops
             return k
 
+def simplify(k):
+    # TODO - how many times do these need to be done?
+    k = collapse_additive_idempotency(k)
+    k = collapse_multiplicative_idempotency(k)
+    k = collapse_multiplicative_identity(k)
+    k = collapse_multiplicative_zero(k)
+    k = canonical(k)
+    k = collapse_additive_idempotency(k)
+    k = collapse_multiplicative_idempotency(k)
+    k = collapse_multiplicative_identity(k)
+    k = collapse_multiplicative_zero(k)
+    return canonical(k)
+
 def collapse_additive_idempotency(k):
     # TODO - abstract this behaviour
     k = canonical(k)
@@ -1013,6 +1085,59 @@ def collapse_multiplicative_identity(k):
             o = collapse_multiplicative_identity(o)
         return k
 
+def break_kernel_into_summands(k):
+    '''Takes a kernel, expands it into a polynomial, and breaks terms up into a list.
+    
+    Mutually Recursive with distribute_products().
+    Always returns a list.
+    '''    
+    # First, recursively distribute all products within the kernel.
+    k_dist = distribute_products(k)
+    
+    if isinstance(k_dist, SumKernel):
+        # Break the summands into a list of kernels.
+        return list(k_dist.operands)
+    else:
+        return [k_dist]
+
+def distribute_products(k):
+    """Distributes products to get a polynomial.
+    
+    Mutually recursive with break_kernel_into_summands().
+    Always returns a sumkernel.
+    """
+
+    if isinstance(k, ProductKernel):
+        # Recursively distribute each of the terms to be multiplied.
+        distributed_ops = [break_kernel_into_summands(op) for op in k.operands]
+        
+        # Now produce a sum of all combinations of terms in the products. Itertools is awesome.
+        new_prod_ks = [ProductKernel( operands=prod ) for prod in itertools.product(*distributed_ops)]
+        return SumKernel(operands=new_prod_ks)
+    
+    elif isinstance(k, SumKernel):
+        # Recursively distribute each the operands to be summed, then combine them back into a new SumKernel.
+        return SumKernel([subop for op in k.operands for subop in break_kernel_into_summands(op)])
+    elif k.is_operator:
+        if k.arity == 2:
+            summands = []
+            operands_list = [[op, ZeroKernel()] for op in break_kernel_into_summands(k.operands[0])]
+            for ops in operand_list:
+                k_new = k.copy()
+                k_new.operands = ops
+                summands.append(k_new)
+            operands_list = [[ZeroKernel(), op] for op in break_kernel_into_summands(k.operands[1])]
+            for ops in operand_list:
+                k_new = k.copy()
+                k_new.operands = ops
+                summands.append(k_new)
+            return SumKernel(operands=summands)
+        else:
+            raise RuntimeError('Not sure how to distribute products of this operator')
+    else:
+        # Base case: A kernel that's just, like, a kernel, man.
+        return k
+
 ##############################################
 #                                            #
 #         Miscellaneous functions            #
@@ -1041,227 +1166,26 @@ def base_kernels_without_dimension(base_kernel_names):
                    #FourierKernelFamily(), \
                    NoiseKernel()]:
         if kernel.id in base_kernel_names.split(','):
-            yield kernel     
+            yield kernel 
 
-# def break_kernel_into_summands(k):
-#     '''Takes a kernel, expands it into a polynomial, and breaks terms up into a list.
-    
-#     Mutually Recursive with distribute_products().
-#     Always returns a list.
-#     '''    
-#     # First, recursively distribute all products within the kernel.
-#     k_dist = distribute_products(k)
-    
-#     if isinstance(k_dist, SumKernel):
-#         # Break the summands into a list of kernels.
-#         return list(k_dist.operands)
-#     else:
-#         return [k_dist]
+def add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape):
+    '''Returns a list of kernels with random restarts for default values'''
+    kernel_list = []
+    for dummy in range(n_rand):
+        k = kernel.copy()
+        k.initialise_params(sd=sd, data_shape=data_shape)
+        kernel_list.append(k)
+    return kernel_list
 
-# def distribute_products(k):
-#     """Distributes products to get a polynomial.
-    
-#     Mutually recursive with break_kernel_into_summands().
-#     Always returns a sumkernel.
-#     """
+def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):    
+    '''Augments the list to include random restarts of all default value parameters'''
+    return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape)]
 
-#     if isinstance(k, ProductKernel):
-#         # Recursively distribute each of the terms to be multiplied.
-#         distributed_ops = [break_kernel_into_summands(op) for op in k.operands]
-        
-#         # Now produce a sum of all combinations of terms in the products. Itertools is awesome.
-#         new_prod_ks = [ProductKernel( prod ) for prod in itertools.product(*distributed_ops)]
-#         return SumKernel(new_prod_ks)
-    
-#     elif isinstance(k, SumKernel):
-#         # Recursively distribute each the operands to be summed, then combine them back into a new SumKernel.
-#         return SumKernel([subop for op in k.operands for subop in break_kernel_into_summands(op)])
-#     elif isinstance(k, ChangePointTanhKernel):
-#         return SumKernel([ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
-#                          [ChangePointTanhKernel(location=k.location, steepness=k.steepness, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
-#     elif isinstance(k, ChangeBurstTanhKernel):
-#         return SumKernel([ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[op, ZeroKernel()]) for op in break_kernel_into_summands(k.operands[0])] + \
-#                          [ChangeBurstTanhKernel(location=k.location, steepness=k.steepness, width=k.width, operands=[ZeroKernel(), op]) for op in break_kernel_into_summands(k.operands[1])])
-#     else:
-#         # Base case: A kernel that's just, like, a kernel, man.
-#         return k
-        
-# from numpy import nan
-
-# class ScoredKernel:
-#     '''
-#     Wrapper around a kernel with various scores and noise parameter
-#     '''
-#     def __init__(self, k_opt, nll=nan, laplace_nle=nan, bic_nle=nan, aic_nle=nan, pl2=nan, npll=nan, pic_nle=nan, mae=nan, std_ratio=nan, noise=nan):
-#         self.k_opt = k_opt
-#         self.nll = nll
-#         self.laplace_nle = laplace_nle
-#         self.bic_nle = bic_nle
-#         self.aic_nle = aic_nle
-#         self.pl2 = pl2
-#         self.npll = npll
-#         self.pic_nle = pic_nle
-#         self.mae = mae
-#         self.std_ratio = std_ratio
-#         self.noise = noise
-        
-#     #### CAUTION - the default keeps on changing!
-#     def score(self, criterion='bic'):
-#         return {'bic': self.bic_nle,
-#                 'aic': self.aic_nle,
-#                 'pl2': self.pl2,
-#                 'nll': self.nll,
-#                 'laplace': self.laplace_nle,
-#                 'npll': self.npll,
-#                 'pic': self.pic_nle,
-#                 'mae': self.mae
-#                 }[criterion.lower()]
-                
-#     @staticmethod
-#     def from_printed_outputs(nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise=None, kernel=None):
-#         return ScoredKernel(kernel, nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise)
-    
-#     def __repr__(self):
-#         return 'ScoredKernel(k_opt=%s, nll=%f, laplace_nle=%f, bic_nle=%f, aic_nle=%f, pl2=%f, npll=%f, pic_nle=%f, mae=%f, std_ratio=%f, noise=%s)' % \
-#             (self.k_opt, self.nll, self.laplace_nle, self.bic_nle, self.aic_nle, self.pl2, self.npll, self.pic_nle, self.mae, self.std_ratio, self.noise)
-
-#     def pretty_print(self):
-#         return self.k_opt.pretty_print()
-
-#     def latex_print(self):
-#         return self.k_opt.latex_print()
-
-#     @staticmethod 
-#     def from_matlab_output(output, kernel_family, ndata):
-#         '''Computes Laplace marginal lik approx and BIC - returns scored Kernel'''
-#         #### TODO - this check should be within the psd_matrices code
-#         if np.any(np.isnan(output.hessian)):
-#             laplace_nle = np.nan
-#         else:
-#             laplace_nle, problems = psd_matrices.laplace_approx_stable_no_prior(output.nll, output.hessian)
-#         k_opt = kernel_family.from_param_vector(output.kernel_hypers)
-#         BIC = 2 * output.nll + k_opt.effective_params() * np.log(ndata)
-#         PIC = 2 * output.npll + k_opt.effective_params() * np.log(ndata)
-#         AIC = 2 * output.nll + k_opt.effective_params() * 2
-#         PL2 = output.nll / ndata + k_opt.effective_params() / (2 * ndata)
-#         return ScoredKernel(k_opt, output.nll, laplace_nle, BIC, AIC, PL2, output.npll, PIC, output.mae, output.std_ratio, output.noise_hyp)  
-
-# def add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape):
-#     '''Returns a list of kernels with random restarts for default values'''
-#     return [kernel] + list(map(lambda unused : kernel.family().from_param_vector(kernel.default_params_replaced(sd=sd, data_shape=data_shape)), [None] * n_rand))
-
-# def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):    
-#     '''Augments the list to include random restarts of all default value parameters'''
-#     return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape)]
-
-# def add_jitter(kernels, sd=0.1, data_shape=None):    
-#     '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
-#     #### FIXME - this is ok for log transformed parameters - for other parameters the scale of jitter might be completely off
-#     return [k.family().from_param_vector(k.param_vector() + np.random.normal(loc=0., scale=sd, size=k.param_vector().size)) for k in kernels]
-
-# class SqExpKernelFamily(BaseKernelFamily):
-#     def from_param_vector(self, params):
-#         lengthscale, output_variance = params
-#         return SqExpKernel(lengthscale=lengthscale, output_variance=output_variance)
-    
-#     def num_params(self):
-#         return 2
-    
-#     def pretty_print(self):
-#         return colored('SqExp', self.depth)
-    
-#     @staticmethod
-#     def default():
-#         return SqExpKernel(0., 0.)
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return 0
-    
-#     def depth(self):
-#         return 0
-    
-#     def id_name(self):
-#         return 'SE'
-    
-#     @staticmethod    
-#     def description():
-#         return "Squared-exponential"
-
-#     @staticmethod    
-#     def params_description():
-#         return "lengthscale"    
-
-# class SqExpKernel(BaseKernel):
-#     def __init__(self, lengthscale, output_variance):
-#         self.lengthscale = lengthscale
-#         self.output_variance = output_variance
-        
-#     def family(self):
-#         return SqExpKernelFamily()
-        
-#     def gpml_kernel_expression(self):
-#         return '{@covSEiso}'
-    
-#     def english_name(self):
-#         return 'SqExp'
-    
-#     def id_name(self):
-#         return 'SE'
-    
-#     def param_vector(self):
-#         # order of args matches GPML
-#         return np.array([self.lengthscale, self.output_variance])
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         result = self.param_vector()
-#         if result[0] == 0:
-#             # Set lengthscale with input scale or neutrally
-#             if np.random.rand() < 0.5:
-#                 result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-#             else:
-#                 # Long lengthscale ~ infty = neutral
-#                 result[0] = np.random.normal(loc=np.log(2*(data_shape['input_max']-data_shape['input_min'])), scale=sd)
-#         if result[1] == 0:
-#             # Set scale factor with output scale or neutrally
-#             if np.random.rand() < 0.5:
-#                 result[1] = np.random.normal(loc=data_shape['y_sd'], scale=sd)
-#             else:
-#                 result[1] = np.random.normal(loc=0, scale=sd)
-#         return result
-
-#     def copy(self):
-#         return SqExpKernel(self.lengthscale, self.output_variance)
-    
-#     def __repr__(self):
-#         return 'SqExpKernel(lengthscale=%f, output_variance=%f)' % (self.lengthscale, self.output_variance)
-    
-#     def pretty_print(self):
-#         return colored('SE(ell=%1.1f, sf=%1.1f)' % (self.lengthscale, self.output_variance), self.depth)
-    
-#     def latex_print(self):
-#         #return 'SE(\\ell=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.output_variance)    
-#         #return 'SE(\\ell=%1.1f)' % self.lengthscale
-#         return 'SE'
-        
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         differences = [self.lengthscale - other.lengthscale, self.output_variance - other.output_variance]
-#         differences = map(shrink_below_tolerance, differences)
-#         return cmp(differences, [0] * len(differences))
-    
-#     def depth(self):
-#         return 0
-            
-#     def out_of_bounds(self, constraints):
-#         return self.lengthscale < constraints['min_lengthscale']
-    
-#     def english(self):
-#         return lengthscale_description(self.lengthscale)          
+def add_jitter(kernels, sd=0.1):    
+    '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
+    for k in kernels:
+        k.load_param_vector(k.param_vector + np.random.normal(loc=0., scale=sd, size=k.param_vector.size))
+    return kernels        
 
 # #### TODO - this is a code name for the reparametrised centred periodic
 # class FourierKernelFamily(BaseKernelFamily):
@@ -1616,179 +1540,6 @@ def base_kernels_without_dimension(base_kernel_names):
 #     def out_of_bounds(self, constraints):
 #         return (self.period < constraints['min_period']) or \
 #                (self.lengthscale < constraints['min_lengthscale'])
-    
-# class ConstKernelFamily(BaseKernelFamily):
-#     def from_param_vector(self, params):
-#         output_variance, = params # N.B. - expects list input
-#         return ConstKernel(output_variance)
-    
-#     def num_params(self):
-#         return 1
-    
-#     def pretty_print(self):
-#         return colored('CS', self.depth)
-    
-#     @staticmethod
-#     def default():
-#         return ConstKernel(0.)
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return 0
-    
-#     def depth(self):
-#         return 0
-    
-#     def id_name(self):
-#         return 'Const'
-    
-#     @staticmethod    
-#     def description():
-#         return "Constant"
-
-#     @staticmethod    
-#     def params_description():
-#         return "Output variance"        
-    
-# class ConstKernel(BaseKernel):
-#     def __init__(self, output_variance):
-#         self.output_variance = output_variance
-        
-#     def family(self):
-#         return ConstKernelFamily()
-        
-#     def gpml_kernel_expression(self):
-#         return '{@covConst}'
-    
-#     def english_name(self):
-#         return 'CS'
-    
-#     def id_name(self):
-#         return 'Const'
-    
-#     def param_vector(self):
-#         # order of args matches GPML
-#         return np.array([self.output_variance])
-
-#     def copy(self):
-#         return ConstKernel(self.output_variance)
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         result = self.param_vector()
-#         if result[0] == 0:
-#             # Set scale factor with output location, scale or neutrally
-#             rand = np.random.rand()
-#             if rand < 1.0 / 3:
-#                 result[0] = np.random.normal(loc=np.log(np.abs(data_shape['y_mean'])), scale=sd)
-#             elif rand < 2.0 / 3:
-#                 result[0] = np.random.normal(loc=data_shape['y_sd'], scale=sd)
-#             else:
-#                 result[0] = np.random.normal(loc=0, scale=sd)
-#         return result
-    
-#     def __repr__(self):
-#         return 'ConstKernel(output_variance=%f)' % \
-#             (self.output_variance)
-    
-#     def pretty_print(self):
-#         return colored('CS(sf=%1.1f)' % (self.output_variance),
-#                        self.depth)
-        
-#     def latex_print(self):
-#         return 'CS'    
-    
-#     def id_name(self):
-#         return 'Const'       
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         differences = [self.output_variance - other.output_variance]
-#         differences = map(shrink_below_tolerance, differences)
-#         return cmp(differences, [0] * len(differences))
-        
-#     def depth(self):
-#         return 0    
-        
-# class ZeroKernelFamily(BaseKernelFamily):
-#     def from_param_vector(self, params):
-#         #### Note - expects list input
-#         assert params == []
-#         return ZeroKernel()
-    
-#     def num_params(self):
-#         return 0
-    
-#     def pretty_print(self):
-#         return colored('NIL', self.depth)
-    
-#     @staticmethod
-#     def default():
-#         return ZeroKernel()
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return 0
-    
-#     def depth(self):
-#         return 0
-    
-#     def id_name(self):
-#         return 'Zero'
-    
-#     @staticmethod    
-#     def description():
-#         return "Zero"
-
-#     @staticmethod    
-#     def params_description():
-#         return "None"        
-    
-# class ZeroKernel(BaseKernel):
-#     def __init__(self):
-#         pass
-        
-#     def family(self):
-#         return ZeroKernelFamily()
-        
-#     def gpml_kernel_expression(self):
-#         return '{@covZero}'
-    
-#     def english_name(self):
-#         return 'NIL'
-    
-#     def id_name(self):
-#         return 'Zero'
-    
-#     def param_vector(self):
-#         return np.array([])
-
-#     def copy(self):
-#         return ZeroKernel()
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         return self.param_vector()
-    
-#     def __repr__(self):
-#         return 'ZeroKernel()'
-    
-#     def pretty_print(self):
-#         return colored('NIL', self.depth)
-        
-#     def latex_print(self):
-#         return 'NIL'       
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         return cmp(self.__class__, other.__class__)
-        
-#     def depth(self):
-#         return 0  
 
 # class PureLinKernelFamily(BaseKernelFamily):
 #     def from_param_vector(self, params):
@@ -2105,189 +1856,3 @@ def base_kernels_without_dimension(base_kernel_names):
 #                (self.width > np.log(0.25*(constraints['input_max'] - constraints['input_min']))) or \
 #                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
 #                (any([o.out_of_bounds(constraints) for o in self.operands])) 
-        
-# class SumKernelFamily(KernelOperatorFamily):
-#     def __init__(self, operands):
-#         self.operands = operands
-        
-#     def from_param_vector(self, params):
-#         start = 0
-#         ops = []
-#         for e in self.operands:
-#             end = start + e.num_params()
-#             ops.append(e.from_param_vector(params[start:end]))
-#             start = end
-#         return SumKernel(ops)
-    
-#     def num_params(self):
-#         return sum([e.num_params() for e in self.operands])
-    
-#     def pretty_print(self):
-#         op = colored(' + ', self.depth)
-#         return colored('( ', self.depth) + \
-#             op.join([e.pretty_print() for e in self.operands]) + \
-#             colored(' ) ', self.depth)
-    
-#     def default(self):
-#         return SumKernel([op.default() for op in self.operands])
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return cmp(self.operands, other.operands)
-    
-#     def depth(self):
-#         return max([op.depth for op in self.operands]) + 1
-
-# class SumKernel(KernelOperator):
-#     def __init__(self, operands):
-#         self.operands = operands
-        
-#     def family(self):
-#         return SumKernelFamily([e.family() for e in self.operands])
-        
-#     def pretty_print(self):
-#         #### TODO - Should this call the family method?
-#         op = colored(' + ', self.depth)
-#         return colored('( ', self.depth) + \
-#             op.join([e.pretty_print() for e in self.operands]) + \
-#             colored(' ) ', self.depth)
-            
-#     def latex_print(self):
-#         return '\\left( ' + ' + '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
-            
-#     def __repr__(self):
-#         return 'SumKernel(%s)' % \
-#             ('[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
-    
-#     def gpml_kernel_expression(self):
-#         return '{@covSum, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
-    
-#     def copy(self):
-#         return SumKernel([e.copy() for e in self.operands])
-
-#     def param_vector(self):
-#         return np.concatenate([e.param_vector() for e in self.operands])
-        
-#     def effective_params(self):
-#         return sum([o.effective_params() for o in self.operands])
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         '''Returns the parameter vector with any default values replaced with random Gaussian'''
-#         return np.concatenate([o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return cmp(self.operands, other.operands)
-    
-#     def depth(self):
-#         return max([op.depth for op in self.operands]) + 1
-    
-#     def __add__(self, other):
-#         assert isinstance(other, Kernel)
-#         if isinstance(other, SumKernel):
-#             return SumKernel(self.operands + other.operands).copy()
-#         else:
-#             return SumKernel(self.operands + [other]).copy()
-            
-#     def out_of_bounds(self, constraints):
-#         return any([o.out_of_bounds(constraints) for o in self.operands]) 
-    
-# class ProductKernelFamily(KernelOperatorFamily):
-#     def __init__(self, operands):
-#         self.operands = operands
-        
-#     def from_param_vector(self, params):
-#         start = 0
-#         ops = []
-#         for o in self.operands:
-#             end = start + o.num_params()
-#             ops.append(o.from_param_vector(params[start:end]))
-#             start = end
-#         return ProductKernel(ops)
-    
-#     def num_params(self):
-#         return sum([e.num_params() for e in self.operands])
-    
-#     def pretty_print(self):
-#         op = colored(' x ', self.depth)
-#         return colored('( ', self.depth) + \
-#             op.join([e.pretty_print() for e in self.operands]) + \
-#             colored(' ) ', self.depth)
-    
-#     def default(self):
-#         return ProductKernel([op.default() for op in self.operands])
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return cmp(self.operands, other.operands)
-    
-#     def depth(self):
-#         return max([op.depth for op in self.operands]) + 1
-        
-        
-# class ProductKernel(KernelOperator):
-#     def __init__(self, operands):
-#         self.operands = operands
-        
-#     def family(self):
-#         return ProductKernelFamily([e.family() for e in self.operands])
-        
-#     def pretty_print(self):
-#         #### TODO - Should this call the family method?
-#         op = colored(' x ', self.depth)
-#         return colored('( ', self.depth) + \
-#             op.join([e.pretty_print() for e in self.operands]) + \
-#             colored(' ) ', self.depth)
-
-#     def latex_print(self):
-#         return ' \\times '.join([e.latex_print() for e in self.operands])
-            
-#     def __repr__(self):
-#         return 'ProductKernel(%s)' % \
-#             ('[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')              
-    
-#     def gpml_kernel_expression(self):
-#         return '{@covProd, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
-    
-#     def copy(self):
-#         return ProductKernel([e.copy() for e in self.operands])
-
-#     def param_vector(self):
-#         return np.concatenate([e.param_vector() for e in self.operands])
-        
-#     def effective_params(self):
-#         '''The scale of a product of kernels is over parametrised'''
-#         return sum([o.effective_params() for o in self.operands]) - (len(self.operands) - 1)
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         '''Returns the parameter vector with any default values replaced with random Gaussian'''
-#         return np.concatenate([o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return cmp(self.operands, other.operands)
-    
-#     def depth(self):
-#         return max([op.depth for op in self.operands]) + 1
-    
-#     def __mul__(self, other):
-#         assert isinstance(other, Kernel)
-#         if isinstance(other, ProductKernel):
-#             return ProductKernel(self.operands + other.operands).copy()
-#         else:
-#             return ProductKernel(self.operands + [other]).copy()
-            
-#     def out_of_bounds(self, constraints):
-#         return any([o.out_of_bounds(constraints) for o in self.operands])
-    
-#     @property
-#     def output_variance(self):
-#         return sum([e.output_variance for e in self.operands])  

@@ -194,10 +194,10 @@ class Kernel(FunctionWrapper):
 
     def multiply_by_const(self, sf):
         if not self.is_operator:
-            if self.is_stationary:
+            if hasattr(self, 'sf'):
                 self.sf += sf
             else:
-                raise RuntimeError('Non-stationary kernels must override this method')
+                raise RuntimeError('Kernels without a scale factor must overide this method')
         else:
             raise RuntimeError('Operators must override this method')
 

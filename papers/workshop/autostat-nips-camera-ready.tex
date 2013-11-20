@@ -85,7 +85,7 @@ University of Cambridge \\
 
 \begin{abstract}
 To complement a recently introduced automatic model-construction and search method, we demonstrate an automatic model-summarization procedure.
-After automatically building an additive nonparametric regression model, our method constructs a report which visualizes and explains in words the meaning and relevance of each component.
+After building an additive nonparametric regression model, our method constructs a report which visualizes and explains in words the meaning and relevance of each component.
 These reports enable human model-checking and the understanding of complex modeling assumptions and structure.
 We demonstrate this procedure on two time-series, showing that the automatically constructed models identify highly interpretable structures that can be automatically described in simple natural language.
 \end{abstract}
@@ -124,7 +124,7 @@ The supplementary material to this paper is a pair of complete reports generated
 \label{sec:gpss}
 \vspace{-0.08in}
 
-The family of models described by our procedure are Gaussian process (\gp{}) models \cite{rasmussen38gaussian}.
+The family of models described by our procedure are Gaussian process (\gp{}) regression models \cite{rasmussen38gaussian}.
 %
 %\subsection{Gaussian process regression}
 \gp{}s use a kernel to define the covariance between any two function values, $\outputVar, \outputVar'$ evaluated at two inputs, $\inputVar,\inputVar'$ \ie ${\textrm{Cov}(\outputVar, \outputVar') = \kernel(\inputVar,\inputVar')}$.
@@ -143,12 +143,17 @@ To produce the reports exhibited in this paper we used 6 base kernels that repre
 \section{Description of kernel compositions}
 \vspace{-0.08in}
 
-For a given dataset, the GPSS method produces a compound kernel composed of sums and products of the 6 base kernels.  In this section, we describe how the properties of \gp{} models allow us to reduce the task of english-language summarization into relatively simple subproblems.
+For a given dataset, the GPSS method produces a compound kernel composed of sums and products of the 6 base kernels.
+In this section, we describe how the properties of kernel functions reduce the task of natural-language summarization into relatively simple subproblems.
 
-\subsection{Taking advantage of distributivity}
+%\subsection{Summary}  
+%\vspace{-0.08in}
+%We have broken down the problem of describing arbitary compositions of kernels into two manageable parts.  First, we distribute the composite kernel into a sum of products.  Second, for each product of kernels, we describe the properties of products of kernels $\kSE$, $\kPer$, $\kC$ and $\kWN$, and then append descriptions of the properties of the modulating functions implied by products of $\kLin$ and $\kCP$.
+
+\subsection{Distributivity of multiplication over addition}
 \vspace{-0.08in}
 
-By distributivity, we can convert any compound kernel expression into a sum of products of base kernels.
+By distributivity of multiplication over addition, any kernel expression can be converted into a sum of products of base kernels.
 For example, when the first version of {\sc GPSS} \citep{DuvLloGroetal13} was applied to airline passenger data, the syntax of the learned kernel structure was
 \begin{equation}
 \kSE \times \big( \kLin + \kLin \times ( \kPer + \kSE ) \big) + \kWN
@@ -172,14 +177,17 @@ Since the individual additive components produced by the GPSS method are produce
 
 %\subsubsection{Stationary Kernels}
 
-We now examine the properties of products of base kernels.  We'll show that each kernel we multiply by modifies the properties of the resulting prior on functions in a consistent way.  This means that, for most cases, multiplying by another base kernel means we can simply append a set of adjectives to the description of the resulting function.
+We now examine the properties of products of base kernels.
+We will show that multiplying by each kernel modifies the properties of the resulting prior on functions in a consistent way. 
+This means that, for most cases, multiplying by another base kernel means we can simply append a set of adjectives to the description of the resulting function.
 
-\subsubsection{Multiplication by a Squared-Exp Kernel}
+\subsubsection{Multiplication by a squared exponential kernel}
 \vspace{-0.08in}
 
-Multiplying by an $\kSE$ kernel means that the resulting prior over functions now varies smoothly.  The degree of smoothness depends on the lengthscale of the kernel.%  We describe a kernel that has been multiplied by a $\kSE$ as a function ``that varies smoothly with a characteristic lengthscale
-%
-A product of two $\kSE$ kernels is exactly equivalent to a single $\kSE$ with different parameters.  This means that multiplication by an $\kSE$ kernel is an idempotent operation.  
+Multiplying by an $\kSE$ kernel means that the resulting prior over functions now varies smoothly.
+The degree of smoothness depends on the lengthscale of the kernel.
+A product of two $\kSE$ kernels is exactly equivalent to a single $\kSE$ with different parameters.
+This means that multiplication by an $\kSE$ kernel is an idempotent operation.  
 
 For example,
 the kernel $\kSE \times \kPer$ gives rise to functions which are \emph{locally} periodic: they only approximately repeat.
@@ -189,23 +197,25 @@ We therefore see that the functional form of the periodicity varies like $\kSE$,
 
 %At a syntactic level, mutliplication by $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$.
 
-\subsubsection{Multiplication by a White Noise kernel}
+\subsubsection{Multiplication by a white noise kernel}
 \vspace{-0.08in}
 
-For stationary kernels, $\kWN$ behaves like zero.  For example, $\kWN \times \kSE = \kWN \times \kPer = \kWN$.  Thus the product of white noise with any kernel is simply white noise.
+For stationary kernels, $\kWN$ behaves like a multiplicative zero.
+For example, $\kWN \times \kSE = \kWN \times \kPer = \kWN$.
+Thus the product of white noise with any stationary kernel is simply white noise.
 
 
-\subsubsection{Multiplication by the constant kernel}
+\subsubsection{Multiplication by a constant kernel}
 \vspace{-0.08in}
 
-The constant kernel $\kC$ behaves like the identity: $\kC \times k = k$.
+The constant kernel $\kC$ behaves like a multiplicative identity: $\kC \times k = k$.
 
 %We now only need to describe the base kernels and products of the form $\kSE \times \prod \kPer$.
 
 \subsubsection{Multiplication by a periodic kernel}
 \vspace{-0.08in}
 
-Multiplication by a periodic kernel means that each $f(x)$ will only covary with points near $f(x + n \tau)$, where $n$ is an integer and $\tau$ is the period of the kernel.
+Multiplication by a periodic kernel means that each $f(x)$ will co-vary with points near $f(x + n \tau)$, where $n$ is an integer and $\tau$ is the period of the kernel.
 %
 %\paragraph{ Products of Periodic Kernels}
 This property also applies to products of periodic kernels.
@@ -233,14 +243,15 @@ Suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}
 Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
 
 For example, the linear kernel, $\kLin$, has the form $\kLin(x, x') = c(x-a)(x'-a)$.
-Setting $a(x) = \sqrt{c}(x-a)$ we see that multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) sim \gp{}(0, k)$ by a linear function.
+Setting $a(x) = \sqrt{c}(x-a)$ we see that multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) \sim \gp{}(0, k)$ by a linear function.
 Similarly, multiplying by a changepoint kernel is equivalent to multiplying a \gp{} by a sigmoid function.
 
 This interpretation means that we can separately describe the properties of the model arising from multiplication with kernels of the form $k(x,x') = a(x)a(x')$.
 %
-For example, multiplying by a linear kernel means that the amplitude of the function grows linearly away from a central point.  Multiplication by two kernels impplies quadratic growth, etc.
+For example, multiplying by a linear kernel means that the amplitude of the function grows linearly away from a central point.
+Multiplication by two linear kernels results in quadratic growth, etc.
 
-Changepoints are expressed in a similar manner:  By multiplying our function by a sigmoid, we can modulate the condtribution of any given kernel to go to zero in certain regions.  This modulation can be expressed through language such as ``this component applies from 1700 to 1800''.
+Changepoints are expressed in a similar manner: By multiplying a function by a sigmoid the contribution of any given kernel will go to zero in certain regions.  This modulation can be trivially expressed in natural-language \eg ``this component applies from 1700 to 1800''.
 
 %The univariate envelopes can be arbitrary products of linear functions and sigmoids which can be simply described by their parameters.
 
@@ -308,11 +319,6 @@ Changepoints are expressed in a similar manner:  By multiplying our function by 
 %This sum decomposed the regression function into three additive components and additive noise.
 %The second component was described by the authors as periodic ($\kPer$) with linearly ($\kLin$) increasing amplitude.
 %The corresponding automatically generated description is able to give a more nuanced description
-
-
-\subsection{Summary}  
-\vspace{-0.08in}
-We have broken down the problem of describing arbitary compositions of kernels into two manageable parts.  First, we distribute the composite kernel into a sum of products.  Second, for each product of kernels, we describe the properties of products of kernels $\kSE$, $\kPer$, $\kC$ and $\kWN$, and then append descriptions of the properties of the modulating functions implied by products of $\kLin$ and $\kCP$.
 
 \section{Automatic Report Generation}
 \label{sec:method}

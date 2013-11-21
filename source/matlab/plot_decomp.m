@@ -1,10 +1,24 @@
-function plot_decomp(X, y, complete_covfunc, complete_hypers, decomp_list, ...
-                     decomp_hypers, log_noise, figname, latex_names, ...
+function plot_decomp(X, y, mean_family, mean_params, complete_covfunc, complete_hypers, decomp_list, ...
+                     decomp_hypers, lik_family_, lik_params, figname, latex_names, ...
                      full_name, X_mean, X_scale, y_mean, y_scale, max_depth)
+                 
+%%%%%%%%%%%
+% WARNING %
+%%%%%%%%%%%
+% - Ignores mean
+% - Ignores lik - assumes provides a noise parameter
+if length(lik_params) == 0
+    log_noise = -inf;
+else
+    log_noise = lik_params(0);
+end
+%%%%%%%%%%%
+% WARNING %
+%%%%%%%%%%%
 
 % TODO: Assert that the sum of all kernels is the same as the complete kernel.
 
-if nargin < 15; max_depth = numel(decomp_list); end
+if nargin < 18; max_depth = numel(decomp_list); end
 % if nargin < 15; max_depth = 4; end
 
 % Convert to double in case python saved as integers

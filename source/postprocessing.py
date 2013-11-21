@@ -67,7 +67,7 @@ def gen_all_results(folder):
             yield files.split('.')[-2], best_tuple
                 
 
-def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix='', rescale=True, data_folder=None, skip_kernel_evaluation=False):
+def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix='', rescale=False, data_folder=None, skip_kernel_evaluation=False):
     """Crawls the results directory, and makes decomposition plots for each file.
     
     prefix is an optional string prepended to the output directory
@@ -115,17 +115,14 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix
                 X_mean = X_mean + 1949
                 X_scale = 1.0/12.0
                                 
-            model = exp.parse_results(results_files, max_level=max_level)
+            model = exp.parse_results(results_files)
             model.kernel = ff.canonical(ff.simplify(model.kernel))
             print model.pretty_print()
-            if not max_level is None:
-                fig_folder = os.path.join(save_folder, (prefix + file + '_max_level_%d' % max_level))
-            else:
-                fig_folder = os.path.join(save_folder, (prefix + file))
+            fig_folder = os.path.join(save_folder, (prefix + file))
             if not os.path.exists(fig_folder):
                 os.makedirs(fig_folder)
             # Call gpml to plot the decomposition and evaluate the kernels
-            (code, kernel_components) = gpml.plot_decomposition(model, X, y, os.path.join(fig_folder, file), X_mean, X_scale, y_mean, y_scale, dont_run_code_hack=skip_kernel_evaluation)
+            (code, kernel_components) = gpml.plot_decomposition(model, X, y, D, os.path.join(fig_folder, file), X_mean, X_scale, y_mean, y_scale, dont_run_code_hack=skip_kernel_evaluation)
             # Now the kernels have been evaluated we can translate the revelant ones
             evaluation_data = scipy.io.loadmat(os.path.join(fig_folder, '%s_decomp_data.mat' % file))
             component_order = evaluation_data['idx'].ravel() - 1 # MATLAB to python OBOE

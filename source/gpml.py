@@ -195,15 +195,15 @@ y = double(y);
 addpath(genpath('%(gpml_path)s'));
 addpath(genpath('%(matlab_script_path)s'));
 
-mean_family = %(mean_family)s;
+mean_family = %(mean_syntax)s;
 mean_params = %(mean_params)s;
-kernel_family = %(kernel_family)s;
+kernel_family = %(kernel_syntax)s;
 kernel_params = %(kernel_params)s;
-lik_family = %(lik_family)s;
+lik_family = %(lik_syntax)s;
 lik_params = %(lik_params)s;
 kernel_family_list = %(kernel_syntax_list)s;
 kernel_params_list = %(kernel_params_list)s;
-inference = '%(inference)s'
+inference = '%(inference)s';
 figname = '%(figname)s';
 latex_names = %(latex_names)s;
 full_kernel_name = %(full_kernel_name)s;
@@ -212,23 +212,22 @@ X_scale = %(X_scale)f;
 y_mean = %(y_mean)f;
 y_scale = %(y_scale)f;
 
-plot_decomp(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, lik_family, lik_params, inference, figname, latex_names, full_kernel_name, X_mean, X_scale, y_mean, y_scale)
+plot_decomp(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, lik_family, lik_params, figname, latex_names, full_kernel_name, X_mean, X_scale, y_mean, y_scale)
 exit();"""
 
 
-def plot_decomposition(model, X, y, figname, noise=None, X_mean=0, X_scale=1, y_mean=0, y_scale=1, dont_run_code_hack=False):
+def plot_decomposition(model, X, y, D, figname, X_mean=0, X_scale=1, y_mean=0, y_scale=1, dont_run_code_hack=False):
     matlab_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'matlab'))
     figname = os.path.abspath(os.path.join(os.path.dirname(__file__), figname))
     print 'Plotting to: %s' % figname
     
     kernel_components = ff.break_kernel_into_summands(model.kernel)
-    kernel_components = ff.canonical(ff.simplify(kernel_components))
+    kernel_components = ff.canonical(ff.simplify(ff.SumKernel(kernel_components))).operands
     latex_names = [k.latex.strip() for k in kernel_components]
-    kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector for k in kernel_components))
+    kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector) for k in kernel_components)
     
     if X.ndim == 1: X = X[:, nax]
     if y.ndim == 1: y = y[:, nax]
-    if noise is None: noise = np.log(np.var(y)/10)   # Just a heuristic.
     data = {'X': X, 'y': y}
     (fd1, temp_data_file) = tempfile.mkstemp(suffix='.mat')
     scipy.io.savemat(temp_data_file, data)
@@ -237,17 +236,17 @@ def plot_decomposition(model, X, y, figname, noise=None, X_mean=0, X_scale=1, y_
     code = code % {'datafile': temp_data_file,
         'gpml_path': config.GPML_PATH,
         'matlab_script_path': matlab_dir,
-        'mean_syntax': model.mean.get_gpml_expression(dimensions=X.ndim),
+        'mean_syntax': model.mean.get_gpml_expression(dimensions=D),
         'mean_params': '[ %s ]' % ' '.join(str(p) for p in model.mean.param_vector),
-        'kernel_syntax': model.kernel.get_gpml_expression(dimensions=X.ndim),
+        'kernel_syntax': model.kernel.get_gpml_expression(dimensions=D),
         'kernel_params': '[ %s ]' % ' '.join(str(p) for p in model.kernel.param_vector),
-        'lik_syntax': model.likelihood.get_gpml_expression(dimensions=X.ndim),
+        'lik_syntax': model.likelihood.get_gpml_expression(dimensions=D),
         'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
         'inference': model.likelihood.gpml_inference_method,
-        'kernel_family_list': '{ %s }' % ','.join(str(k.get_gpml_expression(dimensions=X.ndim)) for k in kernel_components),
+        'kernel_syntax_list': '{ %s }' % ','.join(str(k.get_gpml_expression(dimensions=D)) for k in kernel_components),
         'kernel_params_list': '{ %s }' % kernel_params_list,
         'latex_names': "{ ' %s ' }" % "','".join(latex_names),
-        'full_kernel_name': "{ '%s' }" % kernel.latex_print().strip(), 
+        'full_kernel_name': "{ '%s' }" % model.kernel.latex.strip(), 
         'figname': figname,
         'X_mean' : X_mean,
         'X_scale' : X_scale,

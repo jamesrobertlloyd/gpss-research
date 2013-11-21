@@ -16,7 +16,6 @@ import time
 import warnings
 
 import flexible_function as ff
-import grammar
 
 to_19 = ( 'zero',  'one',   'two',  'three', 'four',   'five',   'six',
           'seven', 'eight', 'nine', 'ten',   'eleven', 'twelve', 'thirteen',
@@ -138,7 +137,7 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
         else:
             local_intervals = [(-np.Inf, k.location-np.exp(k.width)/2), (k.location+np.exp(k.width)/2, np.Inf)]
             base_kernel = k.operands[0]
-    elif isinstance(k, ff.ProductKernel) and not all(isinstance(op, ff.MaskKernel) or isinstance(op, ff.BaseKernel) for op in k.operands):
+    elif isinstance(k, ff.ProductKernel) and any(op.is_operator for op in k.operands):
         # Product contains an operator - find it
         for (i, op) in enumerate(k.operands):
             if not (isinstance(op, ff.MaskKernel) or isinstance(op, ff.BaseKernel)):
@@ -147,13 +146,13 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
                 if isinstance(op.operands[0], ff.ZeroKernel) or isinstance(op.operands[0], ff.NoneKernel):
                     for other_k in other_kernels:
                         op.operands[1] *= other_k
-                    op.operands[1] = grammar.canonical(op.operands[1])
+                    op.operands[1] = ff.canonical(op.operands[1])
                 else:
                     for other_k in other_kernels:
                         op.operands[0] *= other_k
-                    op.operands[0] = grammar.canonical(op.operands[0])
+                    op.operands[0] = ff.canonical(op.operands[0])
                 return find_region_of_influence(op, intervals)
-    elif isinstance(k, ff.MaskKernel) or isinstance(k, ff.BaseKernel) or (isinstance(k, ff.ProductKernel) and all(isinstance(op, ff.MaskKernel) or isinstance(op, ff.BaseKernel) for op in k.operands)):
+    elif isinstance(k, ff.Kernel):
         return (intervals, k)
     else:
         raise RuntimeError('I''m not intelligent enough to find the region of influence of kernel', k.__class__)
@@ -230,8 +229,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     # - IMTLin not dealt with
     # - Step function not dealt with
     # Strip masks and produce list of base kernels in product
-    prod = grammar.canonical(ff.strip_masks(grammar.canonical(prod)))
-    if isinstance(prod, ff.BaseKernel):
+    prod = ff.canonical(prod)
+    if not prod.is_operator:
         kernels = [prod]
     else:
         kernels = prod.operands
@@ -609,7 +608,7 @@ def translate_additive_component(k, X, monotonic, gradient, unit):
     '''
     #### TODO
     #     - Discuss steepness of changepoints when there is only one / the form is simple enough
-    k = grammar.canonical(k) # Just in case
+    k = ff.canonical(k) # Just in case
     (intervals, k) = find_region_of_influence(k)
     # Calculate the description of the changepoint free part of the kernel
     (summary, descriptions, extrap_descriptions) = translate_product(k, X, monotonic, gradient, unit)

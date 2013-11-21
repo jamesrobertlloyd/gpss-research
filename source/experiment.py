@@ -70,7 +70,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     m = eval(exp.mean)
     k = eval(exp.kernel)
     l = eval(exp.lik)
-    current_models = [model.RegressionModel(mean=m, kernel=k, likelihood=l, ndata=y.size)]
+    current_models = [ff.RegressionModel(mean=m, kernel=k, likelihood=l, ndata=y.size)]
 
     print '\n\nStarting search with this model:\n'
     print current_models[0].pretty_print()
@@ -83,8 +83,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     # Convert to additive form if desired
 
     if exp.additive_form:
-        current_models = model.models_to_additive_form(current_models)
-        current_models = model.remove_duplicates(current_models)   
+        current_models = ff.models_to_additive_form(current_models)
+        current_models = ff.remove_duplicates(current_models)   
 
     # Set up lists to record search
     
@@ -102,19 +102,19 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
             current_models = current_models[0:4]
              
         # Add random restarts to kernels
-        current_models = model.add_random_restarts_to_models(current_models, exp.n_rand, exp.sd, data_shape=data_shape)
+        current_models = ff.add_random_restarts_to_models(current_models, exp.n_rand, exp.sd, data_shape=data_shape)
         
         # Remove any redundancy introduced into kernel expressions
-        current_models = model.simplify_models(current_models)
-        current_models = model.remove_duplicates(current_models)
+        current_models = ff.simplify_models(current_models)
+        current_models = ff.remove_duplicates(current_models)
         
         # Add jitter to parameter values (empirically discovered to help optimiser)
-        current_models = model.add_jitter_to_models(current_models, exp.jitter_sd)
+        current_models = ff.add_jitter_to_models(current_models, exp.jitter_sd)
         
         # Add the previous best models - in case we just need to optimise more rather than changing structure
         if not best_models is None:
             for a_model in best_models:
-                current_models = current_models + [a_model.copy()] + model.add_jitter_to_models([a_model.copy() for dummy in range(exp.n_rand)], exp.jitter_sd)
+                current_models = current_models + [a_model.copy()] + ff.add_jitter_to_models([a_model.copy() for dummy in range(exp.n_rand)], exp.jitter_sd)
         
         # Randomise the order of the model to distribute computational load evenly
         np.random.shuffle(current_models)
@@ -155,8 +155,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Convert to additive form if desired
         if exp.additive_form:
-            current_models = model.models_to_additive_form(current_models)
-            current_models = model.remove_duplicates(current_models)   
+            current_models = ff.models_to_additive_form(current_models)
+            current_models = ff.remove_duplicates(current_models)   
         
         # Reduce number of kernels when in debug mode
         if exp.debug==True:
@@ -218,7 +218,7 @@ def parse_results(results_filenames, max_level=None):
                     level = int(line.split(' ')[2])
                     if level > max_level:
                         break
-        result_tuples += [model.repr_to_model(line.strip()) for line in lines]
+        result_tuples += [ff.repr_to_model(line.strip()) for line in lines]
     if not score is None:
         best_tuple = sorted(result_tuples, key=lambda a_model : RegressionModel.score(a_model, exp.score))[0]
     else:
@@ -267,9 +267,9 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 iters=100,                    # How long to optimize hyperparameters for.
                 base_kernels='SE,Per,Lin,Const',
                 additive_form=False,          # Restrict kernels to be in an additive form?
-                mean='model.MeanZero()',      # Starting model
-                kernel='model.NoiseKernel()', # Starting kernel
-                lik='model.LikGauss(sf=-np.Inf)', # Starting likelihood 
+                mean='ff.MeanZero()',      # Starting model
+                kernel='ff.NoiseKernel()', # Starting kernel
+                lik='ff.LikGauss(sf=-np.Inf)', # Starting likelihood 
                 verbose_results=False,        # Whether or not to record all kernels tested
                 random_seed=0,
                 period_heuristic=10,          # The minimum number of data points per period (roughly)

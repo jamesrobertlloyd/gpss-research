@@ -15,7 +15,7 @@ import scipy.stats
 import time
 import warnings
 
-import flexiblekernel as fk
+import flexible_function as ff
 import grammar
 
 to_19 = ( 'zero',  'one',   'two',  'three', 'four',   'five',   'six',
@@ -124,27 +124,27 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
     Returns (intervals, base_kernel) where intervals is a list of tuple intervals
     '''
     #### TODO - what extensions will this need in multi-d?
-    if isinstance(k, fk.ChangePointTanhKernel):
-        if isinstance(k.operands[0], fk.ZeroKernel) or isinstance(k.operands[0], fk.NoneKernel):
+    if isinstance(k, ff.ChangePointKernel):
+        if isinstance(k.operands[0], ff.ZeroKernel) or isinstance(k.operands[0], ff.NoneKernel):
             local_intervals = [(k.location, np.Inf)]
             base_kernel = k.operands[1]
         else:
             local_intervals = [(-np.Inf, k.location)]
             base_kernel = k.operands[0]
-    elif isinstance(k, fk.ChangeBurstTanhKernel):
-        if isinstance(k.operands[0], fk.ZeroKernel) or isinstance(k.operands[0], fk.NoneKernel):
+    elif isinstance(k, ff.ChangeBurstKernel):
+        if isinstance(k.operands[0], ff.ZeroKernel) or isinstance(k.operands[0], ff.NoneKernel):
             local_intervals = [(k.location-np.exp(k.width)/2, k.location+np.exp(k.width)/2)]
             base_kernel = k.operands[1]
         else:
             local_intervals = [(-np.Inf, k.location-np.exp(k.width)/2), (k.location+np.exp(k.width)/2, np.Inf)]
             base_kernel = k.operands[0]
-    elif isinstance(k, fk.ProductKernel) and not all(isinstance(op, fk.MaskKernel) or isinstance(op, fk.BaseKernel) for op in k.operands):
+    elif isinstance(k, ff.ProductKernel) and not all(isinstance(op, ff.MaskKernel) or isinstance(op, ff.BaseKernel) for op in k.operands):
         # Product contains an operator - find it
         for (i, op) in enumerate(k.operands):
-            if not (isinstance(op, fk.MaskKernel) or isinstance(op, fk.BaseKernel)):
+            if not (isinstance(op, ff.MaskKernel) or isinstance(op, ff.BaseKernel)):
                 # Found an operator - place all other kernels within it - resulting in the operator at the top of the kernel
                 other_kernels = k.operands[:i] + k.operands[(i+1):]
-                if isinstance(op.operands[0], fk.ZeroKernel) or isinstance(op.operands[0], fk.NoneKernel):
+                if isinstance(op.operands[0], ff.ZeroKernel) or isinstance(op.operands[0], ff.NoneKernel):
                     for other_k in other_kernels:
                         op.operands[1] *= other_k
                     op.operands[1] = grammar.canonical(op.operands[1])
@@ -153,7 +153,7 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
                         op.operands[0] *= other_k
                     op.operands[0] = grammar.canonical(op.operands[0])
                 return find_region_of_influence(op, intervals)
-    elif isinstance(k, fk.MaskKernel) or isinstance(k, fk.BaseKernel) or (isinstance(k, fk.ProductKernel) and all(isinstance(op, fk.MaskKernel) or isinstance(op, fk.BaseKernel) for op in k.operands)):
+    elif isinstance(k, ff.MaskKernel) or isinstance(k, ff.BaseKernel) or (isinstance(k, ff.ProductKernel) and all(isinstance(op, ff.MaskKernel) or isinstance(op, ff.BaseKernel) for op in k.operands)):
         return (intervals, k)
     else:
         raise RuntimeError('I''m not intelligent enough to find the region of influence of kernel', k.__class__)
@@ -230,8 +230,8 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     # - IMTLin not dealt with
     # - Step function not dealt with
     # Strip masks and produce list of base kernels in product
-    prod = grammar.canonical(fk.strip_masks(grammar.canonical(prod)))
-    if isinstance(prod, fk.BaseKernel):
+    prod = grammar.canonical(ff.strip_masks(grammar.canonical(prod)))
+    if isinstance(prod, ff.BaseKernel):
         kernels = [prod]
     else:
         kernels = prod.operands
@@ -254,32 +254,32 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     lin_location = None
     # Count kernels and calculate a variety of summary quantities
     for k in kernels:
-        if isinstance(k, fk.SqExpKernel) or isinstance(k, fk.Matern5Kernel):
+        if isinstance(k, ff.SqExpKernel) or isinstance(k, ff.Matern5Kernel):
             #### FIXME - How accurate is it to assume that SqExp and Matern lengthscales multiply similarly
             los_count += 1
             lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*k.lengthscale))
-        #elif isinstance(k, fk.LinKernel) or isinstance(k, fk.PureLinKernel):
-        elif isinstance(k, fk.PureLinKernel):
+        #elif isinstance(k, ff.LinKernel) or isinstance(k, ff.PureLinKernel):
+        elif isinstance(k, ff.PureLinKernel):
             lin_count += 1
             lin_location = k.location
-        elif isinstance(k, fk.CentredPeriodicKernel):
+        elif isinstance(k, ff.CentredPeriodicKernel):
             per_count += 1
             per_kernels.append(k)
             min_period = np.min([np.exp(k.period), min_period])
-        elif isinstance(k, fk.FourierKernel):
+        elif isinstance(k, ff.FourierKernel):
             per_count += 1
             per_kernels.append(k)
             min_period = np.min([np.exp(k.period), min_period])
-        elif isinstance(k, fk.CosineKernel):
+        elif isinstance(k, ff.CosineKernel):
             cos_count += 1
             cos_kernels.append(k)
             min_period = np.min([np.exp(k.period), min_period])
-        elif isinstance(k, fk.ExpKernel):
+        elif isinstance(k, ff.ExpKernel):
             exp_count += 1
             exp_rate += k.rate
-        elif isinstance(k, fk.NoiseKernel):
+        elif isinstance(k, ff.NoiseKernel):
             noi_count += 1
-        elif not isinstance(k, fk.ConstKernel):
+        elif not isinstance(k, ff.ConstKernel):
             # Cannot deal with whatever type of kernel this is
             unk_count +=1
     lengthscale = np.exp(lengthscale)

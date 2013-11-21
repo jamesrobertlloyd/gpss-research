@@ -39,16 +39,6 @@ import shutil
 import random
 
 def evaluate_models(models, X, y, verbose=True, iters=300, local_computation=False, zip_files=False, max_jobs=500, random_seed=0, subset=False, subset_size=250, full_iters=0, bundle_size=1):
-    '''
-    Sets up the kernel optimisation and nll calculation experiments, returns the results as scored kernels
-    Input:
-     - kernels           - A list of kernels (i.e. not scored kernels)
-     - X                 - A matrix (data_points x dimensions) of input locations
-     - y                 - A matrix (data_points x 1) of output values
-     - ...
-    Return:
-     - A list of ScoredKernel objects
-    '''
    
     # Make data into matrices in case they're unidimensional.
     if X.ndim == 1: X = X[:, nax]
@@ -71,38 +61,25 @@ def evaluate_models(models, X, y, verbose=True, iters=300, local_computation=Fal
     # Create a list of MATLAB scripts to assess and optimise parameters for each kernel
     if verbose:
         print 'Creating scripts'
-    scripts = [None] * len(kernels)
-    for (i, model) in enumerate(kernels):
+    scripts = [None] * len(models)
+    for (i, model) in enumerate(models):
         parameters = {'datafile': data_file.split('/')[-1],
                       'writefile': '%(output_file)s', # N.B. cblparallel manages output files
                       'gpml_path': cblparallel.gpml_path(local_computation),
-                      'mean_syntax': model.mean.gpml_expression,
+                      'mean_syntax': model.mean.get_gpml_expression(dimensions=X.ndim),
                       'mean_params': '[ %s ]' % ' '.join(str(p) for p in model.mean.param_vector),
-                      'kernel_syntax': model.kernel.gpml_expression,
+                      'kernel_syntax': model.kernel.get_gpml_expression(dimensions=X.ndim),
                       'kernel_params': '[ %s ]' % ' '.join(str(p) for p in model.kernel.param_vector),
-                      'lik_syntax': model.likelihood.gpml_expression,
+                      'lik_syntax': model.likelihood.get_gpml_expression(dimensions=X.ndim),
                       'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
+                      'inference': model.likelihood.gpml_inference_method,
                       'iters': str(iters),
                       'seed': str(np.random.randint(2**31)),
                       'subset': 'true' if subset else 'false',
                       'subset_size' : str(subset_size),
                       'full_iters' : str(full_iters)}
 
-    ######
-    ######
-    ######
-    # CONTINUE FROM HERE
-    ######
-    ######
-    ######
-
-        if zero_mean:
-            if no_noise:
-                scripts[i] = gpml.OPTIMIZE_KERNEL_CODE_ZERO_MEAN_NO_NOISE % parameters
-            else:
-                scripts[i] = gpml.OPTIMIZE_KERNEL_CODE_ZERO_MEAN % parameters
-        else:
-            scripts[i] = gpml.OPTIMIZE_KERNEL_CODE % parameters
+        scripts[i] = gpml.OPTIMIZE_KERNEL_CODE % parameters
         #### Need to be careful with % signs
         #### For the moment, cblparallel expects no single % signs - FIXME
         scripts[i] = re.sub('% ', '%% ', scripts[i])
@@ -116,16 +93,16 @@ def evaluate_models(models, X, y, verbose=True, iters=300, local_computation=Fal
         output_files = cblparallel.run_batch_on_fear(scripts, language='matlab', max_jobs=max_jobs, verbose=verbose, zip_files=zip_files, bundle_size=bundle_size)  
     
     # Read in results
-    results = [None] * len(kernels)
+    results = [None] * len(models)
     for (i, output_file) in enumerate(output_files):
         if verbose:
-            print 'Reading output file %d of %d' % (i + 1, len(kernels))
-        results[i] = ScoredKernel.from_matlab_output(gpml.read_outputs(output_file), kernels[i].family(), ndata)
+            print 'Reading output file %d of %d' % (i + 1, len(models))
+        results[i] = RegressionModel.from_matlab_output(gpml.read_outputs(output_file), models[i], ndata)
     
     # Tidy up local output files
     for (i, output_file) in enumerate(output_files):
         if verbose:
-            print 'Removing output file %d of %d' % (i + 1, len(kernels)) 
+            print 'Removing output file %d of %d' % (i + 1, len(models)) 
         os.remove(output_file)
     # Remove temporary data file (perhaps on the cluster server)
     cblparallel.remove_temp_file(data_file, local_computation)
@@ -134,7 +111,7 @@ def evaluate_models(models, X, y, verbose=True, iters=300, local_computation=Fal
     return results     
 
    
-def make_predictions(X, y, Xtest, ytest, best_scored_kernel, local_computation=False, max_jobs=500, verbose=True, zero_mean=False, random_seed=0, no_noise=False):
+def make_predictions(X, y, Xtest, ytest, model, local_computation=False, max_jobs=500, verbose=True, zero_mean=False, random_seed=0, no_noise=False):
     '''
     Evaluates a kernel on held out data
     Input:
@@ -168,18 +145,17 @@ def make_predictions(X, y, Xtest, ytest, best_scored_kernel, local_computation=F
     parameters ={'datafile': data_file.split('/')[-1],
                  'writefile': '%(output_file)s',
                  'gpml_path': cblparallel.gpml_path(local_computation),
-                 'kernel_family': best_scored_kernel.k_opt.gpml_kernel_expression(),
-                 'kernel_params': '[ %s ]' % ' '.join(str(p) for p in best_scored_kernel.k_opt.param_vector()),
+                 'mean_syntax': model.mean.get_gpml_expression(dimensions=X.ndim),
+                 'mean_params': '[ %s ]' % ' '.join(str(p) for p in model.mean.param_vector),
+                 'kernel_syntax': model.kernel.get_gpml_expression(dimensions=X.ndim),
+                 'kernel_params': '[ %s ]' % ' '.join(str(p) for p in model.kernel.param_vector),
+                 'lik_syntax': model.likelihood.get_gpml_expression(dimensions=X.ndim),
+                 'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
+                 'inference': model.likelihood.gpml_inference_method,
                  'noise': str(best_scored_kernel.noise),
                  'iters': str(30),
                  'seed': str(random_seed)}
-    if zero_mean:
-        if no_noise:
-            code = gpml.PREDICT_AND_SAVE_CODE_ZERO_MEAN_NO_NOISE % parameters
-        else:
-            code = gpml.PREDICT_AND_SAVE_CODE_ZERO_MEAN % parameters
-    else:
-        code = gpml.PREDICT_AND_SAVE_CODE % parameters
+    code = gpml.PREDICT_AND_SAVE_CODE % parameters
     code = re.sub('% ', '%% ', code) # HACK - cblparallel currently does not like % signs
     # Evaluate code - potentially on cluster
     if local_computation:   

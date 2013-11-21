@@ -236,6 +236,11 @@ class Likelihood(FunctionWrapper):
         else:
             return ProductLikelihood([self, other])
 
+    # Properties
+
+    @property
+    def gpml_inference_method(self): return '@infExact'
+
     # Methods
 
     def get_gpml_expression(self, dimensions):
@@ -319,10 +324,10 @@ class RegressionModel:
         return RegressionModel(mean=mean, kernel=kernel, likelihood=likelihood, nll=nll, ndata=ndata)
 
     @staticmethod 
-    def from_matlab_output(output, mean, kernel, likelihood, ndata):
-        mean.load_param_vector(output.mean_hypers)
-        kernel.load_param_vector(output.kernel_hypers)
-        likelihood.load_param_vector(output.likelihood_hypers)
+    def from_matlab_output(output, model, ndata):
+        model.mean.load_param_vector(output.mean_hypers)
+        model.kernel.load_param_vector(output.kernel_hypers)
+        model.likelihood.load_param_vector(output.lik_hypers)
         return RegressionModel(mean=mean, kernel=kernel, likelihood=likelihood, nll=output.nll, ndata=ndata) 
 
 ##############################################
@@ -832,7 +837,12 @@ class LikGauss(Likelihood):
     # Properties
         
     @property
-    def gpml_function(self): return '{@likGauss}'
+    def gpml_function(self):
+        # TODO - once GPML infExact fixed, always return likGauss
+        if self.sf > -np.Inf
+            return '{@likGauss}'
+        else:
+            return '{@likDelta}'
 
     @property    
     def is_thunk(self): return True
@@ -841,7 +851,11 @@ class LikGauss(Likelihood):
     def id(self): return 'Gauss'
     
     @property
-    def param_vector(self): return np.array([self.sf])
+    def param_vector(self):
+        if self.sf > -np.Inf
+            return np.array([self.sf])
+        else:
+            return np.array([])
         
     @property
     def latex(self): return '{\\sc GS}' 
@@ -855,6 +869,13 @@ class LikGauss(Likelihood):
             return 0
         else:
             return 1
+
+    @property
+    def gpml_inference_method(self):
+        if self.sf > -np.Inf
+            return '@infExact'
+        else:
+            return '@infDelta'
 
     # Methods
 

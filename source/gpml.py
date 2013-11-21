@@ -222,7 +222,7 @@ def plot_decomposition(model, X, y, D, figname, X_mean=0, X_scale=1, y_mean=0, y
     print 'Plotting to: %s' % figname
     
     kernel_components = ff.break_kernel_into_summands(model.kernel)
-    kernel_components = ff.canonical_k(ff.simplify_k(ff.SumKernel(kernel_components))).operands
+    kernel_components = ff.SumKernel(kernel_components).simplified().canonical().operands
     latex_names = [k.latex.strip() for k in kernel_components]
     kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector) for k in kernel_components)
     

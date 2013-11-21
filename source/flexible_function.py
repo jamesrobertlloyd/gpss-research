@@ -94,6 +94,10 @@ class FunctionWrapper:
             return cmp(self.__class__, other.__class__)
         return cmp(list(self.param_vector), list(other.param_vector))  
 
+    def simplified(self): return self.copy()
+
+    def canonical(self): return self.copy()
+
 
 class MeanFunction(FunctionWrapper):
     """Base mean function class with default properties and methods."""
@@ -157,12 +161,12 @@ class Kernel(FunctionWrapper):
         if isinstance(other, SumKernel):
             if isinstance(self, SumKernel):
                 self.operands = self.operands + other.operands
-                return canonical_k(self)
+                return self.canonical()
             else:
                 other.operands = [self] + other.operands
-                return canonical_k(other)
+                return other.canonical()
         else:
-            return canonical_k(SumKernel([self, other]))
+            return SumKernel([self, other]).canonical()
     
     # Syntactic sugar e.g. k1 * k2
     def __mul__(self, other):
@@ -170,12 +174,12 @@ class Kernel(FunctionWrapper):
         if isinstance(other, ProductKernel):
             if isinstance(self, ProductKernel):
                 self.operands = self.operands + other.operands
-                return canonical_k(self)
+                return self.canonical()
             else:
                 other.operands = [self] + other.operands
-                return canonical_k(other)
+                return other.canonical()
         else:
-            return canonical_k(ProductKernel([self, other]))
+            return ProductKernel([self, other]).canonical()
 
     # Properties
        
@@ -213,7 +217,89 @@ class Kernel(FunctionWrapper):
         else:
             raise RuntimeError('Operators must override this method')
 
+    def simplified(self):
+        # TODO - how many times do these need to be done?
+        k = self.copy()
+        k = collapse_additive_idempotency_k(k)
+        k = collapse_multiplicative_idempotency_k(k)
+        k = collapse_multiplicative_identity_k(k)
+        k = collapse_multiplicative_zero_k(k)
+        k = k.canonical()
+        k = collapse_additive_idempotency_k(k)
+        k = collapse_multiplicative_idempotency_k(k)
+        k = collapse_multiplicative_identity_k(k)
+        k = collapse_multiplicative_zero_k(k)
+        k = k.canonical()
+        return k
+
     def __repr__(self): return 'Kernel()'
+
+    def canonical(self):
+        '''Sorts a kernel tree into a canonical form.'''
+        if not self.is_operator:
+            return self.copy()
+        else:
+            new_ops = []
+            for op in self.operands:
+                op_canon = op.canonical()
+                if isinstance(op_canon, self.__class__):
+                    new_ops += op_canon.operands
+                elif not isinstance(op_canon, NoneKernel):
+                    new_ops.append(op_canon)
+            if len(new_ops) == 0:
+                return NoneKernel()
+            elif len(new_ops) == 1:
+                return new_ops[0]
+            else:
+                canon = self.copy()
+                canon.operands = new_ops
+                return canon
+
+    def additive_form(self):
+        '''
+        Converts a kernel into a sum of products and with changepoints percolating to the top
+        Output is always in canonical form
+        '''
+        #### TODO - currently implemented for a subset of changepoint operators - to be extended or operators to be abstracted
+        k = self
+        if isinstance(k, ProductKernel):
+            # Convert operands into additive form
+            additive_ops = sorted([op.additive_form() for op in k.operands])
+            # Initialise the new kernel
+            new_kernel = additive_ops[0]
+            # Build up the product, iterating over the other components
+            for additive_op in additive_ops[1:]:
+                if isinstance(new_kernel, ChangePointKernel) or isinstance(new_kernel, ChangeBurstKernel):
+                    # Changepoints take priority - nest the products within this operator
+                    new_kernel.operands = [(op*additive_op.copy()).canonical().additive_form() for op in new_kernel.operands]
+                elif isinstance(additive_op, ChangePointKernel) or isinstance(additive_op, ChangeBurstKernel):
+                    # Nest within the next operator
+                    old_kernel = new_kernel.copy()
+                    new_kernel = additive_op
+                    new_kernel.operands = [(op*old_kernel.copy()).canonical().additive_form() for op in new_kernel.operands]
+                elif isinstance(new_kernel, SumKernel):
+                    # Nest the products within this sum
+                    new_kernel.operands = [(op*additive_op.copy()).canonical().additive_form() for op in new_kernel.operands]
+                elif isinstance(additive_op, SumKernel):
+                    # Nest within the next operator
+                    old_kernel = new_kernel.copy()
+                    new_kernel = additive_op
+                    new_kernel.operands = [(op*old_kernel.copy()).canonical().additive_form() for op in new_kernel.operands]
+                else:
+                    # Both base kernels - just multiply
+                    new_kernel = new_kernel*additive_op
+                # Make sure still in canonical form - useful mostly for detecting duplicates
+                new_kernel = new_kernel.canonical()
+            return new_kernel
+        elif k.is_operator:
+            # This operator is additive - make all operands additive
+            new_kernel = k.copy()
+            new_kernel.operands = [op.additive_form() for op in k.operands]
+            return new_kernel.canonical()
+        else:
+            #### TODO - Place a check here that the kernel is not a binary or higher operator
+            # Base case - return self
+            return k.canonical() # Just to make it clear that the output is always canonical
 
 
 class Likelihood(FunctionWrapper):
@@ -341,6 +427,25 @@ class GPModel:
         model.likelihood.load_param_vector(output.lik_hypers)
         return GPModel(mean=model.mean, kernel=model.kernel, likelihood=model.likelihood, nll=output.nll, ndata=ndata) 
 
+    def simplified(self):
+        simple = self.copy()
+        simple.mean = simple.mean.simplified()
+        simple.kernel = simple.kernel.simplified()
+        simple.likelihood = simple.likelihood.simplified()
+        return simple
+
+    def canonical(self):
+        canon = self.copy()
+        canon.mean = canon.mean.canonical()
+        canon.kernel = canon.kernel.canonical()
+        canon.likelihood = canon.likelihood.canonical()
+        return canon
+
+    def additive_form(self):
+        # This will need to be more cunning when using compound mean and lik
+        additive = self.copy()
+        additive.kernel = additive.kernel.additive_form()
+        return additive
 
 ##############################################
 #                                            #
@@ -1037,58 +1142,9 @@ class LikGauss(Likelihood):
 #                                            #
 ##############################################
 
-def canonical(model):
-    model.mean = canonical_m(model.mean)
-    model.kernel = canonical_k(model.kernel)
-    model.likelihood = canonical_k(model.likelihood)
-    return model
-
-def canonical_m(m):
-    return m
-
-def canonical_l(l):
-    return l
-
-def canonical_k(k):
-    '''Sorts a kernel tree into a canonical form.'''
-    if not k.is_operator:
-        return k
-    else:
-        new_ops = []
-        for op in k.operands:
-            op_canon = canonical_k(op)
-            if isinstance(op_canon, k.__class__):
-                new_ops += op_canon.operands
-            elif not isinstance(op_canon, NoneKernel):
-                new_ops.append(op_canon)
-        if len(new_ops) == 0:
-            return NoneKernel()
-        elif len(new_ops) == 1:
-            return new_ops[0]
-        else:
-            k.operands = new_ops
-            return k
-
-def simplify_k(k):
-    # TODO - how many times do these need to be done?
-    k = collapse_additive_idempotency_k(k)
-    k = collapse_multiplicative_idempotency_k(k)
-    k = collapse_multiplicative_identity_k(k)
-    k = collapse_multiplicative_zero_k(k)
-    k = canonical_k(k)
-    k = collapse_additive_idempotency_k(k)
-    k = collapse_multiplicative_idempotency_k(k)
-    k = collapse_multiplicative_identity_k(k)
-    k = collapse_multiplicative_zero_k(k)
-    return canonical_k(k)
-
-def simplify(model):
-    model.kernel = simplify_k(model.kernel)
-    return model
-
 def collapse_additive_idempotency_k(k):
     # TODO - abstract this behaviour
-    k = canonical_k(k)
+    k = k.canonical()
     if not k.is_operator:
         return k
     elif isinstance(k, SumKernel):
@@ -1121,7 +1177,7 @@ def collapse_additive_idempotency_k(k):
             ops = not_const_ops + [ConstKernel(sf=0.5*np.log(sf))]
         # Finish
         k.operands = ops
-        return canonical_k(k)
+        return k.canonical()
     else:
         new_ops = []
         for o in k.operands:
@@ -1131,7 +1187,7 @@ def collapse_additive_idempotency_k(k):
 
 def collapse_multiplicative_idempotency_k(k):
     # TODO - abstract this behaviour
-    k = canonical_k(k)
+    k = k.canonical()
     if not k.is_operator:
         return k
     elif isinstance(k, ProductKernel):
@@ -1181,7 +1237,7 @@ def collapse_multiplicative_idempotency_k(k):
             ops = not_const_ops + [ConstKernel(sf=sf)]
         # Finish
         k.operands = ops
-        return canonical_k(k)
+        return k.canonical()
     else:
         new_ops = []
         for o in k.operands:
@@ -1191,7 +1247,7 @@ def collapse_multiplicative_idempotency_k(k):
 
 def collapse_multiplicative_zero_k(k):
     # TODO - abstract this behaviour
-    k = canonical_k(k)
+    k = k.canonical()
     if not k.is_operator:
         return k
     elif isinstance(k, ProductKernel):
@@ -1212,7 +1268,7 @@ def collapse_multiplicative_zero_k(k):
             ops = not_WN_ops + [NoiseKernel(sf=sf)]
         # Finish
         k.operands = ops
-        return canonical_k(k)
+        return k.canonical()
     else:
         new_ops = []
         for o in k.operands:
@@ -1222,7 +1278,7 @@ def collapse_multiplicative_zero_k(k):
 
 def collapse_multiplicative_identity_k(k):
     # TODO - abstract this behaviour
-    k = canonical_k(k)
+    k = k.canonical()
     if not k.is_operator:
         return k
     elif isinstance(k, ProductKernel):
@@ -1242,7 +1298,7 @@ def collapse_multiplicative_identity_k(k):
             ops[0].multiply_by_const(sf=sf)
         # Finish
         k.operands = ops
-        return canonical_k(k)
+        return k.canonical()
     else:
         new_ops = []
         for o in k.operands:
@@ -1302,60 +1358,6 @@ def distribute_products_k(k):
     else:
         # Base case: A kernel that's just, like, a kernel, man.
         return k
-
-def additive_form(model):
-    model.kernel = additive_form_k(model.kernel)
-    return model
-
-def additive_form_k(k):
-    '''
-    Converts a kernel into a sum of products and with changepoints percolating to the top
-    Output is always in canonical form
-    '''
-    #### TODO - currently implemented for a subset of changepoint operators - to be extended or operators to be abstracted
-    if isinstance(k, ProductKernel):
-        # Convert operands into additive form
-        additive_ops = sorted([additive_form_k(op) for op in k.operands])
-        # Initialise the new kernel
-        new_kernel = additive_ops[0]
-        # Build up the product, iterating over the other components
-        for additive_op in additive_ops[1:]:
-            if isinstance(new_kernel, ChangePointKernel) or isinstance(new_kernel, ChangeBurstKernel):
-                # Changepoints take priority - nest the products within this operator
-                new_kernel.operands = [additive_form_k(canonical_k(op*additive_op.copy())) for op in new_kernel.operands]
-            elif isinstance(additive_op, ChangePointKernel) or isinstance(additive_op, ChangeBurstKernel):
-                # Nest within the next operator
-                old_kernel = new_kernel.copy()
-                new_kernel = additive_op
-                new_kernel.operands = [additive_form_k(canonical_k(op*old_kernel.copy())) for op in new_kernel.operands]
-            elif isinstance(new_kernel, SumKernel):
-                # Nest the products within this sum
-                new_kernel.operands = [additive_form_k(canonical_k(op*additive_op.copy())) for op in new_kernel.operands]
-            elif isinstance(additive_op, SumKernel):
-                # Nest within the next operator
-                old_kernel = new_kernel.copy()
-                new_kernel = additive_op
-                new_kernel.operands = [additive_form_k(canonical_k(op*old_kernel.copy())) for op in new_kernel.operands]
-            else:
-                # Both base kernels - just multiply
-                new_kernel = new_kernel*additive_op
-            # Make sure still in canonical form - useful mostly for detecting duplicates
-            new_kernel = canonical_k(new_kernel)
-        return new_kernel
-    elif k.is_operator:
-        # This operator is additive - make all operands additive
-        new_kernel = k.copy()
-        new_kernel.operands = [additive_form_k(op) for op in k.operands]
-        return canonical_k(new_kernel)
-    else:
-        #### TODO - Place a check here that the kernel is not a binary or higher operator
-        # Base case - return self
-        return canonical_k(k) # Just to make it clear that the output is always canonical
-
-def models_to_additive_form_k(models):
-    for a_model in models:
-        a_model.kernel = additive_form_k(a_model.kernel)
-    return models
 
 
 ##############################################

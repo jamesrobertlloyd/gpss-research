@@ -47,8 +47,8 @@ class ff_testcase(unittest.TestCase):
         print '\n', k.pretty_print(), '\n'
         print '\n', k.syntax, '\n'
         print '\n', k, '\n'
-        k1.dimension = 0
-        k2.dimension = 1
+        k.operands[0].dimension = 0
+        k.operands[1].dimension = 1
         print '\n', k.pretty_print(), '\n'
         print '\n', k.syntax, '\n'
         print '\n', k, '\n'
@@ -65,8 +65,6 @@ class ff_testcase(unittest.TestCase):
         print '\n', k.pretty_print(), '\n'
         print '\n', k.syntax, '\n'
         print '\n', k, '\n'
-        k1.dimension = 0
-        k2.dimension = 1
         print '\n', k.pretty_print(), '\n'
         print '\n', k.syntax, '\n'
         print '\n', k, '\n'
@@ -89,8 +87,8 @@ class ff_testcase(unittest.TestCase):
         print '\n', k.pretty_print(), '\n'
         print '\n', k.syntax, '\n'
         print '\n', k, '\n'
-        k1.dimension = 0
-        k2.dimension = 1
+        k.operands[0].dimension = 0
+        k.operands[1].dimension = 1
         print '\n', k.pretty_print(), '\n'
         print '\n', k.syntax, '\n'
         print '\n', k, '\n'
@@ -107,8 +105,6 @@ class ff_testcase(unittest.TestCase):
         print '\n', k.pretty_print(), '\n'
         print '\n', k.syntax, '\n'
         print '\n', k, '\n'
-        k1.dimension = 0
-        k2.dimension = 1
         print '\n', k.pretty_print(), '\n'
         print '\n', k.syntax, '\n'
         print '\n', k, '\n'
@@ -231,8 +227,8 @@ class ff_testcase(unittest.TestCase):
         k = ff.collapse_multiplicative_identity_k(k)
         print '\n', k.pretty_print(), '\n'
 
-    def test_simplify_k(self):
-        print 'simplify_k'
+    def test_simplified_k(self):
+        print 'simplified_k'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
         k1 = k.copy()
         k2 = k.copy()
@@ -247,7 +243,7 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy() + k1.copy() * k1.copy() * k3.copy()
         print '\n', k.pretty_print(), '\n'
-        k = ff.simplify_k(k)
+        k = k.simplified()
         print '\n', k.pretty_print(), '\n'
 
     def test_distribute_products_k(self):
@@ -262,7 +258,7 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = (k1 + k2 + k3) * (k4 + k5)
         print '\n', k.pretty_print(), '\n'
-        components = ff.simplify_k(ff.distribute_products_k(k))
+        components = (ff.distribute_products_k(k)).simplified()
         print components
         print ff.collapse_additive_idempotency_k(components)
         for k in components.operands:
@@ -277,7 +273,7 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = (k1 * (k2 + k3)) + (k4 * k5)
         print '\n', k.pretty_print(), '\n'
-        components = ff.simplify_k(ff.distribute_products_k(k))
+        components = ff.distribute_products_k(k).simplified()
         print components
         print ff.collapse_additive_idempotency_k(components)
         for k in components.operands:
@@ -351,7 +347,7 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = (k1 * (k2 + k3)) + (k4 * k5)
         print '\n', k.pretty_print(), '\n'
-        components = ff.simplify_k(ff.additive_form_k(k))
+        components = k.additive_form().simplified()
         print components
         for k in components.operands:
             print '\n', k.pretty_print(), '\n'
@@ -368,7 +364,7 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy() + k1.copy() * k1.copy() * k3.copy()
         print '\n', k.pretty_print(), '\n'
-        print '\n', ff.canonical_k(k).pretty_print(), '\n'
+        print '\n', k.canonical().pretty_print(), '\n'
 
     def test_canonical_k_2(self):
         print 'canonical_k form 2'
@@ -377,14 +373,14 @@ class ff_testcase(unittest.TestCase):
         k2 = ff.NoneKernel()
         k = ff.ChangePointKernel(operands=[k1,k2])
         print '\n', k, '\n'
-        k = ff.canonical_k(k)
+        k = k.canonical()
         print '\n', k, '\n'
-        assert k == ff.NoneKernel()
+        assert k == k1
         k = ff.ChangePointKernel(operands=[ff.ChangePointKernel(operands=[k1,k2]),k2])
         print '\n', k, '\n'
-        k = ff.canonical_k(k)
+        k = k.canonical()
         print '\n', k, '\n'
-        assert k == ff.NoneKernel()
+        assert k == k1
 
 class grammar_testcase(unittest.TestCase):
 

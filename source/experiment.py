@@ -110,7 +110,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                 print model.pretty_print()
         
         # Remove any redundancy introduced into kernel expressions
-        current_models = [ff.simplify(model) for model in current_models]
+        current_models = [model.simplified() for model in current_models]
         # Print result of simplification
         if exp.debug:
             print '\nSimplified kernels\n'

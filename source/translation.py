@@ -146,11 +146,11 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
                 if isinstance(op.operands[0], ff.ZeroKernel) or isinstance(op.operands[0], ff.NoneKernel):
                     for other_k in other_kernels:
                         op.operands[1] *= other_k
-                    op.operands[1] = ff.canonical_k(op.operands[1])
+                    op.operands[1] = op.operands[1].canonical()
                 else:
                     for other_k in other_kernels:
                         op.operands[0] *= other_k
-                    op.operands[0] = ff.canonical_k(op.operands[0])
+                    op.operands[0] = op.operands[0].canonical()
                 return find_region_of_influence(op, intervals)
     elif isinstance(k, ff.Kernel):
         return (intervals, k)
@@ -229,7 +229,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     # - IMTLin not dealt with
     # - Step function not dealt with
     # Strip masks and produce list of base kernels in product
-    prod = ff.canonical_k(prod)
+    prod = prod.canonical()
     if not prod.is_operator:
         kernels = [prod]
     else:
@@ -607,7 +607,7 @@ def translate_additive_component(k, X, monotonic, gradient, unit):
     '''
     #### TODO
     #     - Discuss steepness of changepoints when there is only one / the form is simple enough
-    k = ff.canonical_k(k) # Just in case
+    k = k.canonical() # Just in case
     (intervals, k) = find_region_of_influence(k)
     # Calculate the description of the changepoint free part of the kernel
     (summary, descriptions, extrap_descriptions) = translate_product(k, X, monotonic, gradient, unit)

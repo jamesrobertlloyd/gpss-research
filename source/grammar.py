@@ -163,7 +163,7 @@ def expand_kernels(D, seed_kernels, base_kernels='SE', rules=None):
     kernels = []
     for k in seed_kernels:
         kernels = kernels + expand(k, g)
-    kernels = map(ff.canonical_k, kernels)
+    kernels = [k.canonical() for k in kernels]
     kernels = ff.remove_duplicates(kernels)
     kernels = [k for k in kernels if not isinstance(k, ff.NoneKernel)]
     return kernels

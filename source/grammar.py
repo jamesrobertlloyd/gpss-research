@@ -8,6 +8,9 @@ Created Nov 2012
           Roger Grosse (rgrosse@mit.edu)
 '''
 
+# TODO
+# - reintroduce old kernel operators once kernels are implemented
+
 import itertools
 import numpy as np
 

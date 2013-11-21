@@ -18,7 +18,7 @@ import re
 import scipy.io
 
 import flexible_function as ff
-from flexible_function import RegressionModel
+from flexible_function import GPModel
 import grammar
 import gpml
 import utils.latex
@@ -70,7 +70,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     m = eval(exp.mean)
     k = eval(exp.kernel)
     l = eval(exp.lik)
-    current_models = [ff.RegressionModel(mean=m, kernel=k, likelihood=l, ndata=y.size)]
+    current_models = [ff.GPModel(mean=m, kernel=k, likelihood=l, ndata=y.size)]
 
     print '\n\nStarting search with this model:\n'
     print current_models[0].pretty_print()
@@ -97,12 +97,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     # Perform search
     for depth in range(exp.max_depth):
         
-        # If debugging, only evaluate a few kernels
-        #if exp.debug==True:
-        #    current_models = current_models[0:4]
-
-        #if exp.debug and (depth==1):
-        #    raise RuntimeError('Stop... Hammer time!')
+        if exp.debug==True:
+            current_models = current_models[0:4]
              
         # Add random restarts to kernels
         current_models = ff.add_random_restarts(current_models, exp.n_rand, exp.sd, data_shape=data_shape)
@@ -157,7 +153,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         # Remove models that were optimised to be out of bounds (this is similar to a 0-1 prior)
         new_results = [a_model for a_model in new_results if not a_model.out_of_bounds(data_shape)]
         oob_results = [a_model for a_model in new_results if a_model.out_of_bounds(data_shape)]
-        oob_results = sorted(oob_results, key=lambda a_model : RegressionModel.score(a_model, exp.score), reverse=True)
+        oob_results = sorted(oob_results, key=lambda a_model : GPModel.score(a_model, exp.score), reverse=True)
         oob_sequence.append(oob_results)
         
         # Some of the scores may have failed - remove nans to prevent sorting algorithms messing up
@@ -166,19 +162,19 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens
 
         # Sort the new results
-        new_results = sorted(new_results, key=lambda a_model : RegressionModel.score(a_model, exp.score), reverse=True)
+        new_results = sorted(new_results, key=lambda a_model : GPModel.score(a_model, exp.score), reverse=True)
 
         print '\nAll new results\n'
         for result in new_results:
             print 'NLL=%0.1f' % result.bic, 'BIC=%0.1f' % result.bic, 'AIC=%0.1f' % result.aic, 'PL2=%0.3f' % result.pl2, result.pretty_print()
 
         all_results = all_results + new_results
-        all_results = sorted(all_results, key=lambda a_model : RegressionModel.score(a_model, exp.score), reverse=True)
+        all_results = sorted(all_results, key=lambda a_model : GPModel.score(a_model, exp.score), reverse=True)
 
         results_sequence.append(all_results)
         
         # Extract the best k kernels from the new all_results
-        best_results = sorted(new_results, key=lambda a_model : RegressionModel.score(a_model, exp.score))[0:exp.k]
+        best_results = sorted(new_results, key=lambda a_model : GPModel.score(a_model, exp.score))[0:exp.k]
 
         # Print best kernels
         if exp.debug:
@@ -207,11 +203,11 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                     print model.pretty_print()
         
         # Reduce number of kernels when in debug mode
-        #if exp.debug==True:
-        #    current_models = current_models[0:4]
+        if exp.debug==True:
+            current_models = current_models[0:4]
 
         # Write all_results to a temporary file at each level.
-        all_results = sorted(all_results, key=lambda a_model : RegressionModel.score(a_model, exp.score), reverse=True)
+        all_results = sorted(all_results, key=lambda a_model : GPModel.score(a_model, exp.score), reverse=True)
         with open(results_filename + '.unfinished', 'w') as outfile:
             outfile.write('Experiment all_results for\n datafile = %s\n\n %s \n\n' \
                           % (experiment_data_file_name, experiment_fields_to_str(exp)))
@@ -222,7 +218,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                         print >> outfile, result  
                 else:
                     # Only print top k kernels - i.e. those used to seed the next level of the search
-                    for result in sorted(all_results, key=lambda a_model : RegressionModel.score(a_model, exp.score))[0:exp.k]:
+                    for result in sorted(all_results, key=lambda a_model : GPModel.score(a_model, exp.score))[0:exp.k]:
                         print >> outfile, result 
         # Write nan scored kernels to a log file
         with open(results_filename + '.nans', 'w') as outfile:
@@ -260,7 +256,7 @@ def parse_results(results_filenames, max_level=None):
             for line in results_file:
                 if line.startswith('score = '):
                     score = line[8:-2]
-                elif line.startswith("RegressionModel"):
+                elif line.startswith("GPModel"):
                     lines.append(line)
                 elif (not max_level is None) and (len(re.findall('Level [0-9]+', line)) > 0):
                     level = int(line.split(' ')[2])
@@ -268,9 +264,9 @@ def parse_results(results_filenames, max_level=None):
                         break
         result_tuples += [ff.repr_to_model(line.strip()) for line in lines]
     if not score is None:
-        best_tuple = sorted(result_tuples, key=lambda a_model : RegressionModel.score(a_model, score))[0]
+        best_tuple = sorted(result_tuples, key=lambda a_model : GPModel.score(a_model, score))[0]
     else:
-        best_tuple = sorted(result_tuples, key=RegressionModel.score)[0]
+        best_tuple = sorted(result_tuples, key=GPModel.score)[0]
     return best_tuple
 
 def gen_all_datasets(dir):

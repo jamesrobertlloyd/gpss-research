@@ -128,7 +128,7 @@ class ff_testcase(unittest.TestCase):
         m = ff.MeanZero()
         k = ff.SqExpKernel()
         l = ff.LikGauss()
-        regression_model = ff.RegressionModel(mean=m, kernel=k, likelihood=l, nll=0, ndata=100)
+        regression_model = ff.GPModel(mean=m, kernel=k, likelihood=l, nll=0, ndata=100)
         print '\n', regression_model.pretty_print(), '\n'
         print '\n', regression_model.__repr__(), '\n'
         print regression_model.bic
@@ -148,7 +148,7 @@ class ff_testcase(unittest.TestCase):
         m = ff.MeanZero()
         k = ff.SqExpKernel()
         l = ff.LikGauss()
-        regression_model = ff.RegressionModel(mean=m, kernel=k, likelihood=l)
+        regression_model = ff.GPModel(mean=m, kernel=k, likelihood=l)
         print regression_model
         print  ff.repr_to_model(regression_model.__repr__())
         assert regression_model == ff.repr_to_model(regression_model.__repr__())
@@ -301,8 +301,8 @@ class ff_testcase(unittest.TestCase):
         k2 = k.copy()
         print [k,k1,k2]
         assert (k == k1) and (k == k2) and (k1 == k2)
-        m1 = ff.RegressionModel(kernel=k1)
-        m2 = ff.RegressionModel(kernel=k2)
+        m1 = ff.GPModel(kernel=k1)
+        m2 = ff.GPModel(kernel=k2)
         ff.add_jitter([m1, m2])
         assert (not k == k1) and (not k == k2) and (not k1 == k2)
         print [k,k1,k2]
@@ -331,8 +331,8 @@ class ff_testcase(unittest.TestCase):
         k2.dimension = 1
         print [k,k1,k2]
         assert (k == k1) and (k == k2) and (k1 == k2)
-        m1 = ff.RegressionModel(kernel=k1)
-        m2 = ff.RegressionModel(kernel=k2)
+        m1 = ff.GPModel(kernel=k1)
+        m2 = ff.GPModel(kernel=k2)
         model_list = ff.add_random_restarts([m1, m2], n_rand=1, data_shape=data_shape, sd=1)
         k1 = model_list[0].kernel
         k2 = model_list[1].kernel
@@ -399,7 +399,7 @@ class grammar_testcase(unittest.TestCase):
         print 'expand model'
         print '2d'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=0)
-        m = ff.RegressionModel(mean=ff.MeanZero(), kernel=k, likelihood=ff.LikGauss())
+        m = ff.GPModel(mean=ff.MeanZero(), kernel=k, likelihood=ff.LikGauss())
         expanded = grammar.expand_models(2, [m], base_kernels='SE', rules=None)
         for k in expanded:
             print '\n', k.pretty_print(), '\n'
@@ -408,8 +408,8 @@ class experiment_testcase(unittest.TestCase):
 
     def test_nan_score(self):
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=0)
-        m1 = ff.RegressionModel(kernel=k, nll=np.nan, ndata=100)
-        m2 = ff.RegressionModel(kernel=k.copy(), nll=0, ndata=100)
+        m1 = ff.GPModel(kernel=k, nll=np.nan, ndata=100)
+        m2 = ff.GPModel(kernel=k.copy(), nll=0, ndata=100)
         (not_nan, eq_nan) = experiment.remove_nan_scored_models([m1,m2], score='bic')
         assert (len(not_nan) == 1) and (len(eq_nan) == 1)
 

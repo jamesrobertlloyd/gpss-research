@@ -264,7 +264,7 @@ class Likelihood(FunctionWrapper):
 
 # Model class - this will take over from ScoredKernel
 
-class RegressionModel:
+class GPModel:
 
     def __init__(self, mean=None, kernel=None, likelihood=None, nll=None, ndata=None):
         assert isinstance(mean, MeanFunction) or (mean is None)
@@ -280,7 +280,7 @@ class RegressionModel:
 
     def __repr__(self):
         # Remember all the various scoring criteria
-        return 'RegressionModel(mean=%s, kernel=%s, likelihood=%s, nll=%s, ndata=%s)' % \
+        return 'GPModel(mean=%s, kernel=%s, likelihood=%s, nll=%s, ndata=%s)' % \
                (self.mean.__repr__(), self.kernel.__repr__(), self.likelihood.__repr__(), self.nll, self.ndata)
 
     def __cmp__(self, other):
@@ -292,10 +292,10 @@ class RegressionModel:
         m = self.mean.copy() if not self.mean is None else None
         k = self.kernel.copy() if not self.kernel is None else None
         l = self.likelihood.copy() if not self.likelihood is None else None
-        return RegressionModel(mean=m, kernel=k, likelihood=l, nll=self.nll, ndata=self.ndata)
+        return GPModel(mean=m, kernel=k, likelihood=l, nll=self.nll, ndata=self.ndata)
 
     def pretty_print(self):
-        return 'RegressionModel(mean=%s, kernel=%s, likelihood=%s)' % \
+        return 'GPModel(mean=%s, kernel=%s, likelihood=%s)' % \
                 (self.mean.pretty_print(), self.kernel.pretty_print(), self.likelihood.pretty_print())
         
     def out_of_bounds(self, constraints):
@@ -324,14 +324,14 @@ class RegressionModel:
                 
     @staticmethod
     def from_printed_outputs(nll=None, ndata=None, noise=None, mean=None, kernel=None, likelihood=None):
-        return RegressionModel(mean=mean, kernel=kernel, likelihood=likelihood, nll=nll, ndata=ndata)
+        return GPModel(mean=mean, kernel=kernel, likelihood=likelihood, nll=nll, ndata=ndata)
 
     @staticmethod 
     def from_matlab_output(output, model, ndata):
         model.mean.load_param_vector(output.mean_hypers)
         model.kernel.load_param_vector(output.kernel_hypers)
         model.likelihood.load_param_vector(output.lik_hypers)
-        return RegressionModel(mean=model.mean, kernel=model.kernel, likelihood=model.likelihood, nll=output.nll, ndata=ndata) 
+        return GPModel(mean=model.mean, kernel=model.kernel, likelihood=model.likelihood, nll=output.nll, ndata=ndata) 
 
 ##############################################
 #                                            #
@@ -915,6 +915,7 @@ def canonical(model):
     model.mean = canonical_m(model.mean)
     model.kernel = canonical_k(model.kernel)
     model.likelihood = canonical_k(model.likelihood)
+    return model
 
 def canonical_m(m):
     return m

@@ -9,7 +9,7 @@ Created Jan 2013
 '''
 
 import flexible_function as ff
-from flexible_function import RegressionModel
+from flexible_function import GPModel
 import grammar
 import gpml
 import utils.latex
@@ -97,7 +97,7 @@ def evaluate_models(models, X, y, verbose=True, iters=300, local_computation=Fal
     for (i, output_file) in enumerate(output_files):
         if verbose:
             print 'Reading output file %d of %d' % (i + 1, len(models))
-        results[i] = RegressionModel.from_matlab_output(gpml.read_outputs(output_file), models[i], ndata)
+        results[i] = GPModel.from_matlab_output(gpml.read_outputs(output_file), models[i], ndata)
     
     # Tidy up local output files
     for (i, output_file) in enumerate(output_files):
@@ -111,24 +111,7 @@ def evaluate_models(models, X, y, verbose=True, iters=300, local_computation=Fal
     return results     
 
    
-def make_predictions(X, y, Xtest, ytest, model, local_computation=False, max_jobs=500, verbose=True, zero_mean=False, random_seed=0, no_noise=False):
-    '''
-    Evaluates a kernel on held out data
-    Input:
-     - X                  - A matrix (data_points x dimensions) of input locations
-     - y                  - A matrix (data_points x 1) of output values
-     - Xtest              - Held out X data
-     - ytest              - Held out y data
-     - best_scored_kernel - A Scored Kernel object to be evaluated on the held out data
-     - ...
-    Return:
-     - A dictionary of results from the MATLAB script containing:
-       - loglik - an array of log likelihoods of test data
-       - predictions - an array of mean predictions for the held out data
-       - actuals - ytest
-       - model - I'm not sure FIXME
-       - timestamp - A time stamp of some sort
-    '''
+def make_predictions(X, y, Xtest, ytest, model, local_computation=False, max_jobs=500, verbose=True, random_seed=0, no_noise=False):
     # Make data into matrices in case they're unidimensional.
     if X.ndim == 1: X = X[:, nax]
     if y.ndim == 1: y = y[:, nax]

@@ -116,7 +116,7 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix
                 X_scale = 1.0/12.0
                                 
             model = exp.parse_results(results_files)
-            model.kernel = ff.canonical(ff.simplify(model.kernel))
+            model = ff.canonical(ff.simplify(model))
             print model.pretty_print()
             fig_folder = os.path.join(save_folder, (prefix + file))
             if not os.path.exists(fig_folder):

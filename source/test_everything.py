@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-#import experiment
+import experiment
 import model
 import grammar
 #import translation
@@ -364,6 +364,24 @@ class grammar_testcase(unittest.TestCase):
         expanded = grammar.expand_kernels(3, [k + k.copy()], base_kernels='SE', rules=None)
         for k in expanded:
             print '\n', k.pretty_print(), '\n'
+
+    def test_expand_model(self):
+        print 'expand model'
+        print '2d'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=0)
+        m = model.RegressionModel(mean=model.MeanZero(), kernel=k, likelihood=model.LikGauss())
+        expanded = grammar.expand_models(2, [m], base_kernels='SE', rules=None)
+        for k in expanded:
+            print '\n', k.pretty_print(), '\n'
+
+class experiment_testcase(unittest.TestCase):
+
+    def test_nan_score(self):
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=0)
+        m1 = model.RegressionModel(kernel=k, nll=np.nan, ndata=100)
+        m2 = model.RegressionModel(kernel=k.copy(), nll=0, ndata=100)
+        (not_nan, eq_nan) = experiment.remove_nan_scored_models([m1,m2], score='bic')
+        assert (len(not_nan) == 1) and (len(eq_nan) == 1)
 
     # def test_wrong_dimension(self):
     #     try:

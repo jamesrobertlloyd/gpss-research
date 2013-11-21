@@ -1,3 +1,13 @@
+'''
+Defines search operators and can expand kernels
+
+Created Nov 2012
+
+@authors: James Robert Lloyd (jrl44@cam.ac.uk)
+          David Duvenaud (dkd23@cam.ac.uk)
+          Roger Grosse (rgrosse@mit.edu)
+'''
+
 import itertools
 import numpy as np
 
@@ -151,6 +161,16 @@ def expand_kernels(D, seed_kernels, base_kernels='SE', rules=None):
     kernels = model.remove_duplicates(kernels)
     kernels = [k for k in kernels if not isinstance(k, model.NoneKernel)]
     return kernels
+
+def expand_models(D, models, base_kernels='SE', rules=None):
+    expanded = []
+    for a_model in models:
+        for k in expand_kernels(D, [a_model.kernel], base_kernels, rules):
+            new_model = a_model.copy()
+            new_model.kernel = k
+            new_model.nll = np.nan
+            expanded.append(new_model)
+    return expanded 
 
 
 

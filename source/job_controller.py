@@ -8,8 +8,8 @@ Main file for dispatching jobs to a cluster, creates remote files, etc.
 Created Jan 2013
 '''
 
-import flexiblekernel as fk
-from flexiblekernel import ScoredKernel
+import model
+from model import RegressionModel
 import grammar
 import gpml
 import utils.latex
@@ -38,53 +38,7 @@ import re
 import shutil
 import random
 
-#### Explanation : This is no longer used - but a potentially useful idea if using non-greedy searches
-def covariance_distance(kernels, X, local_computation=True, verbose=True): 
-    '''
-    Evaluate a distance matrix of kernels, in terms of their covariance matrix evaluated on training inputs
-    Input:
-     - kernels           - A list of fk.ScoredKernel
-     - X                 - A matrix (data_points x dimensions) of input locations
-     - local_computation - Boolean indicating if computation should be performed on cluster or on local machine
-    Return:
-     - A matrix of similarities between the input kernels
-    '''
-    assert(len(kernels) > 0) #### FIXME - This sort of check should happen earlier
-    # Make data into matrices in case they're unidimensional.
-    if X.ndim == 1: X = X[:, nax]
-    # Save temporary data file in standard temporary directory
-    data_file = cblparallel.create_temp_file('.mat')
-    scipy.io.savemat(data_file, {'X': X})
-    # Copy onto cluster server if necessary
-    if not local_computation:
-        if verbose:
-            print 'Moving data file to fear'
-        cblparallel.copy_to_remote(data_file)
-    # Construct testing code
-    code = gpml.DISTANCE_CODE_HEADER % {'datafile': data_file.split('/')[-1],
-                                          'gpml_path': cblparallel.gpml_path(local_computation)}
-    for (i, kernel) in enumerate([k.k_opt for k in kernels]):
-        code = code + gpml.DISTANCE_CODE_COV % {'iter' : i + 1,
-                                                  'kernel_family': kernel.gpml_kernel_expression(),
-                                                  'kernel_params': '[ %s ]' % ' '.join(str(p) for p in kernel.param_vector())}
-    code = code + gpml.DISTANCE_CODE_FOOTER_HIGH_MEM % {'writefile': '%(output_file)s'} # N.B. cblparallel manages output files
-    code = re.sub('% ', '%% ', code) # HACK - cblparallel not fond of % signs at the moment
-    # Run code - either locally or on cluster - returning location of output file
-    if local_computation:
-        output_file = cblparallel.run_batch_locally([code], language='matlab', max_cpu=1.1, max_mem=1.1, job_check_sleep=30, verbose=verbose, single_thread=False)[0] 
-    else:
-        output_file = cblparallel.run_batch_on_fear([code], language='matlab', max_jobs=500, verbose=verbose)[0]
-    # Read in results from experiment
-    gpml_result = scipy.io.loadmat(output_file)
-    distance = gpml_result['sim_matrix']
-    # Remove temporary files (perhaps on the cluster server)
-    cblparallel.remove_temp_file(output_file, local_computation)
-    cblparallel.remove_temp_file(data_file, local_computation)
-    # Return distance matrix
-    return distance
-
-       
-def evaluate_kernels(kernels, X, y, verbose=True, noise=None, iters=300, local_computation=False, zip_files=False, max_jobs=500, zero_mean=False, random_seed=0, subset=False, subset_size=250, full_iters=0, bundle_size=1, no_noise=False):
+def evaluate_models(models, X, y, verbose=True, iters=300, local_computation=False, zip_files=False, max_jobs=500, random_seed=0, subset=False, subset_size=250, full_iters=0, bundle_size=1):
     '''
     Sets up the kernel optimisation and nll calculation experiments, returns the results as scored kernels
     Input:
@@ -100,40 +54,13 @@ def evaluate_kernels(kernels, X, y, verbose=True, noise=None, iters=300, local_c
     if X.ndim == 1: X = X[:, nax]
     if y.ndim == 1: y = y[:, nax]
     ndata = y.shape[0]
-        
-    # Set default noise using a heuristic.    
-    if noise is None:
-        noise = np.log(np.var(y-np.mean(y))/10)
     
     # Create data file
     if verbose:
         print 'Creating data file locally'
     data_file = cblparallel.create_temp_file('.mat')
-    #### FIXME - make me an experiment parameter / optional
-    #### FIXME - this is disk space (and communication cost) inefficient - transmit cut points for efficiency
-    folds = 10
-    X_train = np.zeros((folds,), dtype=np.object)
-    X_valid = np.zeros((folds,), dtype=np.object)
-    y_train = np.zeros((folds,), dtype=np.object)
-    y_valid = np.zeros((folds,), dtype=np.object)
-    cut_points = np.floor(np.array(range(1,folds))*X.shape[0]/folds)
-    for fold in range(folds):
-        if fold == 0:
-            X_train[fold] = X[cut_points[0]:,:]
-            y_train[fold] = y[cut_points[0]:,:]
-            X_valid[fold] = X[:cut_points[0],:]
-            y_valid[fold] = y[:cut_points[0],:]
-        elif fold == (folds - 1):
-            X_train[fold] = X[:cut_points[-1],:]
-            y_train[fold] = y[:cut_points[-1],:]
-            X_valid[fold] = X[cut_points[-1]:,:]
-            y_valid[fold] = y[cut_points[-1]:,:]
-        else:
-            X_train[fold] = X[range(0,int(cut_points[fold-1])) + range(int(cut_points[fold]),int(X.shape[0])),:]
-            y_train[fold] = y[range(0,int(cut_points[fold-1])) + range(int(cut_points[fold]),int(X.shape[0])),:]
-            X_valid[fold] = X[range(int(cut_points[fold-1]), int(cut_points[fold])),:]
-            y_valid[fold] = y[range(int(cut_points[fold-1]), int(cut_points[fold])),:]
-    scipy.io.savemat(data_file, {'X': X, 'y': y, 'X_train' : X_train, 'y_train' : y_train, 'X_valid' : X_valid, 'y_valid' : y_valid, })
+
+    scipy.io.savemat(data_file, {'X': X, 'y': y, 'X_train' : X_train, 'y_train' : y_train})
     
     # Move to fear if necessary
     if not local_computation:
@@ -145,18 +72,30 @@ def evaluate_kernels(kernels, X, y, verbose=True, noise=None, iters=300, local_c
     if verbose:
         print 'Creating scripts'
     scripts = [None] * len(kernels)
-    for (i, kernel) in enumerate(kernels):
+    for (i, a_model) in enumerate(kernels):
         parameters = {'datafile': data_file.split('/')[-1],
                       'writefile': '%(output_file)s', # N.B. cblparallel manages output files
                       'gpml_path': cblparallel.gpml_path(local_computation),
-                      'kernel_family': kernel.gpml_kernel_expression(),
-                      'kernel_params': '[ %s ]' % ' '.join(str(p) for p in kernel.param_vector()),
-                      'noise': str(noise),
+                      'mean_syntax': a_model.mean.gpml_expression,
+                      'mean_params': '[ %s ]' % ' '.join(str(p) for p in model.mean.param_vector),
+                      'kernel_syntax': a_model.kernel.gpml_expression,
+                      'kernel_params': '[ %s ]' % ' '.join(str(p) for p in model.kernel.param_vector),
+                      'lik_syntax': a_model.likelihood.gpml_expression,
+                      'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
                       'iters': str(iters),
                       'seed': str(np.random.randint(2**31)),
                       'subset': 'true' if subset else 'false',
                       'subset_size' : str(subset_size),
                       'full_iters' : str(full_iters)}
+
+    ######
+    ######
+    ######
+    # CONTINUE FROM HERE
+    ######
+    ######
+    ######
+
         if zero_mean:
             if no_noise:
                 scripts[i] = gpml.OPTIMIZE_KERNEL_CODE_ZERO_MEAN_NO_NOISE % parameters

@@ -1,4 +1,7 @@
 '''
+Defines mean, covariance and likelihood functions.
+Also defines kernel manipulation routines
+
 Created Nov 2012
 
 @authors: James Robert Lloyd (jrl44@cam.ac.uk)
@@ -280,6 +283,11 @@ class RegressionModel:
     def pretty_print(self):
         return 'RegressionModel(mean=%s, kernel=%s, likelihood=%s)' % \
                 (self.mean.pretty_print(), self.kernel.pretty_print(), self.likelihood.pretty_print())
+        
+    def out_of_bounds(self, constraints):
+        return any([self.mean.out_of_bounds(constraints), \
+                    self.kernel.out_of_bounds(constraints), \
+                    self.likelihood.out_of_bounds(constraints)])
 
     @property
     def bic(self):
@@ -910,6 +918,11 @@ def simplify(k):
     k = collapse_multiplicative_zero(k)
     return canonical(k)
 
+def simplify_models(models):
+    for a_model in models:
+        a_model.kernel = simplify(a_model.kernel)
+    return models
+
 def collapse_additive_idempotency(k):
     # TODO - abstract this behaviour
     k = canonical(k)
@@ -1164,6 +1177,11 @@ def additive_form(k):
         # Base case - return self
         return canonical(k) # Just to make it clear that the output is always canonical
 
+def models_to_additive_form(models):
+    for a_model in models:
+        a_model.kernel = additive_form(a_model.kernel)
+    return models
+
 ##############################################
 #                                            #
 #         Miscellaneous functions            #
@@ -1173,9 +1191,9 @@ def additive_form(k):
 def repr_to_model(string):
     return eval(string)
 
-def remove_duplicates(kernels):
-    # This is possible since kernels are now hashable
-    return list(set(kernels))
+def remove_duplicates(things):
+    # This is possible since things are hashable
+    return list(set(things))
          
 def base_kernels(dimensions=1, base_kernel_names='SE'):
     for kernel in base_kernels_without_dimension(base_kernel_names):
@@ -1209,13 +1227,27 @@ def add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape):
 
 def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):    
     '''Augments the list to include random restarts of all default value parameters'''
-    return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape)]
+    return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape)] 
+
+def add_random_restarts_to_models(models, sd=0.1):
+    new_models = []
+    for a_model in models:
+        for kernel in add_random_restarts_single_kernel(a_model.kernel, sd=sd):
+            new_model = a_model.copy()
+            new_model.kernel = kernel
+            new_models.append(new_model)
+    return new_models 
 
 def add_jitter(kernels, sd=0.1):    
     '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
     for k in kernels:
         k.load_param_vector(k.param_vector + np.random.normal(loc=0., scale=sd, size=k.param_vector.size))
-    return kernels      
+    return kernels     
+
+def add_jitter_to_models(models, sd=0.1):
+    for a_model in models:
+        a_model.kernel = add_jitter(a_model.kernel, sd=sd)
+    return models 
 
 ##############################################
 #                                            #

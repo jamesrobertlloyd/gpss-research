@@ -22,6 +22,9 @@ import utils.misc
 from utils.misc import colored, format_if_possible
 from scipy.special import i0 # 0th order Bessel function of the first kind
 
+#### TODO
+# - Implement old kernels
+
 ##############################################
 #                                            #
 #               Base classes                 #
@@ -152,12 +155,12 @@ class Kernel(FunctionWrapper):
         if isinstance(other, SumKernel):
             if isinstance(self, SumKernel):
                 self.operands = self.operands + other.operands
-                return canonical(self)
+                return canonical_k(self)
             else:
                 other.operands = [self] + other.operands
-                return canonical(other)
+                return canonical_k(other)
         else:
-            return canonical(SumKernel([self, other]))
+            return canonical_k(SumKernel([self, other]))
     
     # Syntactic sugar e.g. k1 * k2
     def __mul__(self, other):
@@ -165,12 +168,12 @@ class Kernel(FunctionWrapper):
         if isinstance(other, ProductKernel):
             if isinstance(self, ProductKernel):
                 self.operands = self.operands + other.operands
-                return canonical(self)
+                return canonical_k(self)
             else:
                 other.operands = [self] + other.operands
-                return canonical(other)
+                return canonical_k(other)
         else:
-            return canonical(ProductKernel([self, other]))
+            return canonical_k(ProductKernel([self, other]))
 
     # Properties
        
@@ -908,13 +911,24 @@ class LikGauss(Likelihood):
 #                                            #
 ##############################################
 
-def canonical(k):
+def canonical(model):
+    model.mean = canonical_m(model.mean)
+    model.kernel = canonical_k(model.kernel)
+    model.likelihood = canonical_k(model.likelihood)
+
+def canonical_m(m):
+    return m
+
+def canonical_l(l):
+    return l
+
+def canonical_k(k):
     '''Sorts a kernel tree into a canonical form.'''
     if not k.is_operator:
         return k
     elif k.arity == 2:
         for o in k.operands:
-            o = canonical(o)
+            o = canonical_k(o)
         if isinstance(k.operands[0], NoneKernel) or isinstance(k.operands[1], NoneKernel):
             return NoneKernel()
         else:
@@ -922,7 +936,7 @@ def canonical(k):
     else:
         new_ops = []
         for op in k.operands:
-            op_canon = canonical(op)
+            op_canon = canonical_k(op)
             if isinstance(op_canon, k.__class__):
                 new_ops += op_canon.operands
             elif not isinstance(op_canon, NoneKernel):
@@ -935,31 +949,30 @@ def canonical(k):
             k.operands = new_ops
             return k
 
-def simplify(k):
+def simplify_k(k):
     # TODO - how many times do these need to be done?
-    k = collapse_additive_idempotency(k)
-    k = collapse_multiplicative_idempotency(k)
-    k = collapse_multiplicative_identity(k)
-    k = collapse_multiplicative_zero(k)
-    k = canonical(k)
-    k = collapse_additive_idempotency(k)
-    k = collapse_multiplicative_idempotency(k)
-    k = collapse_multiplicative_identity(k)
-    k = collapse_multiplicative_zero(k)
-    return canonical(k)
+    k = collapse_additive_idempotency_k(k)
+    k = collapse_multiplicative_idempotency_k(k)
+    k = collapse_multiplicative_identity_k(k)
+    k = collapse_multiplicative_zero_k(k)
+    k = canonical_k(k)
+    k = collapse_additive_idempotency_k(k)
+    k = collapse_multiplicative_idempotency_k(k)
+    k = collapse_multiplicative_identity_k(k)
+    k = collapse_multiplicative_zero_k(k)
+    return canonical_k(k)
 
-def simplify_models(models):
-    for a_model in models:
-        a_model.kernel = simplify(a_model.kernel)
-    return models
+def simplify(model):
+    model.kernel = simplify_k(model.kernel)
+    return model
 
-def collapse_additive_idempotency(k):
+def collapse_additive_idempotency_k(k):
     # TODO - abstract this behaviour
-    k = canonical(k)
+    k = canonical_k(k)
     if not k.is_operator:
         return k
     elif isinstance(k, SumKernel):
-        ops = [collapse_additive_idempotency(o) for o in k.operands]
+        ops = [collapse_additive_idempotency_k(o) for o in k.operands]
         # Count the number of white noises
         sf = 0
         WN_count = 0
@@ -988,19 +1001,19 @@ def collapse_additive_idempotency(k):
             ops = not_const_ops + [ConstKernel(sf=0.5*np.log(sf))]
         # Finish
         k.operands = ops
-        return canonical(k)
+        return canonical_k(k)
     else:
         for o in k.operands:
-            o = collapse_additive_idempotency(o)
+            o = collapse_additive_idempotency_k(o)
         return k
 
-def collapse_multiplicative_idempotency(k):
+def collapse_multiplicative_idempotency_k(k):
     # TODO - abstract this behaviour
-    k = canonical(k)
+    k = canonical_k(k)
     if not k.is_operator:
         return k
     elif isinstance(k, ProductKernel):
-        ops = [collapse_multiplicative_idempotency(o) for o in k.operands]
+        ops = [collapse_multiplicative_idempotency_k(o) for o in k.operands]
         # Count the number of SEs in different dimensions
         lengthscales = {}
         sfs = {}
@@ -1046,19 +1059,19 @@ def collapse_multiplicative_idempotency(k):
             ops = not_const_ops + [ConstKernel(sf=sf)]
         # Finish
         k.operands = ops
-        return canonical(k)
+        return canonical_k(k)
     else:
         for o in k.operands:
-            o = collapse_multiplicative_idempotency(o)
+            o = collapse_multiplicative_idempotency_k(o)
         return k
 
-def collapse_multiplicative_zero(k):
+def collapse_multiplicative_zero_k(k):
     # TODO - abstract this behaviour
-    k = canonical(k)
+    k = canonical_k(k)
     if not k.is_operator:
         return k
     elif isinstance(k, ProductKernel):
-        ops = [collapse_multiplicative_zero(o) for o in k.operands]
+        ops = [collapse_multiplicative_zero_k(o) for o in k.operands]
         sf = 0
         WN_count = 0
         not_WN_ops = []
@@ -1075,19 +1088,19 @@ def collapse_multiplicative_zero(k):
             ops = not_WN_ops + [NoiseKernel(sf=sf)]
         # Finish
         k.operands = ops
-        return canonical(k)
+        return canonical_k(k)
     else:
         for o in k.operands:
-            o = collapse_multiplicative_zero(o)
+            o = collapse_multiplicative_zero_k(o)
         return k
 
-def collapse_multiplicative_identity(k):
+def collapse_multiplicative_identity_k(k):
     # TODO - abstract this behaviour
-    k = canonical(k)
+    k = canonical_k(k)
     if not k.is_operator:
         return k
     elif isinstance(k, ProductKernel):
-        ops = [collapse_multiplicative_identity(o) for o in k.operands]
+        ops = [collapse_multiplicative_identity_k(o) for o in k.operands]
         sf = 0
         const_count = 0
         not_const_ops = []
@@ -1103,20 +1116,20 @@ def collapse_multiplicative_identity(k):
             ops[0].multiply_by_const(sf=sf)
         # Finish
         k.operands = ops
-        return canonical(k)
+        return canonical_k(k)
     else:
         for o in k.operands:
-            o = collapse_multiplicative_identity(o)
+            o = collapse_multiplicative_identity_k(o)
         return k
 
 def break_kernel_into_summands(k):
     '''Takes a kernel, expands it into a polynomial, and breaks terms up into a list.
     
-    Mutually Recursive with distribute_products().
+    Mutually Recursive with distribute_products_k().
     Always returns a list.
     '''    
     # First, recursively distribute all products within the kernel.
-    k_dist = distribute_products(k)
+    k_dist = distribute_products_k(k)
     
     if isinstance(k_dist, SumKernel):
         # Break the summands into a list of kernels.
@@ -1124,7 +1137,7 @@ def break_kernel_into_summands(k):
     else:
         return [k_dist]
 
-def distribute_products(k):
+def distribute_products_k(k):
     """Distributes products to get a polynomial.
     
     Mutually recursive with break_kernel_into_summands().
@@ -1162,7 +1175,11 @@ def distribute_products(k):
         # Base case: A kernel that's just, like, a kernel, man.
         return k
 
-def additive_form(k):
+def additive_form(model):
+    model.kernel = additive_form_k(model.kernel)
+    return model
+
+def additive_form_k(k):
     '''
     Converts a kernel into a sum of products and with changepoints percolating to the top
     Output is always in canonical form
@@ -1170,46 +1187,46 @@ def additive_form(k):
     #### TODO - currently implemented for a subset of changepoint operators - to be extended or operators to be abstracted
     if isinstance(k, ProductKernel):
         # Convert operands into additive form
-        additive_ops = sorted([additive_form(op) for op in k.operands])
+        additive_ops = sorted([additive_form_k(op) for op in k.operands])
         # Initialise the new kernel
         new_kernel = additive_ops[0]
         # Build up the product, iterating over the other components
         for additive_op in additive_ops[1:]:
             if isinstance(new_kernel, ChangePointKernel) or isinstance(new_kernel, ChangeBurstKernel):
                 # Changepoints take priority - nest the products within this operator
-                new_kernel.operands = [additive_form(canonical(op*additive_op.copy())) for op in new_kernel.operands]
+                new_kernel.operands = [additive_form_k(canonical_k(op*additive_op.copy())) for op in new_kernel.operands]
             elif isinstance(additive_op, ChangePointKernel) or isinstance(additive_op, ChangeBurstKernel):
                 # Nest within the next operator
                 old_kernel = new_kernel.copy()
                 new_kernel = additive_op
-                new_kernel.operands = [additive_form(canonical(op*old_kernel.copy())) for op in new_kernel.operands]
+                new_kernel.operands = [additive_form_k(canonical_k(op*old_kernel.copy())) for op in new_kernel.operands]
             elif isinstance(new_kernel, SumKernel):
                 # Nest the products within this sum
-                new_kernel.operands = [additive_form(canonical(op*additive_op.copy())) for op in new_kernel.operands]
+                new_kernel.operands = [additive_form_k(canonical_k(op*additive_op.copy())) for op in new_kernel.operands]
             elif isinstance(additive_op, SumKernel):
                 # Nest within the next operator
                 old_kernel = new_kernel.copy()
                 new_kernel = additive_op
-                new_kernel.operands = [additive_form(canonical(op*old_kernel.copy())) for op in new_kernel.operands]
+                new_kernel.operands = [additive_form_k(canonical_k(op*old_kernel.copy())) for op in new_kernel.operands]
             else:
                 # Both base kernels - just multiply
                 new_kernel = new_kernel*additive_op
             # Make sure still in canonical form - useful mostly for detecting duplicates
-            new_kernel = canonical(new_kernel)
+            new_kernel = canonical_k(new_kernel)
         return new_kernel
     elif k.is_operator:
         # This operator is additive - make all operands additive
         new_kernel = k.copy()
-        new_kernel.operands = [additive_form(op) for op in k.operands]
-        return canonical(new_kernel)
+        new_kernel.operands = [additive_form_k(op) for op in k.operands]
+        return canonical_k(new_kernel)
     else:
         #### TODO - Place a check here that the kernel is not a binary or higher operator
         # Base case - return self
-        return canonical(k) # Just to make it clear that the output is always canonical
+        return canonical_k(k) # Just to make it clear that the output is always canonical
 
-def models_to_additive_form(models):
+def models_to_additive_form_k(models):
     for a_model in models:
-        a_model.kernel = additive_form(a_model.kernel)
+        a_model.kernel = additive_form_k(a_model.kernel)
     return models
 
 ##############################################
@@ -1246,7 +1263,7 @@ def base_kernels_without_dimension(base_kernel_names):
         if kernel.id in base_kernel_names.split(','):
             yield kernel 
 
-def add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape):
+def add_random_restarts_single_k(kernel, n_rand, sd, data_shape):
     '''Returns a list of kernels with random restarts for default values'''
     kernel_list = []
     for dummy in range(n_rand):
@@ -1255,28 +1272,28 @@ def add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape):
         kernel_list.append(k)
     return kernel_list
 
-def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):    
+def add_random_restarts_k(kernels, n_rand=1, sd=4, data_shape=None):    
     '''Augments the list to include random restarts of all default value parameters'''
-    return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape)] 
+    return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_k(kernel, n_rand, sd, data_shape)] 
 
-def add_random_restarts_to_models(models, n_rand=1, sd=4, data_shape=None):
+def add_random_restarts(models, n_rand=1, sd=4, data_shape=None):
     new_models = []
     for a_model in models:
-        for kernel in add_random_restarts_single_kernel(a_model.kernel, n_rand=n_rand, sd=sd, data_shape=data_shape):
+        for kernel in add_random_restarts_single_k(a_model.kernel, n_rand=n_rand, sd=sd, data_shape=data_shape):
             new_model = a_model.copy()
             new_model.kernel = kernel
             new_models.append(new_model)
     return new_models 
 
-def add_jitter(kernels, sd=0.1):    
+def add_jitter_k(kernels, sd=0.1):    
     '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
     for k in kernels:
         k.load_param_vector(k.param_vector + np.random.normal(loc=0., scale=sd, size=k.param_vector.size))
     return kernels     
 
-def add_jitter_to_models(models, sd=0.1):
+def add_jitter(models, sd=0.1):
     for a_model in models:
-        a_model.kernel = add_jitter([a_model.kernel], sd=sd)[0]
+        a_model.kernel = add_jitter_k([a_model.kernel], sd=sd)[0]
     return models 
 
 ##############################################

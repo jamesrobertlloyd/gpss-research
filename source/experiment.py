@@ -83,7 +83,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     # Convert to additive form if desired
 
     if exp.additive_form:
-        current_models = ff.models_to_additive_form(current_models)
+        current_models = ff.additive_form(current_models)
         current_models = ff.remove_duplicates(current_models)   
 
     # Set up lists to record search
@@ -105,7 +105,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         #    raise RuntimeError('Stop... Hammer time!')
              
         # Add random restarts to kernels
-        current_models = ff.add_random_restarts_to_models(current_models, exp.n_rand, exp.sd, data_shape=data_shape)
+        current_models = ff.add_random_restarts(current_models, exp.n_rand, exp.sd, data_shape=data_shape)
 
         # Print result of expansion
         if exp.debug:
@@ -114,7 +114,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                 print model.pretty_print()
         
         # Remove any redundancy introduced into kernel expressions
-        current_models = ff.simplify_models(current_models)
+        current_models = [ff.simplify(model) for model in current_models]
         # Print result of simplification
         if exp.debug:
             print '\nSimplified kernels\n'
@@ -128,7 +128,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                 print model.pretty_print()
         
         # Add jitter to parameter values (empirically discovered to help optimiser)
-        current_models = ff.add_jitter_to_models(current_models, exp.jitter_sd)
+        current_models = ff.add_jitter(current_models, exp.jitter_sd)
         # Print result of jitter
         if exp.debug:
             print '\nJittered kernels\n'
@@ -170,7 +170,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
 
         print '\nAll new results\n'
         for result in new_results:
-            print 'NLL=%0.1f' % result.bic, 'BIC=%0.1f' % result.bic, 'AIC=%0.1f' % result.aic, 'PL2=%0.2f' % result.pl2, result.pretty_print()
+            print 'NLL=%0.1f' % result.bic, 'BIC=%0.1f' % result.bic, 'AIC=%0.1f' % result.aic, 'PL2=%0.3f' % result.pl2, result.pretty_print()
 
         all_results = all_results + new_results
         all_results = sorted(all_results, key=lambda a_model : RegressionModel.score(a_model, exp.score), reverse=True)
@@ -197,7 +197,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Convert to additive form if desired
         if exp.additive_form:
-            current_models = ff.models_to_additive_form(current_models)
+            current_models = ff.additive_form(current_models)
             current_models = ff.remove_duplicates(current_models)   
 
             # Print expansion

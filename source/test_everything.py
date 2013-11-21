@@ -165,7 +165,7 @@ class ff_testcase(unittest.TestCase):
         k6 = k.copy()
         k = k1 + k2 + k3 + k4 + k5 + k6
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_additive_idempotency(k)
+        k = ff.collapse_additive_idempotency_k(k)
         print '\n', k.pretty_print(), '\n'
 
     def test_collapse_mult_idempotent(self):
@@ -174,7 +174,7 @@ class ff_testcase(unittest.TestCase):
         k2 = k.copy()
         k = k1 * k2
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_idempotency(k)
+        k = ff.collapse_multiplicative_idempotency_k(k)
         assert (isinstance(k, ff.SqExpKernel)) and (k.dimension == 0)
         print '\n', k.pretty_print(), '\n'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
@@ -187,11 +187,11 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy()
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_idempotency(k)
+        k = ff.collapse_multiplicative_idempotency_k(k)
         print '\n', k.pretty_print(), '\n'
         k = k1 * k2 * k3 * k4 * k5 * k5.copy() * k6 * k6.copy()
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_idempotency(k)
+        k = ff.collapse_multiplicative_idempotency_k(k)
         print '\n', k.pretty_print(), '\n'
 
     def test_collapse_zero(self):
@@ -199,7 +199,7 @@ class ff_testcase(unittest.TestCase):
         k2 = ff.NoiseKernel(sf=-1)
         k = k1 * k2
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_zero(k)
+        k = ff.collapse_multiplicative_zero_k(k)
         assert isinstance(k, ff.NoiseKernel)
         print '\n', k.pretty_print(), '\n'
         k = (k1 + k1.copy() + k1.copy() * k2.copy()) * k2
@@ -208,7 +208,7 @@ class ff_testcase(unittest.TestCase):
         print (k1 + k1.copy() + k1.copy() * k2.copy()).sf
         print k.sf
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_zero(k)
+        k = ff.collapse_multiplicative_zero_k(k)
         assert isinstance(k, ff.NoiseKernel)
         print '\n', k.pretty_print(), '\n'
 
@@ -218,7 +218,7 @@ class ff_testcase(unittest.TestCase):
         k2 = ff.ConstKernel(sf=-1)
         k = k1 * k2
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_identity(k)
+        k = ff.collapse_multiplicative_identity_k(k)
         assert isinstance(k, ff.SqExpKernel)
         print '\n', k.pretty_print(), '\n'
         k1 = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
@@ -228,11 +228,11 @@ class ff_testcase(unittest.TestCase):
         print (k1 + k1.copy() + k1.copy() * k2.copy()).sf
         print k.sf
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_identity(k)
+        k = ff.collapse_multiplicative_identity_k(k)
         print '\n', k.pretty_print(), '\n'
 
-    def test_simplify(self):
-        print 'simplify'
+    def test_simplify_k(self):
+        print 'simplify_k'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
         k1 = k.copy()
         k2 = k.copy()
@@ -247,10 +247,10 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy() + k1.copy() * k1.copy() * k3.copy()
         print '\n', k.pretty_print(), '\n'
-        k = ff.simplify(k)
+        k = ff.simplify_k(k)
         print '\n', k.pretty_print(), '\n'
 
-    def test_distribute_products(self):
+    def test_distribute_products_k(self):
         print 'distribute'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
         k1 = k.copy()
@@ -262,9 +262,9 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = (k1 + k2 + k3) * (k4 + k5)
         print '\n', k.pretty_print(), '\n'
-        components = ff.simplify(ff.distribute_products(k))
+        components = ff.simplify_k(ff.distribute_products_k(k))
         print components
-        print ff.collapse_additive_idempotency(components)
+        print ff.collapse_additive_idempotency_k(components)
         for k in components.operands:
             print '\n', k.pretty_print(), '\n'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
@@ -277,9 +277,9 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = (k1 * (k2 + k3)) + (k4 * k5)
         print '\n', k.pretty_print(), '\n'
-        components = ff.simplify(ff.distribute_products(k))
+        components = ff.simplify_k(ff.distribute_products_k(k))
         print components
-        print ff.collapse_additive_idempotency(components)
+        print ff.collapse_additive_idempotency_k(components)
         for k in components.operands:
             print '\n', k.pretty_print(), '\n'
 
@@ -290,7 +290,7 @@ class ff_testcase(unittest.TestCase):
         k2 = k.copy()
         print [k,k1,k2]
         assert (k == k1) and (k == k2) and (k1 == k2)
-        ff.add_jitter([k1, k2])
+        ff.add_jitter_k([k1, k2])
         assert (not k == k1) and (not k == k2) and (not k1 == k2)
         print [k,k1,k2]
 
@@ -303,7 +303,7 @@ class ff_testcase(unittest.TestCase):
         assert (k == k1) and (k == k2) and (k1 == k2)
         m1 = ff.RegressionModel(kernel=k1)
         m2 = ff.RegressionModel(kernel=k2)
-        ff.add_jitter_to_models([m1, m2])
+        ff.add_jitter([m1, m2])
         assert (not k == k1) and (not k == k2) and (not k1 == k2)
         print [k,k1,k2]
 
@@ -316,7 +316,7 @@ class ff_testcase(unittest.TestCase):
         k2.dimension = 1
         print [k,k1,k2]
         assert (k == k1) and (k == k2) and (k1 == k2)
-        kernel_list = ff.add_random_restarts([k1, k2], data_shape=data_shape, sd=1)
+        kernel_list = ff.add_random_restarts_k([k1, k2], data_shape=data_shape, sd=1)
         k1 = kernel_list[0]
         k2 = kernel_list[1]
         assert (not k == k1) and (not k == k2) and (not k1 == k2)
@@ -333,13 +333,13 @@ class ff_testcase(unittest.TestCase):
         assert (k == k1) and (k == k2) and (k1 == k2)
         m1 = ff.RegressionModel(kernel=k1)
         m2 = ff.RegressionModel(kernel=k2)
-        model_list = ff.add_random_restarts_to_models([m1, m2], n_rand=1, data_shape=data_shape, sd=1)
+        model_list = ff.add_random_restarts([m1, m2], n_rand=1, data_shape=data_shape, sd=1)
         k1 = model_list[0].kernel
         k2 = model_list[1].kernel
         assert (not k == k1) and (not k == k2) and (not k1 == k2)
         print [k,k1,k2]
 
-    def test_additive_form(self):
+    def test_additive_form_k(self):
         print 'additive form'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
         k1 = k.copy()
@@ -351,13 +351,13 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = (k1 * (k2 + k3)) + (k4 * k5)
         print '\n', k.pretty_print(), '\n'
-        components = ff.simplify(ff.additive_form(k))
+        components = ff.simplify_k(ff.additive_form_k(k))
         print components
         for k in components.operands:
             print '\n', k.pretty_print(), '\n'
 
-    def test_canonical(self):
-        print 'canonical form'
+    def test_canonical_k(self):
+        print 'canonical_k form'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
         k1 = k.copy()
         k2 = k.copy()
@@ -368,7 +368,7 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy() + k1.copy() * k1.copy() * k3.copy()
         print '\n', k.pretty_print(), '\n'
-        print '\n', ff.canonical(k).pretty_print(), '\n'
+        print '\n', ff.canonical_k(k).pretty_print(), '\n'
 
 class grammar_testcase(unittest.TestCase):
 

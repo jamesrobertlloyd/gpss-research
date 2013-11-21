@@ -326,6 +326,20 @@ class model_testcase(unittest.TestCase):
         for k in components.operands:
             print '\n', k.pretty_print(), '\n'
 
+    def test_canonical(self):
+        print 'canonical form'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        k = model.SqExpKernel(dimension=1, lengthscale=2, sf=2)
+        k3 = k.copy()
+        k4 = k.copy()
+        k5 = model.NoiseKernel(sf=-1)
+        k6 = model.ConstKernel(sf=1)
+        k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy() + k1.copy() * k1.copy() * k3.copy()
+        print '\n', k.pretty_print(), '\n'
+        print '\n', model.canonical(k).pretty_print(), '\n'
+
 class grammar_testcase(unittest.TestCase):
 
     def test_expand(self):

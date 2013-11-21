@@ -6,8 +6,8 @@ import model
 # Search operators
 MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),
                  ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), # Might be generalised via excluded types?
-                 #('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
-                 #('A', 'B', {'A': 'kernel', 'B': 'base'}),
+                 ('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
+                 ('A', 'B', {'A': 'kernel', 'B': 'base'}),
                  #('A', ('CP', 'A', 'd'), {'A': 'kernel', 'd' : 'dimension'}),
                  #('A', ('CB', 'A', 'd'), {'A': 'kernel', 'd' : 'dimension'}),
                  #('A', ('B', 'A', 'd'), {'A': 'kernel', 'd' : 'dimension'}),
@@ -69,7 +69,7 @@ def polish_to_kernel(polish_expr):
             return model.ProductKernel(operands)
         elif polish_expr[0] == '*-const':
             operands = [polish_to_kernel(e) for e in polish_expr[1:]]
-            return model.ProductKernel([operands[0], model.SumKernel([operands[1], model.ConstKernel])])
+            return model.ProductKernel([operands[0], model.SumKernel([operands[1], model.ConstKernel()])])
         elif polish_expr[0] == 'CP':
             base_kernel = polish_to_kernel(polish_expr[2])
             return model.ChangePointKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])

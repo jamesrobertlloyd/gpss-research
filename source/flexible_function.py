@@ -1,13 +1,13 @@
-'''
-Defines mean, covariance and likelihood functions.
-Also defines kernel manipulation routines
+"""
+Defines wrappers for mean, covariance and likelihood functions.
+Also defines kernel manipulation routines.
 
-Created Nov 2012
+Created November 2012
 
 @authors: James Robert Lloyd (jrl44@cam.ac.uk)
           David Duvenaud (dkd23@cam.ac.uk)
           Roger Grosse (rgrosse@mit.edu)
-'''
+"""
 
 from __future__ import division
 
@@ -31,9 +31,9 @@ from scipy.special import i0 # 0th order Bessel function of the first kind
 #                                            #
 ##############################################
 
-# Base mean / kernel / likelihood function class
 
 class FunctionWrapper:
+    """Base class for mean / kernel / likelihood functions."""
             
     def __hash__(self): return hash(self.__repr__())
 
@@ -94,9 +94,10 @@ class FunctionWrapper:
             return cmp(self.__class__, other.__class__)
         return cmp(list(self.param_vector), list(other.param_vector))  
 
-# Base mean function class with default properties and methods
 
 class MeanFunction(FunctionWrapper):
+    """Base mean function class with default properties and methods."""
+    
     # Syntactic sugar e.g. f1 + f2
     def __add__(self, other):
         assert isinstance(other, MeanFunction)
@@ -146,9 +147,10 @@ class MeanFunction(FunctionWrapper):
 
     def __repr__(self): return 'MeanFunction()'
 
-# Base kernel class with default properties and methods
 
 class Kernel(FunctionWrapper):
+    """Base kernel class with default properties and methods"""
+    
     # Syntactic sugar e.g. k1 + k2
     def __add__(self, other):
         assert isinstance(other, Kernel)
@@ -210,9 +212,10 @@ class Kernel(FunctionWrapper):
 
     def __repr__(self): return 'Kernel()'
 
-# Base likelihood function class with default properties and methods
 
 class Likelihood(FunctionWrapper):
+    """Base likelihood function class with default properties and methods"""
+    
     # Syntactic sugar e.g. l1 + l2
     def __add__(self, other):
         assert isinstance(other, Likelihood)
@@ -262,9 +265,10 @@ class Likelihood(FunctionWrapper):
 
     def __repr__(self): return 'Likelihood()'
 
-# Model class - this will take over from ScoredKernel
 
 class GPModel:
+    """Model class - keeps track of a mean function, kernel, likelihood function,
+       and optionally a score."""
 
     def __init__(self, mean=None, kernel=None, likelihood=None, nll=None, ndata=None):
         assert isinstance(mean, MeanFunction) or (mean is None)
@@ -332,6 +336,7 @@ class GPModel:
         model.kernel.load_param_vector(output.kernel_hypers)
         model.likelihood.load_param_vector(output.lik_hypers)
         return GPModel(mean=model.mean, kernel=model.kernel, likelihood=model.likelihood, nll=output.nll, ndata=ndata) 
+
 
 ##############################################
 #                                            #
@@ -487,6 +492,7 @@ class ZeroKernel(Kernel):
     def multiply_by_const(self, sf):
         pass
 
+
 class NoiseKernel(Kernel):
     def __init__(self, sf=None):
         self.sf = sf
@@ -532,6 +538,7 @@ class NoiseKernel(Kernel):
     def load_param_vector(self, params):
         sf, = params # N.B. - expects list input
         self.sf = sf  
+
 
 class ConstKernel(Kernel):
     def __init__(self, sf=None):
@@ -580,6 +587,7 @@ class ConstKernel(Kernel):
     def load_param_vector(self, params):
         sf, = params # N.B. - expects list input
         self.sf = sf  
+
 
 class SqExpKernel(Kernel):
     def __init__(self, dimension=None, lengthscale=None, sf=None):
@@ -638,6 +646,7 @@ class SqExpKernel(Kernel):
         lengthscale, sf = params # N.B. - expects list input
         self.lengthscale = lengthscale  
         self.sf = sf  
+
 
 ##############################################
 #                                            #
@@ -827,6 +836,7 @@ class ChangePointKernel(Kernel):
 class ChangeBurstKernel(Kernel):
     pass
 
+
 ##############################################
 #                                            #
 #           Likelihood functions             #
@@ -904,6 +914,7 @@ class LikGauss(Likelihood):
         else:
             sf, = params # N.B. - expects list input
             self.sf = sf   
+
 
 ##############################################
 #                                            #
@@ -1229,6 +1240,7 @@ def models_to_additive_form_k(models):
     for a_model in models:
         a_model.kernel = additive_form_k(a_model.kernel)
     return models
+
 
 ##############################################
 #                                            #

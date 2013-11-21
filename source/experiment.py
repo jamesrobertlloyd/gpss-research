@@ -28,8 +28,8 @@ import job_controller as jc
 import utils.misc
  
 def remove_nan_scored_models(scored_kernels, score):    
-    not_nan = [k for k in scored_kernels if not np.isnan(k.score(criterion=score))] 
-    eq_nan = [k for k in scored_kernels if np.isnan(k.score(criterion=score))] 
+    not_nan = [k for k in scored_kernels if not np.isnan(ff.GPModel.score(k, criterion=score))] 
+    eq_nan = [k for k in scored_kernels if np.isnan(ff.GPModel.score(k, criterion=score))] 
     return (not_nan, eq_nan)
     
 def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, exp):

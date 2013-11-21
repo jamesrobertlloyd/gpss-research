@@ -183,6 +183,9 @@ class Kernel(FunctionWrapper):
     def is_stationary(self): return True
        
     @property    
+    def sf(self): raise RuntimeError('This must be overriden')
+       
+    @property    
     def is_thunk(self): return False
 
     # Methods
@@ -319,6 +322,7 @@ class GPModel:
     def pl2(self):
         return self.nll / self.ndata + self.kernel.effective_params / (2 * self.ndata)
 
+    @staticmethod
     def score(self, criterion='bic'):
         return {'bic': self.bic,
                 'aic': self.aic,
@@ -449,6 +453,9 @@ class NoneKernel(Kernel):
     def multiply_by_const(self, sf):
         pass
 
+    @property
+    def param_vector(self): return np.array([])
+
 class ZeroKernel(Kernel):
     def __init__(self):
         pass
@@ -465,7 +472,7 @@ class ZeroKernel(Kernel):
     def id(self): return 'Zero'
     
     @property
-    def param_vector(self): return np.array([self.sf])
+    def param_vector(self): return np.array([])
         
     @property
     def latex(self): return '{\\sc Z}' 
@@ -744,6 +751,9 @@ class SumKernel(Kernel):
         for o in self.operands:
             o.multiply_by_const(sf=sf)
 
+    def out_of_bounds(self, constraints):
+        return any([o.out_of_bounds(constraints=constraints) for o in self.operands])
+
 class ProductKernel(Kernel):
     def __init__(self, operands=None):
         if operands is None:
@@ -830,8 +840,113 @@ class ProductKernel(Kernel):
     def multiply_by_const(self, sf):
         self.operands[0].multiply_by_const(sf=sf)
 
+    def out_of_bounds(self, constraints):
+        return any([o.out_of_bounds(constraints=constraints) for o in self.operands])
+
 class ChangePointKernel(Kernel):
-    pass
+    def __init__(self, dimension=None, location=None, steepness=None, operands=None):
+        assert len(operands) == 2
+        self.dimension = dimension
+        self.location = location
+        self.steepness = steepness
+        if operands is None:
+            self.operands = []
+        else:
+            self.operands  = operands
+
+    # Properties
+
+    @property    
+    def is_stationary(self): return False
+
+    @property
+    def sf(self):
+        raise RuntimeError('Cannot ask for scale factor of non-stationary kernel')
+        
+    @property
+    def arity(self): return 2
+        
+    @property
+    def gpml_function(self): return '{@covChangePointMultiD}'
+    
+    @property
+    def id(self): return 'CP'
+    
+    @property
+    def param_vector(self):
+        return np.concatenate([np.array([self.location, self.steepness])] + [o.param_vector for o in self.operands])
+        
+    @property
+    def latex(self):
+        return '{\\sc CP}\\left( ' + ' , '.join([o.latex for o in self.operands]) + ' \\right)'  
+    
+    @property
+    def syntax(self): 
+        return colored('CP( ', self.depth) + \
+                self.operands[0].syntax + \
+                colored(', ', self.depth) + \
+                self.operands[1].syntax + \
+                colored(' )', self.depth)
+       
+    @property    
+    def is_operator(self): return True
+
+    @property
+    def effective_params(self):
+        return sum([o.effective_params for o in self.operands])
+
+    @property
+    def depth(self):
+        return max([o.depth for o in self.operands]) + 1
+
+    # Methods
+
+    def copy(self):
+        return ChangePointKernel(dimension=self.dimension, location=self.location, steepness=self.steepness, operands=[o.copy() for o in self.operands])
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.location is None:
+            # Location uniform in data range
+            self.location = np.random.uniform(data_shape['x_min'][self.dimension], data_shape['x_max'][self.dimension])
+        if self.steepness is None:
+            # Set steepness with inverse input scale
+            self.steepness = np.random.normal(loc=3.3-np.log((data_shape['x_max'][self.dimension] - data_shape['x_min'][self.dimension])), scale=1)
+        for o in self.operands:
+            o.initialise_params(sd=sd, data_shape=data_shape)
+    
+    def __repr__(self):
+        return 'ChangePointKernel(dimension=%s, location=%s, steepness=%s, operands=%s)' % \
+                (self.dimension, self.location, self.steepness, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')   
+    
+    def pretty_print(self):
+        return colored('CP(dim=%s, loc=%s, steep=%s, ' % \
+               (self.dimension, format_if_possible('%1.1f', self.location), format_if_possible('%1.1f', self.steepness)), self.depth) + \
+                self.operands[0].pretty_print() + \
+                colored(', ', self.depth) + \
+                self.operands[1].pretty_print() + \
+                colored(')', self.depth)
+
+    def load_param_vector(self, params):
+        location = params[0]
+        steepness = params[1]
+        start = 2
+        for o in self.operands:
+            end = start + o.num_params
+            o.load_param_vector(params[start:end])
+            start = end
+
+    def get_gpml_expression(self, dimensions):
+        return '{@covChangePointMultiD, %s, {%s}}' % (self.dimension + 1, ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
+
+    def multiply_by_const(self, sf):
+        for o in self.operands:
+            o.multiply_by_const(sf=sf)                    
+            
+    def out_of_bounds(self, constraints):
+        return (self.location < constraints['x_min'][self.dimension]) or \
+               (self.location > constraints['x_max'][self.dimension]) or \
+               (self.steepness < -np.log((constraints['x_max'][self.dimension] -constraints['x_min'][self.dimension])) + 2.3) or \
+               (any([o.out_of_bounds(constraints) for o in self.operands])) 
 
 class ChangeBurstKernel(Kernel):
     pass
@@ -938,13 +1053,6 @@ def canonical_k(k):
     '''Sorts a kernel tree into a canonical form.'''
     if not k.is_operator:
         return k
-    elif k.arity == 2:
-        for o in k.operands:
-            o = canonical_k(o)
-        if isinstance(k.operands[0], NoneKernel) or isinstance(k.operands[1], NoneKernel):
-            return NoneKernel()
-        else:
-            return k
     else:
         new_ops = []
         for op in k.operands:
@@ -1015,8 +1123,10 @@ def collapse_additive_idempotency_k(k):
         k.operands = ops
         return canonical_k(k)
     else:
+        new_ops = []
         for o in k.operands:
-            o = collapse_additive_idempotency_k(o)
+            new_ops.append(collapse_additive_idempotency_k(o))
+        k.operands = new_ops
         return k
 
 def collapse_multiplicative_idempotency_k(k):
@@ -1073,8 +1183,10 @@ def collapse_multiplicative_idempotency_k(k):
         k.operands = ops
         return canonical_k(k)
     else:
+        new_ops = []
         for o in k.operands:
-            o = collapse_multiplicative_idempotency_k(o)
+            new_ops.append(collapse_multiplicative_idempotency_k(o))
+        k.operands = new_ops
         return k
 
 def collapse_multiplicative_zero_k(k):
@@ -1102,8 +1214,10 @@ def collapse_multiplicative_zero_k(k):
         k.operands = ops
         return canonical_k(k)
     else:
+        new_ops = []
         for o in k.operands:
-            o = collapse_multiplicative_zero_k(o)
+            new_ops.append(collapse_multiplicative_zero_k(o))
+        k.operands = new_ops
         return k
 
 def collapse_multiplicative_identity_k(k):
@@ -1130,8 +1244,10 @@ def collapse_multiplicative_identity_k(k):
         k.operands = ops
         return canonical_k(k)
     else:
+        new_ops = []
         for o in k.operands:
-            o = collapse_multiplicative_identity_k(o)
+            new_ops.append(collapse_multiplicative_identity_k(o))
+        k.operands = new_ops
         return k
 
 def break_kernel_into_summands(k):
@@ -1171,12 +1287,12 @@ def distribute_products_k(k):
         if k.arity == 2:
             summands = []
             operands_list = [[op, ZeroKernel()] for op in break_kernel_into_summands(k.operands[0])]
-            for ops in operand_list:
+            for ops in operands_list:
                 k_new = k.copy()
                 k_new.operands = ops
                 summands.append(k_new)
             operands_list = [[ZeroKernel(), op] for op in break_kernel_into_summands(k.operands[1])]
-            for ops in operand_list:
+            for ops in operands_list:
                 k_new = k.copy()
                 k_new.operands = ops
                 summands.append(k_new)
@@ -1775,107 +1891,6 @@ def add_jitter(models, sd=0.1):
 #     @property    
 #     def stationary(self):
 #         return False
-               
-# class ChangePointTanhKernelFamily(KernelOperatorFamily):
-#     def __init__(self, operands):
-#         self.operands = operands
-#         assert len(operands) == 2
-        
-#     def from_param_vector(self, params):
-#         location = params[0]
-#         steepness = params[1]
-#         start = 2
-#         ops = []
-#         for e in self.operands:
-#             end = start + e.num_params()
-#             ops.append(e.from_param_vector(params[start:end]))
-#             start = end
-#         return ChangePointTanhKernel(location, steepness, ops)
-    
-#     def num_params(self):
-#         return 2 + sum([e.num_params() for e in self.operands])
-    
-#     def pretty_print(self):        
-#         return colored('CPT(', self.depth) + \
-#             self.operands[0].pretty_print() + \
-#             colored(', ', self.depth) + \
-#             self.operands[1].pretty_print() + \
-#             colored(')', self.depth)
-
-#     def default(self):
-#         return ChangePointTanhKernel(0., 0., [op.default() for op in self.operands])
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return cmp(self.operands, other.operands)
-    
-#     def depth(self):
-#         return max([op.depth for op in self.operands]) + 1
-
-# class ChangePointTanhKernel(KernelOperator):
-#     def __init__(self, location, steepness, operands):
-#         self.location = location
-#         self.steepness = steepness
-#         self.operands = operands
-        
-#     def family(self):
-#         return ChangePointTanhKernelFamily([e.family() for e in self.operands])
-        
-#     def pretty_print(self): 
-#         return colored('CPT(loc=%1.1f, steep=%1.1f, ' % (self.location, self.steepness), self.depth) + \
-#             self.operands[0].pretty_print() + \
-#             colored(', ', self.depth) + \
-#             self.operands[1].pretty_print() + \
-#             colored(')', self.depth)
-            
-#     def latex_print(self):
-#         return 'CPT\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
-            
-#     def __repr__(self):
-#         return 'ChangePointTanhKernel(location=%f, steepness=%f, operands=%s)' % \
-#             (self.location, self.steepness, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
-    
-#     def gpml_kernel_expression(self):
-#         return '{@covChangePointTanh, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
-    
-#     def copy(self):
-#         return ChangePointTanhKernel(self.location, self.steepness, [e.copy() for e in self.operands])
-
-#     def param_vector(self):
-#         return np.concatenate([np.array([self.location, self.steepness])] + [e.param_vector() for e in self.operands])
-        
-#     def effective_params(self):
-#         return 2 + sum([o.effective_params() for o in self.operands])
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         '''Returns the parameter vector with any default values replaced with random Gaussian'''
-#         result = self.param_vector()[:2]
-#         if result[0] == 0:
-#             # Location uniform in data range
-#             result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
-#         if result[1] == 0:
-#             #### FIXME - Caution, magic numbers
-#             # Set steepness with inverse input scale
-#             result[1] = np.random.normal(loc=3.3-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
-#         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return cmp((self.location, self.steepness, self.operands),
-#                    (other.location, other.steepness, other.operands))
-    
-#     def depth(self):
-#         return max([op.depth for op in self.operands]) + 1
-            
-#     def out_of_bounds(self, constraints):
-#         return (self.location < constraints['input_min']) or \
-#                (self.location > constraints['input_max']) or \
-#                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
-#                (any([o.out_of_bounds(constraints) for o in self.operands])) 
                
 # class ChangeBurstTanhKernelFamily(KernelOperatorFamily):
 #     def __init__(self, operands):

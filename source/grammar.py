@@ -21,10 +21,10 @@ MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),
                  ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), # Might be generalised via excluded types?
                  ('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
                  ('A', 'B', {'A': 'kernel', 'B': 'base'}),
-                 #('A', ('CP', 'A', 'd'), {'A': 'kernel', 'd' : 'dimension'}),
-                 #('A', ('CB', 'A', 'd'), {'A': 'kernel', 'd' : 'dimension'}),
-                 #('A', ('B', 'A', 'd'), {'A': 'kernel', 'd' : 'dimension'}),
-                 #('A', ('BL', 'A', 'd'), {'A': 'kernel', 'd' : 'dimension'}),
+                 #('A', ('CP', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
+                 #('A', ('CB', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
+                 #('A', ('B', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
+                 #('A', ('BL', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
                  ('A', ('None',), {'A': 'kernel'}),
                  ]
     
@@ -65,7 +65,10 @@ def replace_all(polish_expr, mapping):
         return tuple([replace_all(e, mapping) for e in polish_expr])
     elif type(polish_expr) == str:
         if polish_expr in mapping:
-            return mapping[polish_expr].copy()
+            if type(mapping[polish_expr]) == int: # i.e. is it immutable
+                return mapping[polish_expr]
+            else:
+                return mapping[polish_expr].copy()
         else:
             return polish_expr
     else:
@@ -100,7 +103,7 @@ def polish_to_kernel(polish_expr):
         else:
             raise RuntimeError('Unknown operator: %s' % polish_expr[0])
     else:
-        assert isinstance(polish_expr, ff.Kernel) or (polish_expr is None)
+        assert isinstance(polish_expr, ff.Kernel) or (polish_expr is None) or (type(polish_expr) == int)
         return polish_expr
 
 

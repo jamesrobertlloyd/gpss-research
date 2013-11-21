@@ -328,7 +328,7 @@ class RegressionModel:
         model.mean.load_param_vector(output.mean_hypers)
         model.kernel.load_param_vector(output.kernel_hypers)
         model.likelihood.load_param_vector(output.lik_hypers)
-        return RegressionModel(mean=mean, kernel=kernel, likelihood=likelihood, nll=output.nll, ndata=ndata) 
+        return RegressionModel(mean=model.mean, kernel=model.kernel, likelihood=model.likelihood, nll=output.nll, ndata=ndata) 
 
 ##############################################
 #                                            #
@@ -839,7 +839,7 @@ class LikGauss(Likelihood):
     @property
     def gpml_function(self):
         # TODO - once GPML infExact fixed, always return likGauss
-        if self.sf > -np.Inf
+        if self.sf > -np.Inf:
             return '{@likGauss}'
         else:
             return '{@likDelta}'
@@ -852,7 +852,7 @@ class LikGauss(Likelihood):
     
     @property
     def param_vector(self):
-        if self.sf > -np.Inf
+        if self.sf > -np.Inf:
             return np.array([self.sf])
         else:
             return np.array([])
@@ -872,7 +872,7 @@ class LikGauss(Likelihood):
 
     @property
     def gpml_inference_method(self):
-        if self.sf > -np.Inf
+        if self.sf > -np.Inf:
             return '@infExact'
         else:
             return '@infDelta'
@@ -896,8 +896,11 @@ class LikGauss(Likelihood):
         return colored('GS(sf=%s)' % (format_if_possible('%1.1f', self.sf)), self.depth)   
 
     def load_param_vector(self, params):
-        sf, = params # N.B. - expects list input
-        self.sf = sf   
+        if len(params) == 0:
+            self.sf = -np.Inf
+        else:
+            sf, = params # N.B. - expects list input
+            self.sf = sf   
 
 ##############################################
 #                                            #
@@ -1256,10 +1259,10 @@ def add_random_restarts(kernels, n_rand=1, sd=4, data_shape=None):
     '''Augments the list to include random restarts of all default value parameters'''
     return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_kernel(kernel, n_rand, sd, data_shape)] 
 
-def add_random_restarts_to_models(models, sd=0.1):
+def add_random_restarts_to_models(models, n_rand=1, sd=4, data_shape=None):
     new_models = []
     for a_model in models:
-        for kernel in add_random_restarts_single_kernel(a_model.kernel, sd=sd):
+        for kernel in add_random_restarts_single_kernel(a_model.kernel, n_rand=n_rand, sd=sd, data_shape=data_shape):
             new_model = a_model.copy()
             new_model.kernel = kernel
             new_models.append(new_model)
@@ -1273,7 +1276,7 @@ def add_jitter(kernels, sd=0.1):
 
 def add_jitter_to_models(models, sd=0.1):
     for a_model in models:
-        a_model.kernel = add_jitter(a_model.kernel, sd=sd)
+        a_model.kernel = add_jitter([a_model.kernel], sd=sd)[0]
     return models 
 
 ##############################################

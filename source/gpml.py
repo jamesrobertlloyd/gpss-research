@@ -134,7 +134,6 @@ def read_outputs(write_file):
     optimized_hypers = gpml_result['hyp_opt']
     nll = gpml_result['best_nll'][0, 0]
     nlls = gpml_result['nlls'].ravel()
-    assert isinstance(hessian, np.ndarray)  # just to make sure
 
     mean_hypers = optimized_hypers['mean'][0, 0].ravel()
     kernel_hypers = optimized_hypers['cov'][0, 0].ravel()
@@ -187,22 +186,6 @@ a='Supposedly finished writing file'
 %% exit();
 """
 
-#### TODO - remove me
-def make_predictions(kernel_expression, kernel_init_params, data_file, write_file, noise, iters=30, zero_mean=False, random_seed=0):  
-    parameters = {'datafile': data_file,
-                  'writefile': write_file,
-                  'gpml_path': config.GPML_PATH,
-                  'kernel_family': kernel_expression,
-                  'kernel_params': '[ %s ]' % ' '.join(str(p) for p in kernel_init_params),
-                  'noise': str(noise),
-                  'iters': str(iters),
-                  'seed': str(random_seed)}
-    if zero_mean:
-        code = PREDICT_AND_SAVE_CODE_ZERO_MEAN % parameters
-    else:
-        code = PREDICT_AND_SAVE_CODE % parameters
-    run_matlab_code(code, verbose=True)
-
 # Matlab code to decompose posterior into additive parts.
 MATLAB_PLOT_DECOMP_CALLER_CODE = r"""
 load '%(datafile)s'  %% Load the data, it should contain X and y.
@@ -241,7 +224,7 @@ def plot_decomposition(model, X, y, figname, noise=None, X_mean=0, X_scale=1, y_
     kernel_components = ff.break_kernel_into_summands(model.kernel)
     kernel_components = ff.canonical(ff.simplify(kernel_components))
     latex_names = [k.latex.strip() for k in kernel_components]
-    kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector for k in kernel_components)
+    kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector for k in kernel_components))
     
     if X.ndim == 1: X = X[:, nax]
     if y.ndim == 1: y = y[:, nax]

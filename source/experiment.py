@@ -98,18 +98,42 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     for depth in range(exp.max_depth):
         
         # If debugging, only evaluate a few kernels
-        if exp.debug==True:
-            current_models = current_models[0:4]
+        #if exp.debug==True:
+        #    current_models = current_models[0:4]
+
+        #if exp.debug and (depth==1):
+        #    raise RuntimeError('Stop... Hammer time!')
              
         # Add random restarts to kernels
         current_models = ff.add_random_restarts_to_models(current_models, exp.n_rand, exp.sd, data_shape=data_shape)
+
+        # Print result of expansion
+        if exp.debug:
+            print '\nRandomly restarted kernels\n'
+            for model in current_models:
+                print model.pretty_print()
         
         # Remove any redundancy introduced into kernel expressions
         current_models = ff.simplify_models(current_models)
+        # Print result of simplification
+        if exp.debug:
+            print '\nSimplified kernels\n'
+            for model in current_models:
+                print model.pretty_print()
         current_models = ff.remove_duplicates(current_models)
+        # Print result of duplicate removal
+        if exp.debug:
+            print '\nDuplicate removed kernels\n'
+            for model in current_models:
+                print model.pretty_print()
         
         # Add jitter to parameter values (empirically discovered to help optimiser)
         current_models = ff.add_jitter_to_models(current_models, exp.jitter_sd)
+        # Print result of jitter
+        if exp.debug:
+            print '\nJittered kernels\n'
+            for model in current_models:
+                print model.pretty_print()
         
         # Add the previous best models - in case we just need to optimise more rather than changing structure
         if not best_models is None:
@@ -118,6 +142,12 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Randomise the order of the model to distribute computational load evenly
         np.random.shuffle(current_models)
+
+        # Print current models
+        if exp.debug:
+            print '\nKernels to be evaluated\n'
+            for model in current_models:
+                print model.pretty_print()
         
         # Optimise parameters of and score the kernels
         new_results = jc.evaluate_models(current_models, X, y, verbose=exp.verbose, local_computation=exp.local_computation,
@@ -138,9 +168,9 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         # Sort the new results
         new_results = sorted(new_results, key=lambda a_model : RegressionModel.score(a_model, exp.score), reverse=True)
 
-        print 'All new results after duplicate removal:'
+        print '\nAll new results\n'
         for result in new_results:
-            print 'NLL=%0.1f' % result.bic, 'BIC=%0.1f' % result.bic, 'AIC=%0.1f' % result.aic, 'PL2=%0.1f' % result.pl2, result.pretty_print()
+            print 'NLL=%0.1f' % result.bic, 'BIC=%0.1f' % result.bic, 'AIC=%0.1f' % result.aic, 'PL2=%0.2f' % result.pl2, result.pretty_print()
 
         all_results = all_results + new_results
         all_results = sorted(all_results, key=lambda a_model : RegressionModel.score(a_model, exp.score), reverse=True)
@@ -149,18 +179,36 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Extract the best k kernels from the new all_results
         best_results = sorted(new_results, key=lambda a_model : RegressionModel.score(a_model, exp.score))[0:exp.k]
+
+        # Print best kernels
+        if exp.debug:
+            print '\nBest models\n'
+            for model in best_results:
+                print model.pretty_print()
         
         # Expand the best models
-        current_kernels = grammar.expand_models(D=D, models=best_results, base_kernels=exp.base_kernels, rules=exp.search_operators)
+        current_models = grammar.expand_models(D=D, models=best_results, base_kernels=exp.base_kernels, rules=exp.search_operators)
+
+        # Print expansion
+        if exp.debug:
+            print '\nExpanded models\n'
+            for model in current_models:
+                print model.pretty_print()
         
         # Convert to additive form if desired
         if exp.additive_form:
             current_models = ff.models_to_additive_form(current_models)
             current_models = ff.remove_duplicates(current_models)   
+
+            # Print expansion
+            if exp.debug:
+                print '\Converted into additive\n'
+                for model in current_models:
+                    print model.pretty_print()
         
         # Reduce number of kernels when in debug mode
-        if exp.debug==True:
-            current_models = current_models[0:4]
+        #if exp.debug==True:
+        #    current_models = current_models[0:4]
 
         # Write all_results to a temporary file at each level.
         all_results = sorted(all_results, key=lambda a_model : RegressionModel.score(a_model, exp.score), reverse=True)
@@ -220,9 +268,9 @@ def parse_results(results_filenames, max_level=None):
                         break
         result_tuples += [ff.repr_to_model(line.strip()) for line in lines]
     if not score is None:
-        best_tuple = sorted(result_tuples, key=lambda a_model : RegressionModel.score(a_model, exp.score))[0]
+        best_tuple = sorted(result_tuples, key=lambda a_model : RegressionModel.score(a_model, score))[0]
     else:
-        best_tuple = sorted(result_tuples, key=ScoredKernel.score)[0]
+        best_tuple = sorted(result_tuples, key=RegressionModel.score)[0]
     return best_tuple
 
 def gen_all_datasets(dir):
@@ -246,7 +294,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                              'n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, ' + \
                              'iters, base_kernels, additive_form, mean, kernel, lik, verbose_results, ' + \
                              'random_seed, period_heuristic, ' + \
-                             'lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, ' + \
+                             'subset, subset_size, full_iters, bundle_size, ' + \
                              'search_operators, score, period_heuristic_type')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
@@ -284,7 +332,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                                               n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, \
                                               iters, base_kernels, additive_form, mean, kernel, lik, verbose_results, \
                                               random_seed, period_heuristic, \
-                                              lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, \
+                                              subset, subset_size, full_iters, bundle_size, \
                                               search_operators, score, period_heuristic_type)
 
 def experiment_fields_to_str(exp):
@@ -328,7 +376,7 @@ def run_experiment_file(filename):
 def perform_experiment(data_file, output_file, exp):
     
     if exp.make_predictions:        
-        X, y, D, Xtest, ytest = gpml.load_mat(data_file, y_dim=1)
+        X, y, D, Xtest, ytest = gpml.load_mat(data_file)
         prediction_file = os.path.join(exp.results_dir, os.path.splitext(os.path.split(data_file)[-1])[0] + "_predictions.mat")
     else:
         X, y, D = gpml.load_mat(data_file, y_dim=1)
@@ -337,9 +385,9 @@ def perform_experiment(data_file, output_file, exp):
     best_model = parse_results(output_file)
     
     if exp.make_predictions:
+        print '\nMaking predictions\n'
         predictions = jc.make_predictions(X, y, Xtest, ytest, best_model, local_computation=True,
-                                          max_jobs=exp.max_jobs, verbose=exp.verbose, zero_mean=exp.zero_mean, random_seed=exp.random_seed,
-                                          no_noise=exp.no_noise)
+                                          max_jobs=exp.max_jobs, verbose=exp.verbose, random_seed=exp.random_seed)
         scipy.io.savemat(prediction_file, predictions, appendmat=False)
         
     os.system('reset')  # Stop terminal from going invisible.
@@ -347,4 +395,4 @@ def perform_experiment(data_file, output_file, exp):
 
 def run_debug_kfold():
     """This is a quick debugging function."""
-    run_experiment_file('../experiments/debug_example.py')
+    run_experiment_file('../experiments/debug/debug_example.py')

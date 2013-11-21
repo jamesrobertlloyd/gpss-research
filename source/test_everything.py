@@ -294,6 +294,19 @@ class ff_testcase(unittest.TestCase):
         assert (not k == k1) and (not k == k2) and (not k1 == k2)
         print [k,k1,k2]
 
+    def test_jitter_model(self):
+        print 'jitter model'
+        k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        print [k,k1,k2]
+        assert (k == k1) and (k == k2) and (k1 == k2)
+        m1 = ff.RegressionModel(kernel=k1)
+        m2 = ff.RegressionModel(kernel=k2)
+        ff.add_jitter_to_models([m1, m2])
+        assert (not k == k1) and (not k == k2) and (not k1 == k2)
+        print [k,k1,k2]
+
     def test_restarts(self):
         print 'restart'
         data_shape = {'y_sd' : 0, 'x_sd' : [0,2], 'x_min' : [-10,-100], 'x_max' : [10,100]}
@@ -306,6 +319,23 @@ class ff_testcase(unittest.TestCase):
         kernel_list = ff.add_random_restarts([k1, k2], data_shape=data_shape, sd=1)
         k1 = kernel_list[0]
         k2 = kernel_list[1]
+        assert (not k == k1) and (not k == k2) and (not k1 == k2)
+        print [k,k1,k2]
+
+    def test_restarts_model(self):
+        print 'restart model'
+        data_shape = {'y_sd' : 0, 'x_sd' : [0,2], 'x_min' : [-10,-100], 'x_max' : [10,100]}
+        k = ff.SqExpKernel(dimension=0)
+        k1 = k.copy()
+        k2 = k.copy()
+        k2.dimension = 1
+        print [k,k1,k2]
+        assert (k == k1) and (k == k2) and (k1 == k2)
+        m1 = ff.RegressionModel(kernel=k1)
+        m2 = ff.RegressionModel(kernel=k2)
+        model_list = ff.add_random_restarts_to_models([m1, m2], n_rand=1, data_shape=data_shape, sd=1)
+        k1 = model_list[0].kernel
+        k2 = model_list[1].kernel
         assert (not k == k1) and (not k == k2) and (not k1 == k2)
         print [k,k1,k2]
 

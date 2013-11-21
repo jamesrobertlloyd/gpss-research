@@ -50,7 +50,7 @@ def evaluate_models(models, X, y, verbose=True, iters=300, local_computation=Fal
         print 'Creating data file locally'
     data_file = cblparallel.create_temp_file('.mat')
 
-    scipy.io.savemat(data_file, {'X': X, 'y': y, 'X_train' : X_train, 'y_train' : y_train})
+    scipy.io.savemat(data_file, {'X': X, 'y': y})
     
     # Move to fear if necessary
     if not local_computation:
@@ -152,7 +152,6 @@ def make_predictions(X, y, Xtest, ytest, model, local_computation=False, max_job
                  'lik_syntax': model.likelihood.get_gpml_expression(dimensions=X.ndim),
                  'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
                  'inference': model.likelihood.gpml_inference_method,
-                 'noise': str(best_scored_kernel.noise),
                  'iters': str(30),
                  'seed': str(random_seed)}
     code = gpml.PREDICT_AND_SAVE_CODE % parameters

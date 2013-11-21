@@ -4,7 +4,7 @@ import numpy as np
 
 #import experiment
 import model
-#import grammar
+import grammar
 #import translation
 
 class model_testcase(unittest.TestCase):
@@ -124,12 +124,17 @@ class model_testcase(unittest.TestCase):
         k.sf
 
     def test_model(self):
+        print 'model'
         m = model.MeanZero()
         k = model.SqExpKernel()
         l = model.LikGauss()
-        regression_model = model.RegressionModel(mean=m, kernel=k, likelihood=l)
+        regression_model = model.RegressionModel(mean=m, kernel=k, likelihood=l, nll=0, ndata=100)
         print '\n', regression_model.pretty_print(), '\n'
         print '\n', regression_model.__repr__(), '\n'
+        print regression_model.bic
+        print regression_model.aic
+        print regression_model.pl2
+        print regression_model.score('nll')
 
     def test_base(self):
         kernels = model.base_kernels_without_dimension('SE,Const,Noise')
@@ -303,6 +308,48 @@ class model_testcase(unittest.TestCase):
         k2 = kernel_list[1]
         assert (not k == k1) and (not k == k2) and (not k1 == k2)
         print [k,k1,k2]
+
+    def test_additive_form(self):
+        print 'additive form'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        k = model.SqExpKernel(dimension=1, lengthscale=2, sf=2)
+        k3 = k.copy()
+        k4 = k.copy()
+        k5 = model.NoiseKernel(sf=-1)
+        k6 = model.ConstKernel(sf=1)
+        k = (k1 * (k2 + k3)) + (k4 * k5)
+        print '\n', k.pretty_print(), '\n'
+        components = model.simplify(model.additive_form(k))
+        print components
+        for k in components.operands:
+            print '\n', k.pretty_print(), '\n'
+
+class grammar_testcase(unittest.TestCase):
+
+    def test_expand(self):
+        print 'expand'
+        print '1d'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=0)
+        expanded = grammar.expand_kernels(1, [k], base_kernels='SE', rules=None)
+        for k in expanded:
+            print '\n', k.pretty_print(), '\n'
+        print '2d'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=0)
+        expanded = grammar.expand_kernels(2, [k], base_kernels='SE', rules=None)
+        for k in expanded:
+            print '\n', k.pretty_print(), '\n'
+        print '3d'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=0)
+        expanded = grammar.expand_kernels(3, [k], base_kernels='SE', rules=None)
+        for k in expanded:
+            print '\n', k.pretty_print(), '\n'
+        print '3d with two SEs'
+        k = model.SqExpKernel(dimension=0, lengthscale=0, sf=0)
+        expanded = grammar.expand_kernels(3, [k + k.copy()], base_kernels='SE', rules=None)
+        for k in expanded:
+            print '\n', k.pretty_print(), '\n'
 
     # def test_wrong_dimension(self):
     #     try:

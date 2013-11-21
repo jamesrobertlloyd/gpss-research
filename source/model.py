@@ -6,11 +6,12 @@ Created Nov 2012
           Roger Grosse (rgrosse@mit.edu)
 '''
 
+from __future__ import division
+
 import itertools
+from numpy import nan, inf
 import numpy as np
 import re
-
-from numpy import nan, inf
 
 import operator
 from utils import psd_matrices
@@ -45,7 +46,7 @@ class FunctionWrapper:
     def effective_params(self):
         if not self.is_operator:
             '''This is true of all base functions, hence definition here'''  
-            return len(self.param_vector())
+            return len(self.param_vector)
         else:
             raise RuntimeError('Operators must override this property')
     
@@ -254,20 +255,22 @@ class Likelihood(FunctionWrapper):
 
 class RegressionModel:
 
-    def __init__(self, mean=None, kernel=None, likelihood=None):
+    def __init__(self, mean=None, kernel=None, likelihood=None, nll=None, ndata=None):
         assert isinstance(mean, MeanFunction) or (mean is None)
         assert isinstance(kernel, Kernel) or (kernel is None)
         assert isinstance(likelihood, Likelihood) or (likelihood is None)
         self.mean = mean
         self.kernel = kernel
         self.likelihood = likelihood
+        self.nll = nll
+        self.ndata = ndata
             
     def __hash__(self): return hash(self.__repr__())
 
     def __repr__(self):
         # Remember all the various scoring criteria
-        return 'RegressionModel(mean=%s, kernel=%s, likelihood=%s)' % \
-               (self.mean.__repr__(), self.kernel.__repr__(), self.likelihood.__repr__())
+        return 'RegressionModel(mean=%s, kernel=%s, likelihood=%s, nll=%s, ndata=%s)' % \
+               (self.mean.__repr__(), self.kernel.__repr__(), self.likelihood.__repr__(), self.nll, self.ndata)
 
     def __cmp__(self, other):
         if cmp(self.__class__, other.__class__):
@@ -278,63 +281,35 @@ class RegressionModel:
         return 'RegressionModel(mean=%s, kernel=%s, likelihood=%s)' % \
                 (self.mean.pretty_print(), self.kernel.pretty_print(), self.likelihood.pretty_print())
 
-# class ScoredKernel:
-#     '''
-#     Wrapper around a kernel with various scores and noise parameter
-#     '''
-#     def __init__(self, k_opt, nll=nan, laplace_nle=nan, bic_nle=nan, aic_nle=nan, pl2=nan, npll=nan, pic_nle=nan, mae=nan, std_ratio=nan, noise=nan):
-#         self.k_opt = k_opt
-#         self.nll = nll
-#         self.laplace_nle = laplace_nle
-#         self.bic_nle = bic_nle
-#         self.aic_nle = aic_nle
-#         self.pl2 = pl2
-#         self.npll = npll
-#         self.pic_nle = pic_nle
-#         self.mae = mae
-#         self.std_ratio = std_ratio
-#         self.noise = noise
-        
-#     #### CAUTION - the default keeps on changing!
-#     def score(self, criterion='bic'):
-#         return {'bic': self.bic_nle,
-#                 'aic': self.aic_nle,
-#                 'pl2': self.pl2,
-#                 'nll': self.nll,
-#                 'laplace': self.laplace_nle,
-#                 'npll': self.npll,
-#                 'pic': self.pic_nle,
-#                 'mae': self.mae
-#                 }[criterion.lower()]
+    @property
+    def bic(self):
+        return 2 * self.nll + self.kernel.effective_params * np.log(self.ndata)
+
+    @property
+    def aic(self):
+        return 2 * self.nll + self.kernel.effective_params * 2
+
+    @property
+    def pl2(self):
+        return self.nll / self.ndata + self.kernel.effective_params / (2 * self.ndata)
+
+    def score(self, criterion='bic'):
+        return {'bic': self.bic,
+                'aic': self.aic,
+                'pl2': self.pl2,
+                'nll': self.nll
+                }[criterion.lower()]
                 
-#     @staticmethod
-#     def from_printed_outputs(nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise=None, kernel=None):
-#         return ScoredKernel(kernel, nll, laplace, BIC, AIC, PL2, npll, PIC, mae, std_ratio, noise)
-    
-#     def __repr__(self):
-#         return 'ScoredKernel(k_opt=%s, nll=%f, laplace_nle=%f, bic_nle=%f, aic_nle=%f, pl2=%f, npll=%f, pic_nle=%f, mae=%f, std_ratio=%f, noise=%s)' % \
-#             (self.k_opt, self.nll, self.laplace_nle, self.bic_nle, self.aic_nle, self.pl2, self.npll, self.pic_nle, self.mae, self.std_ratio, self.noise)
+    @staticmethod
+    def from_printed_outputs(nll=None, ndata=None, noise=None, mean=None, kernel=None, likelihood=None):
+        return RegressionModel(mean=mean, kernel=kernel, likelihood=likelihood, nll=nll, ndata=ndata)
 
-#     def pretty_print(self):
-#         return self.k_opt.pretty_print()
-
-#     def latex_print(self):
-#         return self.k_opt.latex_print()
-
-#     @staticmethod 
-#     def from_matlab_output(output, kernel_family, ndata):
-#         '''Computes Laplace marginal lik approx and BIC - returns scored Kernel'''
-#         #### TODO - this check should be within the psd_matrices code
-#         if np.any(np.isnan(output.hessian)):
-#             laplace_nle = np.nan
-#         else:
-#             laplace_nle, problems = psd_matrices.laplace_approx_stable_no_prior(output.nll, output.hessian)
-#         k_opt = kernel_family.from_param_vector(output.kernel_hypers)
-#         BIC = 2 * output.nll + k_opt.effective_params() * np.log(ndata)
-#         PIC = 2 * output.npll + k_opt.effective_params() * np.log(ndata)
-#         AIC = 2 * output.nll + k_opt.effective_params() * 2
-#         PL2 = output.nll / ndata + k_opt.effective_params() / (2 * ndata)
-#         return ScoredKernel(k_opt, output.nll, laplace_nle, BIC, AIC, PL2, output.npll, PIC, output.mae, output.std_ratio, output.noise_hyp) 
+    @staticmethod 
+    def from_matlab_output(output, mean, kernel, likelihood, ndata):
+        mean.load_param_vector(output.mean_hypers)
+        kernel.load_param_vector(output.kernel_hypers)
+        likelihood.load_param_vector(output.likelihood_hypers)
+        return RegressionModel(mean=mean, kernel=kernel, likelihood=likelihood, nll=output.nll, ndata=ndata) 
 
 ##############################################
 #                                            #
@@ -787,7 +762,7 @@ class ProductKernel(Kernel):
 
     @property
     def effective_params(self):
-        return sum([o.effective_params for o in self.operands])
+        return sum([o.effective_params for o in self.operands]) - (len(self.operands) - 1)
 
     @property
     def depth(self):
@@ -823,6 +798,12 @@ class ProductKernel(Kernel):
 
     def multiply_by_const(self, sf):
         self.operands[0].multiply_by_const(sf=sf)
+
+class ChangePointKernel(Kernel):
+    pass
+
+class ChangeBurstKernel(Kernel):
+    pass
 
 ##############################################
 #                                            #
@@ -1138,6 +1119,51 @@ def distribute_products(k):
         # Base case: A kernel that's just, like, a kernel, man.
         return k
 
+def additive_form(k):
+    '''
+    Converts a kernel into a sum of products and with changepoints percolating to the top
+    Output is always in canonical form
+    '''
+    #### TODO - currently implemented for a subset of changepoint operators - to be extended or operators to be abstracted
+    if isinstance(k, ProductKernel):
+        # Convert operands into additive form
+        additive_ops = sorted([additive_form(op) for op in k.operands])
+        # Initialise the new kernel
+        new_kernel = additive_ops[0]
+        # Build up the product, iterating over the other components
+        for additive_op in additive_ops[1:]:
+            if isinstance(new_kernel, ChangePointKernel) or isinstance(new_kernel, ChangeBurstKernel):
+                # Changepoints take priority - nest the products within this operator
+                new_kernel.operands = [additive_form(canonical(op*additive_op.copy())) for op in new_kernel.operands]
+            elif isinstance(additive_op, ChangePointKernel) or isinstance(additive_op, ChangeBurstKernel):
+                # Nest within the next operator
+                old_kernel = new_kernel.copy()
+                new_kernel = additive_op
+                new_kernel.operands = [additive_form(canonical(op*old_kernel.copy())) for op in new_kernel.operands]
+            elif isinstance(new_kernel, SumKernel):
+                # Nest the products within this sum
+                new_kernel.operands = [additive_form(canonical(op*additive_op.copy())) for op in new_kernel.operands]
+            elif isinstance(additive_op, SumKernel):
+                # Nest within the next operator
+                old_kernel = new_kernel.copy()
+                new_kernel = additive_op
+                new_kernel.operands = [additive_form(canonical(op*old_kernel.copy())) for op in new_kernel.operands]
+            else:
+                # Both base kernels - just multiply
+                new_kernel = new_kernel*additive_op
+            # Make sure still in canonical form - useful mostly for detecting duplicates
+            new_kernel = canonical(new_kernel)
+        return new_kernel
+    elif k.is_operator:
+        # This operator is additive - make all operands additive
+        new_kernel = k.copy()
+        new_kernel.operands = [additive_form(op) for op in k.operands]
+        return canonical(new_kernel)
+    else:
+        #### TODO - Place a check here that the kernel is not a binary or higher operator
+        # Base case - return self
+        return canonical(k) # Just to make it clear that the output is always canonical
+
 ##############################################
 #                                            #
 #         Miscellaneous functions            #
@@ -1146,6 +1172,10 @@ def distribute_products(k):
 
 def repr_to_model(string):
     return eval(string)
+
+def remove_duplicates(kernels):
+    # This is possible since kernels are now hashable
+    return list(set(kernels))
          
 def base_kernels(dimensions=1, base_kernel_names='SE'):
     for kernel in base_kernels_without_dimension(base_kernel_names):
@@ -1185,7 +1215,13 @@ def add_jitter(kernels, sd=0.1):
     '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
     for k in kernels:
         k.load_param_vector(k.param_vector + np.random.normal(loc=0., scale=sd, size=k.param_vector.size))
-    return kernels        
+    return kernels      
+
+##############################################
+#                                            #
+#     Old kernel functions to be revived     #
+#                                            #
+##############################################  
 
 # #### TODO - this is a code name for the reparametrised centred periodic
 # class FourierKernelFamily(BaseKernelFamily):

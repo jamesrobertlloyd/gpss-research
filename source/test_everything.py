@@ -134,7 +134,7 @@ class ff_testcase(unittest.TestCase):
         print regression_model.bic
         print regression_model.aic
         print regression_model.pl2
-        print regression_model.score('nll')
+        print ff.GPModel.score(regression_model, criterion='nll')
 
     def test_base(self):
         kernels = ff.base_kernels_without_dimension('SE,Const,Noise')
@@ -369,6 +369,22 @@ class ff_testcase(unittest.TestCase):
         k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy() + k1.copy() * k1.copy() * k3.copy()
         print '\n', k.pretty_print(), '\n'
         print '\n', ff.canonical_k(k).pretty_print(), '\n'
+
+    def test_canonical_k_2(self):
+        print 'canonical_k form 2'
+        k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = ff.NoneKernel()
+        k = ff.ChangePointKernel(operands=[k1,k2])
+        print '\n', k, '\n'
+        k = ff.canonical_k(k)
+        print '\n', k, '\n'
+        assert k == ff.NoneKernel()
+        k = ff.ChangePointKernel(operands=[ff.ChangePointKernel(operands=[k1,k2]),k2])
+        print '\n', k, '\n'
+        k = ff.canonical_k(k)
+        print '\n', k, '\n'
+        assert k == ff.NoneKernel()
 
 class grammar_testcase(unittest.TestCase):
 

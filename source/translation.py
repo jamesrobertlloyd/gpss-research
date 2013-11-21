@@ -253,29 +253,28 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
     lin_location = None
     # Count kernels and calculate a variety of summary quantities
     for k in kernels:
-        if isinstance(k, ff.SqExpKernel) or isinstance(k, ff.Matern5Kernel):
-            #### FIXME - How accurate is it to assume that SqExp and Matern lengthscales multiply similarly
+        if isinstance(k, ff.SqExpKernel):
             los_count += 1
             lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*k.lengthscale))
         #elif isinstance(k, ff.LinKernel) or isinstance(k, ff.PureLinKernel):
-        elif isinstance(k, ff.PureLinKernel):
-            lin_count += 1
-            lin_location = k.location
-        elif isinstance(k, ff.CentredPeriodicKernel):
-            per_count += 1
-            per_kernels.append(k)
-            min_period = np.min([np.exp(k.period), min_period])
-        elif isinstance(k, ff.FourierKernel):
-            per_count += 1
-            per_kernels.append(k)
-            min_period = np.min([np.exp(k.period), min_period])
-        elif isinstance(k, ff.CosineKernel):
-            cos_count += 1
-            cos_kernels.append(k)
-            min_period = np.min([np.exp(k.period), min_period])
-        elif isinstance(k, ff.ExpKernel):
-            exp_count += 1
-            exp_rate += k.rate
+        #elif isinstance(k, ff.PureLinKernel):
+        #    lin_count += 1
+        #    lin_location = k.location
+        #elif isinstance(k, ff.CentredPeriodicKernel):
+        #    per_count += 1
+        #    per_kernels.append(k)
+        #    min_period = np.min([np.exp(k.period), min_period])
+        #elif isinstance(k, ff.FourierKernel):
+        #    per_count += 1
+        #    per_kernels.append(k)
+        #    min_period = np.min([np.exp(k.period), min_period])
+        #elif isinstance(k, ff.CosineKernel):
+        #    cos_count += 1
+        #    cos_kernels.append(k)
+        #    min_period = np.min([np.exp(k.period), min_period])
+        #elif isinstance(k, ff.ExpKernel):
+        #    exp_count += 1
+        #    exp_rate += k.rate
         elif isinstance(k, ff.NoiseKernel):
             noi_count += 1
         elif not isinstance(k, ff.ConstKernel):

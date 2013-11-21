@@ -801,7 +801,7 @@ x = linspace(-10, 10, 1000)';
 delta = 0.00000001;
 i = 2;
 
-cov_func = {@covChangePoint, {@covSEiso, @covSEiso}};
+cov_func = {@covChangePointTanh, {@covSEiso, @covSEiso}};
 hyp1.cov = hyp.cov;
 hyp2.cov = hyp1.cov;
 hyp2.cov(i) = hyp2.cov(i) + delta;
@@ -1531,3 +1531,84 @@ K = K + 1e-9*max(max(K))*eye(size(K));
 y = chol(K)' * randn(size(x));
 
 plot(x, y);
+
+%% Change point draw
+
+x = linspace(-10, 10, 1000)';
+
+cov_func = {@covChangePointMultiD, 1, {@covSEiso, @covSEiso}};
+hyp.cov = [0, 0, 0, 0, 2, 0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
+%% Change point draw
+
+x = linspace(-10, 10, 100)';
+[X,Y] = meshgrid(x,x);
+x = [X(:), Y(:)];
+
+cov_func = {@covChangePointMultiD, 2, {{@covMask, {[1, 0], @covSEiso}}, {@covMask, {[1, 1], @covSEiso}}}};
+hyp.cov = [0, 0, 0, 0, 0, 0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x, 1),1);
+
+surf(reshape(y, 100, 100));
+
+%% Check CP tanh grad
+
+x = linspace(-10, 10, 50)';
+[X,Y] = meshgrid(x,x);
+x = [X(:), Y(:)];
+
+delta = 0.0000001;
+i = 2;
+
+%cov_func = {@covChangePointMultiD, 1, {{@covMask, {[1, 0], @covSEiso}}, {@covMask, {[1, 1], @covSEiso}}}};
+%hyp.cov = [0, 1, 2, 3, 1, 1];
+hyp1.cov = hyp.cov;
+hyp2.cov = hyp1.cov;
+hyp2.cov(i) = hyp2.cov(i) + delta;
+
+diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / delta;
+deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
+
+max(max(abs(diff - deriv)))
+
+%% ChangePointTanh fit
+
+%load 01-airline
+
+x = linspace(-15, 15, 250)';
+y = cos(1*pi*x) .* (1- (max(0,x)>0)) + cos(2*pi*x) .* ((max(0,x)>0)) + 0.1*randn(size(x)) + max(0,x);
+
+cov_func = {@covChangePointMultiD, 1, {{@covProd, {@covPeriodic, @covSEiso}}, {@covProd, {@covPeriodic, @covSEiso}}}};
+hyp.cov = [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+mean_func = @meanZero;
+hyp.mean = [];
+
+lik_func = @likGauss;
+hyp.lik = log(std(y-mean(y)) / 10);
+
+repeats = 1;
+total_iters = 200;
+for i = 1:repeats
+  hyp = minimize(hyp, @gp, -floor(total_iters/repeats), @infExact, mean_func, cov_func, lik_func, x, y);
+end
+
+xrange = linspace(min(x)-5, max(x)+5, 1000)';
+
+fit = gp(hyp, @infExact, mean_func, cov_func, lik_func, x, y, xrange);
+
+plot(x, y, 'o');
+hold on;
+plot(xrange, fit);
+hold off;

@@ -17,8 +17,8 @@ import random
 import re
 import scipy.io
 
-import model
-from model import RegressionModel
+import flexible_function as ff
+from flexible_function import RegressionModel
 import grammar
 import gpml
 import utils.latex

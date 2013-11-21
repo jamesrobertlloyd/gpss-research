@@ -11,7 +11,7 @@ Created Nov 2012
 import itertools
 import numpy as np
 
-import model
+import flexible_function as ff
         
 # Search operators
 MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),
@@ -35,11 +35,11 @@ class MultiDGrammar:
         
     def type_matches(self, candidate, tp):
         if tp == 'base':
-            return isinstance(candidate, model.Kernel) and (not candidate.is_operator)
+            return isinstance(candidate, ff.Kernel) and (not candidate.is_operator)
         elif tp == 'kernel':
-            return isinstance(candidate, model.Kernel)
+            return isinstance(candidate, ff.Kernel)
         elif tp == 'base-not-const':
-            return isinstance(candidate, model.Kernel) and (not candidate.is_operator) and (not isinstance(candidate, model.ConstKernel))
+            return isinstance(candidate, ff.Kernel) and (not candidate.is_operator) and (not isinstance(candidate, ff.ConstKernel))
         elif tp == 'dimension':
             return isinstance(candidate, int)
         else:
@@ -47,11 +47,11 @@ class MultiDGrammar:
         
     def list_options(self, tp):
         if tp == 'base':
-            return list(model.base_kernels(self.ndim, self.base_kernels))
+            return list(ff.base_kernels(self.ndim, self.base_kernels))
         elif tp == 'kernel':
             raise RuntimeError("Cannot expand the '%s' type" % tp)
         elif tp == 'base-not-const':
-            return [k for k in self.list_options(tp='base') if not isinstance(k, model.ConstKernel)]
+            return [k for k in self.list_options(tp='base') if not isinstance(k, ff.ConstKernel)]
         elif tp == 'dimension':
             return range(self.ndim)
         else:
@@ -66,43 +66,43 @@ def replace_all(polish_expr, mapping):
         else:
             return polish_expr
     else:
-        assert isinstance(polish_expr, model.Kernel)
+        assert isinstance(polish_expr, ff.Kernel)
         return polish_expr.copy()
     
 def polish_to_kernel(polish_expr):
     if type(polish_expr) == tuple:
         if polish_expr[0] == '+':
             operands = [polish_to_kernel(e) for e in polish_expr[1:]]
-            return model.SumKernel(operands)
+            return ff.SumKernel(operands)
         elif polish_expr[0] == '*':
             operands = [polish_to_kernel(e) for e in polish_expr[1:]]
-            return model.ProductKernel(operands)
+            return ff.ProductKernel(operands)
         elif polish_expr[0] == '*-const':
             operands = [polish_to_kernel(e) for e in polish_expr[1:]]
-            return model.ProductKernel([operands[0], model.SumKernel([operands[1], model.ConstKernel()])])
+            return ff.ProductKernel([operands[0], ff.SumKernel([operands[1], ff.ConstKernel()])])
         elif polish_expr[0] == 'CP':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return model.ChangePointKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])
+            return ff.ChangePointKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])
         elif polish_expr[0] == 'CB':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return model.ChangeBurstKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])
+            return ff.ChangeBurstKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])
         elif polish_expr[0] == 'B':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return model.ChangeBurstKernel(dimension=polish_expr[1], operands=[model.ConstKernel(), base_kernel])
+            return ff.ChangeBurstKernel(dimension=polish_expr[1], operands=[ff.ConstKernel(), base_kernel])
         elif polish_expr[0] == 'BL':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return model.ChangeBurstKernel(dimension=polish_expr[1], operands=[base_kernel, model.ConstKernel()])
+            return ff.ChangeBurstKernel(dimension=polish_expr[1], operands=[base_kernel, ff.ConstKernel()])
         elif polish_expr[0] == 'None':
-            return model.NoneKernel()
+            return ff.NoneKernel()
         else:
             raise RuntimeError('Unknown operator: %s' % polish_expr[0])
     else:
-        assert isinstance(polish_expr, model.Kernel) or (polish_expr is None)
+        assert isinstance(polish_expr, ff.Kernel) or (polish_expr is None)
         return polish_expr
 
 
 def expand_single_tree(kernel, grammar):
-    assert isinstance(kernel, model.Kernel)
+    assert isinstance(kernel, ff.Kernel)
     result = []
     for lhs, rhs, types in grammar.rules:
         if grammar.type_matches(kernel, types[lhs]):
@@ -157,16 +157,16 @@ def expand_kernels(D, seed_kernels, base_kernels='SE', rules=None):
     kernels = []
     for k in seed_kernels:
         kernels = kernels + expand(k, g)
-    kernels = map(model.canonical, kernels)
-    kernels = model.remove_duplicates(kernels)
-    kernels = [k for k in kernels if not isinstance(k, model.NoneKernel)]
+    kernels = map(ff.canonical, kernels)
+    kernels = ff.remove_duplicates(kernels)
+    kernels = [k for k in kernels if not isinstance(k, ff.NoneKernel)]
     return kernels
 
 def expand_models(D, models, base_kernels='SE', rules=None):
     expanded = []
-    for a_model in models:
-        for k in expand_kernels(D, [a_model.kernel], base_kernels, rules):
-            new_model = a_model.copy()
+    for model in models:
+        for k in expand_kernels(D, [model.kernel], base_kernels, rules):
+            new_model = model.copy()
             new_model.kernel = k
             new_model.nll = np.nan
             expanded.append(new_model)

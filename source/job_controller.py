@@ -8,8 +8,8 @@ Main file for dispatching jobs to a cluster, creates remote files, etc.
 Created Jan 2013
 '''
 
-import model
-from model import RegressionModel
+import flexible_function as ff
+from flexible_function import RegressionModel
 import grammar
 import gpml
 import utils.latex
@@ -72,15 +72,15 @@ def evaluate_models(models, X, y, verbose=True, iters=300, local_computation=Fal
     if verbose:
         print 'Creating scripts'
     scripts = [None] * len(kernels)
-    for (i, a_model) in enumerate(kernels):
+    for (i, model) in enumerate(kernels):
         parameters = {'datafile': data_file.split('/')[-1],
                       'writefile': '%(output_file)s', # N.B. cblparallel manages output files
                       'gpml_path': cblparallel.gpml_path(local_computation),
-                      'mean_syntax': a_model.mean.gpml_expression,
+                      'mean_syntax': model.mean.gpml_expression,
                       'mean_params': '[ %s ]' % ' '.join(str(p) for p in model.mean.param_vector),
-                      'kernel_syntax': a_model.kernel.gpml_expression,
+                      'kernel_syntax': model.kernel.gpml_expression,
                       'kernel_params': '[ %s ]' % ' '.join(str(p) for p in model.kernel.param_vector),
-                      'lik_syntax': a_model.likelihood.gpml_expression,
+                      'lik_syntax': model.likelihood.gpml_expression,
                       'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
                       'iters': str(iters),
                       'seed': str(np.random.randint(2**31)),

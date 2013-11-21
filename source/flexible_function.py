@@ -280,6 +280,12 @@ class RegressionModel:
             return cmp(self.__class__, other.__class__)
         return cmp([self.mean, self.kernel, self.likelihood], [other.mean, other.kernel, other.likelihood])
 
+    def copy(self):
+        m = self.mean.copy() if not self.mean is None else None
+        k = self.kernel.copy() if not self.kernel is None else None
+        l = self.likelihood.copy() if not self.likelihood is None else None
+        return RegressionModel(mean=m, kernel=k, likelihood=l, nll=self.nll, ndata=self.ndata)
+
     def pretty_print(self):
         return 'RegressionModel(mean=%s, kernel=%s, likelihood=%s)' % \
                 (self.mean.pretty_print(), self.kernel.pretty_print(), self.likelihood.pretty_print())

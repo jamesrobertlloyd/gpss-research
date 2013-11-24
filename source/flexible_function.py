@@ -34,20 +34,35 @@ from scipy.special import i0 # 0th order Bessel function of the first kind
 
 class FunctionWrapper:
     """Base class for mean / kernel / likelihood functions."""
-            
-    def __hash__(self): return hash(self.__repr__())
 
-    # Properties
+    # Properties - these are read-only and immutable
 
+    # e.g. @covSEiso
     @property
     def gpml_function(self): raise RuntimeError('This property must be overriden')
        
     @property    
     def is_operator(self): return False
+       
+    @property    
+    def is_abelian(self):
+        if not self.is_operator:
+            return None # Not applicable
+        else:
+            raise RuntimeError('Operators must override this property')
 
+    # Identification used internally
     @property
     def id(self): raise RuntimeError('This property must be overriden')
+    
+    # Parameters in the order defined by GPML
+    @property
+    def param_vector(self): raise RuntimeError('This property must be overriden')
+    
+    @property
+    def num_params(self): return len(self.param_vector)
 
+    # Used by information criteria that count optimised parameters
     @property
     def effective_params(self):
         if not self.is_operator:
@@ -55,33 +70,56 @@ class FunctionWrapper:
             return len(self.param_vector)
         else:
             raise RuntimeError('Operators must override this property')
-    
-    @property
-    def param_vector(self): raise RuntimeError('This property must be overriden')
 
+    # LaTeX representation of function
     @property
     def latex(self): raise RuntimeError('This property must be overriden') 
 
+    # Depth within the expression tree - leaves = 0
     @property
     def depth(self):
         if not self.is_operator:
             return 0 
         else:
             raise RuntimeError('Operators must override this property')
-    
-    @property
-    def num_params(self): return len(self.param_vector)
 
+    # String representation of function without any parameters
     @property
     def syntax(self): raise RuntimeError('This property must be overriden') 
 
-    # Methods
+    # Hidden methods
+
+    def __repr__(self): return 'FunctionWrapper()'
+            
+    # NOTE : This hash is defined for convenience but must be used with caution since this class is mutable
+    def __hash__(self): return hash(self.__repr__())
+
+    def __cmp__(self, other):
+        if cmp(self.__class__, other.__class__):
+            return cmp(self.__class__, other.__class__)
+        else:
+            # QUESTION : Is comparing strings very slow?
+            # If so this should be overidden for speed
+            return cmp(self.__repr__(), other.__repr__())
+
+    # Methods returning objects of the same type as self
 
     def copy(self): raise RuntimeError('This method must be overriden')
 
-    def initialise_params(self, sd=1, data_shape=None): raise RuntimeError('This method must be overriden')
+    # Returns a function with any syntactic redundancy removed (e.g. idempotency, zero elements...)
+    def simplified(self): return self.copy()
 
-    def __repr__(self): return 'FunctionWrapper()'
+    # Returns the canonical form of an object
+    def canonical(self): return self.copy()
+
+    def additive_form(self): return self.copy()
+
+    # Returns a list of summands
+    def break_into_summands(self): return [self.copy()]
+
+    # Methods returning different types
+
+    def initialise_params(self, sd=1, data_shape=None): raise RuntimeError('This method must be overriden')
     
     def pretty_print(self): return RuntimeError('This method must be overriden')
         
@@ -89,44 +127,41 @@ class FunctionWrapper:
 
     def load_param_vector(self, params): return RuntimeError('This method must be overriden')
 
-    def __cmp__(self, other):
-        if cmp(self.__class__, other.__class__):
-            return cmp(self.__class__, other.__class__)
-        return cmp(list(self.param_vector), list(other.param_vector))  
-
-    def simplified(self): return self.copy()
-
-    def canonical(self): return self.copy()
-
 
 class MeanFunction(FunctionWrapper):
     """Base mean function class with default properties and methods."""
     
     # Syntactic sugar e.g. f1 + f2
+    # Returns copies of involved functions - ensured by canonical operation
     def __add__(self, other):
         assert isinstance(other, MeanFunction)
         if isinstance(other, SumFunction):
             if isinstance(self, SumFunction):
-                self.operands = self.operands + other.operands
-                return self
+                new_f = self.copy()
+                new_f.operands = self.operands + other.operands
+                return new_f.canonical()
             else:
-                other.operands = [self] + other.operands
-                return other
+                new_f = self.copy()
+                new_f.operands = [self] + other.operands
+                return new_f.canonical()
         else:
-            return SumFunction([self, other])
+            return SumFunction([self, other]).canonical()
     
     # Syntactic sugar e.g. f1 * f2
+    # Returns copies of involved functions - ensured by canonical operation
     def __mul__(self, other):
         assert isinstance(other, MeanFunction)
         if isinstance(other, ProductFunction):
             if isinstance(self, ProductFunction):
-                self.operands = self.operands + other.operands
-                return self
+                new_f = self.copy()
+                new_f.operands = self.operands + other.operands
+                return new_f.canonical()
             else:
-                other.operands = [self] + other.operands
-                return other
+                new_f = self.copy()
+                new_f.operands = [self] + other.operands
+                return new_f.canonical()
         else:
-            return ProductFunction([self, other])
+            return ProductFunction([self, other]).canonical()
 
     # Properties
        
@@ -156,28 +191,34 @@ class Kernel(FunctionWrapper):
     """Base kernel class with default properties and methods"""
     
     # Syntactic sugar e.g. k1 + k2
+    # Returns copies of involved functions - ensured by canonical operation
     def __add__(self, other):
         assert isinstance(other, Kernel)
         if isinstance(other, SumKernel):
             if isinstance(self, SumKernel):
-                self.operands = self.operands + other.operands
-                return self.canonical()
+                new_f = self.copy()
+                new_f.operands = self.operands + other.operands
+                return new_f.canonical()
             else:
-                other.operands = [self] + other.operands
-                return other.canonical()
+                new_f = self.copy()
+                new_f.operands = [self] + other.operands
+                return new_f.canonical()
         else:
             return SumKernel([self, other]).canonical()
     
     # Syntactic sugar e.g. k1 * k2
+    # Returns copies of involved functions - ensured by canonical operation
     def __mul__(self, other):
         assert isinstance(other, Kernel)
         if isinstance(other, ProductKernel):
             if isinstance(self, ProductKernel):
-                self.operands = self.operands + other.operands
-                return self.canonical()
+                new_f = self.copy()
+                new_f.operands = self.operands + other.operands
+                return new_f.canonical()
             else:
-                other.operands = [self] + other.operands
-                return other.canonical()
+                new_f = self.copy()
+                new_f.operands = [self] + other.operands
+                return new_f.canonical()
         else:
             return ProductKernel([self, other]).canonical()
 
@@ -236,6 +277,7 @@ class Kernel(FunctionWrapper):
 
     def canonical(self):
         '''Sorts a kernel tree into a canonical form.'''
+        #### TODO - This can be abstracted by defining a None wrapper
         if not self.is_operator:
             return self.copy()
         else:
@@ -252,7 +294,10 @@ class Kernel(FunctionWrapper):
                 return new_ops[0]
             else:
                 canon = self.copy()
-                canon.operands = new_ops
+                if self.is_abelian:
+                    canon.operands = sorted(new_ops)
+                else:
+                    canon.operands = new_ops
                 return canon
 
     def additive_form(self):
@@ -306,30 +351,36 @@ class Likelihood(FunctionWrapper):
     """Base likelihood function class with default properties and methods"""
     
     # Syntactic sugar e.g. l1 + l2
+    # Returns copies of involved functions - ensured by canonical operation
     def __add__(self, other):
         assert isinstance(other, Likelihood)
         if isinstance(other, SumLikelihood):
             if isinstance(self, SumLikelihood):
-                self.operands = self.operands + other.operands
-                return self
+                new_f = self.copy()
+                new_f.operands = self.operands + other.operands
+                return new_f.canonical()
             else:
-                other.operands = [self] + other.operands
-                return other
+                new_f = self.copy()
+                new_f.operands = [self] + other.operands
+                return new_f.canonical()
         else:
-            return SumLikelihood([self, other])
+            return SumLikelihood([self, other]).canonical()
     
     # Syntactic sugar e.g. l1 * l2
+    # Returns copies of involved functions - ensured by canonical operation
     def __mul__(self, other):
         assert isinstance(other, Likelihood)
         if isinstance(other, ProductLikelihood):
             if isinstance(self, ProductLikelihood):
-                self.operands = self.operands + other.operands
-                return self
+                new_f = self.copy()
+                new_f.operands = self.operands + other.operands
+                return new_f.canonical()
             else:
-                other.operands = [self] + other.operands
-                return other
+                new_f = self.copy()
+                new_f.operands = [self] + other.operands
+                return new_f.canonical()
         else:
-            return ProductLikelihood([self, other])
+            return ProductLikelihood([self, other]).canonical()
 
     # Properties
 
@@ -379,7 +430,8 @@ class GPModel:
     def __cmp__(self, other):
         if cmp(self.__class__, other.__class__):
             return cmp(self.__class__, other.__class__)
-        return cmp([self.mean, self.kernel, self.likelihood], [other.mean, other.kernel, other.likelihood])
+        else:
+            return cmp(self.__repr__(), other.__repr__())
 
     def copy(self):
         m = self.mean.copy() if not self.mean is None else None
@@ -815,6 +867,9 @@ class SumKernel(Kernel):
        
     @property    
     def is_operator(self): return True
+       
+    @property    
+    def is_abelian(self): return True
 
     @property
     def effective_params(self):
@@ -905,6 +960,9 @@ class ProductKernel(Kernel):
        
     @property    
     def is_operator(self): return True
+       
+    @property    
+    def is_abelian(self): return True
 
     @property
     def effective_params(self):
@@ -995,6 +1053,9 @@ class ChangePointKernel(Kernel):
        
     @property    
     def is_operator(self): return True
+       
+    @property    
+    def is_abelian(self): return False
 
     @property
     def effective_params(self):

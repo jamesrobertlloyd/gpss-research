@@ -309,7 +309,6 @@ class ff_testcase(unittest.TestCase):
         k = ff.SqExpKernel(dimension=0)
         k1 = k.copy()
         k2 = k.copy()
-        k2.dimension = 1
         print [k,k1,k2]
         assert (k == k1) and (k == k2) and (k1 == k2)
         kernel_list = ff.add_random_restarts_k([k1, k2], data_shape=data_shape, sd=1)
@@ -324,7 +323,6 @@ class ff_testcase(unittest.TestCase):
         k = ff.SqExpKernel(dimension=0)
         k1 = k.copy()
         k2 = k.copy()
-        k2.dimension = 1
         print [k,k1,k2]
         assert (k == k1) and (k == k2) and (k1 == k2)
         m1 = ff.GPModel(kernel=k1)
@@ -381,6 +379,21 @@ class ff_testcase(unittest.TestCase):
         k = k.canonical()
         print '\n', k, '\n'
         assert k == k1
+
+    def test_hash_and_cmp(self):
+        k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k1 = k.copy()
+        k2 = k.copy()
+        k3 = ff.SqExpKernel(dimension=1, lengthscale=0, sf=1)
+        assert sorted(list(set([k1,k2,k3]))) == sorted([k1,k3])
+        k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
+        k4 = k.copy()
+        k5 = ff.NoneKernel()
+        k6 = ff.ChangePointKernel(operands=[k4,k5])
+        k7 = ff.ChangePointKernel(operands=[ff.ChangePointKernel(operands=[k4,k5]),k1])
+        assert sorted([k1,k2,k3,k4,k5,k6,k7]) == sorted([k7,k1,k6,k2,k5,k3,k4])
+        assert sorted(k.canonical() for k in [k1,k2,k3,k4,k5,k6,k7]) == sorted(k.canonical() for k in [k7,k1,k6,k2,k5,k3,k4])
+        assert sorted(k.additive_form() for k in [k1,k2,k3,k4,k5,k6,k7]) == sorted(k.additive_form() for k in [k7,k1,k6,k2,k5,k3,k4])
 
 class grammar_testcase(unittest.TestCase):
 

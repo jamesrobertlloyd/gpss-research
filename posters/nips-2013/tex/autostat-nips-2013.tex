@@ -284,15 +284,15 @@
 \begin{center}
 \fbox{\includegraphics[trim=0cm 9.5cm 0cm 0.7cm, clip, width=0.98\columnwidth]{../figures/airline-pages/pg_0002-crop.pdf}}
 
-\vspace{0.5\baselineskip}
+\vspace{\baselineskip}
 
 \fbox{\includegraphics[trim=0cm 6cm 0cm 0.9cm, clip, width=0.98\columnwidth]{../figures/airline-pages/pg_0003-crop.pdf}}
 
-\vspace{0.5\baselineskip}
+\vspace{\baselineskip}
 
 \fbox{\includegraphics[trim=0cm 6cm 0cm 0.0cm, clip, width=0.98\columnwidth]{../figures/airline-pages/pg_0004-crop.pdf}}
 
-\vspace{0.5\baselineskip}
+\vspace{\baselineskip}
 
 \fbox{\includegraphics[trim=0cm 6cm 0cm 0.0cm, clip, width=0.98\columnwidth]{../figures/airline-pages/pg_0005-crop.pdf}}
 
@@ -347,16 +347,15 @@
 \mysection{Automatically describing model properties}
 
 \begin{itemize}
-\item Search can produce arbitrarily complex kernels
-\item How to automatically describe such models?
-\item To do this, we:
-\begin{itemize}
-\item Break each kernel into a sum of product
-\item Look up the properties of each kernel in the product
-\item Combine their pro
+\item How to automatically describe complex kernels?
+\begin{enumerate}
+\item Break each kernel into a sum of products.
+\item For each product, look up the properties of each kernel in that product.
+\item Combine the properties into one sentence.
+\item Plot contribution of this compoenent to the model.
+\end{enumerate}
 \end{itemize}
-\end{itemize}
-It is hard to write a lookup table to handle every kernel that the open-ended search might produce.  How to automate this?
+%It is hard to write a lookup table to handle every kernel that the open-ended search might produce.  How to automate this?
 
 %For a given dataset, the GPSS method produces a compound kernel composed of sums and products of the 6 base kernels.
 %In this section, we describe how the properties of kernel functions reduce the task of natural-language summarization into relatively simple subproblems.
@@ -376,21 +375,21 @@ becomes
 \begin{equation*}
 (\kSE \times \kLin) + (\kSE \times \kLin \times \kPer) + (\kSE \times \kLin).
 \end{equation*}
-%\end{itemize}
-%
-%\paragraph{Additivity}
+
+{ \color{red} [Insert a figure here showing an additive decomposition]}
+
 
 \subsection*{Sums of kernels correspond to sums of functions}
 
 
 If $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ then $f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)$.
-%Therefore, a sum of kernels can be described as a sum of independent functions.
+Therefore, a sum of kernels can be described as a sum of independent functions.
 %
 %Thus, we can always exactly describe our model as a sum of these components, each of which is a product of base kernels.  The only remaining task is to produce a procedure for describing products of base kernels.
 
-\vspace{3\baselineskip}
+%\vspace{3\baselineskip}
 
- {\bf Each kernel in a product corresponds to an adjective}
+\subsection*{Each kernel in a product corresponds to an adjective}
 
 
 \vspace{1\baselineskip}
@@ -404,11 +403,13 @@ $\kPer$ & functions repeat \\
 $\kLin$ & amplitude increases linearly
 \end{tabular}
 
-%\mysection{Hello}
-
-
-
 \vspace{1\baselineskip}
+
+On its own, each kernel simply modifyies the constant function $f(x) = c$.
+
+
+
+\subsection*{Example short descriptions}
 
 \centering
 \begin{tabular}{l|l}
@@ -425,7 +426,7 @@ $\kPer \times \kLin \times \kLin$ & An exactly periodic function with quadratica
 \vspace{1\baselineskip}
 
 \raggedright
-Code available at \url{github.com/jamesrobertlloyd/gpss-research}
+\paragraph{Code available} at \url{github.com/jamesrobertlloyd/gpss-research}
 
 \end{multicols}
 

@@ -19,14 +19,6 @@
 \documentclass[landscape,a0b,final,a4resizeable]{a0poster}
 %\documentclass[portrait,a0b,final,a4resizeable]{a0poster}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% 'Basic' packages
-%
-% TODO - Almost certainly some are unnecessary - feel free to remove nonstandard
-% packages if you think it is a good idea not to always have them
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \usepackage{multicol}
 \usepackage{color}
@@ -40,6 +32,7 @@
 \usepackage{nth}
 \usepackage[square,numbers]{natbib}
 \usepackage{booktabs}
+%\usepackage{xcolor}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -376,8 +369,6 @@ becomes
 (\kSE \times \kLin) + (\kSE \times \kLin \times \kPer) + (\kSE \times \kLin).
 \end{equation*}
 
-{ \color{red} [Insert a figure here showing an additive decomposition]}
-
 
 \subsection*{Sums of kernels correspond to sums of functions}
 
@@ -388,6 +379,47 @@ Therefore, a sum of kernels can be described as a sum of independent functions.
 %Thus, we can always exactly describe our model as a sum of these components, each of which is a product of base kernels.  The only remaining task is to produce a procedure for describing products of base kernels.
 
 %\vspace{3\baselineskip}
+
+
+%
+\definecolor{verylightblue}{rgb}{0.97,0.97,1}
+\setlength{\fboxsep}{0pt}
+
+\newcommand{\ltrim}{ 2 }
+\newcommand{\rictrim}{ 2 }
+%\newcommand{\airlinefig}[1]{\includegraphics[trim=20 0 12 20, clip, width=0.207\textwidth]{figures/#1}}
+\newcommand{\airlinefigtwo}[1]{\includegraphics[trim=30 0 62 25, clip, width=0.21\columnwidth]{../figures/01-airline-months_#1}}
+\newcommand{\olduptext}[1]{\hspace{-1cm} \raisebox{ 0.8cm}{ {#1}} \hspace{-0.75cm} }
+\newcommand{\uptext}[1]{ \raisebox{1.5cm}{ #1} }
+%
+\begin{tabular}{cc}
+%\airlinefig{01-airline-months_all}&\hspace{0.6cm}\olduptext{$=$} \hspace{-0.1cm}
+%\airlinefig{01-airline-months_1} & \olduptext{$+$}
+%\airlinefig{01-airline-months_2} & \olduptext{$+$}
+%\airlinefig{/01-airline-months_3} \\
+\hspace{-3.5mm}
+%\fbox{
+\fcolorbox{blue}{verylightblue}{
+\hspace{-3.5mm}
+\begin{tabular}{c}
+%\\[-0.7em]
+\airlinefigtwo{all} \hspace{-3mm} \\
+ entire signal
+\end{tabular}
+}
+\begin{tabular}{ccc}
+\\%[1cm]
+\uptext{$=$}
+\airlinefigtwo{1} & \uptext{$+$} \airlinefigtwo{2} & \uptext{$+$} \airlinefigtwo{3} \\
+ $\kSE \times \kLin$ & $\kSE \times \kLin \times \kPer$ & $\kSE \times \kLin$ \\
+smooth trend \quad + & growing periodic \quad + &  short-term deviation
+\end{tabular}
+\end{tabular}
+
+%
+
+
+
 
 \subsection*{Each kernel in a product corresponds to an adjective}
 

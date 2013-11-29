@@ -339,15 +339,13 @@
 
 \mysection{Automatically describing model properties}
 
-\begin{itemize}
-\item How to automatically describe complex kernels?
+\subsection*{How to automatically describe arbitrarily complex kernels}
 \begin{enumerate}
 \item Break each kernel into a sum of products.
 \item For each product, look up the properties of each kernel in that product.
 \item Combine the properties into one sentence.
 \item Plot contribution of this compoenent to the model.
 \end{enumerate}
-\end{itemize}
 %It is hard to write a lookup table to handle every kernel that the open-ended search might produce.  How to automate this?
 
 %For a given dataset, the GPSS method produces a compound kernel composed of sums and products of the 6 base kernels.
@@ -362,11 +360,13 @@
  
 For example:
 \begin{equation*}
-\kSE \times \big( \kLin + \kLin \times ( \kPer + \kSE ) \big)
+%\kSE \times \big( \kLin + \kLin \times ( \kPer + \kSE ) \big)
+\kSE \times \big( \kLin + \kPer + \kSE \big)
 \end{equation*}
 becomes
 \begin{equation*}
-(\kSE \times \kLin) + (\kSE \times \kLin \times \kPer) + (\kSE \times \kLin).
+%(\kSE \times \kLin) + (\kSE \times \kLin \times \kPer) + (\kSE \times \kLin).
+(\kSE \times \kLin) + (\kSE \times \kPer) + (\kSE).
 \end{equation*}
 
 
@@ -382,7 +382,7 @@ becomes
 \newcommand{\ltrim}{ 2 }
 \newcommand{\rictrim}{ 2 }
 %\newcommand{\airlinefig}[1]{\includegraphics[trim=20 0 12 20, clip, width=0.207\textwidth]{figures/#1}}
-\newcommand{\airlinefigtwo}[1]{\includegraphics[trim=30 0 62 25, clip, width=0.21\columnwidth]{../figures/01-airline-months_#1}}
+\newcommand{\airlinefigtwo}[1]{\includegraphics[trim=30 0 62 25, clip, width=0.18\columnwidth]{../figures/03-mauna2003_#1}}
 \newcommand{\olduptext}[1]{\hspace{-1cm} \raisebox{ 0.8cm}{ {#1}} \hspace{-0.75cm} }
 \newcommand{\uptext}[1]{ \raisebox{1.5cm}{ #1} }
 %
@@ -393,7 +393,7 @@ becomes
 %\airlinefig{/01-airline-months_3} \\
 \hspace{-3.5mm}
 %\fbox{
-\fcolorbox{blue}{verylightblue}{
+\fcolorbox{blue}{white}{
 \hspace{-3.5mm}
 \begin{tabular}{c}
 %\\[-0.7em]
@@ -401,12 +401,11 @@ becomes
  entire signal
 \end{tabular}
 }
-\begin{tabular}{ccc}
+\begin{tabular}{cccccc}
 \\%[1cm]
-\uptext{$=$}
-\airlinefigtwo{1} & \uptext{$+$} \airlinefigtwo{2} & \uptext{$+$} \airlinefigtwo{3} \\
- $\kSE \times \kLin$ & $\kSE \times \kLin \times \kPer$ & $\kSE \times \kLin$ \\
-smooth trend \quad + & growing periodic \quad + &  short-term deviation
+\uptext{$=$} & \airlinefigtwo{1} & \uptext{$+$} & \airlinefigtwo{2} & \uptext{$+$} & \airlinefigtwo{3} \\
+& $\kSE \times \kLin$ & & $\kSE \times \kPer$ & & $\kSE$ \\
+& smooth trend & + & periodicity & + & short-term deviation
 \end{tabular}
 \end{tabular}
 
@@ -422,7 +421,7 @@ Therefore, a sum of kernels can be described as a sum of independent functions.
 
 
 
-\subsection*{Each kernel in a product corresponds to an adjective}
+\subsection*{Each kernel in a product roughly corresponds to an adjective}
 
 
 \vspace{1\baselineskip}

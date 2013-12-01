@@ -166,7 +166,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
 
         print '\nAll new results\n'
         for result in new_results:
-            print 'NLL=%0.1f' % result.bic, 'BIC=%0.1f' % result.bic, 'AIC=%0.1f' % result.aic, 'PL2=%0.3f' % result.pl2, result.pretty_print()
+            print 'NLL=%0.1f' % result.nll, 'BIC=%0.1f' % result.bic, 'AIC=%0.1f' % result.aic, 'PL2=%0.3f' % result.pl2, result.pretty_print()
 
         all_results = all_results + new_results
         all_results = sorted(all_results, key=lambda a_model : GPModel.score(a_model, exp.score), reverse=True)

@@ -130,7 +130,7 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
         else:
             local_intervals = [(-np.Inf, k.location)]
             base_kernel = k.operands[0]
-    elif isinstance(k, ff.ChangeBurstKernel):
+    elif isinstance(k, ff.ChangeWindowKernel):
         if isinstance(k.operands[0], ff.ZeroKernel) or isinstance(k.operands[0], ff.NoneKernel):
             local_intervals = [(k.location-np.exp(k.width)/2, k.location+np.exp(k.width)/2)]
             base_kernel = k.operands[1]

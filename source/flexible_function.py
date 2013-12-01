@@ -227,6 +227,7 @@ class Kernel(FunctionWrapper):
     @property    
     def sf(self): raise RuntimeError('This must be overriden')
        
+    #### TODO - this only happens when a kernel is dimensionless?
     @property    
     def is_thunk(self): return False
 
@@ -967,9 +968,9 @@ class ConstKernel(Kernel):
     def initialise_params(self, sd=1, data_shape=None):
         if self.sf == None:
             # Set scale factor with output location, scale or neutrally
-            if rand < 1.0 / 3:
+            if np.random.rand() < 1.0 / 3:
                 self.sf = np.random.normal(loc=np.log(np.abs(data_shape['y_mean'])), scale=sd)
-            elif rand < 2.0 / 3:
+            elif np.random.rand() < 2.0 / 3:
                 self.sf = np.random.normal(loc=data_shape['y_sd'], scale=sd)
             else:
                 self.sf = np.random.normal(loc=0, scale=sd)             
@@ -1085,7 +1086,7 @@ class PeriodicKernel(Kernel):
                     self.period = utils.misc.sample_truncated_normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd, min_value=data_shape['min_period'][self.dimension])
             else:
                 if data_shape['min_period'] is None:
-                    self.period = np.random.normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['input_min'])-3.2, scale=sd)
+                    self.period = np.random.normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd)
                 else:
                     self.period = utils.misc.sample_truncated_normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd, min_value=data_shape['min_period'][self.dimension])
         if self.sf == None:
@@ -1115,80 +1116,68 @@ class PeriodicKernel(Kernel):
             
     def out_of_bounds(self, constraints):
         return (self.period < constraints['min_period'][self.dimension]) or \
-               (self.period > np.log(0.5*(constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension]))) # Need to observe more than 2 periods to declare periodicity
-    
-# class PureLinKernel(BaseKernel):
-#     #### FIXME - lengthscale is actually an inverse scale
-#     #### FIXME - change to a sf parameter
-#     #### Also - lengthscale is a silly name even if it is used by GPML
-#     def __init__(self, lengthscale=0, location=0):
-#         self.lengthscale = lengthscale
-#         self.location = location
-        
-#     def family(self):
-#         return PureLinKernelFamily()
-        
-#     def gpml_kernel_expression(self):
-#         return '{@covLINscaleshift}'
-    
-#     def english_name(self):
-#         return 'PLN'
-    
-#     def id_name(self):
-#         return 'PureLin'
-    
-#     def param_vector(self):
-#         # order of args matches GPML
-#         return np.array([self.lengthscale, self.location])
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         result = self.param_vector()
-#         if result[0] == 0:
-#             # Lengthscale scales inversely with ratio of y std and x std (gradient = delta y / delta x)
-#             # Or with gradient or a neutral value
-#             rand = np.random.rand()
-#             if rand < 1.0/3:
-#                 result[0] = np.random.normal(loc=-(data_shape['y_sd'] - data_shape['input_scale']), scale=sd)
-#             elif rand < 2.0/3:
-#                 result[0] = np.random.normal(loc=-np.log(np.abs((data_shape['output_max']-data_shape['output_min'])/(data_shape['input_max']-data_shape['input_min']))), scale=sd)
-#             else:
-#                 result[0] = np.random.normal(loc=0, scale=sd)
-#         if result[1] == 0:
-#             # Uniform over 3 x data range
-#             result[1] = np.random.uniform(low=2*data_shape['input_min']-data_shape['input_max'], high=2*data_shape['input_max']-data_shape['input_min'])
-#         return result
-        
-#     #def effective_params(self):
-#     #    return 2
+               (self.period > np.log(0.5*(constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension]))) # Need to observe more than 2 periods to declare periodicity  
 
-#     def copy(self):
-#         return PureLinKernel(lengthscale=self.lengthscale, location=self.location)
-    
-#     def __repr__(self):
-#         return 'PureLinKernel(lengthscale=%f, location=%f)' % \
-#             (self.lengthscale, self.location)
-    
-#     def pretty_print(self):
-#         return colored('PLN(ell=%1.1f, loc=%1.1f)' % (self.lengthscale, self.location),
-#                        self.depth)
+class LinearKernel(Kernel):
+    def __init__(self, dimension=None, location=None, sf=None):
+        self.dimension = dimension
+        self.location = location
+        self.sf = sf
+
+    # Properties
         
-#     def latex_print(self):
-#         return 'PureLin'           
+    @property
+    def gpml_function(self): return '{@covLinear}'
     
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         differences = [self.lengthscale - other.lengthscale, self.location - other.location]
-#         differences = map(shrink_below_tolerance, differences)
-#         return cmp(differences, [0] * len(differences))
+    @property
+    def id(self): return 'Lin'
+    
+    @property
+    def is_stationary(self): return False
+    
+    @property
+    def param_vector(self): return np.array([self.sf, self.location])
         
-#     def depth(self):
-#         return 0  
+    @property
+    def latex(self): return '{\\sc Lin}' 
+    
+    @property
+    def syntax(self): return colored('Lin_%s' % self.dimension, self.depth)
+
+    # Methods
+
+    def copy(self): return LinearKernel(dimension=self.dimension, location=self.location, sf=self.sf)
         
-#     @property    
-#     def stationary(self):
-#         return False
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.sf == None:
+            # Scale factor scales with ratio of y std and x std (gradient = delta y / delta x)
+            # Or with gradient or a neutral value
+            rand = np.random.rand()
+            if rand < 1.0/3:
+                self.sf = np.random.normal(loc=(data_shape['y_sd'] - data_shape['x_sd'][self.dimension]), scale=sd)
+            elif rand < 2.0/3:
+                self.sf = np.random.normal(loc=np.log(np.abs((data_shape['y_max']-data_shape['y_min'])/(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension]))), scale=sd)
+            else:
+                self.sf = np.random.normal(loc=0, scale=sd)
+        if self.location == None:
+            # Uniform over 3 x data range
+            self.location = np.random.uniform(low=2*data_shape['x_min'][self.dimension]-data_shape['x_max'][self.dimension], high=2*data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])      
+    
+    def __repr__(self):
+        return 'LinearKernel(dimension=%s, location=%s, sf=%s)' % \
+               (self.dimension, self.location, self.sf)
+    
+    def pretty_print(self):
+        return colored('Lin(dim=%s, loc=%s, sf=%s)' % \
+               (self.dimension, \
+                format_if_possible('%1.1f', self.location), \
+                format_if_possible('%1.1f', self.sf)), \
+               self.depth)   
+
+    def load_param_vector(self, params):
+        sf, location = params # N.B. - expects list input
+        self.location = location 
+        self.sf = sf  
 
 ##############################################
 #                                            #
@@ -1602,7 +1591,7 @@ class ChangeWindowKernel(Kernel):
     def out_of_bounds(self, constraints):
         return (self.location - np.exp(self.width)/2 < constraints['x_min'][self.dimension] + 0.05 * (constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension])) or \
                (self.location + np.exp(self.width)/2 > constraints['x_max'][self.dimension] - 0.05 * (constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension])) or \
-               (self.width > np.log(0.25*(constraints['x_max'][self.dimension] - constraints['input_min']))) or \
+               (self.width > np.log(0.25*(constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension]))) or \
                (self.steepness < -np.log((constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension])) + 2.3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
 
@@ -1712,15 +1701,15 @@ def base_kernels(dimensions=1, base_kernel_names='SE'):
 def base_kernels_without_dimension(base_kernel_names):
     for kernel in [SqExpKernel(), \
                    ConstKernel(), \
-                   #PureLinKernelFamily(), \
+                   LinearKernel(), \
+                   PeriodicKernel(), \
                    #CosineKernelFamily(), \
                    #SpectralKernelFamily(), \
-                   #FourierKernelFamily(), \
                    NoiseKernel()]:
         if kernel.id in base_kernel_names.split(','):
             yield kernel 
 
-#### TODO - these should be added to model classes
+#### TODO - these should be added to model and kernel classes
 
 def add_random_restarts_single_k(kernel, n_rand, sd, data_shape):
     '''Returns a list of kernels with random restarts for default values'''

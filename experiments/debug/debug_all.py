@@ -41,4 +41,7 @@ Experiment(description='For debugging all',
                              ('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
                              ('A', 'B', {'A': 'kernel', 'B': 'base'}),
                              ('A', ('CP', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
+                             ('A', ('CW', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
+                             ('A', ('B', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
+                             ('A', ('BL', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
                              ('A', ('None',), {'A': 'kernel'})])

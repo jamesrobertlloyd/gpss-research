@@ -438,6 +438,67 @@ class experiment_testcase(unittest.TestCase):
         (not_nan, eq_nan) = experiment.remove_nan_scored_models([m1,m2], score='bic')
         assert (len(not_nan) == 1) and (len(eq_nan) == 1)
 
+class misc_testcase(unittest.TestCase):
+
+    def test_change_window(self):
+        print 'Test change window'
+        k1 = ff.SqExpKernel(dimension=0, lengthscale=2, sf=1)
+        k2 = ff.SqExpKernel(dimension=0, lengthscale=0, sf=0)
+        k3 = ff.ConstKernel(sf=-1)
+        m = ff.GPModel(mean=ff.MeanZero(), kernel=k1+k2+k3, likelihood=ff.LikGauss(sf=-np.Inf))
+        print 'Model'
+        print m.pretty_print()
+        models = grammar.expand_models(1, [m], base_kernels='SE', rules=None)
+        print 'Expanded models'
+        for m in models:
+            print m.pretty_print()
+        data_shape = {'y_sd' : 0, 'x_sd' : [0], 'x_min' : [-10], 'x_max' : [10], 'y_mean' : 0, 'y_max' : 10, 'y_min' : -10}
+        models = ff.add_random_restarts(models, 1, 1, data_shape=data_shape)
+        print 'Restarts'
+        for m in models:
+            print m.pretty_print()
+        models = [model.simplified() for model in models]
+        print 'Simplified'
+        for m in models:
+            print m.pretty_print()
+        models = ff.remove_duplicates(models)
+        print 'No duplicates'
+        for m in models:
+            print m.pretty_print()
+        models = ff.add_jitter(models, 1)
+        print 'Jittered'
+        for m in models:
+            print m.pretty_print()
+
+    def test_3_operands_to_binary(self):
+        print 'Test 3 operands'
+        #m = ff.GPModel(mean=ff.MeanZero(), kernel=ff.SumKernel(operands=[ff.NoiseKernel(sf=1.62143586434), ff.ChangeWindowKernel(dimension=0, location=1953.80055981, steepness=0.346473273988, width=-0.717373161549, operands=[ ff.SqExpKernel(dimension=0, lengthscale=-2.40022618543, sf=5.33389322909), ff.SqExpKernel(dimension=0, lengthscale=3.22532304627, sf=8.17408029585) ])]), likelihood=ff.LikGauss(sf=-np.inf), nll=591.433891706, ndata=129)
+        k = ff.ChangeWindowKernel(dimension=0, location=0, steepness=0, width=0, operands=[ff.ConstKernel(sf=0), ff.ConstKernel(sf=0)])
+        m = ff.GPModel(mean=ff.MeanZero(), kernel=k, likelihood=ff.LikGauss(sf=-np.Inf))
+        print 'Model'
+        print m.pretty_print()
+        models = grammar.expand_models(1, [m], base_kernels='SE', rules=None)
+        print 'Expanded models'
+        for m in models:
+            print m.pretty_print()
+        data_shape = {'y_sd' : 0, 'x_sd' : [0], 'x_min' : [-10], 'x_max' : [10], 'y_mean' : 0, 'y_max' : 10, 'y_min' : -10}
+        models = ff.add_random_restarts(models, 1, 1, data_shape=data_shape)
+        print 'Restarts'
+        for m in models:
+            print m.pretty_print()
+        models = [model.simplified() for model in models]
+        print 'Simplified'
+        for m in models:
+            print m.pretty_print()
+        models = ff.remove_duplicates(models)
+        print 'No duplicates'
+        for m in models:
+            print m.pretty_print()
+        models = ff.add_jitter(models, 1)
+        print 'Jittered'
+        for m in models:
+            print m.pretty_print()
+
     # def test_wrong_dimension(self):
     #     try:
     #         k = fk.MaskKernelFamily(1,1,fk.SqExpKernelFamily())

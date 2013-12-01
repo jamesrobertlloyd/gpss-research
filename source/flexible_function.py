@@ -22,9 +22,6 @@ import utils.misc
 from utils.misc import colored, format_if_possible
 from scipy.special import i0 # 0th order Bessel function of the first kind
 
-#### TODO
-# - Implement old kernels
-
 ##############################################
 #                                            #
 #               Base classes                 #
@@ -75,7 +72,7 @@ class FunctionWrapper:
     @property
     def latex(self): raise RuntimeError('This property must be overriden') 
 
-    # Depth within the expression tree - leaves = 0
+    # Depth up the expression tree - leaves = 0
     @property
     def depth(self):
         if not self.is_operator:
@@ -259,25 +256,22 @@ class Kernel(FunctionWrapper):
             raise RuntimeError('Operators must override this method')
 
     def simplified(self):
-        # TODO - how many times do these need to be done?
         k = self.copy()
-        k = collapse_additive_idempotency_k(k)
-        k = collapse_multiplicative_idempotency_k(k)
-        k = collapse_multiplicative_identity_k(k)
-        k = collapse_multiplicative_zero_k(k)
-        k = k.canonical()
-        k = collapse_additive_idempotency_k(k)
-        k = collapse_multiplicative_idempotency_k(k)
-        k = collapse_multiplicative_identity_k(k)
-        k = collapse_multiplicative_zero_k(k)
-        k = k.canonical()
+        k_prev = self.copy()
+        while not k_prev == k:
+            k_prev = k.copy()
+            k = k.collapse_additive_idempotency()
+            k = k.collapse_multiplicative_idempotency()
+            k = k.collapse_multiplicative_identity()
+            k = k.collapse_multiplicative_zero()
+            k = k.canonical()
         return k
 
     def __repr__(self): return 'Kernel()'
 
     def canonical(self):
         '''Sorts a kernel tree into a canonical form.'''
-        #### TODO - This can be abstracted by defining a None wrapper
+        #### TODO - This can be abstracted to mean functions and likelihood functions by defining a None wrapper
         if not self.is_operator:
             return self.copy()
         else:
@@ -314,10 +308,10 @@ class Kernel(FunctionWrapper):
             new_kernel = additive_ops[0]
             # Build up the product, iterating over the other components
             for additive_op in additive_ops[1:]:
-                if isinstance(new_kernel, ChangePointKernel) or isinstance(new_kernel, ChangeBurstKernel):
+                if isinstance(new_kernel, ChangePointKernel) or isinstance(new_kernel, ChangeWindowKernel):
                     # Changepoints take priority - nest the products within this operator
                     new_kernel.operands = [(op*additive_op.copy()).canonical().additive_form() for op in new_kernel.operands]
-                elif isinstance(additive_op, ChangePointKernel) or isinstance(additive_op, ChangeBurstKernel):
+                elif isinstance(additive_op, ChangePointKernel) or isinstance(additive_op, ChangeWindowKernel):
                     # Nest within the next operator
                     old_kernel = new_kernel.copy()
                     new_kernel = additive_op
@@ -345,6 +339,229 @@ class Kernel(FunctionWrapper):
             #### TODO - Place a check here that the kernel is not a binary or higher operator
             # Base case - return self
             return k.canonical() # Just to make it clear that the output is always canonical
+
+    #### TODO - this can be abstracted to function wrapper level
+    def break_into_summands(self):
+        '''Takes a kernel, expands it into a polynomial, and breaks terms up into a list.
+        
+        Mutually Recursive with distribute_products_k().
+        Always returns a list.
+        '''    
+        k = self.copy()
+        # First, recursively distribute all products within the kernel.
+        k_dist = k.distribute_products()
+        
+        if isinstance(k_dist, SumKernel):
+            # Break the summands into a list of kernels.
+            return list(k_dist.operands)
+        else:
+            return [k_dist]
+
+    def distribute_products(self):
+        """Distributes products to get a polynomial.
+        
+        Mutually recursive with break_kernel_into_summands().
+        Always returns a sumkernel.
+        """
+        k = self.copy()
+        if isinstance(k, ProductKernel):
+            # Recursively distribute each of the terms to be multiplied.
+            distributed_ops = [op.break_into_summands() for op in k.operands]
+            
+            # Now produce a sum of all combinations of terms in the products. Itertools is awesome.
+            new_prod_ks = [ProductKernel( operands=prod ) for prod in itertools.product(*distributed_ops)]
+            return SumKernel(operands=new_prod_ks)
+        
+        elif isinstance(k, SumKernel):
+            # Recursively distribute each the operands to be summed, then combine them back into a new SumKernel.
+            return SumKernel([subop for op in k.operands for subop in op.break_into_summands()])
+        elif k.is_operator:
+            if k.arity == 2:
+                summands = []
+                operands_list = [[op, ZeroKernel()] for op in k.operands[0].break_into_summands()]
+                for ops in operands_list:
+                    k_new = k.copy()
+                    k_new.operands = ops
+                    summands.append(k_new)
+                operands_list = [[ZeroKernel(), op] for op in k.operands[1].break_into_summands()]
+                for ops in operands_list:
+                    k_new = k.copy()
+                    k_new.operands = ops
+                    summands.append(k_new)
+                return SumKernel(operands=summands)
+            else:
+                raise RuntimeError('Not sure how to distribute products of this operator')
+        else:
+            # Base case: A kernel that's just, like, a kernel, man.
+            return k
+
+    def collapse_additive_idempotency(self):
+        # TODO - abstract this behaviour
+        k = self.copy()
+        k = k.canonical()
+        if not k.is_operator:
+            return k
+        elif isinstance(k, SumKernel):
+            ops = [o.collapse_additive_idempotency() for o in k.operands]
+            # Count the number of white noises
+            sf = 0
+            WN_count = 0
+            not_WN_ops = []
+            for op in ops:
+                if isinstance(op, NoiseKernel):
+                    WN_count += 1
+                    sf += np.exp(2*op.sf)
+                else:
+                    not_WN_ops.append(op)
+            # Compactify if necessary
+            if WN_count > 0:
+                ops = not_WN_ops + [NoiseKernel(sf=0.5*np.log(sf))]
+            # Now count the number of constants
+            sf = 0
+            const_count = 0
+            not_const_ops = []
+            for op in ops:
+                if isinstance(op, ConstKernel):
+                    const_count += 1
+                    sf += np.exp(2*op.sf)
+                else:
+                    not_const_ops.append(op)
+             # Compactify if necessary
+            if (const_count > 0):
+                ops = not_const_ops + [ConstKernel(sf=0.5*np.log(sf))]
+            # Finish
+            k.operands = ops
+            return k.canonical()
+        else:
+            new_ops = []
+            for o in k.operands:
+                new_ops.append(o.collapse_additive_idempotency())
+            k.operands = new_ops
+            return k
+
+    def collapse_multiplicative_idempotency(self):
+        # TODO - abstract this behaviour
+        k = self.copy()
+        k = k.canonical()
+        if not k.is_operator:
+            return k
+        elif isinstance(k, ProductKernel):
+            ops = [o.collapse_multiplicative_idempotency() for o in k.operands]
+            # Count the number of SEs in different dimensions
+            lengthscales = {}
+            sfs = {}
+            not_SE_ops = []
+            for op in ops:
+                if isinstance(op, SqExpKernel):
+                    if not lengthscales.has_key(op.dimension):
+                        lengthscales[op.dimension] = np.Inf
+                        sfs[op.dimension] = 0
+                    lengthscales[op.dimension] = -0.5 * np.log(np.exp(-2*lengthscales[op.dimension]) + np.exp(-2*op.lengthscale))
+                    sfs[op.dimension] += op.sf
+                else:
+                    not_SE_ops.append(op)
+            # Compactify if necessary
+            ops = not_SE_ops
+            for dimension in lengthscales:
+                ops += [SqExpKernel(dimension=dimension, lengthscale=lengthscales[dimension], sf=sfs[dimension])]
+            # Count the number of white noises
+            sf = 0
+            WN_count = 0
+            not_WN_ops = []
+            for op in ops:
+                if isinstance(op, NoiseKernel):
+                    WN_count += 1
+                    sf += op.sf
+                else:
+                    not_WN_ops.append(op)
+            # Compactify if necessary
+            if WN_count > 0:
+                ops = not_WN_ops + [NoiseKernel(sf=sf)]
+            # Now count the number of constants
+            sf = 0
+            const_count = 0
+            not_const_ops = []
+            for op in ops:
+                if isinstance(op, ConstKernel):
+                    const_count += 1
+                    sf += op.sf
+                else:
+                    not_const_ops.append(op)
+             # Compactify if necessary
+            if const_count > 0:
+                ops = not_const_ops + [ConstKernel(sf=sf)]
+            # Finish
+            k.operands = ops
+            return k.canonical()
+        else:
+            new_ops = []
+            for o in k.operands:
+                new_ops.append(o.collapse_multiplicative_idempotency())
+            k.operands = new_ops
+            return k
+
+    def collapse_multiplicative_zero(self):
+        # TODO - abstract this behaviour
+        k = self.copy()
+        k = k.canonical()
+        if not k.is_operator:
+            return k
+        elif isinstance(k, ProductKernel):
+            ops = [o.collapse_multiplicative_zero() for o in k.operands]
+            sf = 0
+            WN_count = 0
+            not_WN_ops = []
+            for op in ops:
+                if isinstance(op, NoiseKernel):
+                    WN_count += 1
+                    sf += op.sf
+                elif op.is_stationary:
+                    sf += op.sf
+                else:
+                    not_WN_ops.append(op)
+            # Compactify if necessary
+            if WN_count > 0:
+                ops = not_WN_ops + [NoiseKernel(sf=sf)]
+            # Finish
+            k.operands = ops
+            return k.canonical()
+        else:
+            new_ops = []
+            for o in k.operands:
+                new_ops.append(o.collapse_multiplicative_zero())
+            k.operands = new_ops
+            return k
+
+    def collapse_multiplicative_identity(self):
+        # TODO - abstract this behaviour
+        k = self.copy()
+        k = k.canonical()
+        if not k.is_operator:
+            return k
+        elif isinstance(k, ProductKernel):
+            ops = [o.collapse_multiplicative_identity() for o in k.operands]
+            sf = 0
+            const_count = 0
+            not_const_ops = []
+            for op in ops:
+                if isinstance(op, ConstKernel):
+                    const_count += 1
+                    sf += op.sf
+                else:
+                    not_const_ops.append(op)
+            # Compactify if necessary
+            if const_count > 0:
+                ops = not_const_ops
+                ops[0].multiply_by_const(sf=sf)
+            # Finish
+            k.operands = ops
+            return k.canonical()
+        else:
+            new_ops = []
+            for o in k.operands:
+                new_ops.append(o.collapse_multiplicative_identity())
+            k.operands = new_ops
+            return k
 
 
 class Likelihood(FunctionWrapper):
@@ -498,6 +715,21 @@ class GPModel:
         additive = self.copy()
         additive.kernel = additive.kernel.additive_form()
         return additive
+
+    def break_into_summands(self):
+        mean_list = self.mean.break_into_summands()
+        kernel_list = self.kernel.break_into_summands()
+        likelihood_list = self.likelihood.break_into_summands()
+        model_list = []
+        for a_mean in mean_list:
+            model_list.append(GPModel(mean=a_mean, kernel=ZeroKernel(), likelihood=LikGauss(sf=-np.Inf)))
+        for a_kernel in kernel_list:
+            model_list.append(GPModel(mean=MeanZero(), kernel=a_kernel, likelihood=LikGauss(sf=-np.Inf)))
+        for a_likelihood in likelihood_list:
+            model_list.append(GPModel(mean=MeanZero(), kernel=ZeroKernel(), likelihood=a_likelihood))
+        null_model = GPModel(ean=MeanZero(), kernel=ZeroKernel(), likelihood=LikGauss(sf=-np.Inf))
+        model_list = [model for model in model_list if not model == null_model]
+        return model_list
 
 ##############################################
 #                                            #
@@ -752,7 +984,6 @@ class ConstKernel(Kernel):
         sf, = params # N.B. - expects list input
         self.sf = sf  
 
-
 class SqExpKernel(Kernel):
     def __init__(self, dimension=None, lengthscale=None, sf=None):
         self.dimension = dimension
@@ -811,6 +1042,153 @@ class SqExpKernel(Kernel):
         self.lengthscale = lengthscale  
         self.sf = sf  
 
+class PeriodicKernel(Kernel):
+    def __init__(self, dimension=None, lengthscale=None, period=None, sf=None):
+        self.dimension = dimension
+        self.lengthscale = lengthscale
+        self.period = period
+        self.sf = sf
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@covPeriodicNoDC}'
+    
+    @property
+    def id(self): return 'Per'
+    
+    @property
+    def param_vector(self): return np.array([self.lengthscale, self.period, self.sf])
+        
+    @property
+    def latex(self): return '{\\sc Per}' 
+    
+    @property
+    def syntax(self): return colored('Per_%s' % self.dimension, self.depth)
+
+    # Methods
+
+    def copy(self): return PeriodicKernel(dimension=self.dimension, lengthscale=self.lengthscale, period=self.period, sf=self.sf)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.lengthscale == None:
+            # Lengthscale is relative to period so this parameter does not need to scale
+            self.lengthscale = np.random.normal(loc=0, scale=sd)
+        if self.period == None:
+            #### Explanation : This is centered on about 25 periods
+            # Min period represents a minimum sensible scale
+            # Scale with data_scale or data range
+            if np.random.rand() < 0.5:
+                if data_shape['min_period'] is None:
+                    self.period = np.random.normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd)
+                else:
+                    self.period = utils.misc.sample_truncated_normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+            else:
+                if data_shape['min_period'] is None:
+                    self.period = np.random.normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['input_min'])-3.2, scale=sd)
+                else:
+                    self.period = utils.misc.sample_truncated_normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+        if self.sf == None:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                self.sf = np.random.normal(loc=data_shape['y_sd'], scale=sd)
+            else:
+                self.sf = np.random.normal(loc=0, scale=sd)         
+    
+    def __repr__(self):
+        return 'PeriodicKernel(dimension=%s, lengthscale=%s, period=%s, sf=%s)' % \
+               (self.dimension, self.lengthscale, self.period, self.sf)
+    
+    def pretty_print(self):
+        return colored('Per(dim=%s, ell=%s, per=%s, sf=%s)' % \
+               (self.dimension, \
+                format_if_possible('%1.1f', self.lengthscale), \
+                format_if_possible('%1.1f', self.period), \
+                format_if_possible('%1.1f', self.sf)), \
+               self.depth)   
+
+    def load_param_vector(self, params):
+        lengthscale, period, sf = params # N.B. - expects list input
+        self.lengthscale = lengthscale  
+        self.period = period 
+        self.sf = sf  
+            
+    def out_of_bounds(self, constraints):
+        return (self.period < constraints['min_period'][self.dimension]) or \
+               (self.period > np.log(0.5*(constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension]))) # Need to observe more than 2 periods to declare periodicity
+    
+# class PureLinKernel(BaseKernel):
+#     #### FIXME - lengthscale is actually an inverse scale
+#     #### FIXME - change to a sf parameter
+#     #### Also - lengthscale is a silly name even if it is used by GPML
+#     def __init__(self, lengthscale=0, location=0):
+#         self.lengthscale = lengthscale
+#         self.location = location
+        
+#     def family(self):
+#         return PureLinKernelFamily()
+        
+#     def gpml_kernel_expression(self):
+#         return '{@covLINscaleshift}'
+    
+#     def english_name(self):
+#         return 'PLN'
+    
+#     def id_name(self):
+#         return 'PureLin'
+    
+#     def param_vector(self):
+#         # order of args matches GPML
+#         return np.array([self.lengthscale, self.location])
+        
+#     def default_params_replaced(self, sd=1, data_shape=None):
+#         result = self.param_vector()
+#         if result[0] == 0:
+#             # Lengthscale scales inversely with ratio of y std and x std (gradient = delta y / delta x)
+#             # Or with gradient or a neutral value
+#             rand = np.random.rand()
+#             if rand < 1.0/3:
+#                 result[0] = np.random.normal(loc=-(data_shape['y_sd'] - data_shape['input_scale']), scale=sd)
+#             elif rand < 2.0/3:
+#                 result[0] = np.random.normal(loc=-np.log(np.abs((data_shape['output_max']-data_shape['output_min'])/(data_shape['input_max']-data_shape['input_min']))), scale=sd)
+#             else:
+#                 result[0] = np.random.normal(loc=0, scale=sd)
+#         if result[1] == 0:
+#             # Uniform over 3 x data range
+#             result[1] = np.random.uniform(low=2*data_shape['input_min']-data_shape['input_max'], high=2*data_shape['input_max']-data_shape['input_min'])
+#         return result
+        
+#     #def effective_params(self):
+#     #    return 2
+
+#     def copy(self):
+#         return PureLinKernel(lengthscale=self.lengthscale, location=self.location)
+    
+#     def __repr__(self):
+#         return 'PureLinKernel(lengthscale=%f, location=%f)' % \
+#             (self.lengthscale, self.location)
+    
+#     def pretty_print(self):
+#         return colored('PLN(ell=%1.1f, loc=%1.1f)' % (self.lengthscale, self.location),
+#                        self.depth)
+        
+#     def latex_print(self):
+#         return 'PureLin'           
+    
+#     def __cmp__(self, other):
+#         assert isinstance(other, Kernel)
+#         if cmp(self.__class__, other.__class__):
+#             return cmp(self.__class__, other.__class__)
+#         differences = [self.lengthscale - other.lengthscale, self.location - other.location]
+#         differences = map(shrink_below_tolerance, differences)
+#         return cmp(differences, [0] * len(differences))
+        
+#     def depth(self):
+#         return 0  
+        
+#     @property    
+#     def stationary(self):
+#         return False
 
 ##############################################
 #                                            #
@@ -1059,7 +1437,7 @@ class ChangePointKernel(Kernel):
 
     @property
     def effective_params(self):
-        return sum([o.effective_params for o in self.operands])
+        return 2 + sum([o.effective_params for o in self.operands])
 
     @property
     def depth(self):
@@ -1114,9 +1492,119 @@ class ChangePointKernel(Kernel):
                (self.steepness < -np.log((constraints['x_max'][self.dimension] -constraints['x_min'][self.dimension])) + 2.3) or \
                (any([o.out_of_bounds(constraints) for o in self.operands])) 
 
-class ChangeBurstKernel(Kernel):
-    pass
+class ChangeWindowKernel(Kernel):
+    def __init__(self, dimension=None, location=None, steepness=None, width=None, operands=None):
+        assert len(operands) == 2
+        self.dimension = dimension
+        self.location = location
+        self.steepness = steepness
+        self.width = width
+        if operands is None:
+            self.operands = []
+        else:
+            self.operands  = operands
 
+    # Properties
+
+    @property    
+    def is_stationary(self): return False
+
+    @property
+    def sf(self):
+        raise RuntimeError('Cannot ask for scale factor of non-stationary kernel')
+        
+    @property
+    def arity(self): return 2
+        
+    @property
+    def gpml_function(self): return '{@covChangeWindowMultiD}'
+    
+    @property
+    def id(self): return 'CW'
+    
+    @property
+    def param_vector(self):
+        return np.concatenate([np.array([self.location, self.steepness, self.width])] + [o.param_vector for o in self.operands])
+        
+    @property
+    def latex(self):
+        return '{\\sc CW}\\left( ' + ' , '.join([o.latex for o in self.operands]) + ' \\right)'  
+    
+    @property
+    def syntax(self): 
+        return colored('CW( ', self.depth) + \
+                self.operands[0].syntax + \
+                colored(', ', self.depth) + \
+                self.operands[1].syntax + \
+                colored(' )', self.depth)
+       
+    @property    
+    def is_operator(self): return True
+       
+    @property    
+    def is_abelian(self): return False
+
+    @property
+    def effective_params(self):
+        return 3 + sum([o.effective_params for o in self.operands])
+
+    @property
+    def depth(self):
+        return max([o.depth for o in self.operands]) + 1
+
+    # Methods
+
+    def copy(self):
+        return ChangeWindowKernel(dimension=self.dimension, location=self.location, steepness=self.steepness, width=self.width, operands=[o.copy() for o in self.operands])
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.location is None:
+            # Location uniform in data range
+            self.location = np.random.uniform(data_shape['x_min'][self.dimension], data_shape['x_max'][self.dimension])
+        if self.steepness is None:
+            # Set steepness with inverse input scale
+            self.steepness = np.random.normal(loc=3.3-np.log((data_shape['x_max'][self.dimension] - data_shape['x_min'][self.dimension])), scale=1)
+        if self.width is None:
+            # Set width with input scale - but expecting small widths
+            self.width = np.random.normal(loc=np.log(0.1*(data_shape['x_max'][self.dimension] - data_shape['x_min'][self.dimension])), scale=1)
+        for o in self.operands:
+            o.initialise_params(sd=sd, data_shape=data_shape)
+    
+    def __repr__(self):
+        return 'ChangeWindowKernel(dimension=%s, location=%s, steepness=%s, width=%s, operands=%s)' % \
+                (self.dimension, self.location, self.steepness, self.width, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')   
+    
+    def pretty_print(self):
+        return colored('CW(dim=%s, loc=%s, steep=%s, width=%s, ' % \
+               (self.dimension, format_if_possible('%1.1f', self.location), format_if_possible('%1.1f', self.steepness), format_if_possible('%1.1f', self.width)), self.depth) + \
+                self.operands[0].pretty_print() + \
+                colored(', ', self.depth) + \
+                self.operands[1].pretty_print() + \
+                colored(')', self.depth)
+
+    def load_param_vector(self, params):
+        location = params[0]
+        steepness = params[1]
+        width = params[2]
+        start = 3
+        for o in self.operands:
+            end = start + o.num_params
+            o.load_param_vector(params[start:end])
+            start = end
+
+    def get_gpml_expression(self, dimensions):
+        return '{@covChangeWindowMultiD, %s, {%s}}' % (self.dimension + 1, ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
+
+    def multiply_by_const(self, sf):
+        for o in self.operands:
+            o.multiply_by_const(sf=sf)                    
+            
+    def out_of_bounds(self, constraints):
+        return (self.location - np.exp(self.width)/2 < constraints['x_min'][self.dimension] + 0.05 * (constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension])) or \
+               (self.location + np.exp(self.width)/2 > constraints['x_max'][self.dimension] - 0.05 * (constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension])) or \
+               (self.width > np.log(0.25*(constraints['x_max'][self.dimension] - constraints['input_min']))) or \
+               (self.steepness < -np.log((constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension])) + 2.3) or \
+               (any([o.out_of_bounds(constraints) for o in self.operands])) 
 
 ##############################################
 #                                            #
@@ -1196,231 +1684,6 @@ class LikGauss(Likelihood):
             sf, = params # N.B. - expects list input
             self.sf = sf   
 
-
-##############################################
-#                                            #
-#           Kernel manipulation              #
-#                                            #
-##############################################
-
-def collapse_additive_idempotency_k(k):
-    # TODO - abstract this behaviour
-    k = k.canonical()
-    if not k.is_operator:
-        return k
-    elif isinstance(k, SumKernel):
-        ops = [collapse_additive_idempotency_k(o) for o in k.operands]
-        # Count the number of white noises
-        sf = 0
-        WN_count = 0
-        not_WN_ops = []
-        for op in ops:
-            if isinstance(op, NoiseKernel):
-                WN_count += 1
-                sf += np.exp(2*op.sf)
-            else:
-                not_WN_ops.append(op)
-        # Compactify if necessary
-        if WN_count > 0:
-            ops = not_WN_ops + [NoiseKernel(sf=0.5*np.log(sf))]
-        # Now count the number of constants
-        sf = 0
-        const_count = 0
-        not_const_ops = []
-        for op in ops:
-            if isinstance(op, ConstKernel):
-                const_count += 1
-                sf += np.exp(2*op.sf)
-            else:
-                not_const_ops.append(op)
-         # Compactify if necessary
-        if (const_count > 0):
-            ops = not_const_ops + [ConstKernel(sf=0.5*np.log(sf))]
-        # Finish
-        k.operands = ops
-        return k.canonical()
-    else:
-        new_ops = []
-        for o in k.operands:
-            new_ops.append(collapse_additive_idempotency_k(o))
-        k.operands = new_ops
-        return k
-
-def collapse_multiplicative_idempotency_k(k):
-    # TODO - abstract this behaviour
-    k = k.canonical()
-    if not k.is_operator:
-        return k
-    elif isinstance(k, ProductKernel):
-        ops = [collapse_multiplicative_idempotency_k(o) for o in k.operands]
-        # Count the number of SEs in different dimensions
-        lengthscales = {}
-        sfs = {}
-        not_SE_ops = []
-        for op in ops:
-            if isinstance(op, SqExpKernel):
-                if not lengthscales.has_key(op.dimension):
-                    lengthscales[op.dimension] = np.Inf
-                    sfs[op.dimension] = 0
-                lengthscales[op.dimension] = -0.5 * np.log(np.exp(-2*lengthscales[op.dimension]) + np.exp(-2*op.lengthscale))
-                sfs[op.dimension] += op.sf
-            else:
-                not_SE_ops.append(op)
-        # Compactify if necessary
-        ops = not_SE_ops
-        for dimension in lengthscales:
-            ops += [SqExpKernel(dimension=dimension, lengthscale=lengthscales[dimension], sf=sfs[dimension])]
-        # Count the number of white noises
-        sf = 0
-        WN_count = 0
-        not_WN_ops = []
-        for op in ops:
-            if isinstance(op, NoiseKernel):
-                WN_count += 1
-                sf += op.sf
-            else:
-                not_WN_ops.append(op)
-        # Compactify if necessary
-        if WN_count > 0:
-            ops = not_WN_ops + [NoiseKernel(sf=sf)]
-        # Now count the number of constants
-        sf = 0
-        const_count = 0
-        not_const_ops = []
-        for op in ops:
-            if isinstance(op, ConstKernel):
-                const_count += 1
-                sf += op.sf
-            else:
-                not_const_ops.append(op)
-         # Compactify if necessary
-        if const_count > 0:
-            ops = not_const_ops + [ConstKernel(sf=sf)]
-        # Finish
-        k.operands = ops
-        return k.canonical()
-    else:
-        new_ops = []
-        for o in k.operands:
-            new_ops.append(collapse_multiplicative_idempotency_k(o))
-        k.operands = new_ops
-        return k
-
-def collapse_multiplicative_zero_k(k):
-    # TODO - abstract this behaviour
-    k = k.canonical()
-    if not k.is_operator:
-        return k
-    elif isinstance(k, ProductKernel):
-        ops = [collapse_multiplicative_zero_k(o) for o in k.operands]
-        sf = 0
-        WN_count = 0
-        not_WN_ops = []
-        for op in ops:
-            if isinstance(op, NoiseKernel):
-                WN_count += 1
-                sf += op.sf
-            elif op.is_stationary:
-                sf += op.sf
-            else:
-                not_WN_ops.append(op)
-        # Compactify if necessary
-        if WN_count > 0:
-            ops = not_WN_ops + [NoiseKernel(sf=sf)]
-        # Finish
-        k.operands = ops
-        return k.canonical()
-    else:
-        new_ops = []
-        for o in k.operands:
-            new_ops.append(collapse_multiplicative_zero_k(o))
-        k.operands = new_ops
-        return k
-
-def collapse_multiplicative_identity_k(k):
-    # TODO - abstract this behaviour
-    k = k.canonical()
-    if not k.is_operator:
-        return k
-    elif isinstance(k, ProductKernel):
-        ops = [collapse_multiplicative_identity_k(o) for o in k.operands]
-        sf = 0
-        const_count = 0
-        not_const_ops = []
-        for op in ops:
-            if isinstance(op, ConstKernel):
-                const_count += 1
-                sf += op.sf
-            else:
-                not_const_ops.append(op)
-        # Compactify if necessary
-        if const_count > 0:
-            ops = not_const_ops
-            ops[0].multiply_by_const(sf=sf)
-        # Finish
-        k.operands = ops
-        return k.canonical()
-    else:
-        new_ops = []
-        for o in k.operands:
-            new_ops.append(collapse_multiplicative_identity_k(o))
-        k.operands = new_ops
-        return k
-
-def break_kernel_into_summands(k):
-    '''Takes a kernel, expands it into a polynomial, and breaks terms up into a list.
-    
-    Mutually Recursive with distribute_products_k().
-    Always returns a list.
-    '''    
-    # First, recursively distribute all products within the kernel.
-    k_dist = distribute_products_k(k)
-    
-    if isinstance(k_dist, SumKernel):
-        # Break the summands into a list of kernels.
-        return list(k_dist.operands)
-    else:
-        return [k_dist]
-
-def distribute_products_k(k):
-    """Distributes products to get a polynomial.
-    
-    Mutually recursive with break_kernel_into_summands().
-    Always returns a sumkernel.
-    """
-
-    if isinstance(k, ProductKernel):
-        # Recursively distribute each of the terms to be multiplied.
-        distributed_ops = [break_kernel_into_summands(op) for op in k.operands]
-        
-        # Now produce a sum of all combinations of terms in the products. Itertools is awesome.
-        new_prod_ks = [ProductKernel( operands=prod ) for prod in itertools.product(*distributed_ops)]
-        return SumKernel(operands=new_prod_ks)
-    
-    elif isinstance(k, SumKernel):
-        # Recursively distribute each the operands to be summed, then combine them back into a new SumKernel.
-        return SumKernel([subop for op in k.operands for subop in break_kernel_into_summands(op)])
-    elif k.is_operator:
-        if k.arity == 2:
-            summands = []
-            operands_list = [[op, ZeroKernel()] for op in break_kernel_into_summands(k.operands[0])]
-            for ops in operands_list:
-                k_new = k.copy()
-                k_new.operands = ops
-                summands.append(k_new)
-            operands_list = [[ZeroKernel(), op] for op in break_kernel_into_summands(k.operands[1])]
-            for ops in operands_list:
-                k_new = k.copy()
-                k_new.operands = ops
-                summands.append(k_new)
-            return SumKernel(operands=summands)
-        else:
-            raise RuntimeError('Not sure how to distribute products of this operator')
-    else:
-        # Base case: A kernel that's just, like, a kernel, man.
-        return k
-
-
 ##############################################
 #                                            #
 #         Miscellaneous functions            #
@@ -1433,6 +1696,8 @@ def repr_to_model(string):
 def remove_duplicates(things):
     # This is possible since things are hashable
     return list(set(things))
+
+#### TODO - these should be extended to models
          
 def base_kernels(dimensions=1, base_kernel_names='SE'):
     for kernel in base_kernels_without_dimension(base_kernel_names):
@@ -1454,6 +1719,8 @@ def base_kernels_without_dimension(base_kernel_names):
                    NoiseKernel()]:
         if kernel.id in base_kernel_names.split(','):
             yield kernel 
+
+#### TODO - these should be added to model classes
 
 def add_random_restarts_single_k(kernel, n_rand, sd, data_shape):
     '''Returns a list of kernels with random restarts for default values'''
@@ -1493,126 +1760,6 @@ def add_jitter(models, sd=0.1):
 #     Old kernel functions to be revived     #
 #                                            #
 ##############################################  
-
-# #### TODO - this is a code name for the reparametrised centred periodic
-# class FourierKernelFamily(BaseKernelFamily):
-#     def from_param_vector(self, params):
-#         lengthscale, period, output_variance = params
-#         return FourierKernel(lengthscale, period, output_variance)
-    
-#     def num_params(self):
-#         return 3
-    
-#     def pretty_print(self):
-#         return colored('FT', self.depth)
-    
-#     #### FIXME - Caution - magic numbers!
-    
-#     @staticmethod#### Explanation : This is centered on about 20 periods
-#     def default():
-#         return FourierKernel(0., -2.0, 0.)
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return 0
-    
-#     def depth(self):
-#         return 0
-    
-#     def id_name(self):
-#         return 'Fourier'
-    
-#     @staticmethod    
-#     def description():
-#         return "Fourier decomposition"
-
-#     @staticmethod    
-#     def params_description():
-#         return "lengthscale, period"  
-    
-# class FourierKernel(BaseKernel):
-#     def __init__(self, lengthscale, period, output_variance):
-#         self.lengthscale = lengthscale
-#         self.period = period
-#         self.output_variance = output_variance
-        
-#     def family(self):
-#         return FourierKernelFamily()
-        
-#     def gpml_kernel_expression(self):
-#         return '{@covFourier}'
-    
-#     def english_name(self):
-#         return 'Fourier'
-    
-#     def id_name(self):
-#         return 'Fourier'
-    
-#     def param_vector(self):
-#         # order of args matches GPML
-#         return np.array([self.lengthscale, self.period, self.output_variance])
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         '''Overwrites base method, using min period to prevent Nyquist errors'''
-#         result = self.param_vector()
-#         if result[0] == 0:
-#             # Lengthscale is relative to period so this parameter does not need to scale
-#             result[0] = np.random.normal(loc=0, scale=sd)
-#         if result[1] == -2:
-#             #### FIXME - Caution, magic numbers
-#             #### Explanation : This is centered on about 25 periods
-#             # Min period represents a minimum sensible scale
-#             # Scale with data_scale or data range
-#             if np.random.rand() < 0.5:
-#                 if data_shape['min_period'] is None:
-#                     result[1] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
-#                 else:
-#                     result[1] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
-#             else:
-#                 if data_shape['min_period'] is None:
-#                     result[1] = np.random.normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd)
-#                 else:
-#                     result[1] = utils.misc.sample_truncated_normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd, min_value=data_shape['min_period'])
-#         if result[2] == 0:
-#             # Set scale factor with output scale or neutrally
-#             if np.random.rand() < 0.5:
-#                 result[2] = np.random.normal(loc=data_shape['y_sd'], scale=sd)
-#             else:
-#                 result[2] = np.random.normal(loc=0, scale=sd)
-#         return result
-
-#     def copy(self):
-#         return FourierKernel(self.lengthscale, self.period, self.output_variance)
-    
-#     def __repr__(self):
-#         return 'FourierKernel(lengthscale=%f, period=%f, output_variance=%f)' % \
-#             (self.lengthscale, self.period, self.output_variance)
-    
-#     def pretty_print(self):
-#         return colored('FT(ell=%1.1f, p=%1.1f, sf=%1.1f)' % (self.lengthscale, self.period, self.output_variance),
-#                        self.depth)
-        
-#     def latex_print(self):
-#         # return 'PE(\\ell=%1.1f, p=%1.1f, \\sigma=%1.1f)' % (self.lengthscale, self.period, self.output_variance)
-#         #return 'PE(p=%1.1f)' % self.period          
-#         return 'Fourier'
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         differences = [self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]
-#         differences = map(shrink_below_tolerance, differences)
-#         return cmp(differences, [0] * len(differences))
-        
-#     def depth(self):
-#         return 0
-            
-#     def out_of_bounds(self, constraints):
-#         return (self.period < constraints['min_period']) or \
-#                (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
         
 # class CosineKernelFamily(BaseKernelFamily):
 #     def from_param_vector(self, params):
@@ -1847,218 +1994,3 @@ def add_jitter(models, sd=0.1):
 #     def out_of_bounds(self, constraints):
 #         return (self.period < constraints['min_period']) or \
 #                (self.lengthscale < constraints['min_lengthscale'])
-
-# class PureLinKernelFamily(BaseKernelFamily):
-#     def from_param_vector(self, params):
-#         lengthscale, location = params
-#         return PureLinKernel(lengthscale=lengthscale, location=location)
-    
-#     def num_params(self):
-#         return 2
-    
-#     def pretty_print(self):
-#         return colored('PLN', self.depth)
-    
-#     @staticmethod
-#     def default():
-#         return PureLinKernel(0., 0.)
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return 0
-    
-#     def depth(self):
-#         return 0
-    
-#     def id_name(self):
-#         return 'PureLin'
-
-#     @staticmethod    
-#     def description():
-#         return "Pure Linear"
-
-#     @staticmethod    
-#     def params_description():
-#         return "Lengthscale (inverse scale) and location"
-    
-# class PureLinKernel(BaseKernel):
-#     #### FIXME - lengthscale is actually an inverse scale
-#     #### Also - lengthscale is a silly name even if it is used by GPML
-#     def __init__(self, lengthscale=0, location=0):
-#         self.lengthscale = lengthscale
-#         self.location = location
-        
-#     def family(self):
-#         return PureLinKernelFamily()
-        
-#     def gpml_kernel_expression(self):
-#         return '{@covLINscaleshift}'
-    
-#     def english_name(self):
-#         return 'PLN'
-    
-#     def id_name(self):
-#         return 'PureLin'
-    
-#     def param_vector(self):
-#         # order of args matches GPML
-#         return np.array([self.lengthscale, self.location])
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         result = self.param_vector()
-#         if result[0] == 0:
-#             # Lengthscale scales inversely with ratio of y std and x std (gradient = delta y / delta x)
-#             # Or with gradient or a neutral value
-#             rand = np.random.rand()
-#             if rand < 1.0/3:
-#                 result[0] = np.random.normal(loc=-(data_shape['y_sd'] - data_shape['input_scale']), scale=sd)
-#             elif rand < 2.0/3:
-#                 result[0] = np.random.normal(loc=-np.log(np.abs((data_shape['output_max']-data_shape['output_min'])/(data_shape['input_max']-data_shape['input_min']))), scale=sd)
-#             else:
-#                 result[0] = np.random.normal(loc=0, scale=sd)
-#         if result[1] == 0:
-#             # Uniform over 3 x data range
-#             result[1] = np.random.uniform(low=2*data_shape['input_min']-data_shape['input_max'], high=2*data_shape['input_max']-data_shape['input_min'])
-#         return result
-        
-#     #def effective_params(self):
-#     #    return 2
-
-#     def copy(self):
-#         return PureLinKernel(lengthscale=self.lengthscale, location=self.location)
-    
-#     def __repr__(self):
-#         return 'PureLinKernel(lengthscale=%f, location=%f)' % \
-#             (self.lengthscale, self.location)
-    
-#     def pretty_print(self):
-#         return colored('PLN(ell=%1.1f, loc=%1.1f)' % (self.lengthscale, self.location),
-#                        self.depth)
-        
-#     def latex_print(self):
-#         return 'PureLin'           
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         differences = [self.lengthscale - other.lengthscale, self.location - other.location]
-#         differences = map(shrink_below_tolerance, differences)
-#         return cmp(differences, [0] * len(differences))
-        
-#     def depth(self):
-#         return 0  
-        
-#     @property    
-#     def stationary(self):
-#         return False
-               
-# class ChangeBurstTanhKernelFamily(KernelOperatorFamily):
-#     def __init__(self, operands):
-#         self.operands = operands
-#         assert len(operands) == 2
-        
-#     def from_param_vector(self, params):
-#         location = params[0]
-#         steepness = params[1]
-#         width = params[2]
-#         start = 3
-#         ops = []
-#         for e in self.operands:
-#             end = start + e.num_params()
-#             ops.append(e.from_param_vector(params[start:end]))
-#             start = end
-#         return ChangeBurstTanhKernel(location, steepness, width, ops)
-    
-#     def num_params(self):
-#         return 3 + sum([e.num_params() for e in self.operands])
-    
-#     def pretty_print(self):        
-#         return colored('CBT(', self.depth) + \
-#             self.operands[0].pretty_print() + \
-#             colored(', ', self.depth) + \
-#             self.operands[1].pretty_print() + \
-#             colored(')', self.depth)
-    
-#     def default(self):
-#         return ChangeBurstTanhKernel(0., 0., 0., [op.default() for op in self.operands])
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return cmp(self.operands, other.operands)
-    
-#     def depth(self):
-#         return max([op.depth for op in self.operands]) + 1
-
-# class ChangeBurstTanhKernel(KernelOperator):
-#     def __init__(self, location, steepness, width, operands):
-#         self.location = location
-#         self.steepness = steepness
-#         self.width = width
-#         self.operands = operands
-        
-#     def family(self):
-#         return ChangeBurstTanhKernelFamily([e.family() for e in self.operands])
-        
-#     def pretty_print(self): 
-#         return colored('CBT(loc=%1.1f, steep=%1.1f, width=%1.1f, ' % (self.location, self.steepness, self.width), self.depth) + \
-#             self.operands[0].pretty_print() + \
-#             colored(', ', self.depth) + \
-#             self.operands[1].pretty_print() + \
-#             colored(')', self.depth)
-            
-#     def latex_print(self):
-#         return 'CBT\\left( ' + ' , '.join([e.latex_print() for e in self.operands]) + ' \\right)'            
-            
-#     def __repr__(self):
-#         return 'ChangeBurstTanhKernel(location=%f, steepness=%f, width=%f, operands=%s)' % \
-#             (self.location, self.steepness, self.width, '[ ' + ', '.join([o.__repr__() for o in self.operands]) + ' ]')                
-    
-#     def gpml_kernel_expression(self):
-#         return '{@covChangeBurstTanh, {%s}}' % ', '.join(e.gpml_kernel_expression() for e in self.operands)
-    
-#     def copy(self):
-#         return ChangeBurstTanhKernel(self.location, self.steepness, self.width, [e.copy() for e in self.operands])
-
-#     def param_vector(self):
-#         return np.concatenate([np.array([self.location, self.steepness, self.width])] + [e.param_vector() for e in self.operands])
-        
-#     def effective_params(self):
-#         return 3 + sum([o.effective_params() for o in self.operands])
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         '''Returns the parameter vector with any default values replaced with random Gaussian'''
-#         result = self.param_vector()[:3]
-#         if result[0] == 0:
-#             # Location uniform in data range
-#             result[0] = np.random.uniform(data_shape['input_min'], data_shape['input_max'])
-#         if result[1] == 0:
-#             #### FIXME - Caution, magic numbers
-#             # Set steepness with inverse input scale
-#             result[1] = np.random.normal(loc=3.3-np.log((data_shape['input_max'] - data_shape['input_min'])), scale=1)
-#         if result[2] == 0:
-#             # Set width with input scale - but expecting small widths
-#             #### FIXME - Caution, magic numbers
-#             result[2] = np.random.normal(loc=np.log(0.1*(data_shape['input_max'] - data_shape['input_min'])), scale=1)
-#         return np.concatenate([result] + [o.default_params_replaced(sd=sd, data_shape=data_shape) for o in self.operands])
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return cmp((self.location, self.steepness, self.width, self.operands),
-#                    (other.location, other.steepness, self.width, other.operands))
-    
-#     def depth(self):
-#         return max([op.depth for op in self.operands]) + 1
-            
-#     def out_of_bounds(self, constraints):
-#         return (self.location - np.exp(self.width)/2 < constraints['input_min'] + 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-#                (self.location + np.exp(self.width)/2 > constraints['input_max'] - 0.05 * (constraints['input_max'] -constraints['input_min'])) or \
-#                (self.width > np.log(0.25*(constraints['input_max'] - constraints['input_min']))) or \
-#                (self.steepness < -np.log((constraints['input_max'] -constraints['input_min'])) + 2.3) or \
-#                (any([o.out_of_bounds(constraints) for o in self.operands])) 

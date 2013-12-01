@@ -161,7 +161,7 @@ class ff_testcase(unittest.TestCase):
         k6 = k.copy()
         k = k1 + k2 + k3 + k4 + k5 + k6
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_additive_idempotency_k(k)
+        k = k.collapse_additive_idempotency()
         print '\n', k.pretty_print(), '\n'
 
     def test_collapse_mult_idempotent(self):
@@ -170,7 +170,7 @@ class ff_testcase(unittest.TestCase):
         k2 = k.copy()
         k = k1 * k2
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_idempotency_k(k)
+        k = k.collapse_multiplicative_idempotency()
         assert (isinstance(k, ff.SqExpKernel)) and (k.dimension == 0)
         print '\n', k.pretty_print(), '\n'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
@@ -183,11 +183,11 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = k1 * k2 * k3 * k4 * k5 * k5.copy() + k6 + k6.copy()
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_idempotency_k(k)
+        k = k.collapse_multiplicative_idempotency()
         print '\n', k.pretty_print(), '\n'
         k = k1 * k2 * k3 * k4 * k5 * k5.copy() * k6 * k6.copy()
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_idempotency_k(k)
+        k = k.collapse_multiplicative_idempotency()
         print '\n', k.pretty_print(), '\n'
 
     def test_collapse_zero(self):
@@ -195,7 +195,7 @@ class ff_testcase(unittest.TestCase):
         k2 = ff.NoiseKernel(sf=-1)
         k = k1 * k2
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_zero_k(k)
+        k = k.collapse_multiplicative_zero()
         assert isinstance(k, ff.NoiseKernel)
         print '\n', k.pretty_print(), '\n'
         k = (k1 + k1.copy() + k1.copy() * k2.copy()) * k2
@@ -204,7 +204,7 @@ class ff_testcase(unittest.TestCase):
         print (k1 + k1.copy() + k1.copy() * k2.copy()).sf
         print k.sf
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_zero_k(k)
+        k = k.collapse_multiplicative_zero()
         assert isinstance(k, ff.NoiseKernel)
         print '\n', k.pretty_print(), '\n'
 
@@ -214,7 +214,7 @@ class ff_testcase(unittest.TestCase):
         k2 = ff.ConstKernel(sf=-1)
         k = k1 * k2
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_identity_k(k)
+        k = k.collapse_multiplicative_identity()
         assert isinstance(k, ff.SqExpKernel)
         print '\n', k.pretty_print(), '\n'
         k1 = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
@@ -224,7 +224,7 @@ class ff_testcase(unittest.TestCase):
         print (k1 + k1.copy() + k1.copy() * k2.copy()).sf
         print k.sf
         print '\n', k.pretty_print(), '\n'
-        k = ff.collapse_multiplicative_identity_k(k)
+        k = k.collapse_multiplicative_identity()
         print '\n', k.pretty_print(), '\n'
 
     def test_simplified_k(self):
@@ -258,9 +258,9 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = (k1 + k2 + k3) * (k4 + k5)
         print '\n', k.pretty_print(), '\n'
-        components = (ff.distribute_products_k(k)).simplified()
+        components = k.distribute_products().simplified()
         print components
-        print ff.collapse_additive_idempotency_k(components)
+        print components.collapse_additive_idempotency()
         for k in components.operands:
             print '\n', k.pretty_print(), '\n'
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=1)
@@ -273,9 +273,9 @@ class ff_testcase(unittest.TestCase):
         k6 = ff.ConstKernel(sf=1)
         k = (k1 * (k2 + k3)) + (k4 * k5)
         print '\n', k.pretty_print(), '\n'
-        components = ff.distribute_products_k(k).simplified()
+        components = k.distribute_products().simplified()
         print components
-        print ff.collapse_additive_idempotency_k(components)
+        print components.collapse_additive_idempotency()
         for k in components.operands:
             print '\n', k.pretty_print(), '\n'
 

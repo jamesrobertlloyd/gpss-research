@@ -22,7 +22,7 @@ MULTI_D_RULES = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),
                  ('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
                  ('A', 'B', {'A': 'kernel', 'B': 'base'}),
                  #('A', ('CP', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
-                 #('A', ('CB', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
+                 #('A', ('CW', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
                  #('A', ('B', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
                  #('A', ('BL', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'}),
                  ('A', ('None',), {'A': 'kernel'}),
@@ -89,15 +89,15 @@ def polish_to_kernel(polish_expr):
         elif polish_expr[0] == 'CP':
             base_kernel = polish_to_kernel(polish_expr[2])
             return ff.ChangePointKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])
-        elif polish_expr[0] == 'CB':
+        elif polish_expr[0] == 'CW':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return ff.ChangeBurstKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])
+            return ff.ChangeWindowKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])
         elif polish_expr[0] == 'B':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return ff.ChangeBurstKernel(dimension=polish_expr[1], operands=[ff.ConstKernel(), base_kernel])
+            return ff.ChangeWindowKernel(dimension=polish_expr[1], operands=[ff.ConstKernel(), base_kernel])
         elif polish_expr[0] == 'BL':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return ff.ChangeBurstKernel(dimension=polish_expr[1], operands=[base_kernel, ff.ConstKernel()])
+            return ff.ChangeWindowKernel(dimension=polish_expr[1], operands=[base_kernel, ff.ConstKernel()])
         elif polish_expr[0] == 'None':
             return ff.NoneKernel()
         else:
@@ -156,6 +156,8 @@ def expand(kernel, grammar):
                     k.operands = new_ops
                     result.append(k)
     return result
+
+#### TODO - ths should be abstracted to models
     
 def expand_kernels(D, seed_kernels, base_kernels='SE', rules=None):    
     '''Makes a list of all expansions of a set of kernels in D dimensions.'''

@@ -221,7 +221,8 @@ def plot_decomposition(model, X, y, D, figname, X_mean=0, X_scale=1, y_mean=0, y
     figname = os.path.abspath(os.path.join(os.path.dirname(__file__), figname))
     print 'Plotting to: %s' % figname
     
-    kernel_components = ff.break_kernel_into_summands(model.kernel)
+    #### TODO - this should be extended to breaking an entire model into summands
+    kernel_components = model.kernel.break_into_summands()
     kernel_components = ff.SumKernel(kernel_components).simplified().canonical().operands
     latex_names = [k.latex.strip() for k in kernel_components]
     kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector) for k in kernel_components)

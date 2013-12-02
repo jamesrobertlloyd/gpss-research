@@ -308,7 +308,7 @@
   %\item The kernel determines which structures are likely under the \gp{} prior  
   %\item This prior determines the generalization properties of the model.
   %\item The kernel determines the pattern of generalization beyond the observed data
-  \item The kernel specifies which structures are likely under the gp prior \\ - this determines the generalization properties of the model.
+  \item The kernel specifies which structures are likely under the GP prior \\ - which determines the generalization properties of the model.
   %For Gaussian process models, the prior --- and hence, the pattern of generalisation --- is determined by a kernel function. Common examples include:
   %\item Only a few simple kernels are commonly used \eg%the following standard kernels is used%\gp{} priors are used:
 \end{itemize}
@@ -347,7 +347,7 @@
 
 \mysection{Automatically describing model properties}
 
-\subsection*{How to automatically describe arbitrarily complex kernels}
+\subsection*{How to automatically describe arbitrarily complex kernels:}
 \begin{enumerate}
 \item Break each kernel into a sum of products.
 \item For each product, look up the properties of each kernel in that product.
@@ -366,12 +366,14 @@
 \subsection*{Kernels can be distributed into a sum of products}
 
  
-For example:
+%For example:
 \begin{equation*}
 %\kSE \times \big( \kLin + \kLin \times ( \kPer + \kSE ) \big)
 \kSE \times \big( \kLin + \kPer + \kSE \big)
 \end{equation*}
+\begin{centering}
 becomes
+\end{centering}
 \begin{equation*}
 %(\kSE \times \kLin) + (\kSE \times \kLin \times \kPer) + (\kSE \times \kLin).
 (\kSE \times \kLin) + (\kSE \times \kPer) + (\kSE).

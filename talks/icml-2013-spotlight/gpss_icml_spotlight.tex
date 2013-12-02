@@ -1,0 +1,550 @@
+\input{header_beamer}
+\usepackage{etex}
+%\include{macros}
+%\documentclass[usenames,dvipsnames]{beamer}
+%\usepackage{beamerthemesplit}
+%\usepackage{graphics}
+%\usepackage{amsmath}
+%\usepackage{rotating}
+%\usepackage{array}
+%\usepackage{nth}
+\usepackage{xcolor}
+\usepackage{textcomp}
+\input{matlab_setup}
+
+\usepackage{tabularx}
+\usepackage{picins}
+\usepackage{tikz}
+
+\usetikzlibrary{shapes.geometric,arrows,chains,matrix,positioning,scopes,calc}
+\tikzstyle{mybox} = [draw=none, rectangle]
+
+\definecolor{camlightblue}{rgb}{0.601 , 0.8, 1}
+\definecolor{camdarkblue}{rgb}{0, 0.203, 0.402}
+\definecolor{camred}{rgb}{1, 0.203, 0}
+\definecolor{camyellow}{rgb}{1, 0.8, 0}
+\definecolor{lightblue}{rgb}{0, 0, 0.80}
+\definecolor{white}{rgb}{1, 1, 1}
+\definecolor{whiteblue}{rgb}{0.80, 0.80, 1}
+\definecolor{darkblue}{rgb}{0,0.08,0.45}
+
+\newcolumntype{x}[1]{>{\centering\arraybackslash\hspace{0pt}}m{#1}}
+\newcommand{\tabbox}[1]{#1}
+\def\CS{\acro{CS}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Some look and feel definitions
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setlength{\columnsep}{0.03\textwidth}
+\setlength{\columnseprule}{0.0018\textwidth}
+\setlength{\parindent}{0.0cm}
+
+%\include{macros}
+\usepackage{preamble}
+\hypersetup{colorlinks=true,citecolor=blue}
+%\pdfmapfile{+sansmathaccent.map}
+
+\title{Structure Discovery in Nonparametric Regression through Compositional Kernel Search}
+
+
+\author{
+%\begin{center}
+%  \input{figures/fig_airline.tex}
+%\end{center}
+%
+David Duvenaud, James Robert Lloyd, Roger Grosse, Joshua B. Tenenbaum, Zoubin Ghahramani
+}
+%\institute{
+%\includegraphics[width=0.4\textwidth]{figures/spiral_main}
+%\date{}
+
+
+\begin{document}
+
+\frame[plain] {
+%\titlepage
+
+\begin{center}
+
+{ \color{darkblue} Structure Discovery in Nonparametric Regression through Compositional Kernel Search }
+
+
+\begin{minipage}[t][6.8cm][t]{0.8\textwidth}
+\begin{center}
+\vspace{2.5cm}
+  \input{figures/fig_airline_no_kern.tex}
+\end{center}
+\end{minipage}
+
+
+David Duvenaud, James Robert Lloyd, Roger Grosse, \newline
+Joshua B. Tenenbaum, Zoubin Ghahramani
+\end{center}
+}
+
+\setbeamercolor{toc}{fg=black}
+
+%\frame[plain]{
+%\frametitle{GPs with complex kernels are powerful, interpretable models}
+%\begin{center}
+%  \input{figures/fig_mauna2.tex}
+%\end{center}
+%}
+
+
+\frame[plain]{
+%\frametitle{Simple kernels $\to$ simple structure}
+\frametitle{Kernel Choice is Important}
+%\begin{itemize} 
+%	\item Kernel determines almost all the properties of a \gp{} model.
+%	\item Many different kinds, with very different properties:
+%\end{itemize}
+\input{tables/simple_kernels_table_v4}
+}
+
+
+
+\frame[plain]{
+\frametitle{Identifying structure is crucial for extrapolation}
+%\begin{itemize} 
+%	\item SE kernel $\rightarrow$ basic smoothing.
+%	\item Richer kernels means richer structure can be captured.
+%\end{itemize}
+%\begin{center}
+%  \input{figures/fig_synth_extrap.tex}
+%\end{center}
+\begin{center}
+\begin{tabular}{cc}
+local smoothing \\
+%\hspace{-1.5cm}
+\includegraphics[trim=0 0 0 1.2cm, clip, width=0.99\textwidth, height=3cm]{figures/synth_extrap_bad.pdf}
+\\
+\phantom{structured model} \\
+%\hspace{-3cm}
+\phantom{\includegraphics[trim=0 0 0 1.2cm, clip, width=0.99\textwidth, height=3cm]{figures/synth_extrap_good.pdf}}
+%  \input{../figures/fig_synth_extrap.tex}
+\end{tabular}
+\end{center}
+}
+
+
+\frame[plain]{
+%\frametitle{Composite kernels $\to$ richer structure}
+\frametitle{Kernels can be Composed}
+%\begin{itemize} 
+%	\item Two main operations: adding, multiplying
+	\input{tables/comp1v2}
+%\end{itemize}
+}
+
+
+\frame[plain]{
+\frametitle{Identifying structure is crucial for extrapolation}
+%\begin{itemize} 
+%	\item SE kernel $\rightarrow$ basic smoothing.
+%	\item Richer kernels means richer structure can be captured.
+%\end{itemize}
+%\begin{center}
+%  \input{figures/fig_synth_extrap.tex}
+%\end{center}
+\begin{center}
+\begin{tabular}{cc}
+local smoothing \\
+%\hspace{-1.5cm}
+\includegraphics[trim=0 0 0 1.2cm, clip, width=0.99\textwidth, height=3cm]{figures/synth_extrap_bad.pdf}
+\\
+structured model \\
+%\hspace{-3cm}
+\includegraphics[trim=0 0 0 1.2cm, clip, width=0.99\textwidth, height=3cm]{figures/synth_extrap_good.pdf}
+%  \input{../figures/fig_synth_extrap.tex}
+\end{tabular}
+\end{center}
+}
+
+
+\frame[plain]{
+\frametitle{Compositional Structure Search}
+\begin{itemize}
+	\item We define simple grammar over kernels:
+	\begin{itemize}
+		\item $ K \rightarrow K + K$ 
+		\item $ K \rightarrow K \times K$ 
+		%\item $ K \rightarrow \{ \SE, \RQ, \Lin, \Per \}$
+		\item $K \rightarrow \SE\ |\ \RQ\ |\ \Lin\ |\ \Per $
+	\end{itemize}
+	\item Can automatically search open-ended space of kernels by applying production rules, then checking model fit (approximate marginal likelihood).
+\end{itemize}
+}
+
+
+%\frame[plain]{
+%\frametitle{Kernels can be composed}
+%\begin{itemize} 
+%	\item Can be composed across multiple dimensions
+%	\input{tables/comp2}
+%\end{itemize}
+%}
+
+\tikzset{hide on/.code={\only<#1>{\color{white}}}}
+
+\frame[plain]{
+\frametitle{Compositional Structure Search}
+\hspace{-1.2cm}
+\only<1>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_0/03-mauna2003-s_all_small.pdf}}
+\only<2>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_1/03-mauna2003-s_all_small.pdf}}
+\only<3>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_2/03-mauna2003-s_all_small.pdf}}
+\only<4>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_3/03-mauna2003-s_all_small.pdf}}
+
+\vspace{-3.5cm}
+\begin{minipage}[t][14cm][t]{1.14\linewidth}
+\begin{flushleft}
+\hspace{5.5cm}
+\vspace{-8cm}
+\makebox[\textwidth][c]{
+\raisebox{10cm}{
+\vspace{-8cm}
+\begin{tikzpicture}
+[sibling distance=0.18\columnwidth,-,thick, level distance=0.13\columnwidth]
+%\footnotesize
+\node[shape=rectangle,draw,thick] {Start}
+%\pause
+  child {node {$\SE$}}
+%  fill=camlightblue!30
+  child {node[shape=rectangle,draw,thick] {$\RQ$}
+    [sibling distance=0.16\columnwidth]
+%    {\visible<2->{ child {node {\ldots}}}}
+    child [hide on=-1] {node {$\SE$ + \RQ}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node[shape=rectangle,draw,thick] {$\Per + \RQ$}
+      [sibling distance=0.23\columnwidth]
+      child [hide on=-2] {node {$\SE + \Per + \RQ$}}
+      child [hide on=-2] {node {\ldots}}
+      child [hide on=-2] {node[shape=rectangle,draw,thick] {$\SE \times (\Per + \RQ)$}
+        [sibling distance=0.14\columnwidth]
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+      }
+      child [hide on=-2] {node {\ldots}}
+    }
+    %child {node {$\RQ \times \SE$}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node {$\Per \times \RQ$}}
+  }
+  child {node {$\Lin$}}
+  child {node {$\Per$}}
+  ;
+\end{tikzpicture}}
+}\end{flushleft}
+\end{minipage}
+\only<4>{}
+}
+
+\frame[plain]{
+\frametitle{Decomposing the posterior}
+\begin{center}
+  \input{figures/fig_mauna_text_kern.tex}
+\end{center}
+}
+
+
+
+%\frame[plain]{
+%\frametitle{Example: Airline passengers}
+%\begin{center}
+%  \input{figures/fig_airline_text_kern.tex}
+%\end{center}
+%}
+
+\frame[plain]{
+\frametitle{Example: Radio critical frequency }
+\begin{center}
+  \input{figures/fig_radio_text_kern.tex}
+\end{center}
+}
+
+\frame[plain]{
+\frametitle{Automated Model Construction}
+\begin{tabular}{ccc}
+\hspace{-0.5cm}\includegraphics[width=0.33\textwidth]{figures/internet-traffic-data-in-bits-fr/internet-traffic-data-in-bits-fr_all} &
+\includegraphics[width=0.32\textwidth]{figures/weekday-bus-ridership-iowa-city-/weekday-bus-ridership-iowa-city-_all} & 
+\includegraphics[width=0.32\textwidth]{figures/monthly-production-of-gas-in-aus/monthly-production-of-gas-in-aus_all} \\
+\hspace{-0.5cm}\includegraphics[width=0.33\textwidth]{figures/accidental-deaths-in-usa-monthly/accidental-deaths-in-usa-monthly_all} &
+\includegraphics[width=0.32\textwidth]{figures/monthly-production-of-portland-c/monthly-production-of-portland-c_all} & 
+\includegraphics[width=0.32\textwidth]{{figures/monthly-unemployment-figures-in-/monthly-unemployment-figures-in-_all}} \\
+\hspace{-0.5cm}\includegraphics[width=0.33\textwidth]{figures/monthly-us-female-20-years-and-o/monthly-us-female-20-years-and-o_all} &
+\includegraphics[width=0.32\textwidth]{figures/monthly-canadian-total-unemploym/monthly-canadian-total-unemploym_all} & 
+\includegraphics[width=0.32\textwidth]{figures/monthly-sales-of-us-houses-thous/monthly-sales-of-us-houses-thous_all} \\
+\hspace{-0.5cm}\includegraphics[width=0.33\textwidth]{figures/annual-number-of-lynx-trapped-ma/annual-number-of-lynx-trapped-ma_all} &
+\includegraphics[width=0.32\textwidth]{figures/wolfs-sunspot-numbers-1700-1988/wolfs-sunspot-numbers-1700-1988_all} & 
+\includegraphics[width=0.32\textwidth]{figures/monthly-average-daily-calls-to-d/monthly-average-daily-calls-to-d_all}\\
+\end{tabular}
+}
+
+\end{document}
+
+%%%%%%%%%%%%%%%%%
+% End of document
+%%%%%%%%%%%%%%%%%
+
+\frame[plain]{
+\frametitle{Kernel Choice is Important}
+\begin{itemize} 
+	\item Kernel determines almost all the properties of a \gp{} model.
+	\item Many different kinds, with very different properties:
+\input{tables/simple_kernels_table_v3}
+\end{itemize}
+}
+
+
+\frame[plain]{
+\frametitle{Kernels can be composed}
+\begin{itemize} 
+	\item Two main operations: adding, multiplying
+	\input{tables/comp1}
+\end{itemize}
+}
+
+\frame[plain]{
+\frametitle{Kernels can be composed}
+\begin{itemize} 
+	\item Can be composed across multiple dimensions
+	\input{tables/comp2}
+\end{itemize}
+}
+
+
+
+
+
+\frame[plain]{
+\frametitle{Appropriate kernels are necessary for extrapolation}
+\begin{itemize} 
+	\item SE kernel $\rightarrow$ basic smoothing.
+	\item Richer kernels means richer structure can be captured.
+\end{itemize}
+\begin{center}
+  \input{figures/fig_synth_extrap.tex}
+\end{center}
+}
+
+
+\frame[plain]{
+\frametitle{Kernels are hard to choose}
+\begin{itemize}
+	\item Given the diversity of priors available, how to choose one?
+	\item Standard GP software packages include many base kernels and means to combine them, but \emph{no default kernel}
+	\item Software can't choose model for you, you're the expert (?)
+\end{itemize}
+}
+
+\frame[plain]{
+\frametitle{Kernels are hard to construct}
+\begin{itemize}
+	%\item Kernel choice allows for rich structure to be captured - different kernels express very different model classes
+	\item Composition generates a rich space of models
+	\item Hard \& slow to search by hand
+	\begin{itemize}
+		\item Carl Rasmussen devotes 4 pages of his book to constructing a custom kernel for CO$_2$ data
+		\item requires specialized knowledge, trial and error, and a dataset small and low-dimensional enough that a human can interpret it.
+	\end{itemize}
+	\item In practice, most users can't or won't make custom kernel, and SE kernel became \emph{de facto} standard kernel through inertia.
+	\item Can kernel specification be automated?
+\end{itemize}
+}
+
+
+
+
+\frame[plain]{
+\frametitle{Compositional Structure Search}
+\begin{itemize}
+	\item Define simple grammar over kernels:
+	\begin{itemize}
+		\item $ K \rightarrow K + K$ 
+		\item $ K \rightarrow K \times K$ 
+		\item $ K \rightarrow \{ \SE, \RQ, \Lin, \Per \}$
+	\end{itemize}
+	\item Search the space of kernels greedily by applying production rules, then checking model fit (approximate marginal likelihood).
+\end{itemize}
+}
+
+
+
+\tikzset{hide on/.code={\only<#1>{\color{white}}}}
+
+\frame[plain]{
+\frametitle{Compositional Structure Search}
+\hspace{-1.2cm}
+\only<1>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_0/03-mauna2003-s_all_small.pdf}}
+\only<2>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_1/03-mauna2003-s_all_small.pdf}}
+\only<3>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_2/03-mauna2003-s_all_small.pdf}}
+\only<4>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_3/03-mauna2003-s_all_small.pdf}}
+
+\vspace{-3.5cm}
+\begin{minipage}[t][14cm][t]{1.14\linewidth}
+\begin{flushleft}
+\hspace{5.5cm}
+\vspace{-8cm}
+\makebox[\textwidth][c]{
+\raisebox{10cm}{
+\vspace{-8cm}
+\begin{tikzpicture}
+[sibling distance=0.18\columnwidth,-,thick, level distance=0.13\columnwidth]
+%\footnotesize
+\node[shape=rectangle,draw,thick] {Start}
+%\pause
+  child {node {$\SE$}}
+%  fill=camlightblue!30
+  child {node[shape=rectangle,draw,thick] {$\RQ$}
+    [sibling distance=0.16\columnwidth]
+%    {\visible<2->{ child {node {\ldots}}}}
+    child [hide on=-1] {node {$\SE$ + \RQ}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node[shape=rectangle,draw,thick] {$\Per + \RQ$}
+      [sibling distance=0.23\columnwidth]
+      child [hide on=-2] {node {$\SE + \Per + \RQ$}}
+      child [hide on=-2] {node {\ldots}}
+      child [hide on=-2] {node[shape=rectangle,draw,thick] {$\SE \times (\Per + \RQ)$}
+        [sibling distance=0.14\columnwidth]
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+      }
+      child [hide on=-2] {node {\ldots}}
+    }
+    %child {node {$\RQ \times \SE$}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node {$\Per \times \RQ$}}
+  }
+  child {node {$\Lin$}}
+  child {node {$\Per$}}
+  ;
+\end{tikzpicture}}
+}\end{flushleft}
+\end{minipage}
+\only<4>{}
+}
+
+
+
+
+
+%\frame[plain]{
+%\frametitle{Example Search: Mauna Lua CO$_2$}
+%\begin{center}
+%  \input{figures/fig_mauna_growth.tex}
+%\end{center}
+%}
+
+
+
+
+
+\frame[plain]{
+\frametitle{Compound kernels are interpretable}
+
+Sum of kernels are equivalent to sum of functions.  If %functions ${f_1, f_2}$ are draw from independent \gp{} priors, 
+\begin{align*}
+f_1 \sim & \GP(\mu_1, k_1) \qquad \textnormal{and independently,} \\
+f_2 \sim & \GP(\mu_2, k_2) \qquad \textnormal{then} \\
+f_1 + f_2 \sim & \GP(\mu_1 + \mu_2, k_1 + k_2)
+\end{align*}
+
+We can distribute into sums of products of base kernels:
+$${\SE \times (\RQ + \Lin) = \SE \times \RQ + \SE \times \Lin}$$
+}
+
+
+\frame[plain]{
+\frametitle{Example Decomposition: Mauna Loa CO$_2$}
+\begin{center}
+  \input{figures/fig_mauna2.tex}
+\end{center}
+}
+
+
+
+\frame[plain]{
+\frametitle{Example Decomposition: Airline }
+\begin{center}
+  \input{figures/fig_airline_text_kern.tex}
+\end{center}
+}
+
+\frame[plain]{
+\frametitle{Example Decomposition: Radio }
+\begin{center}
+  \input{figures/fig_radio.tex}
+\end{center}
+}
+
+
+%\frame[plain]{
+%\frametitle{Example: Sunspots}
+%\begin{center}
+%	\includegraphics[width=0.8\textwidth]{figures/solar}
+%\end{center}
+%}
+
+
+\frame[plain]{
+\frametitle{Special Cases}
+\large
+\begin{center}
+  \begin{tabular}{l|l}
+  Bayesian linear regression & $\Lin$ \\
+  %Bayesian quadratric regression & $\Lin \times \Lin$ \\
+  Bayesian polynomial regression & $\Lin \times \Lin \times \ldots$\\
+  Generalized Fourier decomposition & $\Per + \Per + \ldots$ \\
+  Generalized additive models & $\sum_{d=1}^D \SE_d$ \\
+  Automatic relevance determination & $\prod_{d=1}^D \SE_d$ \\
+  Linear trend with local deviations & $\Lin + \SE$ \\
+  Linearly growing amplitude & $\Lin \times \SE$ \\
+  \color{darkblue}
+  (Wilson \& Adams 2013) & $\sum_{k=1}^K \SE \times \cos$ \\
+    Flexible Fourier decomposition & $\sum_{k=1}^K \SE \times \Per$
+  \end{tabular}
+\end{center}
+}
+
+
+
+\frame[plain]{
+\frametitle{Mutlidimensional Regression }
+
+\hspace{-1cm}
+\begin{minipage}[t][14cm][t]{1.08\linewidth}
+\hspace{-2.3cm}
+\begin{center}
+  \input{tables/regression_results_mse.tex}
+\end{center}
+\end{minipage}
+}
+
+
+\frame[plain]{
+\frametitle{Summary}
+\begin{itemize}
+	\item Kernel selection is currently done by hand.
+	\item Compositions can be searched over automatically.
+	\item Compositions lead to more interesting priors on functions than typically considered.
+	\item Composite kernels can give interpretable decompositions.
+\end{itemize}
+More generally...
+	\begin{itemize}
+		\item Model-building is currently done mostly by hand.
+		\item Grammars over composite structures are a simple way to specify open-ended model classes.
+		\item Composite structures often imply interpretable decompositions of the data.
+		\item Searching over these model classes is a step towards automating statistical analysis.
+	\end{itemize}
+		\centering
+	{
+		\hfill
+		Thanks!
+				\hfill
+	}
+}

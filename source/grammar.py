@@ -142,8 +142,8 @@ def expand(kernel, grammar):
         for subset in itertools.product(*((0,1),)*len(kernel.operands)):
             if (not sum(subset)==0) and (not sum(subset)==len(kernel.operands)):
                 # Subset non-trivial
-                unexpanded = [op for (i, op) in enumerate(kernel.operands) if not subset[i]]
-                to_be_expanded = [op for (i, op) in enumerate(kernel.operands) if subset[i]]
+                unexpanded = [op.copy() for (i, op) in enumerate(kernel.operands) if not subset[i]]
+                to_be_expanded = [op.copy() for (i, op) in enumerate(kernel.operands) if subset[i]]
                 if len(to_be_expanded) > 1:
                     k = kernel.copy()
                     k.operands = to_be_expanded

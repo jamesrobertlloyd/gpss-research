@@ -1,0 +1,58 @@
+\begin{tikzpicture}[transform canvas={scale=0.9}] 
+  \begin{scope}[yshift=0.2\textwidth]
+    \begin{scope}[xshift=0cm]
+      \node [mybox] (all) at (0, 0) {
+	  \begin{tabular}{c}
+	  {\small $\Lin \times \SE + \SE \times ( \Per + \RQ)$ } \\	  
+        \includegraphics[trim=0 0 0 1.2cm, clip, width=0.8\textwidth, height=0.28\textwidth]{figures/03-mauna2003-s_all.pdf}
+		\end{tabular}
+      };
+    \end{scope}
+  \end{scope}
+  \begin{scope}[yshift=0.3\textwidth]
+    \begin{scope}[xshift=4.8cm]
+        \node [mybox, below of=all] (equals) at (0, 0) {\Huge{$=$}};
+    \end{scope}
+  \end{scope}
+  \begin{scope}[yshift=-0.11\textwidth]
+    \begin{scope}[xshift=-0.3\textwidth]
+      \node [mybox] (all) at (0, 0) {
+	  	  \begin{tabular}{c}
+	  {\small $\Lin \times \SE$ } \\	 
+        \includegraphics[trim=0 0 0 1.1cm, clip, width=0.5\textwidth, height=2.2cm]{figures/03-mauna2003-s_1.pdf}
+		\end{tabular}
+      };
+    \end{scope}
+    \begin{scope}[xshift=+0.3\textwidth]
+      \node [mybox] (all) at (0, 0) {
+	  	  \begin{tabular}{c}
+	   {\small $\SE \times \Per$ } \\	 
+        \includegraphics[trim=0 0 0 1.1cm, clip, width=0.5\textwidth, height=2.2cm]{figures/03-mauna2003-s_2_zoom.pdf}
+		\end{tabular}
+      };
+    \end{scope}
+  \end{scope}
+  \begin{scope}[yshift=-0.16\textwidth]
+    \begin{scope}[xshift=0cm]
+        \node [mybox, below of=all] (equals) at (0, 0) {\Huge{+}};
+    \end{scope}
+  \end{scope}
+  \begin{scope}[yshift=-0.38\textwidth]
+    \begin{scope}[xshift=-0.3\textwidth]
+      \node [mybox] (all) at (0, 0) {
+	  	  \begin{tabular}{c}
+	  {\small $\SE \times \RQ$ } \\	 
+        \includegraphics[trim=0 0 0 1.1cm, clip, width=0.5\textwidth, height=2.2cm]{figures/03-mauna2003-s_3.pdf}
+		\end{tabular}
+      };
+    \end{scope}
+    \begin{scope}[xshift=+0.3\textwidth]
+      \node [mybox] (all) at (0, 0) {
+	  	  \begin{tabular}{c}
+	  {\small Residuals } \\	 
+        \includegraphics[trim=0 0 0 1.1cm, clip, width=0.5\textwidth, height=2.2cm]{figures/03-mauna2003-s_resid.pdf}
+		\end{tabular}
+      };
+    \end{scope}
+  \end{scope}
+\end{tikzpicture}

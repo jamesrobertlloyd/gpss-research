@@ -375,7 +375,7 @@ def perform_experiment(data_file, output_file, exp):
         X, y, D, Xtest, ytest = gpml.load_mat(data_file)
         prediction_file = os.path.join(exp.results_dir, os.path.splitext(os.path.split(data_file)[-1])[0] + "_predictions.mat")
     else:
-        X, y, D = gpml.load_mat(data_file, y_dim=1)
+        X, y, D = gpml.load_mat(data_file)
         
     perform_kernel_search(X, y, D, data_file, output_file, exp)
     best_model = parse_results(output_file)

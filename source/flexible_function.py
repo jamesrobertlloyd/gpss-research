@@ -279,7 +279,7 @@ class Kernel(FunctionWrapper):
             new_ops = []
             for op in self.operands:
                 op_canon = op.canonical()
-                if isinstance(op_canon, self.__class__):
+                if isinstance(op_canon, self.__class__) and (self.arity=='n'):
                     new_ops += op_canon.operands
                 elif not isinstance(op_canon, NoneKernel):
                     new_ops.append(op_canon)

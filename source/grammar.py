@@ -88,23 +88,26 @@ def polish_to_kernel(polish_expr):
             return ff.ProductKernel([operands[0], ff.SumKernel([operands[1], ff.ConstKernel()])])
         elif polish_expr[0] == 'CP':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return ff.ChangePointKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])
+            return ff.ChangePointKernel(dimension=polish_expr[1], operands=[base_kernel.copy(), base_kernel.copy()])
         elif polish_expr[0] == 'CW':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return ff.ChangeWindowKernel(dimension=polish_expr[1], operands=[base_kernel, base_kernel.copy()])
+            return ff.ChangeWindowKernel(dimension=polish_expr[1], operands=[base_kernel.copy(), base_kernel.copy()])
         elif polish_expr[0] == 'B':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return ff.ChangeWindowKernel(dimension=polish_expr[1], operands=[ff.ConstKernel(), base_kernel])
+            return ff.ChangeWindowKernel(dimension=polish_expr[1], operands=[ff.ConstKernel(), base_kernel.copy()])
         elif polish_expr[0] == 'BL':
             base_kernel = polish_to_kernel(polish_expr[2])
-            return ff.ChangeWindowKernel(dimension=polish_expr[1], operands=[base_kernel, ff.ConstKernel()])
+            return ff.ChangeWindowKernel(dimension=polish_expr[1], operands=[base_kernel.copy(), ff.ConstKernel()])
         elif polish_expr[0] == 'None':
             return ff.NoneKernel()
         else:
             raise RuntimeError('Unknown operator: %s' % polish_expr[0])
     else:
         assert isinstance(polish_expr, ff.Kernel) or (polish_expr is None) or (type(polish_expr) == int)
-        return polish_expr
+        if isinstance(polish_expr, ff.Kernel):
+            return polish_expr.copy()
+        else:
+            return polish_expr
 
 
 def expand_single_tree(kernel, grammar):

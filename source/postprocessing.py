@@ -66,7 +66,7 @@ def gen_all_results(folder):
             best_tuple = exp.parse_results( results_filename )
             yield files.split('.')[-2], best_tuple
                 
-
+#### TODO - the function this calls is messy
 def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix='', rescale=False, data_folder=None, skip_kernel_evaluation=False):
     """Crawls the results directory, and makes decomposition plots for each file.
     

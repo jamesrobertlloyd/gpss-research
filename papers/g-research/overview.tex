@@ -1,0 +1,134 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{format/nips13submit_e}
+\nipsfinalcopy % Uncomment for camera-ready version
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage[pdftex]{graphicx}
+\usepackage{url}
+\usepackage{color}
+\usepackage{preamble}
+\definecolor{mydarkblue}{rgb}{0,0.08,0.45}
+\hypersetup{ %
+    pdftitle={},
+    pdfauthor={},
+    pdfsubject={},
+    pdfkeywords={},
+    pdfborder=0 0 0,
+    pdfpagemode=UseNone,
+    colorlinks=true,
+    linkcolor=mydarkblue,
+    citecolor=mydarkblue,
+    filecolor=mydarkblue,
+    urlcolor=mydarkblue,
+    pdfview=FitH}
+    
+    
+\usepackage{graphicx, amsmath, amsfonts, bm, lipsum, capt-of}
+\usepackage{natbib, xcolor, wrapfig, booktabs, multirow, caption}
+\usepackage{float}
+
+%\renewcommand{\baselinestretch}{0.99}
+
+\def\ie{i.e.\ }
+\def\eg{e.g.\ }
+
+%\title{Automatic Summarization of Composite Nonparametric Time-Series Models}
+\title{How can an Artificial Intelligence do Statistics?}
+
+\author{
+David Duvenaud\\
+University of Cambridge \\
+%Department of Engineering \\
+\texttt{dkd23@cam.ac.uk}
+\And
+James Robert Lloyd\\
+University of Cambridge\\
+%Department of Engineering\\
+\texttt{jrl44@cam.ac.uk}
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\setlength{\marginparwidth}{0.9in}
+\input{include/commenting.tex}
+
+%% For submission, make all render blank.
+%\renewcommand{\LATER}[1]{}
+%\renewcommand{\fLATER}[1]{}
+%\renewcommand{\TBD}[1]{}
+%\renewcommand{\fTBD}[1]{}
+%\renewcommand{\PROBLEM}[1]{}
+%\renewcommand{\fPROBLEM}[1]{}
+%\renewcommand{\NA}[1]{#1}  % Note, NA's pass through!
+
+\begin{document}
+
+\allowdisplaybreaks
+
+\maketitle
+
+%\begin{abstract}
+%This summary document gives an overview of our research into building an automatic Bayesian statistician.
+%We discuss our two papers on this subject and highlight features of the automatically generated statistical reports produced by our system.
+%We conclude with a discussion of the potential for this line of research.
+%\end{abstract}
+
+\section{Overview of our work}
+
+In the McKinsey Global Institute report \emph{Big data: The next frontier for innovation, competition, and productivity} it is claimed that
+\begin{quotation}
+``The United States alone faces a shortage of 140,000 to 190,000 people with analytical expertise and 1.5 million managers and analysts with the skills to understand and make decisions based on the analysis of big data.''
+\end{quotation}
+
+With such a large potential demand for data analysis, it is natural to ask to what extent this analysis can be automated.
+In February 2013, statistician Andrew Gelman provided his thoughts on the question, \emph{How can an artifical intelligence do statistics?} via his blog (\url{http://andrewgelman.com/}):
+
+\begin{quotation}
+``In the old-fashioned view of Bayesian data analysis as inference-within-a-supermodel, it’s simple enough: an AI (or a brain) just runs a Stan-like program to learn from the data and make predictions as necessary.
+But in a modern view of Bayesian data analysis---iterating the steps of model-building, inference-within-a-model, and model-checking---here, it’s not quite clear how the AI works.
+It needs not just an inference engine, but also a way to construct new models and a way to check models.
+Currently, those steps are performed by humans, but the AI would have to do it itself, without the aid of a “homunculus” to come up with new models or check the fit of existing ones.
+This philosophical quandary points to new statistical methods, for example a language-like approach to recursively creating new models from a specified list of distributions and transformations, and an automatic approach to checking model fit, based on some way of constructing quantities of interest and evaluating their discrepancies from simulated replications.''
+\end{quotation}
+
+In summary, an artificial statistician would have to automate and iterate over the following three steps:
+\begin{itemize}
+  \item Statistical model construction
+  \item Inference
+  \item Model checking
+\end{itemize}
+
+In addition, any automatic system would have to be able to report its findings in simplistic terms to have a wide impact.
+Automatic statistical inference is currently an active area of research known as probabilistic programming but as for the other procedures ``Currently, those steps are performed by humans''.
+
+In our research we have begun to address the problem of automating the process described above.
+Following the work of \cite{grosse2012exploiting} we have demonstrated an automatic model construction procedure for non-linear non-parametric regression \citep{DuvLloGroetal13}.
+This was achieved by defining an open-ended space of regression models via a generative grammar and then searching this space greedily.
+
+We have subsequently demonstrated that the models produced by this system can be automatically described in simple natural-language in the form of statistical reports \citep{LloDuvGroetal13}.
+We provide examples of these reports; the final sections demonstrate our preliminary investigations into automatic model-checking using techniques described in \cite{gelman1996posterior}.
+
+\section{Discussion}
+
+An optimistic view of our work was posted on Andrew Gelman's blog later in February 2013:
+\begin{quotation}
+``I feel so lucky to be around during this exciting era.
+Imagine being stuck with formalisms such as Wald's and Savage's hopeless attempts to shoehorn statistical reasoning into the formats of decision theory and game theory.
+Those guys were brilliant but they just didn't have the tools to do the job.
+Not that I think today's researchers have the last word, by any means, but it's so satisfying to see forward motion in modeling, computing, and also conceptual frameworks.''
+\end{quotation}
+
+Perhaps a more measured view is that of our coauthor, Joshua Tenenbaum, also published on the blog:
+\begin{quotation}
+``These methods might seem computationally expensive \ldots perhaps compared to what people are used to when they build or fit only one or a small number of models.
+But when you consider the size and scope of the space of models that is searched, and the fact that all steps of model construction, evaluation and search are automatic, it doesn't seem like such an expensive process.
+In my experience, working statisticians, machine learners, and data scientists rarely if ever explore such a space so systematically in large part because it seems impractically expensive to do so (in terms of both their own time and computation time, as well as perhaps other scarce resources).''
+\end{quotation}
+
+We believe that this line of research could have an impact on any area that relies upon data analysis, including quantitative finance.
+
+\bibliographystyle{unsrt}
+\bibliography{gpss, library}
+
+\end{document}

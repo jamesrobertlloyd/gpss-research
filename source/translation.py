@@ -256,18 +256,13 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
         if isinstance(k, ff.SqExpKernel):
             los_count += 1
             lengthscale = -0.5 * np.log(np.exp(-2*lengthscale) + np.exp(-2*k.lengthscale))
-        #elif isinstance(k, ff.LinKernel) or isinstance(k, ff.PureLinKernel):
-        #elif isinstance(k, ff.PureLinKernel):
-        #    lin_count += 1
-        #    lin_location = k.location
-        #elif isinstance(k, ff.CentredPeriodicKernel):
-        #    per_count += 1
-        #    per_kernels.append(k)
-        #    min_period = np.min([np.exp(k.period), min_period])
-        #elif isinstance(k, ff.FourierKernel):
-        #    per_count += 1
-        #    per_kernels.append(k)
-        #    min_period = np.min([np.exp(k.period), min_period])
+        elif isinstance(k, ff.LinearKernel):
+            lin_count += 1
+            lin_location = k.location
+        elif isinstance(k, ff.PeriodicKernel):
+            per_count += 1
+            per_kernels.append(k)
+            min_period = np.min([np.exp(k.period), min_period])
         #elif isinstance(k, ff.CosineKernel):
         #    cos_count += 1
         #    cos_kernels.append(k)

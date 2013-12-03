@@ -258,7 +258,7 @@ class Kernel(FunctionWrapper):
 
     def simplified(self):
         k = self.copy()
-        k_prev = self.copy()
+        k_prev = None
         while not k_prev == k:
             k_prev = k.copy()
             k = k.collapse_additive_idempotency()

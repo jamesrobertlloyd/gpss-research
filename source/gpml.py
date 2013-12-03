@@ -106,7 +106,7 @@ hyp.lik = %(lik_params)s
 
 inference = %(inference)s
 
-%% Optimise...
+%% Optimise on subset
 [hyp_opt, nlls] = minimize(hyp, @gp, -int32(%(iters)s * 3 / 3), inference, meanfunc, covfunc, likfunc, X, y);
 
 %% Optimise on full data

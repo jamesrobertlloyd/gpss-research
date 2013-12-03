@@ -83,7 +83,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     # Convert to additive form if desired
 
     if exp.additive_form:
-        current_models = ff.additive_form(current_models)
+        current_models = [model.additive_form() for model in current_models]
         current_models = ff.remove_duplicates(current_models)   
 
     # Set up lists to record search
@@ -193,7 +193,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         
         # Convert to additive form if desired
         if exp.additive_form:
-            current_models = ff.additive_form(current_models)
+            current_models = [model.additive_form() for model in current_models]
             current_models = ff.remove_duplicates(current_models)   
 
             # Print expansion

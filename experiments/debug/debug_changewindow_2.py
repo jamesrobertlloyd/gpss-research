@@ -24,7 +24,7 @@ Experiment(description='For debugging changewindows',
            bundle_size=5,
            additive_form=True,
            mean='ff.MeanZero()',      # Starting mean
-           kernel='ff.SumKernel(operands=[ff.NoiseKernel(sf=-2.74186266704), ff.SqExpKernel(dimension=0, lengthscale=3.26798848063, sf=-1.17095180348), ff.SqExpKernel(dimension=0, lengthscale=12.8664493006, sf=7.05846293543), ff.ProductKernel(operands=[ff.SqExpKernel(dimension=0, lengthscale=1.83677873694, sf=4.40837326302), ff.PeriodicKernel(dimension=0, lengthscale=0.502038361259, period=2.45457058088, sf=-6.0345955136)])])',
+           kernel='ff.NoiseKernel()', # Starting kernel
            lik='ff.LikGauss(sf=-np.Inf)', # Starting likelihood 
            score='bic',
            search_operators=[('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),

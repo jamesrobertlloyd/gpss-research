@@ -71,6 +71,20 @@ y = chol(K)' * randn(size(x));
 
 plot(x, y);
 
+%% Many materns
+
+x = linspace(0, 1, 1000)';
+
+cov_func = {@covSum, {{@covMaterniso, 5}, {@covMaterniso, 3}, {@covMaterniso, 1}}};
+hyp.cov = [0,0,0,0,0,0];
+
+K = feval(cov_func{:}, hyp.cov, x);
+K = K + 1e-9*max(max(K))*eye(size(K));
+
+y = chol(K)' * randn(size(x));
+
+plot(x, y);
+
 %% Cosine draw
 
 x = linspace(-0, 1, 1000)';

@@ -1582,7 +1582,8 @@ class ChangeWindowKernel(Kernel):
             start = end
 
     def get_gpml_expression(self, dimensions):
-        return '{@covChangeWindowMultiD, %s, {%s}}' % (self.dimension + 1, ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
+        #return '{@covChangeWindowMultiD, %s, {%s}}' % (self.dimension + 1, ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
+        return '{@covChangeBurstTanh, {%s}}' % (', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
 
     def multiply_by_const(self, sf):
         for o in self.operands:

@@ -1500,7 +1500,7 @@ class ChangeWindowKernel(Kernel):
 
     @property
     def sf(self):
-        raise RuntimeError('Cannot ask for scale factor of non-stationary kernel')
+        raise RuntimeError('Cannot ask for scale factor of change window kernel')
         
     @property
     def arity(self): return 2

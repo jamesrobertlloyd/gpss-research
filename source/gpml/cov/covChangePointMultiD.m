@@ -1,4 +1,4 @@
-function K = covChangePointMultiD(dim, cov, hyp, x, z, i)
+function K = covChangePointMultiD(cov, hyp, x, z, i)
 
 % Multi d change point kernel using tanh
 %
@@ -11,16 +11,19 @@ function K = covChangePointMultiD(dim, cov, hyp, x, z, i)
 %
 % Copyright (c) by James Robert Lloyd, 2013-11-21.
 
-if ~numel(cov)==2, error('Change point uses two covariances.'), end
+if ~numel(cov)==3, error('Change point uses a dimension and two covariances.'), end
+dim = cov{1};
+cov = {cov{2},cov{3}};
 for ii = 1:numel(cov)                        % iterate over covariance functions
   f = cov(ii); if iscell(f{:}), f = f{:}; end   % expand cell array if necessary
   j(ii) = cellstr(feval(f{:}));                          % collect number hypers
 end
 
-if nargin<4                                        % report number of parameters
+if nargin<3                                        % report number of parameters
   K = ['2' '+' char(j(1))]; for ii=2:length(cov), K = [K, '+', char(j(ii))]; end, return
 end
-if nargin<5, z = []; end                                   % make sure, z exists
+if nargin<4, z = []; end                                   % make sure, z exists
+original_z = z;
 xeqz = numel(z)==0; dg = strcmp(z,'diag') && numel(z)>0;        % determine mode
 if xeqz
     z = x;
@@ -48,14 +51,14 @@ end
 ax = 1 - ax; % Switching the order of base kernels to match intuition
 az = 1 - az;
 
-if nargin<6                                                        % covariances
+if nargin<5                                                        % covariances
   K = 0; if nargin==3, z = x; end                                 % set default
   for ii = 1:length(cov)                              % iteration over functions
     f = cov(ii); if iscell(f{:}), f = f{:}; end % expand cell array if necessary
     if ii == 1
-        K = K + ax .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* az;
+        K = K + ax .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* az;
     else
-        K = K + (1-ax) .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* (1-az);
+        K = K + (1-ax) .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* (1-az);
     end
   end
 else                                                               % derivatives
@@ -70,11 +73,11 @@ else                                                               % derivatives
     for ii = 1:length(cov)                              % iteration over functions
         f = cov(ii); if iscell(f{:}), f = f{:}; end % expand cell array if necessary
         if ii == 1
-            K = K + dx .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* az;
-            K = K + ax .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* dz;
+            K = K + dx .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* az;
+            K = K + ax .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* dz;
         else
-            K = K + -dx .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* (1-az);
-            K = K + (1-ax) .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* (-dz);
+            K = K + -dx .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* (1-az);
+            K = K + (1-ax) .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* (-dz);
         end
     end
   elseif i==2
@@ -88,11 +91,11 @@ else                                                               % derivatives
     for ii = 1:length(cov)                              % iteration over functions
         f = cov(ii); if iscell(f{:}), f = f{:}; end % expand cell array if necessary
         if ii == 1
-            K = K + dx .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* az;
-            K = K + ax .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* dz;
+            K = K + dx .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* az;
+            K = K + ax .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* dz;
         else
-            K = K + -dx .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* (1-az);
-            K = K + (1-ax) .* feval(f{:}, hyp([false false (v==ii)]), x, z) .* (-dz);
+            K = K + -dx .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* (1-az);
+            K = K + (1-ax) .* feval(f{:}, hyp([false false (v==ii)]), x, original_z) .* (-dz);
         end
     end
   elseif i<=length(v)+2
@@ -101,7 +104,7 @@ else                                                               % derivatives
     j = sum(v(1:i)==vi);                    % which parameter in that covariance
     f  = cov(vi);
     if iscell(f{:}), f = f{:}; end         % dereference cell array if necessary
-    K = feval(f{:}, hyp([false false (v==vi)]), x, z, j);                   % compute derivative
+    K = feval(f{:}, hyp([false false (v==vi)]), x, original_z, j);                   % compute derivative
     if vi == 1
         K = ax .* K .* az;
     elseif vi ==2

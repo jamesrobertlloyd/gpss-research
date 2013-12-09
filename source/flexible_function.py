@@ -301,7 +301,7 @@ class Kernel(FunctionWrapper):
         Output is always in canonical form
         '''
         #### TODO - currently implemented for a subset of changepoint operators - to be extended or operators to be abstracted
-        k = self
+        k = self.canonical()
         if isinstance(k, ProductKernel):
             # Convert operands into additive form
             additive_ops = sorted([op.additive_form() for op in k.operands])
@@ -1460,8 +1460,8 @@ class ChangePointKernel(Kernel):
                 colored(')', self.depth)
 
     def load_param_vector(self, params):
-        location = params[0]
-        steepness = params[1]
+        self.location = params[0]
+        self.steepness = params[1]
         start = 2
         for o in self.operands:
             end = start + o.num_params
@@ -1469,7 +1469,8 @@ class ChangePointKernel(Kernel):
             start = end
 
     def get_gpml_expression(self, dimensions):
-        return '{@covChangePointMultiD, %s, {%s}}' % (self.dimension + 1, ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
+        #return '{@covChangePointMultiD, %s, {%s}}' % (self.dimension + 1, ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
+        return '{@covChangePointMultiD, {%s, %s}}' % (self.dimension + 1, ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
 
     def multiply_by_const(self, sf):
         for o in self.operands:
@@ -1572,9 +1573,9 @@ class ChangeWindowKernel(Kernel):
                 colored(')', self.depth)
 
     def load_param_vector(self, params):
-        location = params[0]
-        steepness = params[1]
-        width = params[2]
+        self.location = params[0]
+        self.steepness = params[1]
+        self.width = params[2]
         start = 3
         for o in self.operands:
             end = start + o.num_params
@@ -1583,7 +1584,8 @@ class ChangeWindowKernel(Kernel):
 
     def get_gpml_expression(self, dimensions):
         #return '{@covChangeWindowMultiD, %s, {%s}}' % (self.dimension + 1, ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
-        return '{@covChangeBurstTanh, {%s}}' % (', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
+        return '{@covChangeWindowMultiD, {%s, %s}}' % (self.dimension + 1, ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
+        #return '{@covChangeBurstTanh, {%s}}' % (', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands))
 
     def multiply_by_const(self, sf):
         for o in self.operands:

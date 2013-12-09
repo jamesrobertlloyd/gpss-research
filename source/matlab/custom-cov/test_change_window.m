@@ -4,16 +4,16 @@ x = linspace(-10, 10, 100)';
 
 cov_func = {@covChangeWindowMultiD, {1, @covSEiso, @covSEiso}};
 %cov_func = {@covSum, {@covChangeWindowMultiD, 1, {@covSEiso, @covSEiso}}};
-%cov_func = {@covSum, {cov_func, {@covNoise}}};
+cov_func = {@covSum, {cov_func, {@covNoise}}};
 %cov_func = {@covSum, {cov_func}};
-hyp.cov = [0, 0, 2, 0, 0, 2, 0, -1];
+hyp.cov = [0, 0, 2, 0, 0, 2, 0, -2];
 
 K = feval(cov_func{:}, hyp.cov, x);
 K = K + 1e-9*max(max(K))*eye(size(K));
 
 y = chol(K)' * randn(size(x));
 
-plot(x, y);
+plot(x, y, 'o');
 
 %% Change point draw
 
@@ -37,11 +37,11 @@ x = linspace(-10, 10, 50)';
 [X,Y] = meshgrid(x,x);
 x = [X(:), Y(:)];
 
-delta = 0.0000001;
-i = 1;
+delta = 0.00000001;
+i = 4;
 
-%cov_func = {@covChangePointMultiD, 1, {{@covMask, {[1, 0], @covSEiso}}, {@covMask, {[1, 1], @covSEiso}}}};
-%hyp.cov = [0, 1, 2, 3, 1, 1];
+cov_func = {@covChangePointMultiD, {1, {@covMask, {[1, 0], @covSEiso}}, {@covMask, {[1, 1], @covSEiso}}}};
+hyp.cov = [0, 0, 0, 3, 1, 1];
 hyp1.cov = hyp.cov;
 hyp2.cov = hyp1.cov;
 hyp2.cov(i) = hyp2.cov(i) + delta;

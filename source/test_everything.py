@@ -449,6 +449,14 @@ class misc_testcase(unittest.TestCase):
         m = ff.GPModel(mean=ff.MeanZero(), kernel=ff.SumKernel(operands=[ff.ProductKernel(operands=[ff.ConstKernel(sf=0.170186999131), ff.SqExpKernel(dimension=0, lengthscale=1.02215322228, sf=5.9042619611)]), ff.ProductKernel(operands=[ff.NoiseKernel(sf=2.43188502201), ff.ConstKernel(sf=-0.368638271154)])]), likelihood=ff.LikGauss(sf=-np.inf), nll=599.59757993, ndata=144)
         assert not m.simplified() == m
 
+    def test_param_loading(self):
+        k = ff.ChangePointKernel(dimension=0, location=0, steepness=0, operands=[ff.ConstKernel(sf=0), ff.ConstKernel(sf=0)])
+        param_vector = [1,1,1,1]
+        k.load_param_vector(param_vector)
+        assert np.all(k.param_vector == param_vector)
+        param_vector = [0,0,0,0]
+        assert not np.any(k.param_vector == param_vector)
+
     # def test_wrong_dimension(self):
     #     try:
     #         k = fk.MaskKernelFamily(1,1,fk.SqExpKernelFamily())

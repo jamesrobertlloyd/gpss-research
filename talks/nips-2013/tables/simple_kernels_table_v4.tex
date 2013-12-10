@@ -11,18 +11,18 @@
 \renewcommand{\tabularxcolumn}[1]{>{\arraybackslash}m{#1}}
 %\begin{tabular}{m{\fwbig}m{0.01\textwidth}m{\fwbig}m{0.01\textwidth}m{\fwbig}m{\fwbig}m{\fwbig}}
 %\begin{tabular}{C{\fwbig}C{\fwbig}C{\fwbig}C{\fwbig}}%{m{\fwbig}m{\fwbig}m{\fwbig}}
-\begin{tabularx}{\columnwidth}{XXXX}
+\begin{tabularx}{\columnwidth}{XXcXX}
 %Composite & Draws from \gp{} & \gp{} posterior \\ \toprule
-  \kernpic{se_kernel} & \kernpic{se_kernel_draws}
+  \kernpic{se_kernel} & \kernpic{se_kernel_draws} & \phantom{mm}
 & \kernpic{per_kernel} & \kernpic{per_kernel_draws_s2}
 \\
-  {\small Squared-exp (\kSE)} & {\small local variation} 
+  {\small Squared-exp (\kSE)} & {\small local \newline variation} & \phantom{mm}
 & {\small Periodic (\kPer)} & {\small repeating structure}
-\\
-  \kernpic{lin_kernel} & \kernpic{lin_kernel_draws}
+\\ \\ \\
+  \kernpic{lin_kernel} & \kernpic{lin_kernel_draws} & \phantom{mm}
 & \kernpic{rq_kernel} & \kernpic{rq_kernel_draws}
 \\
-  {\small Linear (\kLin)} & {\small linear \newline functions} 
+  {\small Linear (\kLin)} & {\small linear \newline functions}  & \phantom{mm}
 & {\small Rational-quadratic(\kRQ)} & {\small multi-scale variation}
 \end{tabularx}
 \end{figure}

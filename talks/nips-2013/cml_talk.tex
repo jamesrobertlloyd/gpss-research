@@ -55,7 +55,7 @@
 \qquad
 \includegraphics[height=0.2\textwidth]{figures/roger-photo}
 \\
-James Robert Lloyd, David Duvenaud, Roger Grosse,\\ Joshua B. Tenenbaum, Zoubin Ghahramani
+James Robert Lloyd, David Duvenaud, Roger Grosse,\\ Joshua Tenenbaum, Zoubin Ghahramani
 }
 \institute{
 %\includegraphics[width=0.4\textwidth]{figures/spiral_main}
@@ -114,40 +114,36 @@ James Robert Lloyd, David Duvenaud, Roger Grosse,\\ Joshua B. Tenenbaum, Zoubin 
 \frame[plain]{
 \frametitle{Typical statistical modelling}
 \begin{itemize} 
-	\item Statistical / machine learning models typically built by hand, or chosen from a fixed set
-	\begin{itemize} 
-	  \vspace{\baselineskip}
-		\item Example: Scikit-learn
-	\end{itemize}
-\end{itemize}
-\begin{center}
+	\item models typically built by hand, or chosen from a fixed set
+	\begin{center}
 		\includegraphics[width=9cm, trim=1.39cm 15cm 35cm 0cm, clip]{figures/plot_classifier_comparison_1}\\
 		\includegraphics[width=9cm, trim=35cm 15cm 1.35cm 0cm, clip]{figures/plot_classifier_comparison_1}
 \end{center}
-}
-
-
-
-
-\frame[plain]{
-\frametitle{This approach is limited}
-\begin{itemize} 
-	\item Building by hand requires considerable expertise% and understanding of the dataset 
-	\begin{itemize}
-	  \item Can become an entire research project
-	\end{itemize}
-	\vspace{\baselineskip}
+%	\begin{itemize} 
+%	  \vspace{\baselineskip}
+%		\item Example: Scikit-learn
+			\item Building by hand requires considerable expertise% and understanding of the dataset 
+%	\begin{itemize}
+%	  \item Can become an entire research project
+%	\end{itemize}
+%	\end{itemize}
+%	\vspace{\baselineskip}
 	\item Just being nonparametric isn't good enough
 	\begin{itemize}
-	  \item Nonparametric does not mean assumption free!
+	  \item Nonparametric does not mean assumption-free!
 	\end{itemize}
-	\vspace{\baselineskip}
+%	\vspace{\baselineskip}
 	\item Can silently fail
 	\begin{itemize}
 	  \item If none of the models tried fit the data well, how can you tell?
 	\end{itemize}
 \end{itemize}
 }
+
+
+
+
+
 
 
 
@@ -158,14 +154,14 @@ James Robert Lloyd, David Duvenaud, Roger Grosse,\\ Joshua B. Tenenbaum, Zoubin 
 	\vspace{\baselineskip}
 	\item An artificial statistician would need:
 			\begin{itemize} 
-			\item a language for describing arbitrarily complicated models
+			\item a language that could describe arbitrarily complicated models
 			\item a method of searching over those models
 			\item a procedure to check model fit
 		\end{itemize}
 	\vspace{\baselineskip}
-	\item We constructed such a language over regression models, a procedure to search over it, and a method to describe in natural language the properties of the resulting models
+	\item This talk:We construct such a language over regression models, a procedure to search over it, and a method to describe in natural language the properties of the resulting models
 	\begin{itemize}
-		\item Actively researching automatic model-checking\ldots
+		\item Working on automatic model-checking\ldots
 	\end{itemize}
 \end{itemize}
 }
@@ -234,9 +230,15 @@ increasing amplitude }
 	\item We define a language of Gaussian process (GP) regression models by defining a language over kernel functions
 	\vspace{\baselineskip}
 	\item We start with a small set of base kernels and create a language with a generative grammar
-	\begin{itemize}
-	  \item Expansion operators include addition, multiplication and change-points
+		\begin{itemize}
+		\item $ K \rightarrow K + K$ 
+		\item $ K \rightarrow K \times K$ 
+		\item $ K \rightarrow CP( K, K)$ 
+		\item $ K \rightarrow \{ \SE, \Lin, \Per \}$
 	\end{itemize}
+%	\begin{itemize}
+%	  \item Expansion rules include addition, multiplication and change-points
+%	\end{itemize}
 	\vspace{\baselineskip}
 	\item The language is open-ended, but its structure makes natural-language description simple
 \end{itemize}
@@ -249,7 +251,7 @@ increasing amplitude }
 	\item Kernel determines almost all the properties of a GP prior
 	\item Many different kinds, with very different properties:
 \end{itemize}
-\input{tables/simple_kernels_table_v3}
+\input{tables/simple_kernels_table_v4}
 }
 
 
@@ -258,16 +260,16 @@ increasing amplitude }
 \begin{itemize} 
 	\item Two main operations: addition, multiplication
 \end{itemize}
-\input{tables/comp1}
+\input{tables/comp1v2}
 }
 
-\frame[plain]{
-\frametitle{Kernels can be composed}
-\begin{itemize} 
-	\item Can be composed across multiple dimensions
-\end{itemize}
-\input{tables/comp2}
-}
+%\frame[plain]{
+%\frametitle{Kernels can be composed}
+%\begin{itemize} 
+%	\item Can be composed across multiple dimensions
+%\end{itemize}
+%\input{tables/comp2v2}
+%}
 
 
 
@@ -289,15 +291,16 @@ increasing amplitude }
 \begin{tabular}{l|l}
 Regression motif & Example kernel \\
 \midrule
-Linear regression & $\kC + \kLin$ \\
-Fourier analysis & $\kC + \sum \cos$ \\
-Sparse spectrum \gp{}s & $\sum \cos$ \\
+Linear regression & $\kLin$ \\
+Quadratric regression & $\Lin \times \Lin$ \\
+Fourier analysis & $\sum \cos$ \\
+%Sparse spectrum \gp{}s & $\sum \cos$ \\
 Spectral kernels & $\sum \SE \times \cos$ \\
-Changepoints & \eg $\kCP(\kSE, \kSE)$ \\
-Kernel smoothing & $\kSE$ \\
-Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$ \\
-Trend cyclical irregular & $\sum \kSE + \sum \kPer$ \\
-Additive nonparametric modelling & $\sum \kSE$ \\
+Changepoints & \eg $\kCP(\kPer, \kSE)$ \\
+%Kernel smoothing & $\kSE$ \\
+Heteroscedasticity & \eg $\kSE + \kLin \times \kSE$ \\
+%irregular Trend cyclical & $\sum \kSE + \sum \kPer$ \\
+%Additive nonparametric modelling & $\sum \kSE$ \\
 \end{tabular}
 \end{center}
 }
@@ -307,11 +310,7 @@ Additive nonparametric modelling & $\sum \kSE$ \\
 %\frametitle{Compositional structure search}
 %\begin{itemize}
 %	\item Define grammar over kernels:
-%	\begin{itemize}
-%		\item $ K \rightarrow K + K$ 
-%		\item $ K \rightarrow K \times K$ 
-%		\item $ K \rightarrow \{ \SE, \Lin, \Per \}$
-%	\end{itemize}
+
 %	\vspace{\baselineskip}
 %	\item Search the space of kernels greedily by applying local search operators, maximising approximate marginal likelihood.
 %\end{itemize}
@@ -393,8 +392,48 @@ If $f_1, f_2$ are independent, and ${f_1 \sim \GP(\mu_1, k_1)}$, ${f_2 \sim \GP(
 \frame[plain]{
 \frametitle{Example Decomposition: Airline }
 \begin{center}
-  \input{figures/fig_airline.tex}
+  \input{figures/fig_airline_text_kern.tex}
 \end{center}
+}
+
+
+\frame[plain]{
+\frametitle{Describing Kernels}
+
+Products of same type of kernel collapse.
+\vspace{0.5cm}
+
+\centering
+\begin{tabular}{l|l}
+Product of Kernels & Becomes \\
+\midrule
+$\kSE \times \kSE \times \kSE \dots$ & \kSE \\
+$\kLin \times \kLin \times \Lin \dots$ & A polynomial \\
+$\kPer \times \kPer \times \kPer$ & Same covariance as \\ & product of periodic functions
+\end{tabular}
+}
+
+
+\frame[plain]{
+\frametitle{Describing Kernels}
+
+Each kernel acts as a modifier in a standard way: an ``adjective''.
+\vspace{0.5cm}
+
+\begin{tabular}{l|l}
+Kernel & Becomes \\
+\midrule
+$K \times \kSE$ & 'locally' or 'approximately' \\
+$K \times \kLin$ & 'with linearly growing amplitude' \\
+$K \times \kPer$ & 'periodic' \\
+$\kCP(K1, K2)$ & '\dots changing at $x$ to \dots' \\
+\end{tabular}
+
+\vspace{0.5cm}
+\begin{itemize}
+\item Special cases for when they're on their own
+\item Extra adjectives depending on hyperparameters
+\end{itemize}
 }
 
 
@@ -407,9 +446,9 @@ Product of Kernels & Description \\
 $\kPer$ & An exactly periodic function \\
 $\kPer \times \kSE$ & An approximately periodic function \\
 $\kPer \times \kSE \times \kLin$ & An approximately periodic function \\ &  with linearly varying amplitude \\
-$\kLin$ & A linear function \\
-$\kLin \times \kLin$ & A quadratic function \\
-$\kPer \times \kLin \times \kLin$ & An exactly periodic function \\ & with quadratically varying amplitude\\
+%$\kLin$ & A linear function \\
+%$\kLin \times \kLin$ & A quadratic function \\
+%$\kPer \times \kLin \times \kLin$ & An exactly periodic function \\ & with quadratically varying amplitude\\
 \end{tabular}
 }
 
@@ -451,12 +490,17 @@ $\kPer \times \kLin \times \kLin$ & An exactly periodic function \\ & with quadr
 \frame[plain]{
 \frametitle{Summary}
 \begin{itemize}
-	\item Constructed a language of regression models via kernel composition
-	\vspace{\baselineskip}
+	\item Constructed a language of regression models through kernel composition
+%	\vspace{\baselineskip}
 	\item Searched over this language greedily
-	\vspace{\baselineskip}
+%	\vspace{\baselineskip}
 	\item Kernels modify prior in predictable ways, allowing automatic natural-language description of models
-	\vspace{\baselineskip}
+%	\vspace{\baselineskip}
+	\item Open questions:
+	\begin{itemize}
+		\item Interpretability versus flexibility
+		\item Automatic Model-checking
+	\end{itemize}
 \end{itemize}
 	\pause
 	\centering

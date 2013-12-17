@@ -1219,16 +1219,20 @@ class SpectralKernel(Kernel):
             #### Explanation : This is centered on about 25 periods
             # Min period represents a minimum sensible scale
             # Scale with data_scale or data range
-            if np.random.rand() < 0.5:
-                if data_shape['min_period'] is None:
-                    self.period = np.random.normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd)
+            if np.random.rand() < 0.66:
+                if np.random.rand() < 0.5:
+                    if data_shape['min_period'] is None:
+                        self.period = np.random.normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd)
+                    else:
+                        self.period = utils.misc.sample_truncated_normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd, min_value=data_shape['min_period'][self.dimension])
                 else:
-                    self.period = utils.misc.sample_truncated_normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+                    if data_shape['min_period'] is None:
+                        self.period = np.random.normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd)
+                    else:
+                        self.period = utils.misc.sample_truncated_normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd, min_value=data_shape['min_period'][self.dimension])
             else:
-                if data_shape['min_period'] is None:
-                    self.period = np.random.normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd)
-                else:
-                    self.period = utils.misc.sample_truncated_normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+                # Spectral kernel can also approximate SE with long period
+                self.period = np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])
         if self.sf == None:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:

@@ -30,7 +30,7 @@ else
   end
 end
 
-K = pi*K/p;
+K = 2*pi*K/p;
 if nargin<4                                                        % covariances
     K = cos(K);
 else                                                               % derivatives

@@ -1116,7 +1116,7 @@ class PeriodicKernel(Kernel):
             
     def out_of_bounds(self, constraints):
         return (self.period < constraints['min_period'][self.dimension]) or \
-               (self.period > np.log(0.5*(constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension]))) # Need to observe more than 2 periods to declare periodicity  
+               (self.period > np.log(0.33*(constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension]))) # Need to observe more than 3 periods to declare periodicity  
 
 class LinearKernel(Kernel):
     def __init__(self, dimension=None, location=None, sf=None):
@@ -1178,6 +1178,84 @@ class LinearKernel(Kernel):
         sf, location = params # N.B. - expects list input
         self.location = location 
         self.sf = sf  
+
+class SpectralKernel(Kernel):
+    def __init__(self, dimension=None, lengthscale=None, period=None, sf=None):
+        self.dimension = dimension
+        self.lengthscale = lengthscale
+        self.period = period
+        self.sf = sf
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@covProd, {@covSEiso, @covCosUnit}}'
+    
+    @property
+    def id(self): return 'SP'
+    
+    @property
+    def param_vector(self): return np.array([self.lengthscale, self.sf, self.period])
+        
+    @property
+    def latex(self): return '{\\sc SP}' 
+    
+    @property
+    def syntax(self): return colored('SP_%s' % self.dimension, self.depth)
+
+    # Methods
+
+    def copy(self): return SpectralKernel(dimension=self.dimension, lengthscale=self.lengthscale, period=self.period, sf=self.sf)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.lengthscale == None:
+            # Set lengthscale with input scale or neutrally
+            if np.random.rand() < 0.5:
+                self.lengthscale = np.random.normal(loc=data_shape['x_sd'][self.dimension], scale=sd)
+            else:
+                # Long lengthscale ~ infty = neutral
+                self.lengthscale = np.random.normal(loc=np.log(2*(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])), scale=sd)
+        if self.period == None:
+            #### Explanation : This is centered on about 25 periods
+            # Min period represents a minimum sensible scale
+            # Scale with data_scale or data range
+            if np.random.rand() < 0.5:
+                if data_shape['min_period'] is None:
+                    self.period = np.random.normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd)
+                else:
+                    self.period = utils.misc.sample_truncated_normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+            else:
+                if data_shape['min_period'] is None:
+                    self.period = np.random.normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd)
+                else:
+                    self.period = utils.misc.sample_truncated_normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+        if self.sf == None:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                self.sf = np.random.normal(loc=data_shape['y_sd'], scale=sd)
+            else:
+                self.sf = np.random.normal(loc=0, scale=sd)         
+    
+    def __repr__(self):
+        return 'SpectralKernel(dimension=%s, lengthscale=%s, period=%s, sf=%s)' % \
+               (self.dimension, self.lengthscale, self.period, self.sf)
+    
+    def pretty_print(self):
+        return colored('SP(dim=%s, ell=%s, per=%s, sf=%s)' % \
+               (self.dimension, \
+                format_if_possible('%1.1f', self.lengthscale), \
+                format_if_possible('%1.1f', self.period), \
+                format_if_possible('%1.1f', self.sf)), \
+               self.depth)   
+
+    def load_param_vector(self, params):
+        lengthscale, sf, period = params # N.B. - expects list input
+        self.lengthscale = lengthscale  
+        self.period = period 
+        self.sf = sf  
+            
+    def out_of_bounds(self, constraints):
+        return (self.period < constraints['min_period'][self.dimension])
 
 ##############################################
 #                                            #
@@ -1707,7 +1785,7 @@ def base_kernels_without_dimension(base_kernel_names):
                    LinearKernel(), \
                    PeriodicKernel(), \
                    #CosineKernelFamily(), \
-                   #SpectralKernelFamily(), \
+                   SpectralKernel(), \
                    NoiseKernel()]:
         if kernel.id in base_kernel_names.split(','):
             yield kernel 
@@ -1861,128 +1939,3 @@ def add_jitter(models, sd=0.1):
 #     def out_of_bounds(self, constraints):
 #         return (self.period < constraints['min_period']) or \
 #                (self.period > np.log(0.5*(constraints['input_max'] - constraints['input_min']))) # Need to observe more than 2 periods to declare periodicity
-        
-# class SpectralKernelFamily(BaseKernelFamily):
-#     def from_param_vector(self, params):
-#         lengthscale, output_variance, period = params
-#         return SpectralKernel(lengthscale, period, output_variance)
-    
-#     def num_params(self):
-#         return 3
-    
-#     def pretty_print(self):
-#         return colored('SP', self.depth)
-    
-#     # FIXME - Caution - magic numbers!
-    
-#     @staticmethod#### Explanation : This is centered on about 20 periods
-#     def default():
-#         return SpectralKernel(0., -2.0, 0.)
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, KernelFamily)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         return 0
-    
-#     def depth(self):
-#         return 0
-    
-#     def id_name(self):
-#         return 'SP'
-    
-#     @staticmethod    
-#     def description():
-#         return "Spectral"
-
-#     @staticmethod    
-#     def params_description():
-#         return "lengthscale, period"  
-    
-# class SpectralKernel(BaseKernel):
-#     def __init__(self, lengthscale, period, output_variance):
-#         self.lengthscale = lengthscale
-#         self.period = period
-#         self.output_variance = output_variance
-        
-#     def family(self):
-#         return SpectralKernelFamily()
-        
-#     def gpml_kernel_expression(self):
-#         return '{@covProd, {@covSEiso, @covCosUnit}}'
-    
-#     def english_name(self):
-#         return 'Spectral'
-    
-#     def id_name(self):
-#         return 'SP'
-    
-#     def param_vector(self):
-#         # order of args matches GPML
-#         return np.array([self.lengthscale, self.output_variance, self.period])
-        
-#     def default_params_replaced(self, sd=1, data_shape=None):
-#         '''Overwrites base method, using min period to prevent Nyquist errors'''
-#         result = self.param_vector()
-#         if result[0] == 0:
-#             # Set lengthscale with input scale or neutrally
-#             if np.random.rand() < 0.5:
-#                 result[0] = np.random.normal(loc=data_shape['input_scale'], scale=sd)
-#             else:
-#                 # Long lengthscale ~ infty = neutral
-#                 result[0] = np.random.normal(loc=np.log(2*(data_shape['input_max']-data_shape['input_min'])), scale=sd)
-#         if result[2] == -2:
-#             #### FIXME - Caution, magic numbers
-#             #### Explanation : This is centered on about 25 periods
-#             # Min period represents a minimum sensible scale
-#             # Scale with data_scale or data range
-#             if np.random.rand() < 0.66:
-#                 if np.random.rand() < 0.5:
-#                     if data_shape['min_period'] is None:
-#                         result[2] = np.random.normal(loc=data_shape['input_scale']-2, scale=sd)
-#                     else:
-#                         result[2] = utils.misc.sample_truncated_normal(loc=data_shape['input_scale']-2, scale=sd, min_value=data_shape['min_period'])
-#                 else:
-#                     if data_shape['min_period'] is None:
-#                         result[2] = np.random.normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd)
-#                     else:
-#                         result[2] = utils.misc.sample_truncated_normal(loc=np.log(data_shape['input_max']-data_shape['input_min'])-3.2, scale=sd, min_value=data_shape['min_period'])
-#             else:
-#                 # Spectral kernel can also approximate SE with long period
-#                 result[2] = np.log(data_shape['input_max']-data_shape['input_min'])
-#         if result[1] == 0:
-#             # Set scale factor with output scale or neutrally
-#             if np.random.rand() < 0.5:
-#                 result[1] = np.random.normal(loc=data_shape['y_sd'], scale=sd)
-#             else:
-#                 result[1] = np.random.normal(loc=0, scale=sd)
-#         return result
-
-#     def copy(self):
-#         return SpectralKernel(self.lengthscale, self.period, self.output_variance)
-    
-#     def __repr__(self):
-#         return 'SpectralKernel(lengthscale=%f, period=%f, output_variance=%f)' % \
-#             (self.lengthscale, self.period, self.output_variance)
-    
-#     def pretty_print(self):
-#         return colored('SP(ell=%1.1f, p=%1.1f, sf=%1.1f)' % (self.lengthscale, self.period, self.output_variance),
-#                        self.depth)
-        
-#     def latex_print(self):         
-#         return 'Spec'
-    
-#     def __cmp__(self, other):
-#         assert isinstance(other, Kernel)
-#         if cmp(self.__class__, other.__class__):
-#             return cmp(self.__class__, other.__class__)
-#         differences = [self.lengthscale - other.lengthscale, self.period - other.period, self.output_variance - other.output_variance]
-#         differences = map(shrink_below_tolerance, differences)
-#         return cmp(differences, [0] * len(differences))
-        
-#     def depth(self):
-#         return 0
-            
-#     def out_of_bounds(self, constraints):
-#         return (self.period < constraints['min_period']) or \
-#                (self.lengthscale < constraints['min_lengthscale'])

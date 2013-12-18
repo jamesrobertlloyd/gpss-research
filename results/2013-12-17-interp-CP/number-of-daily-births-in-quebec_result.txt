@@ -1,0 +1,77 @@
+Experiment all_results for
+ datafile = ../data/tsdlr_5050/number-of-daily-births-in-quebec.mat
+
+ Running experiment:
+description = Trying latest code on interpolation task,
+data_dir = ../data/tsdlr_5050/,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 300,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2013-12-17-interp-CP/,
+iters = 250,
+base_kernels = SE,
+additive_form = True,
+mean = ff.MeanZero(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikGauss(sf=-np.Inf),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 3,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', 'B', {'A': 'kernel', 'B': 'base'}), ('A', ('CP', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('None',), {'A': 'kernel'})],
+score = bic,
+period_heuristic_type = min,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.68026112911), SqExpKernel(dimension=0, lengthscale=2.33722326651, sf=5.55606767242)]), likelihood=LikGauss(sf=-inf), nll=2562.12120116, ndata=500)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.58889142517), SqExpKernel(dimension=0, lengthscale=-1.91209113012, sf=2.95433733248), SqExpKernel(dimension=0, lengthscale=5.12766435327, sf=5.53521509296)]), likelihood=LikGauss(sf=-inf), nll=2544.46062645, ndata=500)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.58889142517), SqExpKernel(dimension=0, lengthscale=-1.91209113012, sf=2.95433733248), SqExpKernel(dimension=0, lengthscale=5.12766435327, sf=5.53521509296)]), likelihood=LikGauss(sf=-inf), nll=2544.46062645, ndata=500)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.58889142517), SqExpKernel(dimension=0, lengthscale=-1.91209113012, sf=2.95433733248), SqExpKernel(dimension=0, lengthscale=5.12766435327, sf=5.53521509296)]), likelihood=LikGauss(sf=-inf), nll=2544.46062645, ndata=500)
+
+%%%%% Level 4 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.58889142517), SqExpKernel(dimension=0, lengthscale=-1.91209113012, sf=2.95433733248), SqExpKernel(dimension=0, lengthscale=5.12766435327, sf=5.53521509296)]), likelihood=LikGauss(sf=-inf), nll=2544.46062645, ndata=500)
+
+%%%%% Level 5 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.58889142517), SqExpKernel(dimension=0, lengthscale=-1.91209113012, sf=2.95433733248), SqExpKernel(dimension=0, lengthscale=5.12766435327, sf=5.53521509296)]), likelihood=LikGauss(sf=-inf), nll=2544.46062645, ndata=500)
+
+%%%%% Level 6 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.58889142517), SqExpKernel(dimension=0, lengthscale=-1.91209113012, sf=2.95433733248), SqExpKernel(dimension=0, lengthscale=5.12766435327, sf=5.53521509296)]), likelihood=LikGauss(sf=-inf), nll=2544.46062645, ndata=500)
+
+%%%%% Level 7 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.58889142517), SqExpKernel(dimension=0, lengthscale=-1.91209113012, sf=2.95433733248), SqExpKernel(dimension=0, lengthscale=5.12766435327, sf=5.53521509296)]), likelihood=LikGauss(sf=-inf), nll=2544.46062645, ndata=500)
+
+%%%%% Level 8 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.58889142517), SqExpKernel(dimension=0, lengthscale=-1.91209113012, sf=2.95433733248), SqExpKernel(dimension=0, lengthscale=5.12766435327, sf=5.53521509296)]), likelihood=LikGauss(sf=-inf), nll=2544.46062645, ndata=500)
+
+%%%%% Level 9 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=3.58871915163), SqExpKernel(dimension=0, lengthscale=-1.91533175641, sf=2.95854572649), SqExpKernel(dimension=0, lengthscale=5.14504781714, sf=5.55275444234)]), likelihood=LikGauss(sf=-inf), nll=2544.46021483, ndata=500)

@@ -1,0 +1,77 @@
+Experiment all_results for
+ datafile = ../data/tsdlr_9010/03-mauna2003.mat
+
+ Running experiment:
+description = Trying latest code on extrapolation task,
+data_dir = ../data/tsdlr_9010/,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 300,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2013-12-16-extrap-GPSS-full/,
+iters = 250,
+base_kernels = SE,Per,Lin,Const,Noise,
+additive_form = False,
+mean = ff.MeanZero(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikGauss(sf=-np.Inf),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 3,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'}), ('A', ('CP', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('CW', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('B', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('BL', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('None',), {'A': 'kernel'})],
+score = bic,
+period_heuristic_type = min,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=0.756843898684), SqExpKernel(dimension=0, lengthscale=3.81459410689, sf=3.6354571279)]), likelihood=LikGauss(sf=-inf), nll=1080.30821555, ndata=490)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-0.833522118497), ProductKernel(operands=[SqExpKernel(dimension=0, lengthscale=2.62821252556, sf=2.02671803268), SumKernel(operands=[ConstKernel(sf=2.13024264924), PeriodicKernel(dimension=0, lengthscale=0.717520717318, period=6.45688925952e-05, sf=-1.59371226479)])])]), likelihood=LikGauss(sf=-inf), nll=370.679643116, ndata=490)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.48447263684), ProductKernel(operands=[SqExpKernel(dimension=0, lengthscale=4.03931391484, sf=1.7395408448), SumKernel(operands=[ConstKernel(sf=1.97886755639), SqExpKernel(dimension=0, lengthscale=-0.582621531437, sf=-2.41655488546), PeriodicKernel(dimension=0, lengthscale=0.433401762862, period=-0.000334168215277, sf=-1.39763823772)])])]), likelihood=LikGauss(sf=-inf), nll=125.190014847, ndata=490)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.4818212229), ProductKernel(operands=[SqExpKernel(dimension=0, lengthscale=4.18998375777, sf=1.89031291259), SumKernel(operands=[ConstKernel(sf=2.41714697638), SqExpKernel(dimension=0, lengthscale=-0.551217116495, sf=-2.59914803089), PeriodicKernel(dimension=0, lengthscale=0.320403156526, period=-0.000323614944538, sf=-1.56122228995)])])]), likelihood=LikGauss(sf=-inf), nll=123.37465237, ndata=490)
+
+%%%%% Level 4 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.4788577066), ProductKernel(operands=[SumKernel(operands=[ConstKernel(sf=2.06512848598), SqExpKernel(dimension=0, lengthscale=-0.152836886106, sf=-2.19653255139), PeriodicKernel(dimension=0, lengthscale=0.112061765659, period=-0.000414267394264, sf=-2.03651178658)]), SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=3.93266833838, sf=1.56950329186), PeriodicKernel(dimension=0, lengthscale=1.43377476396, period=-0.000316855077701, sf=-0.319065833602)])])]), likelihood=LikGauss(sf=-inf), nll=112.855276165, ndata=490)
+
+%%%%% Level 5 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.56667310619), ProductKernel(operands=[SumKernel(operands=[ConstKernel(sf=2.10330471901), SqExpKernel(dimension=0, lengthscale=-0.337283424431, sf=-2.03424478683), PeriodicKernel(dimension=0, lengthscale=0.112073776311, period=-0.000347182906644, sf=-1.98783945011)]), SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=3.87011175833, sf=1.38123243782), PeriodicKernel(dimension=0, lengthscale=1.50203258313, period=-0.000324588595244, sf=-0.117332981663)])])]), likelihood=LikGauss(sf=-inf), nll=107.360690475, ndata=490)
+
+%%%%% Level 6 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.54098836622), ProductKernel(operands=[SumKernel(operands=[ConstKernel(sf=1.92449248396), SqExpKernel(dimension=0, lengthscale=-0.244159784478, sf=-2.00921686655), PeriodicKernel(dimension=0, lengthscale=-0.0634770913462, period=-0.00039350900978, sf=-2.04957224067)]), SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=3.78883604012, sf=1.36096067736), PeriodicKernel(dimension=0, lengthscale=1.55020369344, period=-0.00031883672698, sf=-0.110818869893)])])]), likelihood=LikGauss(sf=-inf), nll=107.255957921, ndata=490)
+
+%%%%% Level 7 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.58737002204), ProductKernel(operands=[SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=-0.310259364501, sf=-1.81462715659), SqExpKernel(dimension=0, lengthscale=5.03682009241, sf=2.18977060623)]), SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=4.01661789891, sf=1.24084090314), PeriodicKernel(dimension=0, lengthscale=0.452293009329, period=-0.000254214556082, sf=-0.467596653682)])])]), likelihood=LikGauss(sf=-inf), nll=112.699545621, ndata=490)
+
+%%%%% Level 8 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.58784876283), ProductKernel(operands=[SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=-0.285022653146, sf=-1.65145030479), SqExpKernel(dimension=0, lengthscale=5.3691289417, sf=1.96913453828)]), SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=3.62980921597, sf=1.05071128511), PeriodicKernel(dimension=0, lengthscale=0.634502864035, period=-0.000306010169489, sf=-0.430588872417)])])]), likelihood=LikGauss(sf=-inf), nll=106.534024859, ndata=490)
+
+%%%%% Level 9 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.60623299572), ProductKernel(operands=[SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=-0.306844185141, sf=-1.71096550025), SqExpKernel(dimension=0, lengthscale=5.63606338076, sf=1.85728850455)]), SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=3.53531230619, sf=1.03898247071), PeriodicKernel(dimension=0, lengthscale=0.659552805932, period=-0.000326299913181, sf=-0.432637813512)])])]), likelihood=LikGauss(sf=-inf), nll=105.92219712, ndata=490)

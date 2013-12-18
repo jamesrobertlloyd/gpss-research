@@ -67,7 +67,7 @@ def gen_all_results(folder):
             yield files.split('.')[-2], best_tuple
                 
 #### TODO - the function this calls is messy
-def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix='', rescale=False, data_folder=None, skip_kernel_evaluation=False):
+def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix='', rescale=False, data_folder=None, skip_kernel_evaluation=False, unit='year'):
     """Crawls the results directory, and makes decomposition plots for each file.
     
     prefix is an optional string prepended to the output directory
@@ -142,7 +142,7 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix
             short_descriptions = []
             while os.path.isfile(os.path.join(fig_folder, '%s_%d.fig' % (file, i))):
                 # Describe this component
-                (summary, sentences, extrap_sentences) = translation.translate_additive_component(kernel_components[component_order[i-1]], X, evaluation_data['monotonic'][i-1], evaluation_data['gradients'][i-1], 'year')
+                (summary, sentences, extrap_sentences) = translation.translate_additive_component(kernel_components[component_order[i-1]], X, evaluation_data['monotonic'][i-1], evaluation_data['gradients'][i-1], unit)
                 short_descriptions.append(summary)
                 paragraph = '.\n'.join(sentences) + '.'
                 extrap_paragraph = '.\n'.join(extrap_sentences) + '.'

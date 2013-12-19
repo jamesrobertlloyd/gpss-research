@@ -201,11 +201,11 @@ max(max(abs(K2 - K1)))
 
 x = linspace(-10, 10, 1000)';
 
-delta = 0.000000001;
-i = 1;
+delta = 0.00000000001;
+i = 2;
 
 cov_func = {@covPeriodicNoDC};
-hyp1.cov = [-9, 0, 1];
+hyp1.cov = [-2, -3, 1];
 hyp2.cov = hyp1.cov;
 hyp2.cov(i) = hyp2.cov(i) + delta;
 

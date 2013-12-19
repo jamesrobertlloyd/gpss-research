@@ -98,6 +98,7 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix
             X = data[0]
             y = data[1]
             D = data[2]
+            assert D == 1
             if rescale:
                 # Load unscaled data to remove scaling later
                 unscaled_file = os.path.join('../data/1d_data/', re.sub('-s$', '', file) + '.mat')

@@ -1,0 +1,77 @@
+Experiment all_results for
+ datafile = ../data/tsdlr_5050/real-daily-wages-in-pounds-engla.mat
+
+ Running experiment:
+description = Trying latest code on interpolation task,
+data_dir = ../data/tsdlr_5050/,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 300,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2013-12-17-interp-SP-nll/,
+iters = 250,
+base_kernels = SP,
+additive_form = True,
+mean = ff.MeanZero(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikGauss(sf=-np.Inf),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 3,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', 'B', {'A': 'kernel', 'B': 'base'}), ('A', ('None',), {'A': 'kernel'})],
+score = nll,
+period_heuristic_type = min,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-0.166968231814), SpectralKernel(dimension=0, lengthscale=3.14240543136, period=10.4105272257, sf=2.54558000512)]), likelihood=LikGauss(sf=-inf), nll=588.510642712, ndata=367)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-0.870710475596), SpectralKernel(dimension=0, lengthscale=0.943480474852, period=6.70889294196, sf=0.0189659591079), SpectralKernel(dimension=0, lengthscale=4.55849710437, period=10.4190840642, sf=3.63520915842)]), likelihood=LikGauss(sf=-inf), nll=480.285179353, ndata=367)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-0.86985355266), SpectralKernel(dimension=0, lengthscale=0.921755145206, period=6.86927830878, sf=0.0338580568567), SpectralKernel(dimension=0, lengthscale=5.34936974284, period=5.0742577898, sf=0.132558380825), SpectralKernel(dimension=0, lengthscale=5.21276914483, period=10.4102661169, sf=3.9878399708)]), likelihood=LikGauss(sf=-inf), nll=478.847387706, ndata=367)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-0.865750344306), SpectralKernel(dimension=0, lengthscale=0.959637091114, period=6.76921070637, sf=0.0389430427311), SpectralKernel(dimension=0, lengthscale=8.55986052462, period=5.92986612215, sf=1.17724090184), SpectralKernel(dimension=0, lengthscale=5.57539013804, period=10.6298535395, sf=4.55665985741), SpectralKernel(dimension=0, lengthscale=5.61183347851, period=5.03368537466, sf=0.39303236862)]), likelihood=LikGauss(sf=-inf), nll=477.675681175, ndata=367)
+
+%%%%% Level 4 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[SpectralKernel(dimension=0, lengthscale=-0.439818517656, period=6.81035938423, sf=-0.683079630319), SpectralKernel(dimension=0, lengthscale=1.07170016354, period=6.82826877812, sf=0.00218594693336), SpectralKernel(dimension=0, lengthscale=5.3340464011, period=10.6702934949, sf=4.3769134346), SpectralKernel(dimension=0, lengthscale=5.50586382114, period=5.08596212658, sf=0.321757814067)]), likelihood=LikGauss(sf=-inf), nll=476.793977283, ndata=367)
+
+%%%%% Level 5 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[SpectralKernel(dimension=0, lengthscale=-1.739004222, period=6.64537679586, sf=-0.909478787074), SpectralKernel(dimension=0, lengthscale=0.79846668165, period=6.70822941773, sf=-0.110762366723), SpectralKernel(dimension=0, lengthscale=3.40050957645, period=3.88070504233, sf=-0.678494322735), SpectralKernel(dimension=0, lengthscale=5.36305907845, period=10.725917274, sf=4.44778222722), SpectralKernel(dimension=0, lengthscale=5.56610674572, period=5.0774380929, sf=0.362250059077)]), likelihood=LikGauss(sf=-inf), nll=474.751793833, ndata=367)
+
+%%%%% Level 6 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[SpectralKernel(dimension=0, lengthscale=-1.67876460077, period=6.73524341333, sf=-0.887532522195), SpectralKernel(dimension=0, lengthscale=0.871591528582, period=6.81167488989, sf=-0.0401258417739), SpectralKernel(dimension=0, lengthscale=5.72547851577, period=3.94546123953, sf=-0.572951504433), SpectralKernel(dimension=0, lengthscale=6.21903957527, period=7.13904599814, sf=1.23239819271), SpectralKernel(dimension=0, lengthscale=5.33662565696, period=10.7609640205, sf=4.28722955199), SpectralKernel(dimension=0, lengthscale=5.52891370936, period=5.05892494819, sf=0.293311237866)]), likelihood=LikGauss(sf=-inf), nll=472.979044477, ndata=367)
+
+%%%%% Level 7 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[SpectralKernel(dimension=0, lengthscale=-1.84568588169, period=6.81999377855, sf=-0.807251933009), SpectralKernel(dimension=0, lengthscale=0.953587345611, period=6.71208407103, sf=-0.0928727386247), SpectralKernel(dimension=0, lengthscale=5.35299421877, period=10.6292208026, sf=4.42546908333), SpectralKernel(dimension=0, lengthscale=5.61845538341, period=5.0749896686, sf=0.388672549119), SpectralKernel(dimension=0, lengthscale=5.8901932215, period=1.93469198328, sf=-2.62526647667), SpectralKernel(dimension=0, lengthscale=5.09479871917, period=3.95201058026, sf=-0.543484687682), SpectralKernel(dimension=0, lengthscale=6.34329954703, period=7.06900377387, sf=1.31043904175)]), likelihood=LikGauss(sf=-inf), nll=472.522991766, ndata=367)
+
+%%%%% Level 8 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[SpectralKernel(dimension=0, lengthscale=-1.88722499269, period=6.93644980909, sf=-0.814016712244), SpectralKernel(dimension=0, lengthscale=1.01348260789, period=6.67135894251, sf=-0.00943569786013), SpectralKernel(dimension=0, lengthscale=5.70500040885, period=3.97377095391, sf=-0.7254916099), SpectralKernel(dimension=0, lengthscale=5.34679512799, period=10.6044094551, sf=4.30728078029), SpectralKernel(dimension=0, lengthscale=5.5268674216, period=3.6378168267, sf=-4.83843204985), SpectralKernel(dimension=0, lengthscale=5.59701916178, period=5.05364267371, sf=0.312440988997), SpectralKernel(dimension=0, lengthscale=6.04786645794, period=1.93361046312, sf=-2.32791800773)]), likelihood=LikGauss(sf=-inf), nll=472.000976086, ndata=367)
+
+%%%%% Level 9 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[SpectralKernel(dimension=0, lengthscale=-1.90242005879, period=6.96223083963, sf=-0.874031868328), SpectralKernel(dimension=0, lengthscale=0.907468271307, period=6.70700056201, sf=-0.0629896423308), SpectralKernel(dimension=0, lengthscale=5.35433887565, period=10.8140774867, sf=4.34722983664), SpectralKernel(dimension=0, lengthscale=6.65466676885, period=2.18447510497, sf=-1.37492765883), SpectralKernel(dimension=0, lengthscale=5.6432137303, period=5.059380997, sf=0.323400628566), SpectralKernel(dimension=0, lengthscale=5.81016467727, period=3.95004863253, sf=-0.622075787117)]), likelihood=LikGauss(sf=-inf), nll=471.090348417, ndata=367)

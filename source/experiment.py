@@ -17,8 +17,8 @@ import random
 import re
 import scipy.io
 
-import flexiblekernel as fk
-from flexiblekernel import ScoredKernel
+import flexible_function as ff
+from flexible_function import GPModel
 import grammar
 import gpml
 import utils.latex
@@ -27,232 +27,198 @@ from cblparallel.util import mkstemp_safe
 import job_controller as jc
 import utils.misc
  
-def remove_nan_scored_kernels(scored_kernels):    
-    not_nan = [k for k in scored_kernels if not np.isnan(k.score())] 
-    eq_nan = [k for k in scored_kernels if np.isnan(k.score())] 
+def remove_nan_scored_models(scored_kernels, score):    
+    not_nan = [k for k in scored_kernels if not np.isnan(ff.GPModel.score(k, criterion=score))] 
+    eq_nan = [k for k in scored_kernels if np.isnan(ff.GPModel.score(k, criterion=score))] 
     return (not_nan, eq_nan)
     
 def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, exp):
     '''Search for the best kernel, in parallel on fear or local machine.'''
     
     # Initialise random seeds - randomness may be used in e.g. data subsetting
-    utils.misc.set_all_random_seeds(exp.random_seed)
 
-    if not exp.model_noise:
-        # Initialise kernels to be all base kernels along all dimensions.
-        current_kernels = list(fk.base_kernels(D, exp.base_kernels))
-    else:
-        # Initialise to white noise kernel
-        #### FIXME - no need in principle for the mask kernel
-        current_kernels = [fk.MaskKernel(D,0,fk.NoiseKernelFamily().default())]
-        # And then expand as per usual
-        current_kernels = grammar.expand_kernels(D, current_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels, rules=exp.search_operators)
-        # Convert to additive form if desired
-        if exp.additive_form:
-            current_kernels = [grammar.additive_form(k) for k in current_kernels]
-            # Using regular expansion rules followed by forcing additive results in lots of redundancy
-            # TODO - this should happen always when other parts of code fixed
-            # Remove any duplicates
-            current_kernels = grammar.remove_duplicates(current_kernels)  
+    utils.misc.set_all_random_seeds(exp.random_seed)
     
     # Create location, scale and minimum period parameters to pass around for initialisations
+
     data_shape = {}
-    data_shape['input_location'] = [np.mean(X[:,dim]) for dim in range(X.shape[1])]
-    data_shape['output_location'] = np.mean(y)
-    data_shape['input_scale'] = np.log([np.std(X[:,dim]) for dim in range(X.shape[1])])
-    data_shape['output_scale'] = np.log(np.std(y)) 
-    data_shape['output_min'] = np.min(y)
-    data_shape['output_max'] = np.max(y)
-    ##### FIXME - only works in one dimension
-    data_shape['input_min'] = [np.min(X[:,dim]) for dim in range(X.shape[1])][0]
-    data_shape['input_max'] = [np.max(X[:,dim]) for dim in range(X.shape[1])][0]
-    data_shape['min_integral_lengthscale'] = np.log(data_shape['input_max'] - data_shape['input_min']) - 2.5
+    data_shape['x_mean'] = [np.mean(X[:,dim]) for dim in range(X.shape[1])]
+    data_shape['y_mean'] = np.mean(y)
+    data_shape['x_sd'] = np.log([np.std(X[:,dim]) for dim in range(X.shape[1])])
+    data_shape['y_sd'] = np.log(np.std(y)) 
+    data_shape['y_min'] = np.min(y)
+    data_shape['y_max'] = np.max(y)
+    data_shape['x_min'] = [np.min(X[:,dim]) for dim in range(X.shape[1])]
+    data_shape['x_max'] = [np.max(X[:,dim]) for dim in range(X.shape[1])]
+
     # Initialise period at a multiple of the shortest / average distance between points, to prevent Nyquist problems.
-    if exp.use_min_period:
-        if exp.period_heuristic_type == 'min':
-            data_shape['min_period'] = np.log([exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]) for i in range(X.shape[1])])
-        elif exp.period_heuristic_type == 'average':
-            data_shape['min_period'] = np.log([exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0] for i in range(X.shape[1])])
-        elif exp.period_heuristic_type == 'both':
-            data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
-        else:
-            warnings.warn('Unrecognised period heuristic type : using most conservative heuristic')
-            data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
-    else:
+
+    if exp.period_heuristic_type == 'none':
         data_shape['min_period'] = None
-    #### TODO - delete these constraints unless you have thought of a reason to keep them - not currently used
-    if exp.use_constraints:
-        data_shape['min_alpha'] = exp.alpha_heuristic
-        data_shape['min_lengthscale'] = exp.lengthscale_heuristic + data_shape['input_scale']
+    if exp.period_heuristic_type == 'min':
+        data_shape['min_period'] = np.log([exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]) for i in range(X.shape[1])])
+    elif exp.period_heuristic_type == 'average':
+        data_shape['min_period'] = np.log([exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0] for i in range(X.shape[1])])
+    elif exp.period_heuristic_type == 'both':
+        data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
     else:
-        data_shape['min_alpha'] = None
-        data_shape['min_lengthscale'] = None
+        warnings.warn('Unrecognised period heuristic type : using most conservative heuristic')
+        data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
+
+    # Initialise mean, kernel and likelihood
+
+    m = eval(exp.mean)
+    k = eval(exp.kernel)
+    l = eval(exp.lik)
+    current_models = [ff.GPModel(mean=m, kernel=k, likelihood=l, ndata=y.size)]
+
+    print '\n\nStarting search with this model:\n'
+    print current_models[0].pretty_print()
+    print ''
+
+    # Perform the initial expansion
+
+    current_models = grammar.expand_models(D=D, models=current_models, base_kernels=exp.base_kernels, rules=exp.search_operators)
+
+    # Convert to additive form if desired
+
+    if exp.additive_form:
+        current_models = [model.additive_form() for model in current_models]
+        current_models = ff.remove_duplicates(current_models)   
+
+    # Set up lists to record search
     
     all_results = [] # List of scored kernels
     results_sequence = [] # List of lists of results, indexed by level of expansion.
     nan_sequence = [] # List of list of nan scored results
     oob_sequence = [] # List of list of out of bounds results
-    
-    noise = None # Initially have no guess at noise
-    
-    best_mae = np.Inf
-    best_kernels = None
-    #### Explanation : Sometimes, marginal likelihood does not pick a kernel that results in dramatically increased predictive performance
-    ####               The below was included to track these kernels - no obvious wins for the search were noted (no crossover between optimising predictions and marginal liklelihood)
-    best_predictor_sequence = [] # List of kernels that were good at predicting
+    best_models = None
     
     # Perform search
     for depth in range(exp.max_depth):
         
         if exp.debug==True:
-            current_kernels = current_kernels[0:4]
+            current_models = current_models[0:4]
              
         # Add random restarts to kernels
-        current_kernels = fk.add_random_restarts(current_kernels, exp.n_rand, exp.sd, data_shape=data_shape)
+        current_models = ff.add_random_restarts(current_models, exp.n_rand, exp.sd, data_shape=data_shape)
+
+        # Print result of expansion
+        if exp.debug:
+            print '\nRandomly restarted kernels\n'
+            for model in current_models:
+                print model.pretty_print()
         
-        # Remove redundancy in kernel expressions - currently only works in additive mode
-        if exp.additive_form:
-            # Additive mode = True tells it to use dangerous hacky tricks that should be replaced
-            current_kernels = [grammar.remove_redundancy(k, additive_mode=True) for k in current_kernels]
-            current_kernels = grammar.remove_duplicates(current_kernels)
+        # Remove any redundancy introduced into kernel expressions
+        current_models = [model.simplified() for model in current_models]
+        # Print result of simplification
+        if exp.debug:
+            print '\nSimplified kernels\n'
+            for model in current_models:
+                print model.pretty_print()
+        current_models = ff.remove_duplicates(current_models)
+        # Print result of duplicate removal
+        if exp.debug:
+            print '\nDuplicate removed kernels\n'
+            for model in current_models:
+                print model.pretty_print()
         
-        # Add jitter to parameter values (empirically discovered to help broken optimiser - hopefully prevents excessive const kernel proliferation)
-        current_kernels = fk.add_jitter(current_kernels, exp.jitter_sd)
+        # Add jitter to parameter values (empirically discovered to help optimiser)
+        current_models = ff.add_jitter(current_models, exp.jitter_sd)
+        # Print result of jitter
+        if exp.debug:
+            print '\nJittered kernels\n'
+            for model in current_models:
+                print model.pretty_print()
         
-        # Add the previous best kernels - in case we just need to optimise more rather than changing structure
-        if not best_kernels is None:
-            for kernel in best_kernels:
-                current_kernels = current_kernels + [kernel.copy()] + fk.add_jitter([kernel.copy() for dummy in range(exp.n_rand)], exp.jitter_sd)
+        # Add the previous best models - in case we just need to optimise more rather than changing structure
+        if not best_models is None:
+            for a_model in best_models:
+                current_models = current_models + [a_model.copy()] + ff.add_jitter_to_models([a_model.copy() for dummy in range(exp.n_rand)], exp.jitter_sd)
         
-        #print 'Trying these kernels'
-        #for result in current_kernels:
-        #    print result.pretty_print()
-        
-        # Randomise the order of the kernels to distribute computationaal load evenly
-        np.random.shuffle(current_kernels)
+        # Randomise the order of the model to distribute computational load evenly
+        np.random.shuffle(current_models)
+
+        # Print current models
+        if exp.debug:
+            print '\nKernels to be evaluated\n'
+            for model in current_models:
+                print model.pretty_print()
         
         # Optimise parameters of and score the kernels
-        new_results = jc.evaluate_kernels(current_kernels, X, y, verbose=exp.verbose, noise = noise, local_computation=exp.local_computation,
-                                          zip_files=True, max_jobs=exp.max_jobs, iters=exp.iters, zero_mean=exp.zero_mean, random_seed=exp.random_seed,
-                                          subset=exp.subset, subset_size=exp.subset_size, full_iters=exp.full_iters, bundle_size=exp.bundle_size,
-                                          no_noise=exp.no_noise)
-                                          
-        #print 'Raw results'
-        #for result in new_results:
-        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
+        new_results = jc.evaluate_models(current_models, X, y, verbose=exp.verbose, local_computation=exp.local_computation,
+                                          zip_files=True, max_jobs=exp.max_jobs, iters=exp.iters, random_seed=exp.random_seed,
+                                          subset=exp.subset, subset_size=exp.subset_size, full_iters=exp.full_iters, bundle_size=exp.bundle_size)
             
-        # Remove kernels that were optimised to be out of bounds (this is similar to a 0-1 prior)
-        new_results = [sk for sk in new_results if not sk.k_opt.out_of_bounds(data_shape)]
-        oob_results = [sk for sk in new_results if sk.k_opt.out_of_bounds(data_shape)]
-        oob_results = sorted(oob_results, key=lambda sk : ScoredKernel.score(sk, exp.score), reverse=True)
+        # Remove models that were optimised to be out of bounds (this is similar to a 0-1 prior)
+        new_results = [a_model for a_model in new_results if not a_model.out_of_bounds(data_shape)]
+        oob_results = [a_model for a_model in new_results if a_model.out_of_bounds(data_shape)]
+        oob_results = sorted(oob_results, key=lambda a_model : GPModel.score(a_model, exp.score), reverse=True)
         oob_sequence.append(oob_results)
-            
-        #print 'Removing out of bounds'
-        #for result in new_results:
-        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
         
         # Some of the scores may have failed - remove nans to prevent sorting algorithms messing up
-        #### TODO - this should not fail silently like this
-        (new_results, nan_results) = remove_nan_scored_kernels(new_results)
-        assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens
-        # Sort the new results
-        new_results = sorted(new_results, key=lambda sk : ScoredKernel.score(sk, exp.score), reverse=True)
-
+        (new_results, nan_results) = remove_nan_scored_models(new_results, exp.score)
         nan_sequence.append(nan_results)
-        
-        #print 'All new results:'
-        #for result in new_results:
-        #    #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
-            
-        #### DEBUG CODE
+        assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens
 
-        #print 'NaNs:'
-        #for result in nan_results:
-        #    print 'BIC=%0.1f' % result.bic_nle, 'AIC=%0.1f' % result.aic_nle, 'Laplace=%0.1f' % result.laplace_nle, 'MAE=%0.1f' % result.mae, result.k_opt.pretty_print()
-            
-        #print 'OOBs:'
-        #for result in oob_results:
-        #    print 'BIC=%0.1f' % result.bic_nle, 'AIC=%0.1f' % result.aic_nle, 'Laplace=%0.1f' % result.laplace_nle, 'MAE=%0.1f' % result.mae, result.k_opt.pretty_print()
+        # Sort the new results
+        new_results = sorted(new_results, key=lambda a_model : GPModel.score(a_model, exp.score), reverse=True)
 
-        print 'All new results after duplicate removal:'
+        print '\nAll new results\n'
         for result in new_results:
-            #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-            print 'BIC=%0.1f' % result.bic_nle, 'AIC=%0.1f' % result.aic_nle, 'Laplace=%0.1f' % result.laplace_nle, 'MAE=%0.1f' % result.mae, result.k_opt.pretty_print()
-            
-        #### Explanation : This heuristic was not especially useful when first tried   
-        # Remove bad predictors
-        #old_best_mae = best_mae
-        #best_mae = min(result.mae for result in new_results)
-        #if old_best_mae == np.Inf:
-        #    cut_off = best_mae * 2
-        #elif best_mae > old_best_mae:
-        #    cut_off = np.Inf
-        #else:
-        #    cut_off = best_mae + 0.5 * (old_best_mae - best_mae)
-        #new_results = [result for result in new_results if (result.mae < cut_off)]
-
-        #print 'All new results after removing bad predictors:'
-        #for result in new_results:
-        #    #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-        #    print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
+            print 'NLL=%0.1f' % result.nll, 'BIC=%0.1f' % result.bic, 'AIC=%0.1f' % result.aic, 'PL2=%0.3f' % result.pl2, result.pretty_print()
 
         all_results = all_results + new_results
-        all_results = sorted(all_results, key=lambda sk : ScoredKernel.score(sk, exp.score), reverse=True)
+        all_results = sorted(all_results, key=lambda a_model : GPModel.score(a_model, exp.score), reverse=True)
 
         results_sequence.append(all_results)
-        #if exp.verbose:
-        #    print 'Printing all results'
-        #    for result in all_results:
-        #        #print result.nll, result.laplace_nle, result.bic_nle, result.npll, result.pic_nle, result.k_opt.pretty_print()
-        #        print result.bic_nle, result.pic_nle, result.mae, result.k_opt.pretty_print()
         
         # Extract the best k kernels from the new all_results
-        best_results = sorted(new_results, key=lambda sk : ScoredKernel.score(sk, exp.score))[0:exp.k]
-        #### Explanation : This would be fixed if kernel objects know their noise - rather than just scored kernels
-        ####               Ultimately we have to decide if we really want all kernels to have the form K + sigma^2*I
-        ####               The answer is probably - but I don't think noise should be treated in a special way as it is currently
-        #### FIXME - this only really works for k = 1 - see comment above
-        noise = best_results[0].noise # Remember the best noise #### WARNING - this only really makes sense when k = 1 since other kernels may have different noise levels
-        best_kernels = [r.k_opt for r in best_results]
+        best_results = sorted(new_results, key=lambda a_model : GPModel.score(a_model, exp.score))[0:exp.k]
+
+        # Print best kernels
+        if exp.debug:
+            print '\nBest models\n'
+            for model in best_results:
+                print model.pretty_print()
         
-        #### Explanation : This heuristic was not especially useful when first tried   
-        # Add the best predicting kernel as well - might lead to a better marginal likelihood eventually
-        #best_kernels = best_kernels + [sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0].k_opt]
-        
-        #### Explanation : Sometimes, marginal likelihood does not pick a kernel that results in dramatically increased predictive performance
-        ####               The below was included to track these kernels - no obvious wins for the search were noted (no crossover between optimising predictions and marginal liklelihood) 
-        best_predictor_sequence += [[sorted(new_results, key=lambda sk : ScoredKernel.score(sk, 'mae'))[0]]]
-        
-        # Expand the best kernels
-        #### Question : Does the grammar expand kernels or is this really a search object?
-        current_kernels = grammar.expand_kernels(D, best_kernels, verbose=exp.verbose, debug=exp.debug, base_kernels=exp.base_kernels, rules=exp.search_operators)
+        # Expand the best models
+        current_models = grammar.expand_models(D=D, models=best_results, base_kernels=exp.base_kernels, rules=exp.search_operators)
+
+        # Print expansion
+        if exp.debug:
+            print '\nExpanded models\n'
+            for model in current_models:
+                print model.pretty_print()
         
         # Convert to additive form if desired
         if exp.additive_form:
-            current_kernels = [grammar.additive_form(k) for k in current_kernels]
-            # Using regular expansion rules followed by forcing additive results in lots of redundancy
-            # TODO - this should happen always when other parts of code fixed
-            # Remove any duplicates
-            current_kernels = grammar.remove_duplicates(current_kernels)
+            current_models = [model.additive_form() for model in current_models]
+            current_models = ff.remove_duplicates(current_models)   
+
+            # Print expansion
+            if exp.debug:
+                print '\Converted into additive\n'
+                for model in current_models:
+                    print model.pretty_print()
         
         # Reduce number of kernels when in debug mode
         if exp.debug==True:
-            current_kernels = current_kernels[0:4]
+            current_models = current_models[0:4]
 
         # Write all_results to a temporary file at each level.
-        all_results = sorted(all_results, key=lambda sk : ScoredKernel.score(sk, exp.score), reverse=True)
+        all_results = sorted(all_results, key=lambda a_model : GPModel.score(a_model, exp.score), reverse=True)
         with open(results_filename + '.unfinished', 'w') as outfile:
             outfile.write('Experiment all_results for\n datafile = %s\n\n %s \n\n' \
                           % (experiment_data_file_name, experiment_fields_to_str(exp)))
-            for (i, (best_predictors, all_results)) in enumerate(zip(best_predictor_sequence, results_sequence)):
+            for (i, all_results) in enumerate(results_sequence):
                 outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
                 if exp.verbose_results:
                     for result in all_results:
                         print >> outfile, result  
                 else:
                     # Only print top k kernels - i.e. those used to seed the next level of the search
-                    for result in sorted(all_results, key=lambda sk : ScoredKernel.score(sk, exp.score))[0:exp.k]:
+                    for result in sorted(all_results, key=lambda a_model : GPModel.score(a_model, exp.score))[0:exp.k]:
                         print >> outfile, result 
         # Write nan scored kernels to a log file
         with open(results_filename + '.nans', 'w') as outfile:
@@ -290,17 +256,17 @@ def parse_results(results_filenames, max_level=None):
             for line in results_file:
                 if line.startswith('score = '):
                     score = line[8:-2]
-                elif line.startswith("ScoredKernel"):
+                elif line.startswith("GPModel"):
                     lines.append(line)
                 elif (not max_level is None) and (len(re.findall('Level [0-9]+', line)) > 0):
                     level = int(line.split(' ')[2])
                     if level > max_level:
                         break
-        result_tuples += [fk.repr_string_to_kernel(line.strip()) for line in lines]
+        result_tuples += [ff.repr_to_model(line.strip()) for line in lines]
     if not score is None:
-        best_tuple = sorted(result_tuples, key=lambda sk : ScoredKernel.score(sk, score))[0]
+        best_tuple = sorted(result_tuples, key=lambda a_model : GPModel.score(a_model, score))[0]
     else:
-        best_tuple = sorted(result_tuples, key=ScoredKernel.score)[0]
+        best_tuple = sorted(result_tuples, key=GPModel.score)[0]
     return best_tuple
 
 def gen_all_datasets(dir):
@@ -322,9 +288,9 @@ def gen_all_datasets(dir):
 # Maybe more natural as a dictionary to handle defaults - but named tuple looks nicer with . notation
 class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, ' + \
                              'n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, ' + \
-                             'iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, ' + \
-                             'random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, ' + \
-                             'lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, ' + \
+                             'iters, base_kernels, additive_form, mean, kernel, lik, verbose_results, ' + \
+                             'random_seed, period_heuristic, ' + \
+                             'subset, subset_size, full_iters, bundle_size, ' + \
                              'search_operators, score, period_heuristic_type')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
@@ -335,9 +301,9 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 k = 1,                        # Keep the k best kernels at every iteration.  1 => greedy search.
                 debug = False,
                 local_computation = True,     # Run experiments locally, or on the cloud.
-                n_rand = 2,                   # Number of random restarts.
-                sd = 4,                       # Standard deviation of random restarts.
-                jitter_sd = 0.5,              # Standard deviation of jitter.
+                n_rand = 9,                   # Number of random restarts.
+                sd = 2,                       # Standard deviation of random restarts.
+                jitter_sd = 0.1,              # Standard deviation of jitter.
                 max_jobs=500,                 # Maximum number of jobs to run at once on cluster.
                 verbose=False,
                 make_predictions=False,       # Whether or not to forecast on a test set.
@@ -345,16 +311,12 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 iters=100,                    # How long to optimize hyperparameters for.
                 base_kernels='SE,Per,Lin,Const',
                 additive_form=False,          # Restrict kernels to be in an additive form?
-                zero_mean=True,               # If false, use a constant mean function - cannot be used with the Const kernel
-                model_noise=False,            # If true, the noise is included in the kernel and searched over
-                no_noise=False,               # Noiseless likelihood - typically = model_noise
+                mean='ff.MeanZero()',      # Starting model
+                kernel='ff.NoiseKernel()', # Starting kernel
+                lik='ff.LikGauss(sf=-np.Inf)', # Starting likelihood 
                 verbose_results=False,        # Whether or not to record all kernels tested
                 random_seed=0,
-		        use_min_period=True,          # Whether to not let the period in a periodic kernel be smaller than the minimum period.
                 period_heuristic=10,          # The minimum number of data points per period (roughly)
-		        use_constraints=False,        # Place hard constraints on some parameter values? #### TODO - should be replaced with a prior / more Bayesian analysis
-                alpha_heuristic=-2,           # Minimum alpha value for RQ kernel
-                lengthscale_heuristic=-4.5,   # Minimum lengthscale 
                 subset=False,                 # Optimise on a subset of the data?
                 subset_size=250,              # Size of data subset
                 full_iters=0,                 # Number of iterations to perform on full data after subset optimisation
@@ -364,9 +326,9 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 period_heuristic_type='both'):               
         return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, \
                                               n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, \
-                                              iters, base_kernels, additive_form, zero_mean, model_noise, no_noise, verbose_results, \
-                                              random_seed, use_min_period, period_heuristic, use_constraints, alpha_heuristic, \
-                                              lengthscale_heuristic, subset, subset_size, full_iters, bundle_size, \
+                                              iters, base_kernels, additive_form, mean, kernel, lik, verbose_results, \
+                                              random_seed, period_heuristic, \
+                                              subset, subset_size, full_iters, bundle_size, \
                                               search_operators, score, period_heuristic_type)
 
 def experiment_fields_to_str(exp):
@@ -406,75 +368,27 @@ def run_experiment_file(filename):
             print 'Skipping file %s' % file
 
     os.system('reset')  # Stop terminal from going invisible.   
-
-def generate_model_fits(filename):
-    """
-    This is intended to be the function that's called to initiate a series of experiments.
-    """       
-    expstring = open(filename, 'r').read()
-    exp = eval(expstring)
-    exp = exp._replace(local_computation = True)
-    print experiment_fields_to_str(exp)
-    
-    data_sets = list(gen_all_datasets(exp.data_dir))
-    
-    # Create results directory if it doesn't exist.
-    if not os.path.isdir(exp.results_dir):
-        os.makedirs(exp.results_dir)
-
-    if exp.random_order:
-        random.shuffle(data_sets)
-
-    for r, file in data_sets:
-        # Check if this experiment has already been done.
-        output_file = os.path.join(exp.results_dir, file + "_result.txt")
-        if os.path.isfile(output_file):
-            print 'Experiment %s' % file
-            print 'Output to: %s' % output_file
-            data_file = os.path.join(r, file + ".mat")
-
-            calculate_model_fits(data_file, output_file, exp )
-            print "Finished file %s" % file
-        else:
-            print 'Skipping file %s' % file
-
-    os.system('reset')  # Stop terminal from going invisible. 
     
 def perform_experiment(data_file, output_file, exp):
     
     if exp.make_predictions:        
-        X, y, D, Xtest, ytest = gpml.load_mat(data_file, y_dim=1)
+        X, y, D, Xtest, ytest = gpml.load_mat(data_file)
         prediction_file = os.path.join(exp.results_dir, os.path.splitext(os.path.split(data_file)[-1])[0] + "_predictions.mat")
     else:
-        X, y, D = gpml.load_mat(data_file, y_dim=1)
+        X, y, D = gpml.load_mat(data_file)
         
     perform_kernel_search(X, y, D, data_file, output_file, exp)
-    best_scored_kernel = parse_results(output_file)
+    best_model = parse_results(output_file)
     
     if exp.make_predictions:
-        predictions = jc.make_predictions(X, y, Xtest, ytest, best_scored_kernel, local_computation=True,
-                                          max_jobs=exp.max_jobs, verbose=exp.verbose, zero_mean=exp.zero_mean, random_seed=exp.random_seed,
-                                          no_noise=exp.no_noise)
+        print '\nMaking predictions\n'
+        predictions = jc.make_predictions(X, y, Xtest, ytest, best_model, local_computation=True,
+                                          max_jobs=exp.max_jobs, verbose=exp.verbose, random_seed=exp.random_seed)
         scipy.io.savemat(prediction_file, predictions, appendmat=False)
-        
-    os.system('reset')  # Stop terminal from going invisible.
-    
-def calculate_model_fits(data_file, output_file, exp):
-         
-    prediction_file = os.path.join(exp.results_dir, os.path.splitext(os.path.split(data_file)[-1])[0] + "_predictions.mat")
-    X, y, D, = gpml.load_mat(data_file, y_dim=1)
-    Xtest = X
-    ytest = y
-        
-    best_scored_kernel = parse_results(output_file)
-    
-    predictions = jc.make_predictions(X, y, Xtest, ytest, best_scored_kernel, local_computation=exp.local_computation,
-                                      max_jobs=exp.max_jobs, verbose=exp.verbose, zero_mean=exp.zero_mean, random_seed=exp.random_seed)
-    scipy.io.savemat(prediction_file, predictions, appendmat=False)
         
     os.system('reset')  # Stop terminal from going invisible.
    
 
 def run_debug_kfold():
     """This is a quick debugging function."""
-    run_experiment_file('../experiments/debug_example.py')
+    run_experiment_file('../experiments/debug/debug_example.py')

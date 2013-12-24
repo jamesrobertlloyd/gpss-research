@@ -1,4 +1,4 @@
-Experiment(description='First attempt at change point extrapolation experiment',
+Experiment(description='Change point extrapolation experiment with latest code',
            data_dir='../data/tsdlr_9010/',
            max_depth=10, 
            random_order=False,
@@ -8,24 +8,26 @@ Experiment(description='First attempt at change point extrapolation experiment',
            n_rand=9,
            sd=2, 
            jitter_sd=0.1,
-           max_jobs=800, 
+           max_jobs=300, 
            verbose=False,
            make_predictions=True,
            skip_complete=True,
            results_dir='../results/2013-11-11-extrap-CP/',
            iters=250,
            base_kernels='SE,Noise',
-           zero_mean=True,
            random_seed=1,
-           period_heuristic=2,
+           period_heuristic=3,
+           period_heuristic_type='min',
            subset=True,
            subset_size=250,
            full_iters=10,
            bundle_size=5,
            additive_form=True,
-           model_noise=True,
-           no_noise=True,
-           search_operators=[('A', ('+', 'A', 'B'), {'A': 'multi', 'B': 'mask'}),\
-                             ('A', 'B', {'A': 'multi', 'B': 'mask'}),\
-                             ('A', ('None',), {'A': 'multi'}),\
-                             ('A', ('CP', 'A'), {'A': 'multi'})])
+           mean='ff.MeanZero()',      # Starting mean
+           kernel='ff.NoiseKernel()', # Starting kernel
+           lik='ff.LikGauss(sf=-np.Inf)', # Starting likelihood 
+           score='bic',
+           search_operators=[('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),
+                             ('A', 'B', {'A': 'kernel', 'B': 'base'}),
+                             ('A', ('None',), {'A': 'kernel'}),
+                             ('A', ('CP', 'd', 'A'), {'A': 'kernel', 'd' : 'dimension'})])

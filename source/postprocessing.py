@@ -112,13 +112,6 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix
                 (y_mean, y_scale) = (y_unscaled.mean(), y_unscaled.std())
             else:
                 (X_mean, X_scale, y_mean, y_scale) = (0,1,0,1)
-                
-            # A shunt to deal with a legacy issue.
-            if datafile == '../data/1d_data/01-airline-months.mat':
-                # Scaling should turn months starting at zero into years starting at 1949
-                print "Special rescaling for airline months data"
-                X_mean = X_mean + 1949
-                X_scale = 1.0/12.0
                                 
             model = exp.parse_results(results_files)
             model = model.simplified().canonical()

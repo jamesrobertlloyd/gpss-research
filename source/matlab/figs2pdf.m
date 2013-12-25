@@ -90,8 +90,10 @@
 % latexdir = '../../analyses/debug-bic/figures';
 % topdir = '../../analyses/telescope/figures';
 % latexdir = '../../analyses/telecope/figures';
-topdir = '../../analyses/telescope-add/figures';
-latexdir = '../../analyses/telecope-add/figures';
+% topdir = '../../analyses/telescope-add/figures';
+% latexdir = '../../analyses/telecope-add/figures';
+topdir = '../../analyses/2013-12-10-extrap-GPSS/figures';
+latexdir = '../../analyses/2013-12-10-extrap-GPSS/figures';
 dirnames = dir(topdir);
 isub = [dirnames(:).isdir]; %# returns logical vector
 dirnames = {dirnames(isub).name}';

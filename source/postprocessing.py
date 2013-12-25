@@ -115,15 +115,23 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix
                                 
             model = exp.parse_results(results_files)
             model = model.simplified().canonical()
+            kernel_components = model.kernel.break_into_summands()
+            kernel_components = ff.SumKernel(kernel_components).simplified().canonical().operands
             print model.pretty_print()
             fig_folder = os.path.join(save_folder, (prefix + file))
             if not os.path.exists(fig_folder):
                 os.makedirs(fig_folder)
-            # Call gpml to plot the decomposition and evaluate the kernels
-            (code, kernel_components) = gpml.plot_decomposition(model, X, y, D, os.path.join(fig_folder, file), X_mean, X_scale, y_mean, y_scale, dont_run_code_hack=skip_kernel_evaluation)
+            # First ask GPML to order the components
+            print 'Determining order of components'
+            (component_order, mae_data) = gpml.order_by_mae(model, kernel_components, X, y, D, os.path.join(fig_folder, file), skip_kernel_evaluation=skip_kernel_evaluation)
+            print 'Plotting decomposition and computing basic stats'
+            component_data = gpml.component_stats(model, kernel_components, X, y, D, os.path.join(fig_folder, file), component_order, skip_kernel_evaluation=skip_kernel_evaluation)
+            print 'Computing model checking stats'
+            checking_stats = gpml.checking_stats(model, kernel_components, X, y, D, os.path.join(fig_folder, file), component_order, make_plots=True, skip_kernel_evaluation=skip_kernel_evaluation)
             # Now the kernels have been evaluated we can translate the revelant ones
-            evaluation_data = scipy.io.loadmat(os.path.join(fig_folder, '%s_decomp_data.mat' % file))
-            component_order = evaluation_data['idx'].ravel() - 1 # MATLAB to python OBOE
+            evaluation_data = mae_data
+            evaluation_data.update(component_data)
+            evaluation_data.update(checking_stats)
             evaluation_data['vars'] = evaluation_data['vars'].ravel()
             evaluation_data['cum_vars'] = evaluation_data['cum_vars'].ravel()
             evaluation_data['cum_resid_vars'] = evaluation_data['cum_resid_vars'].ravel()

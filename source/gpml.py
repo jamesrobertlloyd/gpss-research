@@ -186,8 +186,15 @@ a='Supposedly finished writing file'
 %% exit();
 """
 
-# Matlab code to decompose posterior into additive parts.
-MATLAB_PLOT_DECOMP_CALLER_CODE = r"""
+def standardise_and_save_data(X, y):
+    if X.ndim == 1: X = X[:, nax]
+    if y.ndim == 1: y = y[:, nax]
+    data = {'X': X, 'y': y}
+    (fd1, temp_data_file) = tempfile.mkstemp(suffix='.mat')
+    scipy.io.savemat(temp_data_file, data)
+    return (fd1, temp_data_file)
+
+MATLAB_ORDER_BY_MAE_CODE = r"""
 load '%(datafile)s'  %% Load the data, it should contain X and y.
 X = double(X);
 y = double(y);
@@ -203,37 +210,21 @@ lik_family = %(lik_syntax)s;
 lik_params = %(lik_params)s;
 kernel_family_list = %(kernel_syntax_list)s;
 kernel_params_list = %(kernel_params_list)s;
-inference = '%(inference)s';
 figname = '%(figname)s';
-latex_names = %(latex_names)s;
-full_kernel_name = %(full_kernel_name)s;
-X_mean = %(X_mean)f;
-X_scale = %(X_scale)f;
-y_mean = %(y_mean)f;
-y_scale = %(y_scale)f;
 
-plot_decomp(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, lik_family, lik_params, figname, latex_names, full_kernel_name, X_mean, X_scale, y_mean, y_scale)
+order_by_mae_reduction(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, lik_family, lik_params, figname)
 exit();"""
 
-
-def plot_decomposition(model, X, y, D, figname, X_mean=0, X_scale=1, y_mean=0, y_scale=1, dont_run_code_hack=False):
+def order_by_mae(model, kernel_components, X, y, D, figname, skip_kernel_evaluation=False):
     matlab_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'matlab'))
     figname = os.path.abspath(os.path.join(os.path.dirname(__file__), figname))
-    print 'Plotting to: %s' % figname
+    print 'Saving to: %s' % figname
     
-    #### TODO - this should be extended to breaking an entire model into summands
-    kernel_components = model.kernel.break_into_summands()
-    kernel_components = ff.SumKernel(kernel_components).simplified().canonical().operands
-    latex_names = [k.latex.strip() for k in kernel_components]
     kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector) for k in kernel_components)
     
-    if X.ndim == 1: X = X[:, nax]
-    if y.ndim == 1: y = y[:, nax]
-    data = {'X': X, 'y': y}
-    (fd1, temp_data_file) = tempfile.mkstemp(suffix='.mat')
-    scipy.io.savemat(temp_data_file, data)
+    (fd1, temp_data_file) = standardise_and_save_data(X, y)
     
-    code = MATLAB_PLOT_DECOMP_CALLER_CODE
+    code = MATLAB_ORDER_BY_MAE_CODE
     code = code % {'datafile': temp_data_file,
         'gpml_path': config.GPML_PATH,
         'matlab_script_path': matlab_dir,
@@ -243,23 +234,128 @@ def plot_decomposition(model, X, y, D, figname, X_mean=0, X_scale=1, y_mean=0, y
         'kernel_params': '[ %s ]' % ' '.join(str(p) for p in model.kernel.param_vector),
         'lik_syntax': model.likelihood.get_gpml_expression(dimensions=D),
         'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
-        'inference': model.likelihood.gpml_inference_method,
         'kernel_syntax_list': '{ %s }' % ','.join(str(k.get_gpml_expression(dimensions=D)) for k in kernel_components),
         'kernel_params_list': '{ %s }' % kernel_params_list,
-        'latex_names': "{ ' %s ' }" % "','".join(latex_names),
-        'full_kernel_name': "{ '%s' }" % model.kernel.latex.strip(), 
-        'figname': figname,
-        'X_mean' : X_mean,
-        'X_scale' : X_scale,
-        'y_mean' : y_mean,
-        'y_scale' : y_scale}
+        'figname': figname}
     
-    if not dont_run_code_hack:
+    if not skip_kernel_evaluation:
         run_matlab_code(code, verbose=True, jvm=True)
     os.close(fd1)
     # The below is commented out whilst debugging
     #os.remove(temp_data_file)
-    return (code, kernel_components)
+    mae_data = scipy.io.loadmat(figname + '_mae_data.mat')
+    component_order = mae_data['idx'].ravel() - 1 # MATLAB to python OBOE
+    return (component_order, mae_data)
+
+MATLAB_COMPONENT_STATS_CODE = r"""
+load '%(datafile)s'  %% Load the data, it should contain X and y.
+X = double(X);
+y = double(y);
+
+addpath(genpath('%(gpml_path)s'));
+addpath(genpath('%(matlab_script_path)s'));
+
+mean_family = %(mean_syntax)s;
+mean_params = %(mean_params)s;
+kernel_family = %(kernel_syntax)s;
+kernel_params = %(kernel_params)s;
+lik_family = %(lik_syntax)s;
+lik_params = %(lik_params)s;
+kernel_family_list = %(kernel_syntax_list)s;
+kernel_params_list = %(kernel_params_list)s;
+figname = '%(figname)s';
+idx = %(component_order)s;
+
+component_stats_and_plots(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, lik_family, lik_params, figname, idx)
+exit();"""
+
+def component_stats(model, kernel_components, X, y, D, figname, component_order, skip_kernel_evaluation=False):
+    matlab_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'matlab'))
+    figname = os.path.abspath(os.path.join(os.path.dirname(__file__), figname))
+    print 'Saving to: %s' % figname
+    
+    kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector) for k in kernel_components)
+    
+    (fd1, temp_data_file) = standardise_and_save_data(X, y)
+    
+    code = MATLAB_COMPONENT_STATS_CODE
+    code = code % {'datafile': temp_data_file,
+        'gpml_path': config.GPML_PATH,
+        'matlab_script_path': matlab_dir,
+        'mean_syntax': model.mean.get_gpml_expression(dimensions=D),
+        'mean_params': '[ %s ]' % ' '.join(str(p) for p in model.mean.param_vector),
+        'kernel_syntax': model.kernel.get_gpml_expression(dimensions=D),
+        'kernel_params': '[ %s ]' % ' '.join(str(p) for p in model.kernel.param_vector),
+        'lik_syntax': model.likelihood.get_gpml_expression(dimensions=D),
+        'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
+        'kernel_syntax_list': '{ %s }' % ','.join(str(k.get_gpml_expression(dimensions=D)) for k in kernel_components),
+        'kernel_params_list': '{ %s }' % kernel_params_list,
+        'figname': figname,
+        'component_order': '[ %s ]' % ' '.join(str(comp) for comp in component_order+1)}
+    
+    if not skip_kernel_evaluation:
+        run_matlab_code(code, verbose=True, jvm=True)
+    os.close(fd1)
+    # The below is commented out whilst debugging
+    #os.remove(temp_data_file)
+    component_data = scipy.io.loadmat(figname + '_component_data.mat')
+    return component_data
+
+MATLAB_CHECKING_STATS_CODE = r"""
+load '%(datafile)s'  %% Load the data, it should contain X and y.
+X = double(X);
+y = double(y);
+
+addpath(genpath('%(gpml_path)s'));
+addpath(genpath('%(matlab_script_path)s'));
+
+mean_family = %(mean_syntax)s;
+mean_params = %(mean_params)s;
+kernel_family = %(kernel_syntax)s;
+kernel_params = %(kernel_params)s;
+lik_family = %(lik_syntax)s;
+lik_params = %(lik_params)s;
+kernel_family_list = %(kernel_syntax_list)s;
+kernel_params_list = %(kernel_params_list)s;
+figname = '%(figname)s';
+idx = %(component_order)s;
+plot = %(plot)s;
+
+checking_stats(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, lik_family, lik_params, figname, idx, plot)
+exit();"""
+
+def checking_stats(model, kernel_components, X, y, D, figname, component_order, make_plots=False, skip_kernel_evaluation=False):
+    matlab_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'matlab'))
+    figname = os.path.abspath(os.path.join(os.path.dirname(__file__), figname))
+    print 'Saving to: %s' % figname
+    
+    kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector) for k in kernel_components)
+    
+    (fd1, temp_data_file) = standardise_and_save_data(X, y)
+    
+    code = MATLAB_CHECKING_STATS_CODE
+    code = code % {'datafile': temp_data_file,
+        'gpml_path': config.GPML_PATH,
+        'matlab_script_path': matlab_dir,
+        'mean_syntax': model.mean.get_gpml_expression(dimensions=D),
+        'mean_params': '[ %s ]' % ' '.join(str(p) for p in model.mean.param_vector),
+        'kernel_syntax': model.kernel.get_gpml_expression(dimensions=D),
+        'kernel_params': '[ %s ]' % ' '.join(str(p) for p in model.kernel.param_vector),
+        'lik_syntax': model.likelihood.get_gpml_expression(dimensions=D),
+        'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
+        'kernel_syntax_list': '{ %s }' % ','.join(str(k.get_gpml_expression(dimensions=D)) for k in kernel_components),
+        'kernel_params_list': '{ %s }' % kernel_params_list,
+        'figname': figname,
+        'component_order': '[ %s ]' % ' '.join(str(comp) for comp in component_order+1),
+        'plot': 'true' if make_plots else 'false'}
+    
+    if not skip_kernel_evaluation:
+        run_matlab_code(code, verbose=True, jvm=True)
+    os.close(fd1)
+    # The below is commented out whilst debugging
+    #os.remove(temp_data_file)
+    checking_stats = scipy.io.loadmat(figname + '_checking_stats.mat')
+    return checking_stats
 
 def load_mat(data_file, y_dim=0):
     '''

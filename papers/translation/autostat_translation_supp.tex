@@ -203,8 +203,8 @@ An automatic regression system would ideally report the most interesting or impo
 However, measuring importance is subjective.
 We make the choice that additive components are important if they produce accurate extrapolations and order the components by this metric.
 
-Specifically, after fitting a model to a data set we divide the data set into 10 equally sized contiguous blocks.
-For each component and each block we compute the posterior predictive distribution of the component within the full model after training on the other 9 blocks.
+Specifically, after selecting an additive kernel for a data set we divide the data set into 10 equally sized contiguous blocks.
+For each additive component and each block we compute the posterior predictive distribution of the component within the full model after training on the other 9 blocks.
 We measure the mean absolute difference between the data in the other block and the posterior mean of the component.
 The mean absolute difference is then averaged over all blocks.
 The component with the lowest mean absolute difference is selected as the first component.

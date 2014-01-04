@@ -804,7 +804,7 @@ In addition to the three time series analysed in \cite{DuvLloGroetal13} we evalu
 
 \paragraph{Algorithms}
 
-We compare the structure search algorithm to equation learning \cite{Schmidt2009b} and four other regression algorithms; additive nonparametric (cite), change point modelling (cite) / multi resolution Gaussian processes (cite), spectral kernels (cite) and trend-cyclical-irregular (cite).
+We compare the structure search algorithm to equation learning \cite{Schmidt2009b} \fTBD{Work in progress} and four other regression algorithms; additive nonparametric (cite) (SE), change point modelling (cite) (CP) / multi resolution Gaussian processes (cite), spectral kernels (SP) (cite) and trend-cyclical-irregular (TCI) (cite).
 These four algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}).
 
 We restrict to regression algorithms for comparability; this excludes models which regress on previous values of times series (\eg cite ARIMA or similar).
@@ -869,37 +869,26 @@ This suggests that models composed of kernels of the form $(\kSE + \kC) \times \
 
 \section{Discussion}
 
-\TBD{Have another go at this}
+\TBD{Help requested - haven't thought of a definitive conclusion myself}
 
-The contributions of this paper are two-fold
-\begin{itemize}
-  \item An expanded model construction algorithm for regression with superior interpolation and extrapolation performance compared to other model construction motifs
-  \item The automatic translation of any model expressible in our language of kernels into natural-language
-\end{itemize}
-The first is a traditional contribution to machine learning or statistical methodology.
-The second is clear to any researcher familiar with Gaussian processes or related techniques.
-However, in sum this manuscript is a contribution to artificial intelligence, automating a part of the process of statistical analysis that is currently performed by humans.
+Towards the goal of automating the process of statistical analysis we have introduced a system that can automatically describe the complex statistical models it produces.
 
-\paragraph{Disconnected notes}
+\paragraph{Disconnected unordered notes}
 
-\NA{
-Please feel free to note down anything that seems sensible to discuss here - I am yet to think of a definitive conclusion.
-}
+Changepoints and heteroscedasticity now included leading to increased expressivity and interpretability.
 
-\NA{
-We should demand the same transparency of statistical models as we do a junior employee - although continuing the analogy we sometimes do not expect transparency from a genius (deep neural nets? - j/k).
-}
+GPSS superior at extrapolation and interpolation, but results are high variance - robustness needs to be improved (which probably means a better search algorithm).
 
-\NA{
+Automatically generating descriptions makes interpretability objective - rather than a post-hoc step performed by experts.
+
+Describing complex statistical models makes them more transparent to the non-expert user.
+
 If we can explain something in plain language then we should.
-}
 
-\NA{
-What are the correct metrics?
-A good description should reflect a statistical model that can predict well.
-Interpolation and extrapolation are one measure of prediction.
-Another measure could be scientific discovery - this feels like the ultimate test.
-}
+The improved grammar is a machine learning contribution - the translation is an AI contribution (there was no learning involved, just the application of rules).
+
+We encourage others to make their models automatically describable - but what are the metrics of success at this task?
+For statistical regression the ultimate measure of success is a scientific discovery based on an automated analysis - but we are a way off from that (need to go into higher dimensions with better search I think).
 
 \paragraph{Source Code}
 Source code to perform all experiments is available on github.\footnote{

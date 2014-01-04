@@ -1,0 +1,215 @@
+% Use the following line _only_ if you're still using LaTeX 2.09.
+%\documentstyle[icml2014,epsf,natbib]{article}
+% If you rely on Latex2e packages, like most modern people use this:
+\documentclass{article}
+
+% use Times
+\usepackage{times}
+% For figures
+\usepackage{graphicx} % more modern
+%\usepackage{epsfig} % less modern
+\usepackage{subfigure} 
+
+% For citations
+\usepackage{natbib}
+
+% For algorithms
+%\usepackage{algorithm}
+%\usepackage{algorithmic}
+%\usepackage{algorithmicx}
+
+% As of 2011, we use the hyperref package to produce hyperlinks in the
+% resulting PDF.  If this breaks your system, please commend out the
+% following usepackage line and replace \usepackage{icml2014} with
+% \usepackage[nohyperref]{icml2014} above.
+\usepackage{hyperref}
+
+% Packages hyperref and algorithmic misbehave sometimes.  We can fix
+% this with the following command.
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Employ the following version of the ``usepackage'' statement for
+% submitting the draft version of the paper for review.  This will set
+% the note in the first column to ``Under review.  Do not distribute.''
+\usepackage{format/icml2014} 
+% Employ this version of the ``usepackage'' statement after the paper has
+% been accepted, when creating the final version.  This will set the
+% note in the first column to ``Proceedings of the...''
+%\usepackage[accepted]{icml2014}
+
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{color}
+\usepackage{preamble}
+\definecolor{mydarkblue}{rgb}{0,0.08,0.45}
+\hypersetup{ %
+    pdftitle={},
+    pdfauthor={},
+    pdfsubject={},
+    pdfkeywords={},
+    pdfborder=0 0 0,
+    pdfpagemode=UseNone,
+    colorlinks=true,
+    linkcolor=mydarkblue,
+    citecolor=mydarkblue,
+    filecolor=mydarkblue,
+    urlcolor=mydarkblue,
+    pdfview=FitH}
+    
+    
+\usepackage{amsmath, amsfonts, bm, lipsum, capt-of}
+\usepackage{natbib, xcolor, wrapfig, booktabs, multirow, caption}
+\DeclareCaptionType{copyrightbox}
+\usepackage{float}
+
+
+%\renewcommand{\baselinestretch}{0.99}
+
+\def\ie{i.e.\ }
+\def\eg{e.g.\ }
+\let\oldemptyset\emptyset
+\let\emptyset\varnothing
+
+%\author{
+%James Robert Lloyd\\
+%University of Cambridge\\
+%Department of Engineering\\
+%\texttt{jrl44@cam.ac.uk}
+%\And
+%David Duvenaud\\
+%University of Cambridge \\
+%Department of Engineering \\
+%\texttt{dkd23@cam.ac.uk}
+%\And
+%Roger Grosse\\
+%M.I.T.\\
+%Brain and Cognitive Sciences \\
+%\texttt{rgrosse@mit.edu}
+%\And
+%Joshua B. Tenenbaum\\
+%M.I.T.\\
+%Brain and Cognitive Sciences \\
+%\texttt{jbt@mit.edu}
+%\And
+%Zoubin Ghahramani\\
+%University of Cambridge \\
+%Department of Engineering \\
+%\texttt{zoubin@eng.cam.ac.uk}
+%}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\setlength{\marginparwidth}{0.6in}
+\input{include/commenting.tex}
+
+%% For submission, make all render blank.
+%\renewcommand{\LATER}[1]{}
+%\renewcommand{\fLATER}[1]{}
+%\renewcommand{\TBD}[1]{}
+%\renewcommand{\fTBD}[1]{}
+%\renewcommand{\PROBLEM}[1]{}
+%\renewcommand{\fPROBLEM}[1]{}
+%\renewcommand{\NA}[1]{#1}  % Note, NA's pass through!
+
+
+% The \icmltitle you define below is probably too long as a header.
+% Therefore, a short form for the running title is supplied here:
+\icmltitlerunning{Automatic construction and natural-language summarization of additive nonparametric models -- supplementary material}
+
+\begin{document} 
+
+\twocolumn[
+\icmltitle{Automatic construction and natural-language summarization\\of additive nonparametric models -- supplementary material}
+
+% It is OKAY to include author information, even for blind
+% submissions: the style file will automatically remove it for you
+% unless you've provided the [accepted] option to the icml2014
+% package.
+\icmlauthor{Your Name}{email@yourdomain.edu}
+\icmladdress{Your Fantastic Institute,
+            314159 Pi St., Palo Alto, CA 94306 USA}
+\icmlauthor{Your CoAuthor's Name}{email@coauthordomain.edu}
+\icmladdress{Their Fantastic Institute,
+            27182 Exp St., Toronto, ON M6H 2T1 CANADA}
+
+% You may provide any keywords that you 
+% find helpful for describing your paper; these are used to populate 
+% the "keywords" metadata in the PDF but will not be shown in the document
+\icmlkeywords{}
+
+\vskip 0.3in
+]
+
+\allowdisplaybreaks
+
+\section{Kernel equations}
+
+For scalar-valued inputs, the zero ($\emptyset$), white noise ($\kWN$), constant ($\kC$), linear ($\kLin$), squared exponential ($\kSE$), and periodic kernels ($\kPer$) are defined as follows:
+%
+\begin{eqnarray}
+\kernel_{\emptyset}(\inputVar, \inputVar') =& 0 \\
+\kernel_{\kWN}(\inputVar, \inputVar') =& \sigma^2\delta_{\inputVar, \inputVar'} \\
+\kernel_{\kC}(\inputVar, \inputVar') =& \sigma^2 \\
+\kernel_{\kLin}(\inputVar, \inputVar') =& \sigma^2(\inputVar - \ell)(\inputVar' - \ell) \\
+\kernel_{\kSE}(\inputVar, \inputVar') =& \sigma^2\exp\left(-\frac{(\inputVar - \inputVar')^2}{2\ell^2}\right) \\
+\kernel_{\kPer}(\inputVar, \inputVar') =&  \sigma^2\frac{\exp\left(\frac{\cos\frac{2 \pi (\inputVar - \inputVar')}{p}}{\ell^2}\right) - I_0\left(\frac{1}{\ell^2}\right)}{\exp\left(\frac{1}{\ell^2}\right) - I_0\left(\frac{1}{\ell^2}\right)}
+\end{eqnarray}
+%
+where $\delta_{\inputVar, \inputVar'}$ is the Kronecker delta and $I_0$ is the modified Bessel function of the first kind of order 0.
+
+\section{Search operators}
+
+The original GPSS algorithm included the following search operators
+%
+\begin{eqnarray}
+\mathcal{S} &\to& \mathcal{S} + \mathcal{B} \\
+\mathcal{S} &\to& \mathcal{S} \times \mathcal{B} \\
+\mathcal{B} &\to& \mathcal{B'}
+\end{eqnarray}
+%
+where $\mathcal{S}$ represents any kernel subexpression and $\mathcal{B}$ is any base kernel within a kernel expression \ie the search operators represent addition, multiplication and replacement.
+
+To accommodate changepoint/window operators we introduce the following additional operators
+%
+\begin{eqnarray}
+\mathcal{S} &\to& \kCP(\mathcal{S},\mathcal{S}) \\
+\mathcal{S} &\to& \kCW(\mathcal{S},\mathcal{S}) \\
+\mathcal{S} &\to& \kCW(\mathcal{S},\kC) \\
+\mathcal{S} &\to& \kCW(\kC,\mathcal{S})
+\end{eqnarray}
+%
+where $\kC$ is the constant kernel.
+The last two operators result in a kernel only applying outside or within a certain region.
+
+Based on experience with typical paths followed by the search algorithm of GPSS we introduced the following operators
+%
+\begin{eqnarray}
+\mathcal{S} &\to& \mathcal{S} \times (\mathcal{B} + \kC)\\
+\mathcal{S} &\to& \mathcal{B}\\
+\mathcal{S} &\to& \emptyset
+\end{eqnarray}
+%
+where $\emptyset$ indicates that the subexpression has been removed.
+Their introduction is currently not rigorously justified.
+Further research into the search strategy would be a profitable area of future study.
+
+\section{Translation of kernel functions}
+
+\subsection{Ordering additive components}
+
+An automatic regression system would ideally report the most interesting or important features of a data set first.
+However, measuring importance is subjective.
+We make the choice that additive components are important if they produce accurate extrapolations and order the components by this metric.
+
+Specifically, after fitting a model to a data set we divide the data set into 10 equally sized contiguous blocks.
+For each component and each block we compute the posterior predictive distribution of the component within the full model after training on the other 9 blocks.
+We measure the mean absolute difference between the data in the other block and the posterior mean of the component.
+The mean absolute difference is then averaged over all blocks.
+The component with the lowest mean absolute difference is selected as the first component.
+
+The ordering continues by computing the posterior predictive distribution of the sum of the first component and each of the remaining components and evaluating the mean absolute difference in the manner described above.
+The procedure iterates until the ordering is complete \ie it is a type of forward selection algorithm.
+
+\end{document} 

@@ -279,9 +279,13 @@ cite Sheffield's orthogonal RKHS work?
 
 \subsection{A separate constant kernel}
 
+\TBD{Several small changes - how do we not bore the reader?}
+
 We also remove the constant component from $\kLin$ and introduce the constant function as a separate base kernel to improve interpretability.
 
 \subsection{No rational quadratic}
+
+\TBD{Several small changes - how do we not bore the reader?}
 
 The work of \cite{DuvLloGroetal13} also included the rational quadratic kernel which can be represented as a mixture of $\kSE$ with different lengthscales.
 In preliminary investigations we found that this mixture of lengthscales could result in individual components expressing smooth trends and noise like components simultaneously.
@@ -774,7 +778,8 @@ By multiplying a white noise kernel by a linear kernel the model is able to expr
 Much of machine learning research focuses on numerical performance, with claims of interpretability generated post-hoc.
 In contrast, equation learning (cite) can also be used to automate the process of interpretation/.
 
-We include learned equations for these two data sets produced using Eureqa (cite).
+We include learned equations for these two data sets produced using Eureqa (cite) using the default mean absolute error performance metrix\footnotemark.
+\footnotetext{We experimented with the root mean squared error with Akaike information criterion penalisation (this is most comparable to the Bayesian information criterion used by GPSS) but occasionally observed severe overfitting.}
 However, it is very unlikely that these data sets can be explained parsimoniously with a parametric function.
 
 The learned equation for the solar irradiance data is
@@ -789,25 +794,28 @@ The learned equation for the airline passenger data is
 \textrm{Passengers} = \alpha t + \beta\cos(\gamma - \delta t)\textrm{logistic}(\epsilon t - \zeta) - \eta
 \end{equation}
 which captures the approximately linear trend, and the periodic component with approximately linearly (logistic) increasing amplitude.
-However, the periodicity is heavily approximated with only a single sinusoid.
+However, the periodicity is heavily approximated with only a single sinusoid and the models searched over have no way of expressing heteroskedasticity.
 
 \section{Numerical evaluation}
 \label{sec:numerical}
 
 To complement our demonstration of the interpretability of our method, we conducted numerical experiments testing the ability of various model building algorithms to interpolate and extrapolate time-series.
-GPSS outperforms the other methods on average (\eg as measured by quantiles of performance metrics) but the differences between the top performing methods are small.
-The variability of the results also suggests there is room to improve the robustness of GPSS.
+GPSS outperforms the other methods on average (\eg as measured by quantiles of performance metrics).
+\NA{However, the variability of the results suggests that there is room to improve the robustness of GPSS.}\fTBD{I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
 
 \paragraph{Data sets}
 
-In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of GPSS and 5 other algorithms on 10 additional time series from (cite time series data library); plots are given in the appendix.
+In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of GPSS and 5 other algorithms on 10 additional time series from (cite time series data library); plots can be found at the beginning of the reports in the supplementary material.
 
 \paragraph{Algorithms}
 
-We compare the structure search algorithm to equation learning \cite{Schmidt2009b} \fTBD{Work in progress} and four other regression algorithms; additive nonparametric (cite) (SE), change point modelling (cite) (CP) / multi resolution Gaussian processes (cite), spectral kernels (SP) (cite) and trend-cyclical-irregular (TCI) (cite).
-These four algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}).
+We compare the structure search algorithm to equation learning (EL) \cite{Schmidt2009b} \fTBD{interpolation work in progress} and four other regression algorithms; additive nonparametric (cite) (SE), change point modelling (cite) (CP) / multi resolution Gaussian processes (cite), spectral kernels (SP) (cite) and trend-cyclical-irregular (TCI) (cite).\fTBD{I could add a single Sq-exp GP as a reference point?}
 
-We restrict to regression algorithms for comparability; this excludes models which regress on previous values of times series (\eg cite ARIMA or similar).
+We use the default mean absolute error criterion when using Eureqa.
+The other four algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion (Bayesian information criterion) with appropriate restrictions to the grammar\footnotemark.
+\footnotetext{We experimented with using unpenalised conditional likelihood as the search criterion but observed overfitting as is to be expected.} 
+
+We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series (\eg cite ARIMA or similar).
 Producing model construction algorithms for this class of time-series model would be an interesting area for future research.
 
 \paragraph{Interpolation}
@@ -816,9 +824,10 @@ To test the ability of the methods to interpolate, we randomly divided each data
 We trained each algorithm on the training half of the data, produced predictions for the remaining half and then computed the root mean squared error (RMSE).
 The values of the RMSEs are then standardised by dividing by the smallest RMSE for each data set \ie the best performance on each data set will have a value of 1.
 
-Figure~\ref{fig:box_interp} shows the standardised RMSEs for the different algorithms (raw data and box plots).
+Figure~\ref{fig:box_interp} shows the standardised RMSEs for the different algorithms (raw data and box plots)\fTBD{I will add the raw data to the supplementary material}.
 The box plots demonstrate that all quartiles of the distribution of standardised RMSEs are lower for GPSS.
-However, the medians and largest outliers of GPSS, SP and TCI are all quite similar in value so we should conclude that all methods are similarly effective at interpolation.
+The median for GPSS is 1 \ie it was the best performing algorithm on 9 of the datasets.
+However, the largest outliers of GPSS, TCI and SP are all quite similar in value.
 
 \begin{figure}[h]
 \centering
@@ -829,24 +838,26 @@ Raw data, and box plot of standardised interpolation RMSE (best performance = 1)
 \label{fig:box_interp}
 \end{figure}
 
-CP performs worse than all other methods despite including SE as a special case in its grammar.
-The introduction of CP allows for more interpretable models, but it introduces parametric forms into the regression models (\ie the sigmoids expressing the changepoints).
+CP performs slightly worse than SE despite being strictly more general than SE.
+The introduction of changepoints allows for more structureed models, but it introduces parametric forms into the regression models (\ie the sigmoids expressing the changepoints).
 This results in worse interpolations at the locations of the change points, suggesting that a more robust modelling language would require a more flexible class of changepoint shapes or improved inference (\eg fully Bayesian inference over the location and shape of the changepoint like (cite something)).
+
+\TBD{Comment about equation learning when it is finished.}
 
 \paragraph{Extrapolation}
 
 To test extrapolation we trained all algorithms on the first 90\% of the data, and attempted to predict the remaining 10\%.
-Figure~\ref{fig:box_log_extrap} shows the standardised log RMSEs across algorithms.
-GPSS again has lower quantiles than all other methods but the differences between GPSS, SP and TCI are small compared to the variance of the results so we cannot conclude that any method is a clear winner.
+Figure~\ref{fig:box_extrap} shows the standardised log RMSEs across algorithms.
+GPSS again has lower quartiles than all other methods but the outliers of GPSS, TCI and SP have similar values again.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\columnwidth]{figures/box_log_extrap}
+\includegraphics[width=\columnwidth]{figures/box_extrap}
 \caption{
-Raw data, and box plot of log standardised extrapolation RMSE (best performance = 0).
+Raw data, and box plot of standardised extrapolation RMSE (best performance = 1).
 Ordered by median.
 }
-\label{fig:box_log_extrap}
+\label{fig:box_extrap}
 \end{figure}
 
 %\begin{figure}[h]
@@ -859,8 +870,11 @@ Ordered by median.
 %\label{fig:box_extrap}
 %\end{figure}
 
-SP suffered from very large outliers on a dataset with a large and sharp discontinuity (see the call centre data in the supplementary material) which violates its assumptions of stationarity.
+SP suffered from a large outlier on a dataset with a large and sharp discontinuity (see the call centre data in the supplementary material) which violates its assumptions of stationarity.
 In contrast, GPSS was the best performing algorithm on this dataset, correctly modelling the dataset as locally stationary using change points.
+
+Not shown on the plot is a very large outlier for EL of 274 (this was also on the call centre data).
+However, EL was the best performing algorithm on the wages dataset which is non-linear and highly non-stationary and therefore is poorly modeled by the $\kSE$ kernels used by GPSS, TCI and SP.
 
 Somewhat surprisingly, TCI performs well despite its restrictive modelling assumptions (smooth functions and exact periodicity).
 Further inspection of the extrapolation has revealed that while TCI cannot model non-stationarity, its extrapolations of approximately periodic components can be quite effective.

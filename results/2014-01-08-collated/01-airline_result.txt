@@ -1,0 +1,42 @@
+Experiment all_results for
+ datafile = ../data/tsdlr/01-airline.mat
+
+ Running experiment:
+description = Rerun,
+data_dir = ../data/tsdlr/,
+max_depth = 8,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 4,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 500,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2013-10-08/,
+iters = 250,
+base_kernels = SE,PureLin,Const,Exp,Fourier,Noise,
+additive_form = True,
+zero_mean = True,
+model_noise = True,
+no_noise = True,
+verbose_results = False,
+random_seed = 2,
+use_min_period = True,
+period_heuristic = 5,
+use_constraints = False,
+alpha_heuristic = -2,
+lengthscale_heuristic = -4.5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+ 
+
+
+%%%%% Level 7 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=-0.590119, sf=2.197834), SqExpKernel(dimension=0, lengthscale=2.869310, sf=6.282442), ProductKernel(operands=[ NoiseKernel(sf=-0.293687), LinearKernel(dimension=0, location=1941.423324, sf=-0.492275) ]), ProductKernel(operands=[SqExpKernel(dimension=0, lengthscale=3.153432, sf=3.460612), PeriodicKernel(dimension=0, lengthscale=-0.315508, period=0.002278, sf=-0.032842), LinearKernel(sf=-1.838454, location=1945.443724) ]) ]), likelihood=LikGauss(sf=-inf), nll=536.009650, ndata=129)

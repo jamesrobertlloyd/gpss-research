@@ -24,18 +24,6 @@ y = double(y);
 %%%% TODO - function should accept a mean function
 %y = y - mean(y);
 
-%%%% TODO - turn into parameters
-left_extend = 0.1;  % What proportion to extend beyond the data range.
-right_extend = 0.4;
-
-%%%% TODO - parameter
-num_interpolation_points = 2000;
-
-x_left = min(X) - (max(X) - min(X))*left_extend;
-x_right = max(X) + (max(X) - min(X))*right_extend;
-xrange = linspace(x_left, x_right, num_interpolation_points)';
-xrange_no_extrap = linspace(min(X), max(X), num_interpolation_points)';
-
 complete_sigma = feval(complete_covfunc{:}, complete_hypers, X) + eye(length(y)).*noise_var;
 
 % Plot each component without data
@@ -122,41 +110,61 @@ for j = 1:numel(decomp_list)
     %hold off;
     
     % Compute kernel at grid to compute acf and periodogram
-    %%%% TODO - this can make things a little weird when periods line up
-    %%%%      - with data
+    % First check if the data is a partial grid
     
-    x_grid = linspace(min(X), max(X), numel(X))';
-    grid_distance = x_grid(2) - x_grid(1);
+    x_data = sort(X, 'ascend');
+    x_data_delta = x_data(2:end) - x_data(1:(end-1));
+    min_delta = min(x_data_delta);
+    multiples = x_data_delta / min_delta;
+    rounded_multiples = round(multiples*10)/10;
+    if all(rounded_multiples == 1)
+        x_grid = X;
+        grid_distance = x_grid(2) - x_grid(1);
+        num_el = numel(y);
+    else
+        if all(rounded_multiples == round(rounded_multiples))
+            % We are on a grid
+            num_el = sum(rounded_multiples) + 1;
+        else
+            num_el = numel(X);
+        end
+        x_grid = linspace(min(X), max(X), num_el)';
+        grid_distance = x_grid(2) - x_grid(1);
+    end
     
-    complete_sigma_grid = feval(complete_covfunc{:}, complete_hypers, x_grid);
     decomp_sigma_grid = feval(cur_cov{:}, cur_hyp, x_grid);
+    if all(size(x_grid) == size(X)) && (all(x_grid == X))
+        decomp_sigma_grid_X = decomp_sigma_grid;
+    else
+        decomp_sigma_grid_X = feval(cur_cov{:}, cur_hyp, x_grid, X);
+    end
     
-    data_mean_grid = decomp_sigma_grid' / complete_sigma_grid * y;
-    data_covar_grid = decomp_sigma_grid - decomp_sigma_grid' / complete_sigma_grid * decomp_sigma_grid;
+    data_mean_grid = decomp_sigma_grid_X / complete_sigma * y;
+    data_covar_grid = decomp_sigma_grid - decomp_sigma_grid_X / complete_sigma * decomp_sigma_grid_X';
     
     % Plot sample acf
     
     samples = 1000;
     
-    prior_samples = chol(non_singular(decomp_sigma_grid))' * randn(length(y), samples);
-    prior_acf = autocorr(prior_samples(:,1), length(y) -1);
+    prior_samples = chol(non_singular(decomp_sigma_grid))' * randn(num_el, samples);
+    prior_acf = autocorr(prior_samples(:,1), num_el -1);
     prior_acf = zeros(length(prior_acf), samples);
     prior_acf_min_loc = zeros(samples,1);
     prior_acf_min = zeros(samples,1);
     for iter = 1:samples
-        prior_acf(:,iter) = autocorr(prior_samples(:,iter), length(y) -1);
+        prior_acf(:,iter) = autocorr(prior_samples(:,iter), num_el -1);
         prior_acf_min_loc(iter) = find(prior_acf(:,iter) == min(prior_acf(:,iter)));
         prior_acf_min(iter) = min(prior_acf(:,iter));
     end
 
     post_samples = (repmat(data_mean_grid, 1, samples) + chol(non_singular(data_covar_grid))' * ...
-                    randn(length(y), samples));
-    post_acf = autocorr(post_samples(:,1), length(y) -1);
+                    randn(num_el, samples));
+    post_acf = autocorr(post_samples(:,1), num_el -1);
     post_acf = zeros(length(post_acf), samples);
     post_acf_min_loc = zeros(samples,1);
     post_acf_min = zeros(samples,1);
     for iter = 1:samples
-        post_acf(:,iter) = autocorr(post_samples(:,iter), length(y) -1);
+        post_acf(:,iter) = autocorr(post_samples(:,iter), num_el -1);
         post_acf_min_loc(iter) = find(post_acf(:,iter) == min(post_acf(:,iter)));
         post_acf_min(iter) = min(post_acf(:,iter));
     end
@@ -185,7 +193,7 @@ for j = 1:numel(decomp_list)
     
     samples = 1000;
     
-    prior_samples = chol(non_singular(decomp_sigma_grid))' * randn(length(y), samples);
+    prior_samples = chol(non_singular(decomp_sigma_grid))' * randn(num_el, samples);
     prior_pxx = 10 * log10(periodogram(prior_samples(:,1)));
     prior_pxx = zeros(length(prior_pxx), samples);
     prior_pxx_max_loc = zeros(samples,1);
@@ -197,7 +205,7 @@ for j = 1:numel(decomp_list)
     end
 
     post_samples = (repmat(data_mean_grid, 1, samples) + chol(non_singular(data_covar_grid))' * ...
-                    randn(length(y), samples));
+                    randn(num_el, samples));
     post_pxx = 10 * log10(periodogram(post_samples(:,1)));
     post_pxx = zeros(length(post_pxx), samples);
     post_pxx_max_loc = zeros(samples,1);
@@ -230,126 +238,127 @@ for j = 1:numel(decomp_list)
 end
 
 if make_plots
-    % Plot LOO posterior predictive, residuals and QQ
-
-    p_point_LOO = nan(size(X));
-    mean_LOO = nan(size(X));
-    var_LOO = nan(size(X));
-
-    K = complete_sigma;
-
-    for i = 1:length(X)
-        not_i = [1:(i-1),(i+1):length(X)];
-
-        K_ii = K(not_i,not_i);
-        K_i = K(i,not_i);
-        y_i = y(not_i);
-
-        mean_LOO(i) = K_i * (K_ii \ y_i);
-        var_LOO(i) = K(i,i) - K_i * (K_ii \ K_i');
-        standard = (y(i) - mean_LOO(i)) ./ sqrt(var_LOO(i));
-
-        p_point_LOO(i) = normcdf(standard);
-    end
-
-    figure(333); clf; hold on;
-    mean_var_plot( X, y, ...
-                   X, ...
-                   mean_LOO, 2.*sqrt(var_LOO));
-
-    title(sprintf('LOO posterior predictive'));
-    filename = sprintf('%s_loo_pp.fig', figname);
-    saveas( gcf, filename );
-
-    figure(444); clf; hold on;
-    mean_var_plot( X, p_point_LOO, ...
-                   X, ...
-                   mean_LOO, 2.*sqrt(var_LOO), ...
-                   false, true);
-
-    title(sprintf('LOO residuals'));
-    filename = sprintf('%s_loo_resid.fig', figname);
-    saveas( gcf, filename );
-
-    figure(555); clf; hold on;
-    qq_uniform_plot(p_point_LOO);
-
-    title(sprintf('LOO residuals QQ-plot'));
-    filename = sprintf('%s_loo_qq.fig', figname);
-    saveas( gcf, filename );
-
-    % Plot LCO posterior predictives, residuals and QQ
-
-    chunk_size = 0.1;
-
-    p_point_LOO = nan(size(X));
-    mean_LOO = nan(size(X));
-    var_LOO = nan(size(X));
-
-    K = complete_sigma;
-
-    for i = 1:length(X)
-        not_close = abs(X-X(i)) > ((max(X) - min(X)) * chunk_size * 0.5);
-
-        K_ii = K(not_close,not_close);
-        K_i = K(i,not_close);
-        y_i = y(not_close);
-
-        mean_LOO(i) = K_i * (K_ii \ y_i);
-        var_LOO(i) = K(i,i) - K_i * (K_ii \ K_i');
-        standard = (y(i) - mean_LOO(i)) ./ sqrt(var_LOO(i));
-
-        p_point_LOO(i) = normcdf(standard);
-    end
-
-    figure(777); clf; hold on;
-    mean_var_plot( X, y, ...
-                   X, ...
-                   mean_LOO, 2.*sqrt(var_LOO));
-
-    title(sprintf('LCO posterior predictive'));
-    filename = sprintf('%s_lco_pp.fig', figname);
-    saveas( gcf, filename );
-
-    figure(888); clf; hold on;
-    mean_var_plot( X, p_point_LOO, ...
-                   X, ...
-                   mean_LOO, 2.*sqrt(var_LOO), ...
-                   false, true);
-
-    title(sprintf('LCO residuals'));
-    filename = sprintf('%s_lco_resid.fig', figname);
-    saveas( gcf, filename );
-
-    figure(999); clf; hold on;
-    qq_uniform_plot(p_point_LOO);
-
-    title(sprintf('LCO residuals QQ-plot'));
-    filename = sprintf('%s_lco_qq.fig', figname);
-    saveas( gcf, filename );
-
-    % Plot z score residuals
-
-    L = chol(K);
-    z = (L') \ y;
-    p = normcdf(z);
-
-    figure(123); clf; hold on;
-    mean_var_plot( X, p, ...
-                   X, ...
-                   mean_LOO, 2.*sqrt(var_LOO), ...
-                   false, true);
-
-    title(sprintf('z score residuals'));
-    filename = sprintf('%s_z_resid.fig', figname);
-    saveas( gcf, filename );
-
-    figure(234); clf; hold on;
-    qq_uniform_plot(p);
-
-    title(sprintf('z score residuals QQ-plot'));
-    filename = sprintf('%s_z_qq.fig', figname);
-    saveas( gcf, filename );
+    % These are slow and currently unused
+%     % Plot LOO posterior predictive, residuals and QQ
+% 
+%     p_point_LOO = nan(size(X));
+%     mean_LOO = nan(size(X));
+%     var_LOO = nan(size(X));
+% 
+%     K = complete_sigma;
+% 
+%     for i = 1:length(X)
+%         not_i = [1:(i-1),(i+1):length(X)];
+% 
+%         K_ii = K(not_i,not_i);
+%         K_i = K(i,not_i);
+%         y_i = y(not_i);
+% 
+%         mean_LOO(i) = K_i * (K_ii \ y_i);
+%         var_LOO(i) = K(i,i) - K_i * (K_ii \ K_i');
+%         standard = (y(i) - mean_LOO(i)) ./ sqrt(var_LOO(i));
+% 
+%         p_point_LOO(i) = normcdf(standard);
+%     end
+% 
+%     figure(333); clf; hold on;
+%     mean_var_plot( X, y, ...
+%                    X, ...
+%                    mean_LOO, 2.*sqrt(var_LOO));
+% 
+%     title(sprintf('LOO posterior predictive'));
+%     filename = sprintf('%s_loo_pp.fig', figname);
+%     saveas( gcf, filename );
+% 
+%     figure(444); clf; hold on;
+%     mean_var_plot( X, p_point_LOO, ...
+%                    X, ...
+%                    mean_LOO, 2.*sqrt(var_LOO), ...
+%                    false, true);
+% 
+%     title(sprintf('LOO residuals'));
+%     filename = sprintf('%s_loo_resid.fig', figname);
+%     saveas( gcf, filename );
+% 
+%     figure(555); clf; hold on;
+%     qq_uniform_plot(p_point_LOO);
+% 
+%     title(sprintf('LOO residuals QQ-plot'));
+%     filename = sprintf('%s_loo_qq.fig', figname);
+%     saveas( gcf, filename );
+% 
+%     % Plot LCO posterior predictives, residuals and QQ
+% 
+%     chunk_size = 0.1;
+% 
+%     p_point_LOO = nan(size(X));
+%     mean_LOO = nan(size(X));
+%     var_LOO = nan(size(X));
+% 
+%     K = complete_sigma;
+% 
+%     for i = 1:length(X)
+%         not_close = abs(X-X(i)) > ((max(X) - min(X)) * chunk_size * 0.5);
+% 
+%         K_ii = K(not_close,not_close);
+%         K_i = K(i,not_close);
+%         y_i = y(not_close);
+% 
+%         mean_LOO(i) = K_i * (K_ii \ y_i);
+%         var_LOO(i) = K(i,i) - K_i * (K_ii \ K_i');
+%         standard = (y(i) - mean_LOO(i)) ./ sqrt(var_LOO(i));
+% 
+%         p_point_LOO(i) = normcdf(standard);
+%     end
+% 
+%     figure(777); clf; hold on;
+%     mean_var_plot( X, y, ...
+%                    X, ...
+%                    mean_LOO, 2.*sqrt(var_LOO));
+% 
+%     title(sprintf('LCO posterior predictive'));
+%     filename = sprintf('%s_lco_pp.fig', figname);
+%     saveas( gcf, filename );
+% 
+%     figure(888); clf; hold on;
+%     mean_var_plot( X, p_point_LOO, ...
+%                    X, ...
+%                    mean_LOO, 2.*sqrt(var_LOO), ...
+%                    false, true);
+% 
+%     title(sprintf('LCO residuals'));
+%     filename = sprintf('%s_lco_resid.fig', figname);
+%     saveas( gcf, filename );
+% 
+%     figure(999); clf; hold on;
+%     qq_uniform_plot(p_point_LOO);
+% 
+%     title(sprintf('LCO residuals QQ-plot'));
+%     filename = sprintf('%s_lco_qq.fig', figname);
+%     saveas( gcf, filename );
+% 
+%     % Plot z score residuals
+% 
+%     L = chol(K);
+%     z = (L') \ y;
+%     p = normcdf(z);
+% 
+%     figure(123); clf; hold on;
+%     mean_var_plot( X, p, ...
+%                    X, ...
+%                    mean_LOO, 2.*sqrt(var_LOO), ...
+%                    false, true);
+% 
+%     title(sprintf('z score residuals'));
+%     filename = sprintf('%s_z_resid.fig', figname);
+%     saveas( gcf, filename );
+% 
+%     figure(234); clf; hold on;
+%     qq_uniform_plot(p);
+% 
+%     title(sprintf('z score residuals QQ-plot'));
+%     filename = sprintf('%s_z_qq.fig', figname);
+%     saveas( gcf, filename );
 end
 
 % Save data to file

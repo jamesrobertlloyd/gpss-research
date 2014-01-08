@@ -762,30 +762,7 @@ def produce_summary_document(dataset_name, n_components, fit_data, short_descrip
 \\title{An automatic report for the dataset : %(dataset_name)s}
 
 \\author{
-James Robert Lloyd\\\\
-University of Cambridge\\\\
-Department of Engineering\\\\
-\\texttt{jrl44@cam.ac.uk}
-\And
-David Duvenaud\\\\
-University of Cambridge \\\\
-Department of Engineering \\\\
-\\texttt{dkd23@cam.ac.uk}
-\And
-Roger Grosse\\\\
-M.I.T.\\\\
-Brain and Cognitive Sciences \\\\
-\\texttt{rgrosse@mit.edu}
-\And
-Joshua B. Tenenbaum\\\\
-M.I.T.\\\\
-Brain and Cognitive Sciences \\\\
-\\texttt{jbt@mit.edu}
-\And
-Zoubin Ghahramani\\\\
-University of Cambridge \\\\
-Department of Engineering \\\\
-\\texttt{zoubin@eng.cam.ac.uk}
+The Automatic Statistician
 }
 
 \\newcommand{\\fix}{\marginpar{FIX}}
@@ -811,7 +788,7 @@ Department of Engineering \\\\
 
 \\begin{abstract}
 This report was produced automatically by the Gaussian process structure search algorithm.
-See \url{http://arxiv.org/abs/1302.4922} for a preliminary paper and see \url{https://github.com/jamesrobertlloyd/gpss-research} for the latest source code.
+See \url{http://arxiv.org/abs/1302.4922} and \url{http://www-kd.iai.uni-bonn.de/cml/proceedings/papers/2.pdf} for preliminary papers.
 \end{abstract}
 
 \section{Executive summary}
@@ -821,7 +798,7 @@ The raw data and full model posterior with extrapolations are shown in figure~\\
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
 \\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mdrd}{%(dataset_name)s}
 \\newcommand{\mbm}{\hspace{-0.3cm}}
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_raw_data} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all}
@@ -883,7 +860,7 @@ Short summaries of the additive components are as follows:
 '''
 
     summary_item = '''
-  \item \input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_short_description.tex} 
+  \item \input{%(dataset_name)s/%(dataset_name)s_%(component)d_short_description.tex} 
 '''
     for i in range(n_components):
         text += summary_item % {'dataset_name' : dataset_name, 'component' : i+1}
@@ -978,8 +955,9 @@ The rest of the document is structured as follows.
 In section~\\ref{sec:discussion} the forms of the additive components are described and their posterior distributions are displayed.
 In section~\\ref{sec:extrap} the modelling assumptions of each component are discussed with reference to how this affects the extrapolations made by the model.
 Section~\\ref{sec:check} discusses model checking statistics, with plots showing the form of any detected discrepancies between the model and observed data.
-A glossary of terms is provided in section~\\ref{sec:glossary}.
 '''
+#A glossary of terms is provided in section~\\ref{sec:glossary}.
+#'''
 
     text += '''
 \section{Detailed discussion of additive components}
@@ -989,7 +967,7 @@ A glossary of terms is provided in section~\\ref{sec:glossary}.
     component_text = '''
 \subsection{Component %(component)d : %(short_description)s}
 
-\input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex}
+\input{%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex}
 
 This component explains %(resid_var)0.1f\%% of the residual variance; this %(incdecvar)s the total variance explained from %(prev_var)0.1f\%% to %(var)0.1f\%%.
 The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_reduction)0.2f\%% from %(MAE_orig)0.2f to %(MAE_new)0.2f.
@@ -998,7 +976,7 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
 \\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mdrd}{%(dataset_name)s}
 \\newcommand{\mbm}{\hspace{-0.3cm}}
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum}
@@ -1010,7 +988,7 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
     first_component_text = '''
 \subsection{Component %(component)d : %(short_description)s}
 
-\input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex}
+\input{%(dataset_name)s/%(dataset_name)s_%(component)d_description.tex}
 
 This component explains %(resid_var)0.1f\%% of the total variance.
 The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_reduction)0.1f\%% from %(MAE_orig)0.1f to %(MAE_new)0.1f.
@@ -1019,7 +997,7 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
 \\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mdrd}{%(dataset_name)s}
 \\newcommand{\mbm}{\hspace{-0.3cm}}
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_cum}
@@ -1033,7 +1011,7 @@ The addition of this component %(incdecmae)s the cross validated MAE by %(MAE_re
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
 \\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mdrd}{%(dataset_name)s}
 \\newcommand{\mbm}{\hspace{-0.3cm}}
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_anti_cum}
@@ -1080,7 +1058,7 @@ The plot on the right displays three random samples from the posterior.
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
 \\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mdrd}{%(dataset_name)s}
 \\newcommand{\mbm}{\hspace{-0.3cm}}
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_all_sample}
@@ -1096,12 +1074,12 @@ Plots of the pointwise posterior and samples from the posterior are also present
     extrap_component_text = '''
 \subsection{Component %(component)d : %(short_description)s}
 
-\input{figures/%(dataset_name)s/%(dataset_name)s_%(component)d_extrap_description.tex}
+\input{%(dataset_name)s/%(dataset_name)s_%(component)d_extrap_description.tex}
 
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
 \\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mdrd}{%(dataset_name)s}
 \\newcommand{\mbm}{\hspace{-0.3cm}}
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_extrap} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_%(component)d_sample} \\\\
@@ -1183,7 +1161,7 @@ No statistically significant discrepancies between the data and model have been 
 \\begin{figure}[H]
 \\newcommand{\wmgd}{0.5\columnwidth}
 \\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
+\\newcommand{\mdrd}{%(dataset_name)s}
 \\newcommand{\mbm}{\hspace{-0.3cm}}
 \\begin{tabular}{cc}
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_acf_bands_%(component)d} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_pxx_bands_%(component)d} \\\\
@@ -1239,71 +1217,71 @@ The green line and green dashed lines are the corresponding quantities under the
                                                   'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
                                                   'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
 
-    text += '''
-\\appendix
-'''
+#     text += '''
+# \\appendix
+# '''
 
-    text += '''
-\section{Residual style quantities}
+#     text += '''
+# \section{Residual style quantities}
 
-This appendix contains plots of residual-like quantities.
-Their utility is still being investigated so there are currently no explanations of their calculation or interpretation.
-'''
+# This appendix contains plots of residual-like quantities.
+# Their utility is still being investigated so there are currently no explanations of their calculation or interpretation.
+# '''
 
-    text += '''
-\subsection{Leave one out}
+#     text += '''
+# \subsection{Leave one out}
 
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_resid} \\\\
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_qq}
-\end{tabular}
-\caption{LOO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
-\label{fig:loo}
-\end{figure}
+# \\begin{figure}[H]
+# \\newcommand{\wmgd}{0.5\columnwidth}
+# \\newcommand{\hmgd}{3.0cm}
+# \\newcommand{\mdrd}{%(dataset_name)s}
+# \\newcommand{\mbm}{\hspace{-0.3cm}}
+# \\begin{tabular}{cc}
+# \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_resid} \\\\
+# \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_loo_qq}
+# \end{tabular}
+# \caption{LOO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
+# \label{fig:loo}
+# \end{figure}
 
-\subsection{Leave chunk out}
+# \subsection{Leave chunk out}
 
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_resid} \\\\
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_qq}
-\end{tabular}
-\caption{LCO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
-\label{fig:lco}
-\end{figure}
+# \\begin{figure}[H]
+# \\newcommand{\wmgd}{0.5\columnwidth}
+# \\newcommand{\hmgd}{3.0cm}
+# \\newcommand{\mdrd}{%(dataset_name)s}
+# \\newcommand{\mbm}{\hspace{-0.3cm}}
+# \\begin{tabular}{cc}
+# \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_pp} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_resid} \\\\
+# \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_lco_qq}
+# \end{tabular}
+# \caption{LCO posterior predictive. Distribution (left), standardised residuals (right) and qq-plot (below)}
+# \label{fig:lco}
+# \end{figure}
 
-\subsection{Next data point}
+# \subsection{Next data point}
 
-\\begin{figure}[H]
-\\newcommand{\wmgd}{0.5\columnwidth}
-\\newcommand{\hmgd}{3.0cm}
-\\newcommand{\mdrd}{figures/%(dataset_name)s}
-\\newcommand{\mbm}{\hspace{-0.3cm}}
-\\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_resid} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_qq}
-\end{tabular}
-\caption{Inverse Cholesky thing. Standardised values (left) and qq-plot (right)}
-\label{fig:z}
-\end{figure}
-''' % {'dataset_name' : dataset_name}
+# \\begin{figure}[H]
+# \\newcommand{\wmgd}{0.5\columnwidth}
+# \\newcommand{\hmgd}{3.0cm}
+# \\newcommand{\mdrd}{%(dataset_name)s}
+# \\newcommand{\mbm}{\hspace{-0.3cm}}
+# \\begin{tabular}{cc}
+# \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_resid} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_z_qq}
+# \end{tabular}
+# \caption{Inverse Cholesky thing. Standardised values (left) and qq-plot (right)}
+# \label{fig:z}
+# \end{figure}
+# ''' % {'dataset_name' : dataset_name}
 
-    text += '''
-\section{Glossary of terms}
-\label{sec:glossary}
+#     text += '''
+# \section{Glossary of terms}
+# \label{sec:glossary}
 
-\\begin{itemize}
-\item \emph{lengthscale} - A description of what a lengthscale is
-\end{itemize}
-'''
+# \\begin{itemize}
+# \item \emph{lengthscale} - A description of what a lengthscale is
+# \end{itemize}
+# '''
 
     text += '''
 \end{document}

@@ -160,8 +160,10 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix
                     description_file.write(summary + '.')
                 i += 1
             # Produce the summary LaTeX document
+            print 'Producing LaTeX document'
             latex_summary = translation.produce_summary_document(file, i-1, evaluation_data, short_descriptions)
-            with open(os.path.join(save_folder, os.pardir, '%s.tex' % file), 'w') as latex_file:
+            with open(os.path.join(save_folder, '%s.tex' % file), 'w') as latex_file:
                 latex_file.write(latex_summary)
+            print 'Saving to ' + (os.path.join(save_folder, '%s.tex' % file))
         else:
             print "Cannnot find results for %s" % file

@@ -1,0 +1,40 @@
+Experiment all_results for
+ datafile = ../data/tsdlr/02-solar.mat
+
+ Running experiment:
+description = Rerun,
+data_dir = ../data/tsdlr/,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 500,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2013-10-18/,
+iters = 250,
+base_kernels = SE,PureLin,Const,Exp,Fourier,Noise,
+additive_form = True,
+zero_mean = True,
+model_noise = True,
+no_noise = True,
+verbose_results = False,
+random_seed = 4,
+use_min_period = True,
+period_heuristic = 2,
+use_constraints = False,
+alpha_heuristic = -2,
+lengthscale_heuristic = -4.5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+
+%%%%% Level 9 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-5.755519), ConstKernel(sf=7.205631), ChangeWindowKernel(dimension=0, location=1679.596918, steepness=-2.050841, width=4.291794, operands=[SumKernel(operands=[SqExpKernel(dimension=0, lengthscale=0.498309, sf=-2.144283), SqExpKernel(dimension=0, lengthscale=3.113889, sf=-1.371093), ProductKernel(operands=[SqExpKernel(dimension=0, lengthscale=-1.701262, sf=-7.015715), LinearKernel(dimension=0, sf=-1.541874, location=1701.412293)]), ProductKernel(operands=[SqExpKernel(dimension=0, lengthscale=-1.448236, sf=-5.390649), LinearKernel(sf=-2.046462, location=1881.366828)]), ProductKernel(operands=[SqExpKernel(dimension=0, lengthscale=3.538488, sf=-1.252770), PeriodicKernel(dimension=0, lengthscale=2.279124, period=2.374049, sf=-0.492573)])]), ConstKernel(sf=-0.353454)])]), likelihood=LikGauss(sf=-inf), nll=-488.461861, ndata=402)

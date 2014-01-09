@@ -1116,7 +1116,7 @@ class PeriodicKernel(Kernel):
             
     def out_of_bounds(self, constraints):
         return (self.period < constraints['min_period'][self.dimension]) or \
-               (self.period > np.log(0.33*(constraints['x_max'][self.dimension] - constraints['x_min'][self.dimension]))) # Need to observe more than 3 periods to declare periodicity  
+               (self.period > constraints['max_period'][self.dimension])
 
 class LinearKernel(Kernel):
     def __init__(self, dimension=None, location=None, sf=None):

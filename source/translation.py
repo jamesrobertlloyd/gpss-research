@@ -140,7 +140,7 @@ def find_region_of_influence(k, intervals=[(-np.Inf, np.Inf)]):
     elif isinstance(k, ff.ProductKernel) and any(op.is_operator for op in k.operands):
         # Product contains an operator - find it
         for (i, op) in enumerate(k.operands):
-            if not (isinstance(op, ff.MaskKernel) or isinstance(op, ff.BaseKernel)):
+            if op.is_operator:
                 # Found an operator - place all other kernels within it - resulting in the operator at the top of the kernel
                 other_kernels = k.operands[:i] + k.operands[(i+1):]
                 if isinstance(op.operands[0], ff.ZeroKernel) or isinstance(op.operands[0], ff.NoneKernel):

@@ -1,0 +1,32 @@
+Experiment(description='Trying to recreate old results using latest code',
+           data_dir='../data/radio/',
+           max_depth=4, 
+           random_order=False,
+           k=1,
+           debug=False, 
+           local_computation=False, 
+           n_rand=9,
+           sd=2, 
+           jitter_sd=0.1,
+           max_jobs=200, 
+           verbose=False,
+           make_predictions=False,
+           skip_complete=True,
+           results_dir='../results/2014-01-09-radio/',
+           iters=250,
+           base_kernels='SE,Per,Lin,Const,Noise',
+           random_seed=1,
+           period_heuristic=3,
+           period_heuristic_type='min',
+           max_period_heuristic=1.5, # Encourage it to see periodicity
+           subset=True,
+           subset_size=250,
+           full_iters=10,
+           bundle_size=5,
+           additive_form=True,
+           mean='ff.MeanZero()',      # Starting mean
+           kernel='ff.SumKernel(operands=[ff.NoiseKernel(), ff.ConstKernel(), ff.SqExpKernel(dimension=0), ff.ProductKernel(operands=[ff.PeriodicKernel(dimension=0, lengthscale=0.334902, period=0.000316), ff.PeriodicKernel(dimension=0, lengthscale=1.108831, period=2.296433), ff.SqExpKernel(dimension=0)])])', # Starting kernel
+           lik='ff.LikGauss(sf=-np.Inf)', # Starting likelihood 
+           score='bic',
+           search_operators=[('A', 'B', {'A': 'kernel', 'B': 'base'}),
+                             ('A', ('None',), {'A': 'kernel'})])

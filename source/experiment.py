@@ -65,6 +65,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         warnings.warn('Unrecognised period heuristic type : using most conservative heuristic')
         data_shape['min_period'] = np.log([max(exp.period_heuristic * utils.misc.min_abs_diff(X[:,i]), exp.period_heuristic * np.ptp(X[:,i]) / X.shape[0]) for i in range(X.shape[1])])
 
+    data_shape['max_period'] = [np.log((1.0/exp.max_period_heuristic)*(data_shape['x_max'][i] - data_shape['x_min'][i])) for i in range(X.shape[1])]
+
     # Initialise mean, kernel and likelihood
 
     m = eval(exp.mean)
@@ -289,7 +291,7 @@ def gen_all_datasets(dir):
 class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, random_order, k, debug, local_computation, ' + \
                              'n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, ' + \
                              'iters, base_kernels, additive_form, mean, kernel, lik, verbose_results, ' + \
-                             'random_seed, period_heuristic, ' + \
+                             'random_seed, period_heuristic, max_period_heuristic, ' + \
                              'subset, subset_size, full_iters, bundle_size, ' + \
                              'search_operators, score, period_heuristic_type')):
     def __new__(cls, 
@@ -317,6 +319,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 verbose_results=False,        # Whether or not to record all kernels tested
                 random_seed=0,
                 period_heuristic=10,          # The minimum number of data points per period (roughly)
+                max_period_heuristic=5,       # The minimum number of periods that must be observed to declare periodicity
                 subset=False,                 # Optimise on a subset of the data?
                 subset_size=250,              # Size of data subset
                 full_iters=0,                 # Number of iterations to perform on full data after subset optimisation
@@ -327,7 +330,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
         return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, \
                                               n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, \
                                               iters, base_kernels, additive_form, mean, kernel, lik, verbose_results, \
-                                              random_seed, period_heuristic, \
+                                              random_seed, period_heuristic, max_period_heuristic, \
                                               subset, subset_size, full_iters, bundle_size, \
                                               search_operators, score, period_heuristic_type)
 

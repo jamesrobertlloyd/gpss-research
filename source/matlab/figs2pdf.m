@@ -111,7 +111,9 @@ dirnames(ismember(dirnames,{'.','..'})) = [];
 %dirnames{end+1} = '11-Feb-v4-03-mauna2003-s_max_level_2';
 %dirnames{end+1} = '11-Feb-v4-03-mauna2003-s_max_level_3';
 
-for i = 7:length(dirnames)
+for i = 1:length(dirnames)
+%for i = 7:length(dirnames)
+%for i = 1
     dirname = dirnames{i};
     files = dir([topdir, '/', dirname, '/*.fig']);
     for f_ix = 1:numel(files)

@@ -201,7 +201,7 @@ First we introduce some extensions and improvements to the base kernels and gene
 \subsection{Notation}
 \label{sec:notation}
 
-We typically refer to kernels by their syntax (\ie parameter values are implicit) via the following acronyms; zero -- $\emptyset$, white noise -- $\kWN$, constant -- $\kC$, linear -- $\kLin$, squared-exponential -- $\kSE$, rational-quadratic -- $\kRQ$ and periodic -- $\kPer$.
+We typically refer to kernels by their syntax\fTBD{need a better word - I'm not sure family is quite right either} (\ie parameter values are implicit) via the following acronyms; zero -- $\emptyset$, white noise -- $\kWN$, constant -- $\kC$, linear -- $\kLin$, squared-exponential -- $\kSE$, rational-quadratic -- $\kRQ$ and periodic -- $\kPer$.
 The parametric forms of these kernels are provided in the supplementary material.
 
 \subsection{Remarks}
@@ -260,11 +260,11 @@ A simple application of l'H\^opital's rule shows that
 \begin{equation}
 \kernel_\kPer(\tau) \to \sigma^2\cos\left(\frac{2 \pi \tau}{p}\right) \quad \textrm{as} \quad\ell \to \infty.
 \end{equation}
-It was recently demonstrated (cite Andrew) that any stationary kernel can be arbitrarily well approximated by kernels with syntax
+It was recently demonstrated \citep{WilAda13} that any stationary kernel can be arbitrarily well approximated by kernels with syntax
 \begin{equation}
 \sum \kSE \times \cos
 \end{equation}
-by appealing to Bochner's theorem (cite).
+by appealing to Bochner's theorem \citep{bochner1959lectures}.
 By using this new periodic kernel our language of kernels also attains this completeness property.
 
 \paragraph{No power at zero frequency}
@@ -366,7 +366,7 @@ We now only need to describe arbitrary products of kernels.
 
 \paragraph{Simplification}
 
-At a syntactic level, $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$ (simply, the product of two $\kSE$ kernels is another $\kSE$ kernel but with different parameters).
+At a syntactic\fTBD{need a better word - I'm not sure family is quite right either} level, $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$ (simply, the product of two $\kSE$ kernels is another $\kSE$ kernel but with different parameters).
 For stationary kernels, $\kWN$ behaves like zero \eg $\kWN \times \kSE = \kWN \times \kPer =  \kWN$.
 The constant kernel $\kC$ behaves like the identity \eg $\kC \times \kLin = \kLin$
 
@@ -443,7 +443,7 @@ As with all statistical analysis, a data set may not be well described by any mo
 
 \TBD{Help with the following paragraph requested}
 
-We have begun to experiment with using posterior predictive checks to assess the models produced by GPSS following the techniques of \cite{Gelman1996} (see reports reports in the supplementary material).
+We have begun to experiment with using posterior predictive checks to assess the models produced by GPSS following the techniques of \cite{Gelman1996} (see reports in the supplementary material).
 However, model checking for Gaussian processes, even those with simple kernels, is under-researched so we leave their description and more detailed analysis for future work.
 
 \section{Related work}
@@ -778,7 +778,7 @@ By multiplying a white noise kernel by a linear kernel the model is able to expr
 Much of machine learning research focuses on numerical performance, with claims of interpretability generated post-hoc.
 In contrast, equation learning \citep{Schmidt2009b} can also be used to automate the process of interpretation/.
 
-We include learned equations for these two data sets produced using Eureqa \citep{Eureqa} using the default mean absolute error performance metrix\footnotemark.
+We include learned equations for these two data sets produced using Eureqa \citep{Eureqa} using the default mean absolute error performance metric\footnotemark.
 \footnotetext{We experimented with the root mean squared error with Akaike information criterion penalisation (this is most comparable to the Bayesian information criterion used by GPSS) but occasionally observed severe overfitting.}
 However, it is very unlikely that these data sets can be explained parsimoniously with a parametric function.
 
@@ -805,14 +805,14 @@ GPSS outperforms the other methods on average (\eg as measured by quantiles of p
 
 \paragraph{Data sets}
 
-In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of GPSS and 5 other algorithms on 10 additional time series from (cite time series data library); plots can be found at the beginning of the reports in the supplementary material.
+In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of GPSS and 5 other algorithms on 10 additional time series from the time series data library \citep{TSDL}; plots can be found at the beginning of the reports in the supplementary material.
 
 \paragraph{Algorithms}
 
 We compare the structure search algorithm to equation learning (EL) using Eureqa \citep{Eureqa}\fTBD{interpolation work in progress} and four other regression algorithms; additive nonparametric regression (SE) \citep[e.g.][]{buja1989linear}, change point modelling (cite) (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.\fTBD{I could add a single Sq-exp GP as a reference point?}
 
-We use the default mean absolute error criterion when using Eureqa\footnotemark.
-The other four algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion (Bayesian information criterion) with appropriate restrictions to the grammar.
+We use the default mean absolute error criterion when using Eureqa.
+The other four algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark (Bayesian information criterion) with appropriate restrictions to the grammar.
 For SE, SP and TCI this corresponds to a forward selection algorithm.
 \footnotetext{We experimented with using unpenalised conditional likelihood as the search criterion but observed overfitting as is to be expected.} 
 

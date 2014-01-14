@@ -188,10 +188,11 @@ Based on experience with typical paths followed by the search algorithm of GPSS 
 \begin{eqnarray}
 \mathcal{S} &\to& \mathcal{S} \times (\mathcal{B} + \kC)\\
 \mathcal{S} &\to& \mathcal{B}\\
-\mathcal{S} &\to& \emptyset
+\mathcal{S} + \mathcal{S'} &\to& \mathcal{S}\\
+\mathcal{S} \times \mathcal{S'} &\to& \mathcal{S}
 \end{eqnarray}
 %
-where $\emptyset$ indicates that the subexpression has been removed.
+where $\mathcal{S'}$ represents any other kernel expression.
 Their introduction is currently not rigorously justified.
 Further research into the search strategy would be a profitable area of future study.
 

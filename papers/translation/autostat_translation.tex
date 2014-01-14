@@ -832,7 +832,7 @@ The values of the RMSEs are then standardised by dividing by the smallest RMSE f
 
 Figure~\ref{fig:box_interp} shows the standardised RMSEs for the different algorithms (raw data and box plots)\fTBD{I will add the raw data to the supplementary material}.
 The box plots demonstrate that all quartiles of the distribution of standardised RMSEs are lower for GPSS.
-The median for GPSS is 1 \ie it was the best performing algorithm on 9 of the datasets.
+The median for GPSS is 1 and it was the best performing algorithm on 9 of the datasets.
 However, the largest outliers of GPSS, TCI and SP are all quite similar in value.
 
 \begin{figure}[h]
@@ -846,9 +846,10 @@ Raw data, and box plot of standardised interpolation RMSE (best performance = 1)
 
 CP performs slightly worse than SE despite being strictly more general than SE.
 The introduction of changepoints allows for more structured models, but it introduces parametric forms into the regression models (\ie the sigmoids expressing the changepoints).
-This results in worse interpolations at the locations of the change points, suggesting that a more robust modelling language would require a more flexible class of changepoint shapes or improved inference (\eg fully Bayesian inference over the location and shape of the changepoint like (cite something)).
+This results in worse interpolations at the locations of the change points, suggesting that a more robust modelling language would require a more flexible class of changepoint shapes or improved inference (\eg fully Bayesian inference over the location and shape of the changepoint\TBD{Cite something - anyone know any good references?}).
 
-\TBD{Comment about equation learning when it is finished.}
+EL is not suited to this task and performs poorly.
+The models learned by EL tend to capture only broad trends of the data since the fine details are not well explained by parametric forms.
 
 \paragraph{Extrapolation}
 
@@ -880,7 +881,9 @@ SP suffered from a large outlier on a dataset with a large and sharp discontinui
 In contrast, GPSS was the best performing algorithm on this dataset, correctly modelling the dataset as locally stationary using change points.
 
 Not shown on the plot is a very large outlier for EL of 274 (this was also on the call centre data).
-However, EL was the best performing algorithm on the wages dataset which is non-linear and highly non-stationary and therefore is poorly modeled by the $\kSE$ kernels used by GPSS, TCI and SP.
+However, EL was the best performing algorithm on the wages dataset which shows an exponential increase after the industrial revolution.
+GPSS can approximate an exponential function with a polynomial by combining $\kLin$ kernels but this is not a succinct expression in the current language.
+\NA{Combining equation learning and the covariance learning of GPSS is likely to be a profitable area of future research.}\fTBD{We could just add the exponential function as a base kernel - much like linear - but where do we stop?}
 
 Somewhat surprisingly, TCI performs well despite its restrictive modelling assumptions (smooth functions and exact periodicity).
 Further inspection of the extrapolation has revealed that while TCI cannot model non-stationarity, its extrapolations of approximately periodic components can be quite effective.

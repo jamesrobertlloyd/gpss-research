@@ -324,6 +324,114 @@ Syntax of common regression motifs expressible in our language.
 We use the same inference techniques as \cite{DuvLloGroetal13} but we introduce new search operators to accommodate the changepoint and change window operators.
 The search procedure is not the focus of this manuscript so we defer the details to the supplementary material.
 
+\section{Additional remarks about the language}
+
+\TBD{Please beautify and integrate this material into the previous section as you see fit. Potentially reordering with translation section?}
+
+\subsection{Comparison to previous GPSS}
+
+\subsubsection{Heteroscedasticity}
+
+In the original GPSS the heteroscedasticity of the airline dataset was partially captured by the $\kLin \times \kSE \times \kRQ$ term.
+This term was also modeling the medium term variations in the data (an example of $\kRQ$ capturing multiple lengthscales) forcing a compromise of parameter values\fTBD{This may also be a result of not distributing products during the search - not sure yet} resulting in the variance of the residuals decreasing (see figure~\ref{fig:not_hetero} from old GPSS) rather than increasing with the data (see new figure~\ref{fig:hetero}).
+Notice also that in the old GPSS figure the variance is too large - this is because the $\kRQ$ term partially explained the noise\fTBD{or rather, short term variation with a typical lengthscale on the order of the distance between data points} resulting in anti-correlation in the posterior which the residual plots in the first version of GPSS did not account for.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/01-airline-months_resid}
+\caption{Old GPSS - heteroscedasticity not captured and variance larger than residuals.}
+\label{fig:not_hetero}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/01-airline/01-airline_3_anti_cum}
+\caption{New GPSS - heteroscedasticity captured and mostly appropriate.}
+\label{fig:hetero}
+\end{figure}
+
+These figures can provide justification for removing $\kRQ$ and for introducing $\kWN$ as a base kernel allowing heteroscedasticity to be explicitly modelled\fTBD{we now have a delta likelihood function rather than always assuming homoscedastic Gaussian noise}.
+
+\subsubsection{Removal of $\kRQ$}
+
+GPML describes the $\kRQ$ as ``a scale mixture of \kSE covariance functions with different characteristic length-scales''.
+Explaining how this scale mixture manifests itself in practice is somethign we don't really have words for.
+The only way to really characterise it is to give a plot or equation for the scale mixture.
+
+This is not a great justification for its removal on its own since maybe I'm not being clever enough about the description.
+However, as discussed above, the main problem was that it can model trends and very short term variation in one component.
+What was previously one component (figure \ref{fig:RQ})
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/03-mauna2003-s_3}
+\caption{Old GPSS - many lengthscales in one component.}
+\label{fig:RQ}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/03-mauna/03-mauna_3}
+\caption{New GPSS - medium term variation.}
+\label{fig:medium}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/03-mauna/03-mauna_5}
+\caption{New GPSS - very short term variation.}
+\label{fig:short}
+\end{figure}
+
+\subsubsection{Changepoints and changewindows}
+
+Old GPSS could not capture changepoints evidenced by these solar irradiance data residuals in figure~\ref{fig:not_cp}.
+New GPSS can do changepoints (see later section).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/02-solar-s_resid}
+\caption{Old GPSS - these residuals need a changepoint.}
+\label{fig:not_cp}
+\end{figure}
+
+\subsubsection{Removing constants}
+
+The first two components in the old GPSS decomposition of airline were
+\begin{itemize}
+  \item $\kSE \times \kLin_1'$
+  \item $\kSE \times \kLin_2' \times \kPer'$
+\end{itemize}
+where primes represent old defintions of the kernels.
+The linear kernels have different parameters (indicated by subscripts) but the $\kSE$ is the same in both products.
+
+Using the new versions of the kernels (removing constants) these expressions become
+\begin{itemize}
+  \item $\kSE \times \kLin_1 + \kSE$
+  \item $\kSE \times \kLin_2 \times \kPer + \kSE \times \kLin_2 +  \kSE \times \kPer + \kSE$
+\end{itemize}
+which is undesirable in two ways.
+Firstly, both of these expressions contain the same $\kSE$ as an additive component resulting in anti-correlation in the posterior; contrast figures \ref{fig:anti_corr_1} and \ref{fig:anti_corr_2} with figures \ref{fig:monotonic} and \ref{fig:lin_periodic}.
+
+Secondly, the second component is a sum of four terms and is therefore rather a mouthful to describe.
+It is the sum of an approximately periodic function with approximately linearly increasing amplitude, a smooth function with linearly increasing marginal standard deviation, an approximately periodic function and a smooth function!
+
+The removal of constants results in base kernels which are atomic from the point of view of translation and they make anti-correlation less likely\fTBD{however, they are not orthogonal in any sense so anti-correlation can still happen - I'm not sure how to get round this entirely}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/01-airline-months_1}
+\caption{Old GPSS - uncertainty is in fact anti-correlation.}
+\label{fig:anti_corr_1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/01-airline-months_2}
+\caption{Old GPSS - uncertainty is in fact anti-correlation.}
+\label{fig:anti_corr_2}
+\end{figure}
+
 \section{Translation of kernel functions}
 \label{sec:translation}
 \fTBD{RG: Does the algorithm clarify anything?}

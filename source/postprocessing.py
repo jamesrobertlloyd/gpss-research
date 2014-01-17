@@ -56,6 +56,9 @@ def compare_mse(folders, data_folder):
     print ''
     print standard_RMSEs
     print ''
+    for row in standard_RMSEs:
+        print ' & '.join('%1.2f' % element for element in row) + ' \\\\'
+    print ''
     medians = np.median(standard_RMSEs, 0)
     print medians
     return RMSEs

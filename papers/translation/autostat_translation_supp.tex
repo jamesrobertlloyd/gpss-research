@@ -211,19 +211,104 @@ Further research into the search strategy would be a profitable area of future s
 
 \section{Translation of kernel functions}
 
-\subsection{Ordering additive components}
+\section{Numerical evaluation}
 
-An automatic regression system would ideally report the most interesting or important features of a data set first.
-However, measuring importance is subjective.
-We make the choice that additive components are important if they produce accurate extrapolations and order the components by this metric.
+\subsection{Tabels of standardised RMSEs}
 
-Specifically, after selecting an additive kernel for a data set we divide the data set into 10 equally sized contiguous blocks.
-For each additive component and each block we compute the posterior predictive distribution of the component within the full model after training on the other 9 blocks.
-We measure the mean absolute difference between the data in the other block and the posterior mean of the component.
-The mean absolute difference is then averaged over all blocks.
-The component with the lowest mean absolute difference is selected as the first component.
+Ordered by dataset.
 
-The ordering continues by computing the posterior predictive distribution of the sum of the first component and each of the remaining components and evaluating the mean absolute difference in the manner described above.
-The procedure iterates until the ordering is complete \ie it is a type of forward selection algorithm.
+\begin{table}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+GPSS & TCI & SP & SE & CP & EL \\
+\hline
+1.00 & 1.26 & 2.00 & 3.07 & 3.12 & 5.09\\
+1.00 & 1.50 & 1.09 & 1.50 & 1.75 & 3.22\\
+1.00 & 1.00 & 1.08 & 2.68 & 2.68 & 26.15\\
+1.09 & 1.00 & 1.00 & 1.00 & 1.37 & 1.59\\
+1.00 & 1.06 & 1.08 & 1.01 & 1.01 & 1.49\\
+1.10 & 1.00 & 1.61 & 1.53 & 1.63 & 5.77\\
+1.55 & 1.00 & 1.02 & 1.00 & 1.52 & 2.40\\
+1.00 & 1.24 & 1.26 & 1.49 & 1.49 & 2.43\\
+1.00 & 1.06 & 1.08 & 1.30 & 1.29 & 2.84\\
+1.00 & 1.10 & 1.06 & 1.14 & 1.27 & 39.27\\
+1.08 & 1.00 & 1.36 & 2.33 & 2.82 & 3.14\\
+1.00 & 1.20 & 1.76 & 1.79 & 1.79 & 1.93\\
+1.00 & 1.03 & 1.03 & 1.03 & 1.02 & 2.24\\
+\hline
+\end{tabular}
+\caption{Interpolation standardised RMSEs}
+\end{table}
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+GPSS & TCI & SP & SE & CP & EL \\
+\hline
+1.14 & 1.44 & 1.00 & 4.73 & 4.80 & 3.24\\
+1.00 & 1.03 & 1.21 & 1.00 & 1.03 & 2.64\\
+1.09 & 1.00 & 1.03 & 1.35 & 1.35 & 1.97\\
+1.07 & 3.00 & 3.00 & 3.00 & 1.00 & 1.31\\
+1.00 & 1.00 & 1.03 & 1.35 & 1.35 & 1.28\\
+1.00 & 2.14 & 3.38 & 4.09 & 4.17 & 6.26\\
+1.66 & 1.00 & 6.14 & 1.00 & 1.97 & 274.32\\
+3.10 & 2.31 & 1.00 & 3.13 & 3.13 & 1.41\\
+1.00 & 1.52 & 1.61 & 2.90 & 3.14 & 2.73\\
+1.00 & 1.80 & 1.43 & 1.61 & 2.25 & 1.97\\
+1.30 & 1.35 & 2.15 & 1.03 & 1.00 & 1.34\\
+1.00 & 1.47 & 1.46 & 1.75 & 1.74 & 1.82\\
+3.03 & 3.12 & 3.63 & 3.16 & 5.83 & 1.00\\
+\hline
+\end{tabular}
+\caption{Extrapolation standardised RMSEs}
+\end{table}
+
+\subsection{Tabels of standardised RMSEs - 2 variant version}
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+GPSS & GPSS.int & TCI & SP & SE & CP & EL \\
+\hline
+1.04 & 1.00 & 1.32 & 2.09 & 3.20 & 3.25 & 5.30\\
+1.00 & 1.27 & 1.50 & 1.09 & 1.50 & 1.75 & 3.22\\
+1.00 & 1.00 & 1.00 & 1.09 & 2.69 & 2.69 & 26.20\\
+1.09 & 1.04 & 1.00 & 1.00 & 1.00 & 1.37 & 1.59\\
+1.00 & 1.06 & 1.06 & 1.08 & 1.01 & 1.01 & 1.49\\
+1.50 & 1.00 & 1.37 & 2.19 & 2.09 & 2.23 & 7.88\\
+1.55 & 1.50 & 1.00 & 1.02 & 1.00 & 1.52 & 2.40\\
+1.00 & 1.30 & 1.24 & 1.26 & 1.49 & 1.49 & 2.43\\
+1.00 & 1.09 & 1.06 & 1.08 & 1.30 & 1.29 & 2.84\\
+1.08 & 1.00 & 1.19 & 1.15 & 1.23 & 1.38 & 42.56\\
+1.13 & 1.00 & 1.05 & 1.42 & 2.44 & 2.96 & 3.29\\
+1.00 & 1.15 & 1.20 & 1.76 & 1.79 & 1.79 & 1.93\\
+1.00 & 1.10 & 1.03 & 1.03 & 1.03 & 1.02 & 2.24\\
+\hline
+\end{tabular}
+\caption{Interpolation standardised RMSEs}
+\end{table}
+
+\begin{table}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+GPSS & GPSS.int & TCI & SP & SE & CP & EL \\
+\hline
+1.14 & 2.10 & 1.44 & 1.00 & 4.73 & 4.80 & 3.24\\
+1.00 & 1.26 & 1.03 & 1.21 & 1.00 & 1.03 & 2.64\\
+1.40 & 1.00 & 1.29 & 1.32 & 1.74 & 1.74 & 2.54\\
+1.07 & 1.18 & 3.00 & 3.00 & 3.00 & 1.00 & 1.31\\
+1.00 & 1.00 & 1.00 & 1.03 & 1.35 & 1.35 & 1.28\\
+1.00 & 2.03 & 2.14 & 3.38 & 4.09 & 4.17 & 6.26\\
+2.98 & 1.00 & 1.80 & 11.04 & 1.80 & 3.54 & 493.30\\
+3.10 & 1.88 & 2.31 & 1.00 & 3.13 & 3.13 & 1.41\\
+1.00 & 2.05 & 1.52 & 1.61 & 2.90 & 3.14 & 2.73\\
+1.00 & 1.45 & 1.80 & 1.43 & 1.61 & 2.25 & 1.97\\
+1.30 & 1.22 & 1.35 & 2.15 & 1.03 & 1.00 & 1.34\\
+1.06 & 1.00 & 1.56 & 1.54 & 1.85 & 1.84 & 1.93\\
+3.03 & 4.00 & 3.12 & 3.63 & 3.16 & 5.83 & 1.00\\
+\hline
+\end{tabular}
+\caption{Extrapolation standardised RMSEs}
+\end{table}
 
 \end{document} 

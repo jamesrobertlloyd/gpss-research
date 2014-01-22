@@ -188,7 +188,7 @@ The kernel specifies which structures are likely under the \gp{} prior, which in
 
 Different kernels can express a wide variety of structure that one might expect to find in functions.
 For example, a \gp{} with a squared-exponential (\kSE) kernel corresponds to a prior on locally smooth functions.
-Similarily, a \gp{} with a periodic (\kPer) kernel corresponds to a prior on locally smooth functions.
+Similarily, a \gp{} with a periodic (\kPer) kernel corresponds to a prior on locally smooth functions. \footnote{The precise expression of all kernels are provided in the supplementary material.}
 
 To express richer structures, new kernels can be constructed by taking products of existing ones.
 For example, the kernel $\kSE \times \kPer$ puts mass on functions which are locally periodic.
@@ -199,27 +199,35 @@ A more detailed discussion with examples can be found in \cite{DuvLloGroetal13}.
 \subsection{Gaussian Process Structure Search}
 
 The Gaussian process structure search (GPSS)\fTBD{RG: More specific name?} procedure \citep{DuvLloGroetal13} searches over sums and products of a set of simple base kernels to produce an appropriate model for a given data set.
-Because of the properties of \gp{}s and the structrued nature of the kernels produced, the models can be decomposed to express the model as a sum of interpretable components.
+Because of the properties of \gp{}s and the structured nature of the kernels produced, the models can be decomposed to express the model as a sum of interpretable components.
 
-Because the search operated over an open-ended language of kernel structres, it can construct nonparametric regression models with novel properties.
-For example, when applied to airline passenger data (section~\ref{sec:airline}), the resulting kernel contatined a component of the form $\kSE \times \kPer \times \kLin$, which could be described as ``locally periodic with linearly growing amplitude''. \fTBD{Unfortunately, we never described it that way in the paper}
-In \citep{DuvLloGroetal13}, the authors plotted the discovered components, and interpreted each one by hand.
+Because the search operates over an open-ended language of kernel structres, it can construct novel nonparametric regression models.
+For example, when applied to airline passenger data (section~\ref{sec:airline}), the resulting kernel contatined a component of the form $\kSE \times \kPer \times \kLin$, which could be described as ``locally periodic, with linearly growing amplitude''. \fTBD{Unfortunately, we never described it that way in the paper}
+In \citep{DuvLloGroetal13}, the authors plotted such discovered components, and described each one by hand.
 
 In this paper we show that, suprisingly, one can automatically generate natural-language descriptions of \gp{} models in this open-ended class.
-We detail how to describe arbitrary sums and products of kernels in section~\ref{sec:description}.
-First we introduce some extensions and improvements to the base kernels and generative grammar of GPSS.
+Combined with relevant plots of components of the posterior, our system automatically generates detailed reports discussing various statistical structures present in a dataset.
+This system represents the beginnings of an ``automated statistician'', which has the potential to aid in rapid exploratory analysis of data.
 
-\subsection{Notation}
-\label{sec:notation}
-\fTBD{RG: too brief}
-We typically refer to kernels by their syntax\fTBD{need a better word - I'm not sure family is quite right either} (\ie parameter values are implicit) via the following acronyms; zero -- $\emptyset$, white noise -- $\kWN$, constant -- $\kC$, linear -- $\kLin$, squared-exponential -- $\kSE$, rational-quadratic -- $\kRQ$ and periodic -- $\kPer$.
-The parametric forms of these kernels are provided in the supplementary material.
+\subsection{Paper Outline}
+We detail how arbitrary sums and products of kernels can be automatically described in section~\ref{sec:description}.
+Section [blank] provides a worked example.
+Section [blank] introduces some extensions and improvements to the base kernels and generative grammar of GPSS.
+Section [blank] compares the effectiveness of the method in terms of etrapolation against other methods.
+As supplementary material, we have included 10 reports produced by our method on a variety of datasets.
 
-\subsection{Remarks}
-\label{sec:Remarks}
-\fTBD{RG: Missing word? JL: I don't see it}
-In this manuscript we restrict to one dimensional regression models.
-In the earlier work of \cite{DuvLloGroetal13} the GPSS procedure was applied to multidimensional inputs; we see no obstacles to extending the work in this manuscript to multidimensional inputs.
+
+%\subsection{Notation}
+%\label{sec:notation}
+%\fTBD{RG: too brief}
+%We typically refer to kernels by their syntax\fTBD{need a better word - I'm not sure family is quite right either} (\ie parameter values are implicit) via the following acronyms; zero -- $\emptyset$, white noise -- $\kWN$, constant -- $\kC$, linear -- $\kLin$, squared-exponential -- $\kSE$, rational-quadratic -- $\kRQ$ and periodic -- $\kPer$.
+
+
+%\subsection{Remarks}
+%\label{sec:Remarks}
+%\fTBD{RG: Missing word? JL: I don't see it}
+%In this manuscript we restrict to one dimensional regression models.
+
 
 
 
@@ -228,31 +236,47 @@ In the earlier work of \cite{DuvLloGroetal13} the GPSS procedure was applied to 
 
 \section{Description of kernel functions}
 \label{sec:description}
-\fTBD{RG: Does the algorithm clarify anything?}
-\fTBD{RG, JBT: Section unclear} 
+%\fTBD{RG: Does the algorithm clarify anything?}
+%\fTBD{RG, JBT: Section unclear} 
 
-The extended GPSS language produces sentences composed of 5 base kernels (section~\ref{sec:notation}) and the arbitrary application of addition, multiplication, change point and change window operators. 
-In this section, we describe how the compositional properties of kernel functions reduce the task of natural-language description into relatively simple subproblems.
-The text follows the flow of algorithm~\ref{alg:description}.
+In this section, we describe how the properties of \gp{} models, as well as compound kernel expressions allow one to reduce the task of natural-language description into relatively simple subproblems.
+%The text follows the flow of algorithm~\ref{alg:description}.
+
+\paragraph{Overview of automatic description.}
+
+The automatic description procedure begins by distributing all kernels into sums of products [example here?].
+Because a sum of kernels corresponds to a sum of functions, each of these products can be described separately.
+Descriptions of each product are generated by considering each base kernel in turn.
+%Changepoints, linear kernels and stationary kernels within a product can be described separately.
+This is possible because, conveniently, the effects of multiplying by a base kernel are consistent for each type of base kernel.
+Loosely speaking, each kernel corresponds to a modifier, or an adjective, when multiplied with another kernel.
+For example, multiplying any kernel by \kPer makes the resulting model periodic to some extent.
+The exact effect that each component of the product has depends on the hyperparameters of each kernel.
+Each of these separate description tasks is now small enough that sentences can be templated based on parameter values and basic properties of the posterior.
 
 \begin{algorithm}[tb]
-   \caption{Describe kernel expression}
+   \caption{Describe model}
    \label{alg:description}
 \begin{algorithmic}
-   \STATE {\bfseries Input:} kernel expression $e$
-   \STATE $e = {ChangePointsToSumsAndProducts}(e)$
-   \STATE $e = {DistributeProducts}(e)$
-   \FOR{$k$ in $Summands(e)$}
+   \STATE {\bfseries Input:} kernel $e$
+   %\STATE $e = {ChangePointsToSumsAndProducts}(e)$
+   \STATE $e = {\textnormal{ \sc DistributeProducts}}(e)$
+   \FOR{$k$ in {\sc SummandsOf}$(e)$}
    %\STATE \COMMENT{Individual summands can be described separately}
-     \REPEAT
-       \STATE $k = Simplify(k)$
-     \UNTIL $k$ is unchanged
-     \STATE $DescribeLinearComponents(k)$
-     \STATE $DescribeChangePointComponents(k)$
-     \STATE $DescribeStationaryComponents(k)$
+    % \REPEAT
+       \STATE $k = {\textnormal{ \sc Simplify}}(k)$
+    % \UNTIL $k$ is unchanged
+       \FOR{$m$ in {\sc ProductsOf}$(k)$}
+            \STATE {\textnormal{ \sc Describe}} $(m)$
+     %\STATE $DescribeChangePointComponents(k)$
+     %\STATE $DescribeStationaryComponents(k)$
+     \ENDFOR
    \ENDFOR
 \end{algorithmic}
 \end{algorithm}
+
+
+The extended GPSS language produces sentences composed of 5 base kernels (section~\ref{sec:notation}) and the arbitrary application of addition, multiplication, change point and change window operators. 
 
 \paragraph{Changepoints}
 
@@ -262,12 +286,6 @@ We use equation \eqref{eq:cp} to represent changepoints (and similarly change wi
 
 Pointwise multiplication is distributive over addition for functions so we can convert any kernel expression into a sum of products.
 
-\paragraph{Sums of kernels are sums of functions}
-
-
-
-A sum of kernels can be described as a sum of functions.
-We now only need to describe arbitrary products of kernels.
 
 \paragraph{Simplification}
 
@@ -314,11 +332,11 @@ $\kPer$ & Periodic \\
 \end{table}
 \vspace{-\baselineskip}
 
-\paragraph{$\kSE \times \kPer$}
+%\paragraph{$\kSE \times \kPer$}
 
-gives rise to functions which are \emph{locally} periodic: they only approximately repeat.
-More exactly, if the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
-That is, the functional form of the periodicity varies like $\kSE$, giving rise to the local nature of the periodicity.
+%gives rise to functions which are \emph{locally} periodic: they only approximately repeat.
+%More exactly, if the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
+%That is, the functional form of the periodicity varies like $\kSE$, giving rise to the local nature of the periodicity.
 
 \paragraph{Products of multiple periodic kernels}
 
@@ -349,7 +367,7 @@ The procedure iterates until the ordering is complete \ie it is a type of forwar
 
 \subsection{When is a description `correct'?}
 
-In the above we have described how to produce a description of the prior of a \gp{} described by an arbitrary kernel.
+In the above we have described how to produce a description of the \gp{} model described by an arbitrary kernel.
 The GPSS procedure attempts to find the best fitting model for a data set subject to the constraints of its modeling language.
 As with all statistical analysis, a data set may not be well described by any model in this language and therefore the natural-language description will be spurious.
 
@@ -358,16 +376,17 @@ As with all statistical analysis, a data set may not be well described by any mo
 We have begun to experiment with using posterior predictive checks to assess the models produced by GPSS following the techniques of \cite{Gelman1996} (see reports in the supplementary material).
 However, model checking for Gaussian processes, even those with simple kernels, is under-researched so we leave their description and more detailed analysis for future work.
 
-\section{Second attempt at description section}
 
-\TBD{Written in note form at the moment}
+
+
+\section{Second attempt at description section}
 
 \subsection{Overview}
 
 Kernels are converted into a sum of products normal form.
 Additive kernels are additive functions so we only need to describe products, potentially within changepoints.
-Changepoints, linear kernels and stationary kernels within a product can be described separately.
-Each of these separate description tasks is now small enough that sentences can be templated based on parameter values and basic properties of the posterior.
+
+%Each of these separate description tasks is now small enough that sentences can be templated based on parameter values and basic properties of the posterior.
 
 \subsection{Sum of products normal form}
 
@@ -458,6 +477,11 @@ Extending the model search ideas in GPSS to searches over probabilistic programs
 
 To the best of our knowledge, the automatic description of nonparametric statistical models is novel (whereas parametric models are typically described by their parameters).
 However, grammar based techniques have previously been used to automatically understand images (cite something?) and recently (cite Gowers) have produced a theorem proving system that expresses its proof in natural language.
+
+
+
+
+
 
 \section{Worked example of description}
 
@@ -1243,6 +1267,8 @@ These versions of the plots are probably more honest, showing that there is room
 \TBD{Help requested - haven't thought of a definitive conclusion myself}
 
 Towards the goal of automating the process of statistical analysis we have introduced a system that can automatically describe the complex statistical models it produces.
+
+In the earlier work of \cite{DuvLloGroetal13} the GPSS procedure was applied to multidimensional inputs; we see no obstacles to extending the work in this manuscript to multidimensional inputs.
 
 \paragraph{Disconnected unordered notes}
 

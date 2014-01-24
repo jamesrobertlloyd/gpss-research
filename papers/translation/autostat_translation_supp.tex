@@ -311,4 +311,110 @@ GPSS & GPSS.int & TCI & SP & SE & CP & EL \\
 \caption{Extrapolation standardised RMSEs}
 \end{table}
 
+
+
+
+
+\subsubsection{Heteroscedasticity}
+
+In the original GPSS the heteroscedasticity of the airline dataset was partially captured by the $\kLin \times \kSE \times \kRQ$ term which was modeling short term variation.
+This term was also modeling the medium term variations in the data (an example of $\kRQ$ capturing multiple lengthscales) forcing a compromise of parameter values\fTBD{This may also be a result of not distributing products during the search - not entirely sure} resulting in the variance of the residuals decreasing (see figure~\ref{fig:not_hetero} from old GPSS) rather than increasing with the data (see new figure~\ref{fig:hetero}).\fTBD{The noise variance is too high due to a mathematical error in the original version}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/01-airline-months_resid}
+\caption{Old GPSS - heteroscedasticity not captured and variance larger than residuals.}
+\label{fig:not_hetero}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/01-airline/01-airline_3_anti_cum}
+\caption{New GPSS - heteroscedasticity captured and mostly appropriate.}
+\label{fig:hetero}
+\end{figure}
+
+Introducing $\kWN$ as a base kernel allows heteroscedasticity to be explicitly modelled\fTBD{we now have a delta likelihood function rather than always assuming homoscedastic Gaussian noise} rather than having to approximate it with components that can represent short lengthscales.
+
+
+
+
+\subsubsection{Removal of $\kRQ$}
+
+GPML describes the $\kRQ$ as ``a scale mixture of \kSE covariance functions with different characteristic length-scales''.
+To exactly specify this scale mixture would require an equation or plot.
+One could summarise this information with descriptions like `90\% of the length-scales are between $x$ and $y$' but I do not think there is any common language that would express what is happening exactly.
+
+Also the $\kRQ$ kernel can model smooth trends and very short term variation in one component.
+What was previously one component (figure \ref{fig:RQ}) is now two (figures \ref{fig:medium} and \ref{fig:short}) in new GPSS.
+This feels more interpretable to me, but this is subjective and maybe subtle.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/03-mauna2003-s_3}
+\caption{Old GPSS - many lengthscales in one component.}
+\label{fig:RQ}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/03-mauna/03-mauna_3}
+\caption{New GPSS - medium term variation.}
+\label{fig:medium}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/03-mauna/03-mauna_5}
+\caption{New GPSS - very short term variation.}
+\label{fig:short}
+\end{figure}
+
+More convincing hopefully is the plot in figure~\ref{fig:RQ_bad} which shows a fit to data representing sales of mink fur.
+The kernel is $\kRQ \times \kPer$\fTBD{redundant multiplicative constant kernels were not removed in the version of the algorithm that produced this figure}.
+The extrapolation shows that it has captured the near exact periodicity (\ie a long lengthscale phenomenon) but the interpolation shows it has also captured short term variation (it has joined the dots!).
+Combining these scales of variation does not seem interpretable\fTBD{I tried for quite some time to avoid this fit to the data before convincing myself that $\kRQ$ was the problem rather than anything else}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/fur-sales-mink-h-b-co-18481911_1}
+\caption{Old GPSS - the trend and noise in one component.}
+\label{fig:RQ_bad}
+\end{figure}
+
+\subsection{An improved periodic kernel}
+
+We introduce a new periodic kernel defined by
+\begin{equation}
+\kernel_\kPer(x, x') = \kernel_\kPer(\tau) =  \sigma^2\frac{\exp\left(\frac{\cos\frac{2 \pi \tau}{p}}{\ell^2}\right) - I_0\left(\frac{1}{\ell^2}\right)}{\exp\left(\frac{1}{\ell^2}\right) - I_0\left(\frac{1}{\ell^2}\right)}
+\label{eq:periodic}
+\end{equation}
+where $\tau := x - x'$ and $I_0$ is the modified Bessel function of the first kind of order 0.
+It is linearly related to the original periodic kernel \TBD{cite something?} but has the following elegant properties.
+
+\paragraph{Cosine limit}
+
+A simple application of l'H\^opital's rule shows that
+\begin{equation}
+\kernel_\kPer(\tau) \to \sigma^2\cos\left(\frac{2 \pi \tau}{p}\right) \quad \textrm{as} \quad\ell \to \infty.
+\end{equation}
+It was recently demonstrated \citep{WilAda13} that any stationary kernel can be arbitrarily well approximated by kernels with syntax\fTBD{RG: Syntax $\to$ expression, structure, family?}
+\begin{equation}
+\sum \kSE \times \cos
+\end{equation}
+by appealing to Bochner's theorem \citep{bochner1959lectures}.
+By using this new periodic kernel our language of kernels also attains this completeness property.
+
+\paragraph{No power at zero frequency}
+
+The kernel defined by equation~\eqref{eq:periodic} has a Fourier transform of zero when evaluated at zero.
+Therefore, functions drawn from a \gp{} with this kernel will have zero mean.
+In contrast, the previous periodic kernel defined a prior over a zero mean periodic function plus an independent constant function.
+For the purposes of description we find it more interpretable to separate zero mean periodicity and constant functions.
+\NA{
+cite Sheffield's orthogonal RKHS work?
+}
+
+
+
 \end{document} 

@@ -188,7 +188,7 @@ The kernel specifies which structures are likely under the \gp{} prior, which in
 
 Different kernels can express a wide variety of structure that one might expect to find in functions.
 For example, a \gp{} with a squared-exponential (\kSE) kernel corresponds to a prior on locally smooth functions.
-Similarily, a \gp{} with a periodic (\kPer) kernel corresponds to a prior on locally smooth functions.
+Similarily, a \gp{} with a periodic (\kPer) kernel corresponds to a prior on locally smooth functions. \footnote{The precise expression of all kernels are provided in the supplementary material.}
 
 To express richer structures, new kernels can be constructed by taking products of existing ones.
 For example, the kernel $\kSE \times \kPer$ puts mass on functions which are locally periodic.
@@ -199,320 +199,23 @@ A more detailed discussion with examples can be found in \cite{DuvLloGroetal13}.
 \subsection{Gaussian Process Structure Search}
 
 The Gaussian process structure search (GPSS)\fTBD{RG: More specific name?} procedure \citep{DuvLloGroetal13} searches over sums and products of a set of simple base kernels to produce an appropriate model for a given data set.
-Because of the properties of \gp{}s and the structrued nature of the kernels produced, the models can be decomposed to express the model as a sum of interpretable components.
+Because of the properties of \gp{}s and the structured nature of the kernels produced, the models can be decomposed to express the model as a sum of interpretable components.
 
-Because the search operated over an open-ended language of kernel structres, it can construct nonparametric regression models with novel properties.
-For example, when applied to airline passenger data (section~\ref{sec:airline}), the resulting kernel contatined a component of the form $\kSE \times \kPer \times \kLin$, which could be described as ``locally periodic with linearly growing amplitude''. \fTBD{Unfortunately, we never described it that way in the paper}
-In \citep{DuvLloGroetal13}, the authors plotted the discovered components, and interpreted each one by hand.
+Because the search operates over an open-ended language of kernel structres, it can construct novel nonparametric regression models.
+For example, when applied to airline passenger data (section~\ref{sec:airline}), the resulting kernel contatined a component of the form $\kSE \times \kPer \times \kLin$, which could be described as ``locally periodic, with linearly growing amplitude''. \fTBD{Unfortunately, we never described it that way in the paper}
+In \citep{DuvLloGroetal13}, the authors plotted such discovered components, and described each one by hand.
 
 In this paper we show that, suprisingly, one can automatically generate natural-language descriptions of \gp{} models in this open-ended class.
-We detail how to describe arbitrary sums and products of kernels in section~\ref{sec:description}.
-First we introduce some extensions and improvements to the base kernels and generative grammar of GPSS.
-
-\subsection{Notation}
-\label{sec:notation}
-\fTBD{RG: too brief}
-We typically refer to kernels by their syntax\fTBD{need a better word - I'm not sure family is quite right either} (\ie parameter values are implicit) via the following acronyms; zero -- $\emptyset$, white noise -- $\kWN$, constant -- $\kC$, linear -- $\kLin$, squared-exponential -- $\kSE$, rational-quadratic -- $\kRQ$ and periodic -- $\kPer$.
-The parametric forms of these kernels are provided in the supplementary material.
-
-\subsection{Remarks}
-\label{sec:Remarks}
-\fTBD{RG: Missing word? JL: I don't see it}
-In this manuscript we restrict to one dimensional regression models.
-In the earlier work of \cite{DuvLloGroetal13} the GPSS procedure was applied to multidimensional inputs; we see no obstacles to extending the work in this manuscript to multidimensional inputs.
-
-
-
-
-
-
-\section{Description of kernel functions}
-\label{sec:description}
-\fTBD{RG: Does the algorithm clarify anything?}
-\fTBD{RG, JBT: Section unclear} 
-
-The extended GPSS language produces sentences composed of 5 base kernels (section~\ref{sec:notation}) and the arbitrary application of addition, multiplication, change point and change window operators. 
-In this section, we describe how the compositional properties of kernel functions reduce the task of natural-language description into relatively simple subproblems.
-The text follows the flow of algorithm~\ref{alg:description}.
-
-\begin{algorithm}[tb]
-   \caption{Describe kernel expression}
-   \label{alg:description}
-\begin{algorithmic}
-   \STATE {\bfseries Input:} kernel expression $e$
-   \STATE $e = {ChangePointsToSumsAndProducts}(e)$
-   \STATE $e = {DistributeProducts}(e)$
-   \FOR{$k$ in $Summands(e)$}
-   %\STATE \COMMENT{Individual summands can be described separately}
-     \REPEAT
-       \STATE $k = Simplify(k)$
-     \UNTIL $k$ is unchanged
-     \STATE $DescribeLinearComponents(k)$
-     \STATE $DescribeChangePointComponents(k)$
-     \STATE $DescribeStationaryComponents(k)$
-   \ENDFOR
-\end{algorithmic}
-\end{algorithm}
-
-\paragraph{Changepoints}
-
-We use equation \eqref{eq:cp} to represent changepoints (and similarly change windows) using sums, products, base kernels and sigmoid functions.
-
-\paragraph{Distributivity}
-
-Pointwise multiplication is distributive over addition for functions so we can convert any kernel expression into a sum of products.
-
-\paragraph{Sums of kernels are sums of functions}
-
-
-
-A sum of kernels can be described as a sum of functions.
-We now only need to describe arbitrary products of kernels.
-
-\paragraph{Simplification}
-
-At a syntactic\fTBD{need a better word - I'm not sure family is quite right either} level, $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$ (simply, the product of two $\kSE$ kernels is another $\kSE$ kernel but with different parameters).
-For stationary kernels, $\kWN$ behaves like zero \eg $\kWN \times \kSE = \kWN \times \kPer =  \kWN$.
-The constant kernel $\kC$ behaves like the identity \eg $\kC \times \kLin = \kLin$
-
-\paragraph{Multiplication by linear kernels}
-
-$\kLin$ has the form $k(x,x') = a(x)a(x')$.
-This can be used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
-Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
-Therefore multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) \sim \gp{}(0, k)$ by a linear function.
-
-This allows us to describe any linear kernels separately.
-For example, multiplying by a linear kernel means that the amplitude of the function grows linearly away from a central point.
-Multiplication by two linear kernels results in quadratic growth, etc.
-
-\paragraph{Changepoints and changewindows}
-
-Representing changepoints/windows as sigmoid functions as shown in equation~\eqref{eq:cp} also results in kernels of the form $a(x)k(x,x')a(x')$ where $a(x)$ is a sigmoid (changepoint) or product of sigmoids (changewindow).
-Therefore the application of changepoint/window operators can be described separately as multiplication of functions by sigmoids.
-When the sigmoids transition between 0 and 1 sharply the effect is particularly trivial to express in natural-language \eg ``this component applies from 1700 to 1800''.
-
-We now only need to describe the base kernels and products of the form $\kSE \times \prod \kPer$.
-
-\paragraph{Base kernels}
-
-The priors induced by the base kernels are well understood, with simple descriptions of typical functions.
-
-\vspace{-0.5\baselineskip}
-\begin{table}[ht]
-\centering
-\begin{tabular}{c|c}
-Kernel & Function description \\
-\midrule
-$\kWN$ & White noise \\
-$\kC$ & Constant \\
-$\kLin$ & Linear \\
-$\kSE$ & Smooth \\
-$\kPer$ & Periodic \\
-\end{tabular}
-\label{table:base-kernels}
-\end{table}
-\vspace{-\baselineskip}
-
-\paragraph{$\kSE \times \kPer$}
-
-gives rise to functions which are \emph{locally} periodic: they only approximately repeat.
-More exactly, if the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
-That is, the functional form of the periodicity varies like $\kSE$, giving rise to the local nature of the periodicity.
-
-\paragraph{Products of multiple periodic kernels}
-
-Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
-Then
-\begin{equation}
-{\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.
-\end{equation}
-Therefore $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.  However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
-
-\subsection{Ordering additive components}
-
-\TBD{Needs improvement}
-
-An automatic regression system would ideally report the most interesting or important features of a data set first.
-However, measuring importance is subjective.
-We make the choice that additive components are important if they produce accurate extrapolations and order the components by this metric.
-
-After constructing an additive kernel for a data set we divide the data into 10 equally sized contiguous blocks.
-We then compute a ten fold cross validation estimate of the mean absolute error of each additive component.
-Speficially, for each additive component and each block we compute the posterior predictive distribution of the component after training on the other 9 blocks.
-We measure the mean absolute error between the data in the block and the posterior mean of the component.
-The mean absolute error is then averaged over all blocks.
-
-The component with the lowest cross validated mean absolute error is selected as the first component.
-The ordering continues by computing the posterior predictive distribution of the sum of the first component and each of the remaining components and evaluating the mean absolute error in the manner described above.
-The procedure iterates until the ordering is complete \ie it is a type of forward selection algorithm.
-
-\subsection{When is a description `correct'?}
-
-In the above we have described how to produce a description of the prior of a \gp{} described by an arbitrary kernel.
-The GPSS procedure attempts to find the best fitting model for a data set subject to the constraints of its modeling language.
-As with all statistical analysis, a data set may not be well described by any model in this language and therefore the natural-language description will be spurious.
-
-\TBD{Help with the following paragraph requested}
-
-We have begun to experiment with using posterior predictive checks to assess the models produced by GPSS following the techniques of \cite{Gelman1996} (see reports in the supplementary material).
-However, model checking for Gaussian processes, even those with simple kernels, is under-researched so we leave their description and more detailed analysis for future work.
-
-\section{Second attempt at description section}
-
-\TBD{Written in note form at the moment}
-
-\subsection{Overview}
-
-Kernels are converted into a sum of products normal form.
-Additive kernels are additive functions so we only need to describe products, potentially within changepoints.
-Changepoints, linear kernels and stationary kernels within a product can be described separately.
-Each of these separate description tasks is now small enough that sentences can be templated based on parameter values and basic properties of the posterior.
-
-\subsection{Sum of products normal form}
-
-Products are distributed over addition and changepoints \eg
-\begin{equation}
-\kSE \times (\kWN + \kCP(\kC, \kPer)
-\end{equation}
-becomes
-\begin{equation}
-\kSE \times \kWN + \kCP(\kSE \times \kC, \kSE \times \kPer).
-\end{equation}
-This can be simplified to
-\begin{equation}
-\kWN + \kCP(\kSE, \kSE \times \kPer).
-\end{equation}
-Changepoints and changewindows are split into additive components
-\begin{equation}
-\kWN + \kCP(\kSE, \emptyset) + \kCP(\emptyset, \kSE \times \kPer).
-\end{equation}
-
-\subsection{Description is modular}
-
-Additive kernels = additive functions and can therefore be described separately.
-Linear kernels have special form and can be translated separately.
-Changepoints, when split into additive components also have this form and can therefore also be translated separately.
-
-\subsection{Description of changepoints}
-
-A combination of changepoints and changewindows specifies a collection of intervals to which a function applies.
-These intervals are easy to calculate from parameter values and we only need templates for open at the left, closed, open at the right intervals  and appropriate connectives.
-
-\subsection{Description of linear}
-
-Arbitrary products of linear kernels are easily templated as \eg `linear', `quadratic', `cubic', `polynomial of degree 11'\ldots
-There are a few variants of the templates depending on parameter values and simple statistics of the posterior (\eg increasing / decreasing functions).
-
-\subsection{Description of stationary}
-
-After simplification there are only a small number of kernels we need to create templates for, they are
-\begin{itemize}
-  \itemsep0em
-  \item $\kWN$
-  \item $\kC$
-  \item $\kSE$
-  \item $\kPer^n$
-  \item $\kSE \times \kPer^n$
-\end{itemize}
-where $n \in \mathbb{N}$.
-We have a few variants of the templates depending on kernel parameters and simple statistics of the posterior (\eg very smooth functions, monotonicity).
-
-The base kernels have well defined descriptions in the literature.
-The product of periodics has the same covariance as a product of functions - allowing for a simple template description.
-Multiplication by $\kSE$ has a localising effect which again allows for easy templating of a description.
-
-In principle we could create templates for $\SE \times k$ and $\Per \times k$ for arbitrary $k$ since these have consistent `localising' and `making periodic' effects respectively.
-This isn't so important at the moment, but if the base kernels expand we may need to exploit this additional modularity.
-
-\subsection{In practice}
-
-The modularity is occassionally broken when it improved readability.
-For example, if the kernel was only a product of linear kernels we used a different template.
-Also, `periodic with linearly increasing amplitude' is not an entirely modular construction.
-
-\section{Related work}
-
-\paragraph{Equation learning}
-
-In this work we have defined a search space of statistical models, where each model is characterised by a parametric covariance function.
-Previous work has considered searching over parametric functions \citep[e.g.][]{Schmidt2009b}.
-Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
-
-\paragraph{Searching over statistical models}
-
-GPSS was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
-This work and GPSS is possible for the following reasons: we can define a large space of models through a succinct langauge, inference can be performed for all sentences in this language and a basic search procedure is sufficient to find accurate models.
-\NA{
-This is also true of - can we also cite some sort of graphical model work?
-}
-\fTBD{RG: Cite Kemp + Tenenbaum?}
-
-\paragraph{Standardised inference methods}
-\fTBD{RG: How is this relevant?}
-The GPSS language can express many regression motifs as \gp{}s for which inference is well understood.
-Probabilistic programming (cite) defines languages that describe generative models in such a way that inference can be performed in each model.
-Extending the model search ideas in GPSS to searches over probabilistic programs would be an interesting area for future research (cite Josh's workshop paper?).
-
-\paragraph{Natural-language descriptions of data}
-
-To the best of our knowledge, the automatic description of nonparametric statistical models is novel (whereas parametric models are typically described by their parameters).
-However, grammar based techniques have previously been used to automatically understand images (cite something?) and recently (cite Gowers) have produced a theorem proving system that expresses its proof in natural language.
-
-\section{Worked example of description}
-
-\TBD{To be improved and then worked into next section potentially}
-
-The kernel learned for solar was
-\begin{equation}
-\kWN + \kC + \kCW(\kSE + \kSE + \kSE \times \kLin  + \kSE \times \kLin + \kSE \times \kPer, \kC)
-\end{equation}
-which is already in sum of products form except for the changewindow.
-Distributing the changewindow results in the following additive components
-\begin{itemize}
-  \itemsep0em
-  \item $\kWN$
-  \item $\kC$
-  \item $\kCW(\kSE, \emptyset)$
-  \item $\kCW(\kSE, \emptyset)$
-  \item $\kCW(\kSE \times \kLin, \emptyset)$
-  \item $\kCW(\kSE \times \kLin, \emptyset)$
-  \item $\kCW(\kSE \times \kPer, \emptyset)$
-  \item $\kCW(\emptyset, \kC)$
-\end{itemize}
-which are reordered to
-\begin{itemize}
-  \itemsep0em
-  \item $\kC$
-  \item $\kCW(\emptyset, \kC)$
-  \item $\kCW(\kSE, \emptyset)$
-  \item $\kCW(\kSE \times \kPer, \emptyset)$
-  \item $\kCW(\kSE, \emptyset)$
-  \item $\kWN$
-  \item $\kCW(\kSE \times \kLin, \emptyset)$
-  \item $\kCW(\kSE \times \kLin, \emptyset)$
-\end{itemize}
-by the cross validated MAE heuristic.
-
-The first component is the constant base kernel - its description can be looked up.
-
-The second component is the constant base kernel within a changewindow operator.
-By inspecting the parameters of the change window it can be deduced that this component is zero except in the region from 1644 to 1713\fTBD{It currently does not comment on the speed/slope of the transition} which can be translated using an appropriate template \eg `this function applies from 1644 until 1713'.
-The constant base kernel is then described separately by looking up its description.
-
-The third component is similar to the second, but the $\kSE$ requires more description than $\kC$.
-The lengthscale of the $\kSE$ is compared to the range of the input dimension of the data to determine an appropriate template to use (\ie is the function very smooth, smooth or quickly varying?).
-For this component, the lengthscale is moderate so the function is described as smooth.
-
-The changewindow aspect of the fourth component is dealt with in the same manner as the above.
-There are different templates for the $\kSE \times \kPer$ kernel expression which are selected based on the parameter values of the kernels in comparison to the dimensions of the dataset.
-
-The seventh component is also translated in a modular fashion.
-The changewindow is translated as before from a template 'This component
-applies until 1643 and from 1716 onwards'.
-The linear kernel is translated separately, using an appropriate template based on parameter values resulting in `The marginal standard deviation of the function increases linearly away from 1701'.
-The $\kSE$ is translated spearately from a template `This component is a rapidly varying but smooth function with a typical lengthscale of 2.2 months'.
-The full description is actually these sentences in reverse order.
+Combined with relevant plots of components of the posterior, our system automatically generates detailed reports discussing various statistical structures present in a dataset.
+This system represents the beginnings of an ``automated statistician'', which has the potential to aid in rapid exploratory analysis of data.
+
+\subsection{Paper Outline}
+
+First, section \ref{sec:improvements} review the language of models searched over by the GPSS procedure, and introduce several extensions and refinements.
+We detail how any model in this class can be automatically described in natural language in section~\ref{sec:description}.
+Section [blank] provides a worked example.
+Section [blank] compares the predictive power of this method against other methods.
+As supplementary material, we have included 10 reports produced by our method on a variety of datasets.
 
 
 
@@ -530,8 +233,9 @@ We also make modifications to the language to improve\fTBD{RG: Do we have direct
 
 \subsection{Changepoints}
 
-The original GPSS language was incapable of accurately describing the non-linear non-stationarity exhibited in a solar irradiance data set (section~\ref{sec:solar}).
-A succinct extension to the modelling language to capture this phenomenon is to include the concept of changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}\fTBD{any suggestions for generic papers?}.
+The original GPSS language could not capture the non-linear non-stationarity exhibited in a solar irradiance data set (section~\ref{sec:solar}).
+To capture this type of phenomena, changepoints were introduced to the model language. \citep{garnett2010sequential, FoxDunson:NIPS2012}.
+\fTBD{DD: Let's add a small figure here to show what changepoints can do.}
 Suppose that $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ and define
 \begin{equation}
 f(x) = (1-\sigma(x))f_1(x) + \sigma(x)f_2(x)
@@ -545,60 +249,25 @@ Then $f(x) \dist \gp{}(0,\kernel)$ where
 (see section~\ref{sec:description} for the properties to prove this identity).
 
 We represent this operation as the changepoint operator $\kCP(\kernel_1, \kernel_2)$.
-We also introduce a change window operator, $\kCW(.,.)$, by replacing the sigmoids with products of sigmoids (resulting in a smooth `hat' function).
+We also introduce a change window operator, $\kCW(.)$, by replacing the sigmoids with products of sigmoids (resulting in a smooth `hat' function).
 
-\subsection{Heteroscedasticity}
+\paragraph{Heteroscedasticity}
 
 We introduce the white noise kernel\fTBD{RG: Change name to identity? Does not always produce white noise}, $\kWN$, as a base kernel.
 When multiplied by linear kernels and changepoints this can express polynomially varying standard deviation as well as switching between different noise regimes.
 The original GPSS procedure always assumed homoscedastic noise.
 
-\subsection{An improved periodic kernel}
 
-We introduce a new periodic kernel defined by
-\begin{equation}
-\kernel_\kPer(x, x') = \kernel_\kPer(\tau) =  \sigma^2\frac{\exp\left(\frac{\cos\frac{2 \pi \tau}{p}}{\ell^2}\right) - I_0\left(\frac{1}{\ell^2}\right)}{\exp\left(\frac{1}{\ell^2}\right) - I_0\left(\frac{1}{\ell^2}\right)}
-\label{eq:periodic}
-\end{equation}
-where $\tau := x - x'$ and $I_0$ is the modified Bessel function of the first kind of order 0.
-It is linearly related to the original periodic kernel \TBD{cite something?} but has the following elegant properties.
 
-\paragraph{Cosine limit}
+\paragraph{A separate constant kernel}
+By introducing a constant kernel $C$, we can remove the constant component from the $\kLin$ and $\kPer$ kernels, improving interpretability.  The ``no-dc'' periodic kernel also has a a special case a cosine kernel.  By Bochner's theorem \citep{bochner1959lectures}, a sum of such kernel can approximate any stationary kernel arbitrarily well.
+More details can be found in the appendix.
 
-A simple application of l'H\^opital's rule shows that
-\begin{equation}
-\kernel_\kPer(\tau) \to \sigma^2\cos\left(\frac{2 \pi \tau}{p}\right) \quad \textrm{as} \quad\ell \to \infty.
-\end{equation}
-It was recently demonstrated \citep{WilAda13} that any stationary kernel can be arbitrarily well approximated by kernels with syntax\fTBD{RG: Syntax $\to$ expression, structure, family?}
-\begin{equation}
-\sum \kSE \times \cos
-\end{equation}
-by appealing to Bochner's theorem \citep{bochner1959lectures}.
-By using this new periodic kernel our language of kernels also attains this completeness property.
 
-\paragraph{No power at zero frequency}
+\paragraph{Removal of $\kRQ$}
+The $\kRQ$ kernel is equivalent to a mixture of $\kSE$ covariance functions with different length-scales.
+To improve interpretability, we removed it from the grammar.
 
-The kernel defined by equation~\eqref{eq:periodic} has a Fourier transform of zero when evaluated at zero.
-Therefore, functions drawn from a \gp{} with this kernel will have zero mean.
-In contrast, the previous periodic kernel defined a prior over a zero mean periodic function plus an independent constant function.
-For the purposes of description we find it more interpretable to separate zero mean periodicity and constant functions.
-\NA{
-cite Sheffield's orthogonal RKHS work?
-}
-
-\subsection{A separate constant kernel}
-
-\TBD{Several small changes - how do we not bore the reader?}
-
-We also remove the constant component from $\kLin$ and introduce the constant function as a separate base kernel to improve interpretability.
-
-\subsection{No rational quadratic}
-
-\TBD{Several small changes - how do we not bore the reader?}
-
-The work of \cite{DuvLloGroetal13} also included the rational quadratic kernel which can be represented as a mixture of $\kSE$ with different lengthscales.
-In preliminary investigations we found that this mixture of lengthscales could result in individual components expressing smooth trends and noise like components simultaneously.
-We have therefore removed this kernel on the grounds of interpretability.
 
 \subsection{A broad language of statistical models}
 
@@ -647,26 +316,235 @@ Syntax of common regression motifs expressible in our language.
 
 %In section~\ref{sec:example_description} we demonstrate the natural-language descriptions of some of these kernel forms.
 
-\subsection{Inference}
 
-We use the same inference techniques as \cite{DuvLloGroetal13} but we introduce new search operators to accommodate the changepoint and change window operators.
-The search procedure is not the focus of this manuscript so we defer the details to the supplementary material.
 
-\paragraph{Possible extra content}
 
-\TBD{
-If we choose to present two versions of the algorithm (see figure \ref{fig:box_extrap_dist}) then we need to discuss how it works.
-}
 
-Since the process of translating a model always converts a kernel into a sum of products we experimented with always keeping the kernel in this form.
-After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression \eg
+\section{Description of kernel functions}
+\label{sec:description}
+%\fTBD{RG: Does the algorithm clarify anything?}
+%\fTBD{RG, JBT: Section unclear} 
+
+In this section, we describe how the properties of \gp{} models allow one to reduce the task of describing a model in natural language into a set of relatively simple subproblems.
+%The text follows the flow of algorithm~\ref{alg:description}.
+
+\subsection{Overview}
+
+The automatic description procedure begins by distributing all kernels into sums of products [example here?].
+Because a sum of kernels corresponds to a sum of functions, each of these products can be described separately.
+Descriptions of each product are generated by considering each base kernel in turn.
+%Changepoints, linear kernels and stationary kernels within a product can be described separately.
+
+Generating descriptions for any product of kernels is possible because, conveniently, multiplying any kernel by a base kernel modifies the properties of the resulting model in consistent ways. Loosely speaking, each kernel corresponds to an adjective in the model description.
+
+For example, multiplying any kernel by \kPer makes the resulting model periodic.
+The exact effect that each component of the product has depends on the hyperparameters of each kernel.
+
+%Each of these separate description tasks is now small enough that sentences can be templated based on parameter values and basic properties of the posterior.
+
+\begin{algorithm}[tb]
+   \caption{Natural-language Description of Model}
+   \label{alg:description}
+\begin{algorithmic}
+   \STATE {\bfseries Input:} kernel $e$
+   %\STATE $e = {ChangePointsToSumsAndProducts}(e)$
+   \STATE $e = {\textnormal{ \sc DistributeProducts}}(e)$
+   \FOR{$k$ in {\sc SummandsOf}$(e)$}
+   %\STATE \COMMENT{Individual summands can be described separately}
+    % \REPEAT
+       \STATE $k = {\textnormal{ \sc Simplify}}(k)$
+    % \UNTIL $k$ is unchanged
+       \FOR{$m$ in {\sc ProductsOf}$(k)$}
+            \STATE {\textnormal{ \sc Describe}} $(m)$
+     %\STATE $DescribeChangePointComponents(k)$
+     %\STATE $DescribeStationaryComponents(k)$
+     \ENDFOR
+   \ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Describing products of kernels}
+
+The extended GPSS language produces sentences composed of 5 base kernels (section~\ref{sec:notation}) and the arbitrary application of addition, multiplication, change point and change window operators. 
+
+\paragraph{Changepoints}
+
+We use equation \eqref{eq:cp} to represent changepoints (and similarly change windows) using sums, products, base kernels and sigmoid functions.
+
+\paragraph{Distributivity}
+
+Pointwise multiplication is distributive over addition for functions so we can convert any kernel expression into a sum of products.
+
+
+\paragraph{Simplification}
+
+At a syntactic\fTBD{need a better word - I'm not sure family is quite right either} level, $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$ (simply, the product of two $\kSE$ kernels is another $\kSE$ kernel but with different parameters).
+For stationary kernels, $\kWN$ behaves like zero \eg $\kWN \times \kSE = \kWN \times \kPer =  \kWN$.
+The constant kernel $\kC$ behaves like the identity \eg $\kC \times \kLin = \kLin$
+
+\paragraph{Multiplication by linear kernels}
+
+$\kLin$ has the form $k(x,x') = a(x)a(x')$.
+This can be used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
+Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
+Therefore multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) \sim \gp{}(0, k)$ by a linear function.
+
+This allows us to describe any linear kernels separately.
+For example, multiplying by a linear kernel means that the amplitude of the function grows linearly away from a central point.
+Multiplication by two linear kernels results in quadratic growth, etc.
+
+\paragraph{Changepoints and changewindows}
+
+Representing changepoints/windows as sigmoid functions as shown in equation~\eqref{eq:cp} also results in kernels of the form $a(x)k(x,x')a(x')$ where $a(x)$ is a sigmoid (changepoint) or product of sigmoids (changewindow).
+Therefore the application of changepoint/window operators can be described separately as multiplication of functions by sigmoids.
+When the sigmoids transition between 0 and 1 sharply the effect is particularly trivial to express in natural-language \eg ``this component applies from 1700 to 1800''.
+
+We now only need to describe the base kernels and products of the form $\kSE \times \prod \kPer$.
+
+\paragraph{Base kernels}
+
+The priors induced by the base kernels are well understood, with simple descriptions of typical functions.
+
+\vspace{-0.5\baselineskip}
+\begin{table}[ht]
+\centering
+\begin{tabular}{c|c}
+Kernel & Function description \\
+\midrule
+$\kWN$ & White noise \\
+$\kC$ & Constant \\
+$\kLin$ & Linear \\
+$\kSE$ & Smooth \\
+$\kPer$ & Periodic \\
+\end{tabular}
+\label{table:base-kernels}
+\end{table}
+\vspace{-\baselineskip}
+
+%\paragraph{$\kSE \times \kPer$}
+
+%gives rise to functions which are \emph{locally} periodic: they only approximately repeat.
+%More exactly, if the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
+%That is, the functional form of the periodicity varies like $\kSE$, giving rise to the local nature of the periodicity.
+
+\paragraph{Products of multiple periodic kernels}
+
+Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
+Then
 \begin{equation}
-\kSE \times (\kWN + \kCP(\kC, \kPer) = \kWN + \kCP(\kSE, \kSE \times \kPer).
+{\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.
 \end{equation}
-This variant of the search tends to produce models with fewer additive components which are easier to interpret.
-\NA{
-Further research is required to make rigorous statements about interpretability.
-}
+Therefore $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.  However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
+
+\subsection{Ordering additive components}
+
+Ideally, the system would report the most interesting or important features of a data set first.
+As a heuristic, we order components by always adding the component which reduces the 10-fold extrapolation mean absolute rror the most when added to the model.
+
+
+%Each of these separate description tasks is now small enough that sentences can be templated based on parameter values and basic properties of the posterior.
+
+
+
+\paragraph{Description is modular}
+
+Linear kernels have special form and can be translated separately.
+Changepoints, when split into additive components also have this form and can therefore also be translated separately.
+
+\paragraph{Description of changepoints}
+
+A combination of changepoints and changewindows specifies a collection of intervals to which a function applies.
+These intervals are easy to calculate from parameter values and we only need templates for open at the left, closed, open at the right intervals  and appropriate connectives.
+
+\paragraph{Description of linear kernels}
+
+Products of linear kernels are easily described as `linear', `quadratic', `cubic', etc.
+
+\subsection{Description of compound kernels}
+
+After simplification, there are only a small number of kernels we need to create templates for: $\kWN$, $\kC$, $\kSE$, $\prod \kPer$, and $\kSE \times \prod \kPer$.
+
+We include a few variants of the templates depending on kernel parameters and simple statistics of the posterior (\eg very smooth functions, monotonicity).
+
+The base kernels have well defined descriptions in the literature.
+The product of periodics has the same covariance as a product of functions - allowing for a simple template description.
+Multiplication by $\kSE$ has a localising effect which again allows for easy templating of a description.
+
+In principle we could create templates for $\SE \times k$ and $\Per \times k$ for arbitrary $k$ since these have consistent `localising' and `making periodic' effects respectively.
+This isn't so important at the moment, but if the base kernels expand we may need to exploit this additional modularity.
+
+\subsection{In practice}
+
+Special cases are included to improve readability.
+For example, a product of linear kernels has its own template.
+%Also, `periodic with linearly increasing amplitude' is not an entirely modular construction.
+
+
+
+
+
+
+
+
+
+
+\section{Worked example of description}
+
+\subsection{Sum of products normal form}
+
+Products are distributed over addition and changepoints \eg
+\begin{align*}
+\kSE \times (\kWN + \kCP(\kC, \kPer)
+\end{align*}
+becomes
+\begin{align*}
+\kSE \times \kWN + \kCP(\kSE \times \kC, \kSE \times \kPer).
+\end{align*}
+This can be simplified to
+\begin{align*}
+\kWN + \kCP(\kSE, \kSE \times \kPer).
+\end{align*}
+Changepoints and changewindows are split into additive components
+\begin{align*}
+\kWN + \kCP(\kSE, \emptyset) + \kCP(\emptyset, \kSE \times \kPer).
+\end{align*}
+
+\TBD{To be improved and then worked into next section potentially}
+
+The kernel learned for solar was:
+\begin{align*}
+\kWN + \kC + \kCW(\kSE + \kSE + \kSE \times \kLin  + \kSE \times \kLin + \kSE \times \kPer, \kC)
+\end{align*}
+which is already in sum of products form except for the changewindow.
+Distributing the changewindow results in the following additive components: $\kC$, $\kCW(\kC)$, $\kCW(\kSE)$, $\kCW(\kSE \times \kPer)$, $\kCW(\kSE)$, $\kWN$, $\kCW(\kSE \times \kLin)$, and $\kCW(\kSE \times \kLin)$
+
+The first component, $\kC$ is the constant kernel - its description can be looked up.
+
+The second component, $\kCW(\kC)$, is the constant base kernel within a changewindow operator.
+By inspecting the parameters of the change window, it can be deduced that this component is zero except in the region from 1644 to 1713\fTBD{It currently does not comment on the speed/slope of the transition} which can be translated using an appropriate template \eg `this function applies from 1644 until 1713'.
+The constant base kernel is then described separately by looking up its description.
+
+The third component, $\kCW(\kSE)$, is similar to the second, but the $\kSE$ requires more description than $\kC$.
+The lengthscale of the $\kSE$ is compared to the range of the input dimension of the data to determine an appropriate template to use (\ie is the function very smooth, smooth or quickly varying?).
+For this component, the lengthscale is moderate so the function is described as smooth.
+
+The changewindow aspect of the fourth component, $\kCW(\kSE \times \kPer)$, is dealt with in the same manner as the above.
+There are different templates for the $\kSE \times \kPer$ kernel expression which are selected based on the parameter values of the kernels in comparison to the dimensions of the dataset.
+
+The seventh component, $\kCW(\kSE \times \kLin)$, is also translated in a modular fashion.
+The changewindow is translated as before from a template 'This component
+applies until 1643 and from 1716 onwards'.
+The linear kernel is translated separately, using an appropriate template based on parameter values resulting in `The marginal standard deviation of the function increases linearly away from 1701'.
+The $\kSE$ is translated spearately from a template `This component is a rapidly varying but smooth function with a typical lengthscale of 2.2 months'.
+The full description is actually these sentences in reverse order.
+
+
+
+
+
+
+
 
 \section{Additional remarks about the language}
 
@@ -674,69 +552,10 @@ Further research is required to make rigorous statements about interpretability.
 
 \subsection{Comparison to previous GPSS}
 
-\subsubsection{Heteroscedasticity}
 
-In the original GPSS the heteroscedasticity of the airline dataset was partially captured by the $\kLin \times \kSE \times \kRQ$ term which was modeling short term variation.
-This term was also modeling the medium term variations in the data (an example of $\kRQ$ capturing multiple lengthscales) forcing a compromise of parameter values\fTBD{This may also be a result of not distributing products during the search - not entirely sure} resulting in the variance of the residuals decreasing (see figure~\ref{fig:not_hetero} from old GPSS) rather than increasing with the data (see new figure~\ref{fig:hetero}).\fTBD{The noise variance is too high due to a mathematical error in the original version}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/old-gpss/01-airline-months_resid}
-\caption{Old GPSS - heteroscedasticity not captured and variance larger than residuals.}
-\label{fig:not_hetero}
-\end{figure}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/01-airline/01-airline_3_anti_cum}
-\caption{New GPSS - heteroscedasticity captured and mostly appropriate.}
-\label{fig:hetero}
-\end{figure}
 
-Introducing $\kWN$ as a base kernel allows heteroscedasticity to be explicitly modelled\fTBD{we now have a delta likelihood function rather than always assuming homoscedastic Gaussian noise} rather than having to approximate it with components that can represent short lengthscales.
-
-\subsubsection{Removal of $\kRQ$}
-
-GPML describes the $\kRQ$ as ``a scale mixture of \kSE covariance functions with different characteristic length-scales''.
-To exactly specify this scale mixture would require an equation or plot.
-One could summarise this information with descriptions like `90\% of the length-scales are between $x$ and $y$' but I do not think there is any common language that would express what is happening exactly.
-
-Also the $\kRQ$ kernel can model smooth trends and very short term variation in one component.
-What was previously one component (figure \ref{fig:RQ}) is now two (figures \ref{fig:medium} and \ref{fig:short}) in new GPSS.
-This feels more interpretable to me, but this is subjective and maybe subtle.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/old-gpss/03-mauna2003-s_3}
-\caption{Old GPSS - many lengthscales in one component.}
-\label{fig:RQ}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/03-mauna/03-mauna_3}
-\caption{New GPSS - medium term variation.}
-\label{fig:medium}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/03-mauna/03-mauna_5}
-\caption{New GPSS - very short term variation.}
-\label{fig:short}
-\end{figure}
-
-More convincing hopefully is the plot in figure~\ref{fig:RQ_bad} which shows a fit to data representing sales of mink fur.
-The kernel is $\kRQ \times \kPer$\fTBD{redundant multiplicative constant kernels were not removed in the version of the algorithm that produced this figure}.
-The extrapolation shows that it has captured the near exact periodicity (\ie a long lengthscale phenomenon) but the interpolation shows it has also captured short term variation (it has joined the dots!).
-Combining these scales of variation does not seem interpretable\fTBD{I tried for quite some time to avoid this fit to the data before convincing myself that $\kRQ$ was the problem rather than anything else}.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/old-gpss/fur-sales-mink-h-b-co-18481911_1}
-\caption{Old GPSS - the trend and noise in one component.}
-\label{fig:RQ_bad}
-\end{figure}
 
 \subsubsection{Changepoints and changewindows}
 
@@ -850,9 +669,9 @@ The syntax of the kernels corresponding to the first four components are as foll
 \begin{itemize}
   \itemsep0em
   \item $\kC$
-  \item $\kCW(\emptyset, \kC)$
-  \item $\kCW(\kSE, \emptyset)$
-  \item $\kCW(\kSE \times \kPer, \emptyset).$
+  \item $\kCW(\kC)$
+  \item $\kCW(\kSE)$
+  \item $\kCW(\kSE \times \kPer).$
 \end{itemize}
 \vspace{-\baselineskip}
 
@@ -1117,6 +936,46 @@ The learned equation for the airline passenger data is
 which captures the approximately linear trend, and the periodic component with approximately linearly (logistic) increasing amplitude.
 However, the periodicity is heavily approximated with only a single sinusoid and the models searched over have no way of expressing heteroskedasticity.
 
+
+
+
+
+
+\section{Related work}
+
+\paragraph{Equation learning}
+
+In this work we have defined a search space of statistical models, where each model is characterised by a parametric covariance function.
+Previous work has considered searching over parametric functions \citep[e.g.][]{Schmidt2009b}.
+Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
+
+\paragraph{Searching over statistical models}
+
+GPSS was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
+This work and GPSS is possible for the following reasons: we can define a large space of models through a succinct langauge, inference can be performed for all sentences in this language and a basic search procedure is sufficient to find accurate models.
+\NA{
+This is also true of - can we also cite some sort of graphical model work?
+}
+\fTBD{RG: Cite Kemp + Tenenbaum?}
+
+\paragraph{Standard inference methods}
+\fTBD{RG: How is this relevant?}
+The GPSS language can express many regression motifs as \gp{}s for which inference is well understood.
+Probabilistic programming (cite) defines languages that describe generative models in such a way that inference can be performed in each model.
+Extending the model search ideas in GPSS to searches over probabilistic programs would be an interesting area for future research (cite Josh's workshop paper?).
+
+\paragraph{Natural-language descriptions of data}
+
+To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.% is novel (whereas parametric models are typically described by their parameters).
+However, grammar based techniques have previously been used to automatically understand images (cite something?) and recently (cite Gowers) have produced a theorem proving system that expresses its proof in natural language.
+
+
+
+
+
+
+
+
 \section{Numerical evaluation}
 \label{sec:numerical}
 \fTBD{RG: What is the motivation of this section - seems orthogonal JL: Added to satisfy reviewers who need numerical evaluations - but this depends on the conference it is aimed at I suppose}
@@ -1140,6 +999,26 @@ For SE, SP and TCI this corresponds to a forward selection algorithm.
 
 We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.
 Producing model construction algorithms for this class of time-series model would be an interesting area for future research.
+
+\paragraph{Inference}
+
+We use exact inference, as in \cite{DuvLloGroetal13}
+
+\paragraph{Possible extra content}
+
+\TBD{
+If we choose to present two versions of the algorithm (see figure \ref{fig:box_extrap_dist}) then we need to discuss how it works.
+}
+
+Since the process of translating a model always converts a kernel into a sum of products we experimented with always keeping the kernel in this form.
+After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression \eg
+\begin{equation}
+\kSE \times (\kWN + \kCP(\kC, \kPer) = \kWN + \kCP(\kSE, \kSE \times \kPer).
+\end{equation}
+This variant of the search tends to produce models with fewer additive components which are easier to interpret.
+\NA{
+Further research is required to make rigorous statements about interpretability.
+}
 
 \paragraph{Interpolation}
 
@@ -1207,9 +1086,10 @@ Further inspection of the extrapolation has revealed that while TCI cannot model
 While GPSS and SP will quickly become uncertain about a roughly periodic component, TCI will predict the average which is often more effective.
 This suggests that models composed of kernels of the form $(\kSE + \kC) \times \kPer$ will be effective for extrapolating approximately periodic components.
 
-\section{Additional figures}
 
-As mentioned via email, it is looking increasingly like one can create different versions of GPSS - one that is numerically superior and one that produces more interpretable models.
+\subsection{Interpretabiltiy versus Accuracy}
+
+One can create different versions of GPSS - one that is numerically superior and one that produces more interpretable models.
 The numerical results presented in the previous section could almost certainly be improved upon by reintroducing $\kRQ$ and including Mat\'ern kernels as well as others.
 
 Conversely, one can probably improve interpretability by distributing all products during the search process (this results in more penalisation from BIC resulting in smaller models).
@@ -1238,11 +1118,23 @@ GPSS still comes out favourably.
 On interpolation, one of the variants of GPSS is the top performing model on 11 of the 13 datasets.
 These versions of the plots are probably more honest, showing that there is room for improvement.
 
+
+
+
+
+
+
+
+
+
+
 \section{Discussion}
 
 \TBD{Help requested - haven't thought of a definitive conclusion myself}
 
 Towards the goal of automating the process of statistical analysis we have introduced a system that can automatically describe the complex statistical models it produces.
+
+In the earlier work of \cite{DuvLloGroetal13} the GPSS procedure was applied to multidimensional inputs; we see no obstacles to extending the work in this manuscript to multidimensional inputs.
 
 \paragraph{Disconnected unordered notes}
 
@@ -1260,6 +1152,16 @@ The improved grammar is a machine learning contribution - the description is an 
 
 We encourage others to make their models automatically describable - but what are the metrics of success at this task?
 For statistical regression the ultimate measure of success is a scientific discovery based on an automated analysis - but we are a way off from that (need to go into higher dimensions with better search I think).
+
+\subsection{Model Checking}
+
+Because GPSS must necessarily search through a limited class of models, the reported decomposition may be innacurrate, or may be missing relevant structure.  This fact highlights one of the main benefits of providing an automatic interpretation of the model: it enables a human to check the reported model.
+
+\TBD{Help with the following paragraph requested}
+\subsection{Posterior Predictive Checks}
+
+We have begun to experiment with using posterior predictive checks to assess the models produced by GPSS following the techniques of \cite{Gelman1996} (see reports in the supplementary material).
+However, model checking for Gaussian processes, even those with simple kernels, is under-researched so we leave their description and more detailed analysis for future work.
 
 \paragraph{Source Code}
 Source code to perform all experiments is available on github.\footnote{Available upon publication}

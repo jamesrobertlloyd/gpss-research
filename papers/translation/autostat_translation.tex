@@ -151,7 +151,7 @@
 %In contrast, nonparametric methods are typically capable of providing accurate descriptions of many data sets but at the expense of succinct descriptions.
 %To address this apparent antagonism we demonstrate that a recently introduced nonparametric model construction technique allows for the automatic natural-language description of a data set while also constructing an accurate model.
 %We also extend the class of models that can be produced by this model construction method to include a wide variety of regression motifs.
-We extend a recently introduced nonparametric model construction procedure to produce automatic natural-language description of data.  Our extended procecure takes a time-series as input, runs an open-ended model search, then produces a detailed report with figures and english text which decompose and describe the various types of structure discovered.  We discuss how the class of Gaussian process models being search over naturally decompose into interpretable structure, and introduce several extensions to this model class.  This model search also provides state-of-the-art predictive capability.
+We present a nonparametric model construction procedure which also produces automatic natural-language description of data.  Our procedure takes a time-series as input, runs an open-ended model search, then produces a detailed report with figures and english text which decompose and describe the various types of structure discovered.  We show how the Gaussian process models being searched over naturally decompose into interpretable structures, which allow simple rule-based descriptions of arbitrarily complex models.  This model search also provides state-of-the-art predictive capability.
 \end{abstract} 
 
 \allowdisplaybreaks
@@ -221,35 +221,42 @@ As supplementary material, we have included 10 reports produced by our method on
 
 
 
-\section{An improved and expanded language of statistical models}
+\section{A language of regression models}
 \label{sec:improvements}
-\fTBD{RG: If put after language generation can point to how generating language helped improve the space of kernels}
-\fTBD{RG: Can be shortened - not all details interesting JL: Agreed}
-The initial work of \cite{DuvLloGroetal13} constructed the search space of GPSS via four base kernels and a generative grammar applying addition and multiplication operators.
-Together they define a language of kernels which in turn defines a language of regression models.
+%\fTBD{RG: If put after language generation can point to how generating language helped improve the space of kernels}
+%\fTBD{RG: Can be shortened - not all details interesting JL: Agreed}
 
-In this section we extend the language to include a greater variety of regression motifs.
-We also make modifications to the language to improve\fTBD{RG: Do we have direct comparisons JL: No - but we can demonstrate negative properties of previous of previous work if desired} the interpretability of the models produced by GPSS where we are guided by the principle that \emph{a model is interpretable if it can automatically be described in natural language}\fTBD{RG: Controversial}.
+The initial work of \cite{DuvLloGroetal13} constructed a search space by mutiplying and adding four base kernels.  These four base kernels were $\kSE$ (locally smooth), $\kLin$ (linear functions), $\kPer$ (periodic structure), and $\kRQ$ (multi-scale variation).  By combining these functions, many structures could be expressed, such as periodic functions with long-term trends, or short-term deviations with linearly increasing amplitude through time.
+%Together they define a language of kernels which in turn defines a language of regression models.
+
+
+
+In this section, we extend the language to include a greater variety of regression motifs.
+We also reformulate the base kernels in order to allow a more explicit decomposition of structure.  Specifically, $\kLin$ and $\kPer$ are typically parameterized with an implicit constant added, which can be separated in order to more clearly decompose the different types of structure present.
+
+%to improve\fTBD{RG: Do we have direct comparisons JL: No - but we can demonstrate negative properties of previous of previous work if desired} the interpretability of the models produced by GPSS where we are guided by the principle that \emph{a model is interpretable if it can automatically be described in natural language}\fTBD{RG: Controversial}.
 
 \subsection{Changepoints}
 
 The original GPSS language could not capture the non-linear non-stationarity exhibited in a solar irradiance data set (section~\ref{sec:solar}).
-To capture this type of phenomena, changepoints were introduced to the model language. \citep{garnett2010sequential, FoxDunson:NIPS2012}.
+To capture this type of phenomena, changepoints were introduced to the model language. Hard changepoints were introduced by \citep{garnett2010sequential, FoxDunson:NIPS2012}.  Our parameterization allows for smooth transitions.
+
+Surprisingly, changepoints can be expressed simply by multiplying by sigmoidal functions.
 \fTBD{DD: Let's add a small figure here to show what changepoints can do.}
 Suppose that $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ and define
-\begin{equation}
+\begin{align}
 f(x) = (1-\sigma(x))f_1(x) + \sigma(x)f_2(x)
-\end{equation}
+\end{align}
 where $\sigma(x)$ is a sigmoid function varying between 0 and 1 \ie the function $f$ transitions between functions $f_1$ and $f_2$.
 Then $f(x) \dist \gp{}(0,\kernel)$ where
-\begin{equation}
+\begin{align}
 \kernel(x,x') = (1-\sigma(x))k_1(x,x')(1-\sigma(x')) + \sigma(x)k_2(x)\sigma(x')
 \label{eq:cp}
-\end{equation}
-(see section~\ref{sec:description} for the properties to prove this identity).
+\end{align}
+%(see section~\ref{sec:description} for the properties to prove this identity).
 
 We represent this operation as the changepoint operator $\kCP(\kernel_1, \kernel_2)$.
-We also introduce a change window operator, $\kCW(.)$, by replacing the sigmoids with products of sigmoids (resulting in a smooth `hat' function).
+We also introduce a change window operator, $\kCW(.)$, which uses a product of sigmoids to produce a smooth `hat-shaped' modulation of a function.
 
 \paragraph{Heteroscedasticity}
 
@@ -260,7 +267,7 @@ The original GPSS procedure always assumed homoscedastic noise.
 
 
 \paragraph{A separate constant kernel}
-By introducing a constant kernel $C$, we can remove the constant component from the $\kLin$ and $\kPer$ kernels, improving interpretability.  The ``no-dc'' periodic kernel also has a a special case a cosine kernel.  By Bochner's theorem \citep{bochner1959lectures}, a sum of such kernel can approximate any stationary kernel arbitrarily well.
+By introducing a constant kernel $\kC$, we can remove the constant component from the $\kLin$ and $\kPer$ kernels, improving interpretability.  The ``no-dc'' periodic kernel also has a a special case a cosine kernel.  By Bochner's theorem \citep{bochner1959lectures}, a sum of such kernel can approximate any stationary kernel arbitrarily well.
 More details can be found in the appendix.
 
 
@@ -271,7 +278,7 @@ To improve interpretability, we removed it from the grammar.
 
 \subsection{A broad language of statistical models}
 
-With these additions to the modelling language we can express a wide variety of regression motifs, shown in table~\ref{table:motifs}.
+With these additions to the modelling language, we can express a wide variety of regression motifs, shown in table~\ref{table:motifs}.
 
 \begin{table}[ht]
 \centering
@@ -279,39 +286,19 @@ With these additions to the modelling language we can express a wide variety of 
 Motif & Example syntax \\
 \midrule
 Linear regression & $\kC + \kLin$ \\
-Fourier analysis & $\kC + \sum \cos$ \\
-Sparse spectrum \gp{}s & $\sum \cos$ \\
-Spectral kernels & $\sum \SE \times \cos$ \\
-Changepoints & \eg $\kCP(\kSE, \kSE)$ \\
+Fourier analysis* & $\kC + \sum \cos$ \\
+Sparse spectrum* \gp{}s & $\sum \cos$ \\
+Spectral kernels* & $\sum \SE \times \cos$ \\
+Changepoints* & \eg $\kCP(\kSE, \kSE)$ \\
 Kernel smoothing & $\kSE$ \\
-Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$ \\
+Heteroscedasticity* & \eg $\kSE + \kLin \times \kWN$ \\
 Trend cyclical irregular & $\sum \kSE + \sum \kPer$ \\
 Additive nonparametric & $\sum \kSE$ \\
 \end{tabular}
 \caption{
-Syntax of common regression motifs expressible in our language.
+Syntax of common regression motifs expressible in our language. * denotes a motif not present in the original grammar.
 }
 \label{table:motifs}
-\end{table}
-
-\paragraph{Potential extra content}
-
-This is what the table would look like in the first version of GPSS - \ie quite an expansion.
-
-\begin{table}[ht]
-\centering
-\begin{tabular}{l|l}
-Motif & Example syntax \\
-\midrule
-Linear regression & $\kC + \kLin$ \\
-Kernel smoothing & $\kSE$ \\
-Trend cyclical irregular & $\sum \kSE + \sum \kPer$ \\
-Additive nonparametric & $\sum \kSE$ \\
-\end{tabular}
-\caption{
-Syntax of common regression motifs expressible in our language.
-}
-\label{table:old_motifs}
 \end{table}
 
 %In section~\ref{sec:example_description} we demonstrate the natural-language descriptions of some of these kernel forms.
@@ -319,8 +306,7 @@ Syntax of common regression motifs expressible in our language.
 
 
 
-
-\section{Description of kernel functions}
+\section{Automatic description of regression models}
 \label{sec:description}
 %\fTBD{RG: Does the algorithm clarify anything?}
 %\fTBD{RG, JBT: Section unclear} 
@@ -557,60 +543,6 @@ The full description is actually these sentences in reverse order.
 
 
 
-\subsubsection{Changepoints and changewindows}
-
-Old GPSS could not capture changepoints evidenced by these solar irradiance data residuals in figure~\ref{fig:not_cp}.
-New GPSS can do changepoints (see later section).
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/old-gpss/02-solar-s_resid}
-\caption{Old GPSS - these residuals need a changepoint.}
-\label{fig:not_cp}
-\end{figure}
-
-\subsubsection{Removing constants}
-
-The first two components in the old GPSS decomposition of airline were
-\begin{itemize}
-  \item $\kSE \times \kLin_1'$
-  \item $\kSE \times \kLin_2' \times \kPer'$
-\end{itemize}
-where primes represent old defintions of the kernels.
-The linear kernels have different parameters (indicated by subscripts) but the $\kSE$ is the same in both products.
-
-Using the new versions of the kernels (removing constants) these expressions become
-\begin{itemize}
-  \item $\kSE \times \kLin_1 + \kSE$
-  \item $\kSE \times \kLin_2 \times \kPer + \kSE \times \kLin_2 +  \kSE \times \kPer + \kSE$
-\end{itemize}
-which is undesirable in two ways.
-Firstly, both of these expressions contain the same $\kSE$ as an additive component resulting in anti-correlation in the posterior; contrast figures \ref{fig:anti_corr_1} and \ref{fig:anti_corr_2} with figures \ref{fig:monotonic} and \ref{fig:lin_periodic}.
-
-Secondly, the second component is a sum of four terms and is therefore rather a mouthful to describe.
-It is the sum of an approximately periodic function with approximately linearly increasing amplitude, a smooth function with linearly increasing marginal standard deviation, an approximately periodic function and a smooth function!
-
-The removal of constants results in base kernels which are atomic from the point of view of description \fTBD{In the way they are currently translated at least} and they make anti-correlation less likely\fTBD{however, they are not orthogonal in any sense so anti-correlation can still happen - I'm not sure how to avoid this or whether it is inevitable}.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/old-gpss/01-airline-months_1}
-\caption{Old GPSS - uncertainty is in fact anti-correlation.}
-\label{fig:anti_corr_1}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.98\columnwidth]{figures/old-gpss/01-airline-months_2}
-\caption{Old GPSS - uncertainty is in fact anti-correlation.}
-\label{fig:anti_corr_2}
-\end{figure}
-
-
-
-
-
-
 \section{Natural-language description of time series}
 \label{sec:examples}
 \fTBD{RG: Add worked example?}
@@ -650,7 +582,7 @@ However, it is difficult to quantify the quality of a verbal description so we a
 
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 11.0cm 9cm 1.7cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-2}}
+\includegraphics[trim=0cm 11.0cm 9cm 1.7cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-2}
 \caption{
 Solar irradiance data.}
 \label{fig:solar}
@@ -845,7 +777,7 @@ By examining the parameters of the kernels comprising this component the descrip
 
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 12.5cm 9cm 1.7cm, clip, width=0.98\columnwidth]{airlinepages/01-airline-separate-pages-2}}
+\includegraphics[trim=0cm 12.5cm 9cm 1.7cm, clip, width=0.98\columnwidth]{airlinepages/01-airline-separate-pages-2}
 \caption{
 International airline passenger data.}
 \label{fig:airline}
@@ -1020,32 +952,7 @@ This variant of the search tends to produce models with fewer additive component
 Further research is required to make rigorous statements about interpretability.
 }
 
-\paragraph{Interpolation}
 
-To test the ability of the methods to interpolate, we randomly divided each data set into equal amounts of training data and testing data.
-We trained each algorithm on the training half of the data, produced predictions for the remaining half and then computed the root mean squared error (RMSE).
-The values of the RMSEs are then standardised by dividing by the smallest RMSE for each data set \ie the best performance on each data set will have a value of 1.
-
-Figure~\ref{fig:box_interp} shows the standardised RMSEs for the different algorithms (raw data and box plots)\fTBD{I will add the raw data to the supplementary material}.
-The box plots demonstrate that all quartiles of the distribution of standardised RMSEs are lower for GPSS.
-The median for GPSS is 1 and it was the best performing algorithm on 9 of the datasets.
-However, the largest outliers of GPSS, TCI and SP are all quite similar in value.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=\columnwidth]{figures/box_interp}
-\caption{
-Raw data, and box plot of standardised interpolation RMSE (best performance = 1).
-}
-\label{fig:box_interp}
-\end{figure}
-
-CP performs slightly worse than SE despite being strictly more general than SE.
-The introduction of changepoints allows for more structured models, but it introduces parametric forms into the regression models (\ie the sigmoids expressing the changepoints).
-This results in worse interpolations at the locations of the change points, suggesting that a more robust modelling language would require a more flexible class of changepoint shapes or improved inference (\eg fully Bayesian inference over the location and shape of the changepoint\TBD{Cite something - anyone know any good references?}).
-
-EL is not suited to this task and performs poorly.
-The models learned by EL tend to capture only broad trends of the data since the fine details are not well explained by parametric forms.
 
 \paragraph{Extrapolation}
 
@@ -1053,15 +960,6 @@ To test extrapolation we trained all algorithms on the first 90\% of the data, a
 Figure~\ref{fig:box_extrap} shows the standardised log RMSEs across algorithms.
 GPSS again has lower quartiles than all other methods but the outliers of GPSS, TCI and SP have similar values again.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=\columnwidth]{figures/box_extrap}
-\caption{
-Raw data, and box plot of standardised extrapolation RMSE (best performance = 1).
-Ordered by median.
-}
-\label{fig:box_extrap}
-\end{figure}
 
 %\begin{figure}[h]
 %\centering
@@ -1095,14 +993,7 @@ The numerical results presented in the previous section could almost certainly b
 Conversely, one can probably improve interpretability by distributing all products during the search process (this results in more penalisation from BIC resulting in smaller models).
 The following figures show how this variant of the algorithm (labelled GPSS.int for `interpretable') would compare to the others.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=\columnwidth]{figures/box_interp_dist}
-\caption{
-Raw data, and box plot of standardised interpolation RMSE (best performance = 1).
-}
-\label{fig:box_interp_dist}
-\end{figure}
+
 
 \begin{figure}[h]
 \centering

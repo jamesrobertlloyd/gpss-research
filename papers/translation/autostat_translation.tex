@@ -924,23 +924,29 @@ However, the periodicity is heavily approximated with only a single sinusoid and
 
 \paragraph{Building Structured Covariance Functions}
 
-\cite{rasmussen38gaussian} devotes 4 pages to constructing a complex kernel to model the time series of Mauna Loa carbon dioxode conentrations over time.  An automatic report showing similar structure is contained in the supplementary material.  Other examples of papers whose main contribution is constructing and fitting a compound gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}.
+\citet{rasmussen38gaussian} devoted 4 pages to constructing a complex kernel to model the time series of Mauna Loa carbon dioxode concentrations over time.
+An automatic report showing similar structure is contained in the supplementary material.
+Other examples of papers whose main contribution is constructing and fitting a compound gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}, suggesting that our procedure automates parts of the field of data analysis.
 
-Contrast with kernels preserving group symmetries???
+%Contrast with kernels preserving group symmetries???
+\citet{kondor2008group} and \citet{Invariances13} characterized the types of invariances and symmetries that can be expressed through covariance functions.
 
 \paragraph{Equation learning}
 
 %In this work we have defined a search space of statistical models, where each model is characterised by a parametric covariance function.
 %Previous work has considered searching over parametric functions \citep[e.g.][]{Schmidt2009b}.
 %Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
-\cite{schmidt2009distilling}, \cite{todorovski1997declarative} and \cite{washio1999discovering} learn parametric forms of equations specifying time series, or relations between quantities.  Because our system specifies the more general covariance structure rather than the functions themselves, we are able to capture structure which does not have a simple parametric form.
+\citet{schmidt2009distilling}, \citet{todorovski1997declarative} and \citet{washio1999discovering} learn parametric forms of equations specifying time series, or relations between quantities.
+Because our system specifies the more general covariance structure rather than the functions themselves, we are able to capture structure which does not have a simple parametric form.
 
 \paragraph{Searching over statistical models}
 
-GPSS was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
-Automatic model search is possible whenever the following conditions are met: 1) we can define a large space of models by combining a small number of components in a small number of different ways, inference can be performed for all models in this space, and a basic search procedure is sufficient to find accurate models.  For example, \citet{kemp2008discovery} learned the structural form of a graph used to model human similarity judgments.  
+GPSS was originally inspired by the search over matrix factorisation models by \citet{grosse2012exploiting}.
+Automatic model search is possible whenever 1) we can define a large space of models by combining a small number of components in a small number of different ways, 2) inference can be performed for all models in this space, and 3) a basic search procedure is sufficient to find accurate models.
+For example, \citet{kemp2008discovery} learned the structural form of a graph used to model human similarity judgments.  
 
-More generally, probabilistic programming [cite] software automatically generates inference mechanisms for open-ended classes of models, enabling automatic model search.  For example, \cite{VikashScene13} automatically searches over models of 2D scenes.
+More generally, probabilistic programming \cite{goodman2008church} software automatically generates inference mechanisms for open-ended classes of models, enabling automatic model search.
+For example, \citet{VikashScene13} automatically search over models of 2D scenes.
 
 %\NA{
 %This is also true of - can we also cite some sort of graphical model work?
@@ -955,8 +961,9 @@ More generally, probabilistic programming [cite] software automatically generate
 
 \paragraph{Natural-language descriptions of data}
 
-To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.% is novel (whereas parametric models are typically described by their parameters).
-However, grammar based techniques have previously been used to automatically understand images \cite{zhu2007stochastic} and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
+To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.
+% is novel (whereas parametric models are typically described by their parameters).
+However, grammar based techniques have previously been used to automatically understand images \cite{zhu2007stochastic}, and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
 
 
 

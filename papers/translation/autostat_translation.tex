@@ -321,10 +321,11 @@ In this section we describe how the properties of \gp{} models allow one to redu
 
 \subsubsection{Overview}
 
-The automatic description procedure begins by distributing a kernel expression into a sum of products and then applying simplification operations.
-A sum of kernels corresponds to a sum of functions which allows each product of kernels to be described separately.
-Changepoints and linear kernels have a special form allowing them to be described independently of other kernels in a product.
-After the simplification operations there are relatively few combinations of the other kernels so their descriptions are templated based on their parameter values.
+The automatic description procedure first distributes a kernel expression into a sum of products.
+Because a sum of kernels corresponds to a sum of functions, each product of kernels can be described separately.
+Simplifications are then performed, and kernels of the same type are grouped together within each expression.
+Because each type of kernel modifies the resulting model in a consistent way, the code to produce a natural-language desription can consider each type of kernel seperately.  This means that there is no need to write descriptions for every combination of kernels ahead of time, although our procedure does include some special cases where the naive wording is cumbersome.
+%There are relatively few combinations of the other kernels so their descriptions are templated based on their parameter values.
 The procedure is outlined in algorithm~\ref{alg:description}.
 
 %Generating descriptions for any product of kernels is possible because, conveniently, multiplying any kernel by a base kernel modifies the properties of the resulting model in consistent ways. Loosely speaking, each kernel corresponds to an adjective in the model description.
@@ -360,7 +361,7 @@ The procedure is outlined in algorithm~\ref{alg:description}.
 
 \subsubsection{Sum of products form}
 
-Pointwise multiplication is distributive over addition for functions so we can distribute kernel multiplication over addition \eg $\kSE \times (\kC + \kLin) = \kSE \times \kC + \kSE \times \kLin$.
+Pointwise multiplication of functions is distributive over addition, so we can distribute kernel multiplication over addition.  For example, $\kSE \times (\kC + \kLin) = \kSE \times \kC + \kSE \times \kLin$.
 
 Changepoints can also be represented as a sum of products; from equation \eqref{eq:cp} we can write
 \begin{equation}

@@ -417,4 +417,113 @@ cite Sheffield's orthogonal RKHS work?
 
 
 
+\section{Extra Experimental Results}
+\paragraph{Interpolation}
+
+To test the ability of the methods to interpolate, we randomly divided each data set into equal amounts of training data and testing data.
+We trained each algorithm on the training half of the data, produced predictions for the remaining half and then computed the root mean squared error (RMSE).
+The values of the RMSEs are then standardised by dividing by the smallest RMSE for each data set \ie the best performance on each data set will have a value of 1.
+
+Figure~\ref{fig:box_interp} shows the standardised RMSEs for the different algorithms (raw data and box plots)\fTBD{I will add the raw data to the supplementary material}.
+The box plots demonstrate that all quartiles of the distribution of standardised RMSEs are lower for GPSS.
+The median for GPSS is 1 and it was the best performing algorithm on 9 of the datasets.
+However, the largest outliers of GPSS, TCI and SP are all quite similar in value.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{figures/box_interp}
+\caption{
+Raw data, and box plot of standardised interpolation RMSE (best performance = 1).
+}
+\label{fig:box_interp}
+\end{figure}
+
+CP performs slightly worse than SE despite being strictly more general than SE.
+The introduction of changepoints allows for more structured models, but it introduces parametric forms into the regression models (\ie the sigmoids expressing the changepoints).
+This results in worse interpolations at the locations of the change points, suggesting that a more robust modelling language would require a more flexible class of changepoint shapes or improved inference (\eg fully Bayesian inference over the location and shape of the changepoint\TBD{Cite something - anyone know any good references?}).
+
+EL is not suited to this task and performs poorly.
+The models learned by EL tend to capture only broad trends of the data since the fine details are not well explained by parametric forms.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{figures/box_extrap}
+\caption{
+Raw data, and box plot of standardised extrapolation RMSE (best performance = 1).
+Ordered by median.
+}
+\label{fig:box_extrap}
+\end{figure}
+
+
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{figures/box_interp_dist}
+\caption{
+Raw data, and box plot of standardised interpolation RMSE (best performance = 1).
+}
+\label{fig:box_interp_dist}
+\end{figure}
+
+
+
+
+
+
+\section{Improvements to Language}
+
+\subsubsection{Changepoints and changewindows}
+
+Old GPSS could not capture changepoints evidenced by these solar irradiance data residuals in figure~\ref{fig:not_cp}.
+New GPSS can do changepoints (see later section).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/02-solar-s_resid}
+\caption{Old GPSS - these residuals need a changepoint.}
+\label{fig:not_cp}
+\end{figure}
+
+\subsubsection{Removing constants}
+
+The first two components in the old GPSS decomposition of airline were
+\begin{itemize}
+  \item $\kSE \times \kLin_1'$
+  \item $\kSE \times \kLin_2' \times \kPer'$
+\end{itemize}
+where primes represent old defintions of the kernels.
+The linear kernels have different parameters (indicated by subscripts) but the $\kSE$ is the same in both products.
+
+Using the new versions of the kernels (removing constants) these expressions become
+\begin{itemize}
+  \item $\kSE \times \kLin_1 + \kSE$
+  \item $\kSE \times \kLin_2 \times \kPer + \kSE \times \kLin_2 +  \kSE \times \kPer + \kSE$
+\end{itemize}
+which is undesirable in two ways.
+Firstly, both of these expressions contain the same $\kSE$ as an additive component resulting in anti-correlation in the posterior; contrast figures \ref{fig:anti_corr_1} and \ref{fig:anti_corr_2} with figures \ref{fig:monotonic} and \ref{fig:lin_periodic}.
+
+Secondly, the second component is a sum of four terms and is therefore rather a mouthful to describe.
+It is the sum of an approximately periodic function with approximately linearly increasing amplitude, a smooth function with linearly increasing marginal standard deviation, an approximately periodic function and a smooth function!
+
+The removal of constants results in base kernels which are atomic from the point of view of description \fTBD{In the way they are currently translated at least} and they make anti-correlation less likely\fTBD{however, they are not orthogonal in any sense so anti-correlation can still happen - I'm not sure how to avoid this or whether it is inevitable}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/01-airline-months_1}
+\caption{Old GPSS - uncertainty is in fact anti-correlation.}
+\label{fig:anti_corr_1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/old-gpss/01-airline-months_2}
+\caption{Old GPSS - uncertainty is in fact anti-correlation.}
+\label{fig:anti_corr_2}
+\end{figure}
+
+
+
+
+
 \end{document} 

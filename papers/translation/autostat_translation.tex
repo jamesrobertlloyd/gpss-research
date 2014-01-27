@@ -233,7 +233,6 @@ By combining these kernels, many structures can be expressed, such as periodic f
 
 In this section we extend the language to include a greater variety of regression motifs.
 We also modify the base kernels to allow more succinct descriptions of the models produced.
-Specifically, $\kLin$ and $\kPer$ are typically parameterized with an implicit constant added; this can be removed in order to more clearly decompose the different types of structure present.
 
 %to improve\fTBD{RG: Do we have direct comparisons JL: No - but we can demonstrate negative properties of previous of previous work if desired} the interpretability of the models produced by GPSS where we are guided by the principle that \emph{a model is interpretable if it can automatically be described in natural language}\fTBD{RG: Controversial}.
 
@@ -241,36 +240,37 @@ Specifically, $\kLin$ and $\kPer$ are typically parameterized with an implicit c
 
 The original GPSS language could not capture the non-linear non-stationarity exhibited in a solar irradiance data set (section~\ref{sec:solar}).
 To capture this type of phenomenon, we introduce changepoints into the modeling language.
-Hard changepoints have been considered by \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}
 
-We construct smooth changepoints by by multiplying by sigmoidal functions.
+Hard changepoints have been considered by \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}.
+We construct smooth changepoints by multiplying by sigmoidal functions.
 \fTBD{DD: Let's add a small figure here to show what changepoints can do.}
 Suppose that $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ and define
 \begin{align}
-f(x) = (1-\sigma(x))f_1(x) + \sigma(x)f_2(x)
+f(x) = \sigma(x)f_1(x) + (1-\sigma(x)) f_2(x)
 \end{align}
-where $\sigma(x)$ is a sigmoid function varying between 0 and 1 \ie the function $f$ transitions between functions $f_1$ and $f_2$.
+where $\sigma(x)$ is a sigmoid function varying between 0 and 1, so that $f$ transitions between functions $f_1$ and $f_2$.
 Then $f(x) \dist \gp{}(0,\kernel)$ where
 \begin{align}
-\kernel(x,x') = (1-\sigma(x))k_1(x,x')(1-\sigma(x')) + \sigma(x)k_2(x)\sigma(x')
+\kernel(x,x') = \qquad \qquad \sigma(x) & k_1(x,x')\sigma(x') \nonumber \\ + (1-\sigma(x)) & k_2(x,x')(1-\sigma(x'))
 \label{eq:cp}
 \end{align}
 %(see section~\ref{sec:description} for the properties to prove this identity).
-
+%
 We represent this kernel with the changepoint operator $\kCP(\kernel_1, \kernel_2)$.
-We also introduce a change window operator, $\kCW(.,.)$, which uses a product of sigmoids to produce a smooth `hat-shaped' modulation of a function.
+We also introduce a change window operator, $\kCW(\cdot,\cdot)$, which uses a product of two sigmoids to produce a smooth `hat-shaped' modulation of a function.
 
 \paragraph{Heteroscedasticity}
 
-We introduce the white noise kernel, $\kWN$, as a base kernel.
-When multiplied by linear kernels and changepoints this can express polynomially varying standard deviation as well as switching between different noise regimes.
-The original GPSS procedure always assumed homoscedastic noise.
+To more flexibly model different types of noise, we introduce the white noise kernel, $\kWN$, as a base kernel.  Combined with linear kernels and changepoints, this addition allows models with noise levels which vary over time.
+%When multiplied by linear kernels and changepoints, this can express polynomially varying standard deviation as well as switching between different noise regimes.
+%The original GPSS procedure always assumed homoscedastic noise.
 
 \paragraph{A separate constant kernel}
-By introducing a constant kernel $\kC$ we can remove the constant component included in typical definitions of $\kLin$ and $\kPer$ kernels.
-The new form of linear kernel is necessary for the modular construction of descriptions of kernels (see section [blank]).
+% included in typical definitions of $\kLin$ and $\kPer$ kernels.
+The $\kLin$ and $\kPer$ are typically parameterized with an implicit constant added.  By introducing a constant kernel $\kC$ we can remove this constant component in order to more clearly decompose the different types of structure present.
+%The new form of linear kernel is necessary for the modular construction of descriptions of kernels (see section [blank]).
 
-The new form of the periodic kernel\footnotemark~includes the cosine kernel as a limiting form.
+This new form of periodic kernel\footnotemark~includes the cosine kernel as a limiting form.
 It was recently demonstrated \citep{WilAda13} that any stationary kernel can be arbitrarily well approximated by kernels of the form $\sum \kSE \times \cos$ by appealing to Bochner's theorem \citep{bochner1959lectures}.
 By using this new periodic kernel our language of kernels also attains this completeness property.
 More details are in the supplementary material.

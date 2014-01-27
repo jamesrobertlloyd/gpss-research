@@ -916,29 +916,23 @@ However, the periodicity is heavily approximated with only a single sinusoid and
 
 \paragraph{Building Structured Covariance Functions}
 
-\citet{rasmussen38gaussian} devoted 4 pages to constructing a complex kernel to model the time series of Mauna Loa carbon dioxode concentrations over time.
-An automatic report showing similar structure is contained in the supplementary material.
-Other examples of papers whose main contribution is constructing and fitting a compound gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}, suggesting that our procedure automates parts of the field of data analysis.
+\cite{rasmussen38gaussian} devotes 4 pages to constructing a complex kernel to model the time series of Mauna Loa carbon dioxode conentrations over time.  An automatic report showing similar structure is contained in the supplementary material.  Other examples of papers whose main contribution is constructing and fitting a compound gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}.
 
-%Contrast with kernels preserving group symmetries???
-\citet{kondor2008group} and \citet{Invariances13} characterized the types of invariances and symmetries that can be expressed through covariance functions.
+Contrast with kernels preserving group symmetries???
 
 \paragraph{Equation learning}
 
 %In this work we have defined a search space of statistical models, where each model is characterised by a parametric covariance function.
 %Previous work has considered searching over parametric functions \citep[e.g.][]{Schmidt2009b}.
 %Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
-\citet{schmidt2009distilling}, \citet{todorovski1997declarative} and \citet{washio1999discovering} learn parametric forms of equations specifying time series, or relations between quantities.
-Because our system specifies the more general covariance structure rather than the functions themselves, we are able to capture structure which does not have a simple parametric form.
+\cite{schmidt2009distilling}, \cite{todorovski1997declarative} and \cite{washio1999discovering} learn parametric forms of equations specifying time series, or relations between quantities.  Because our system specifies the more general covariance structure rather than the functions themselves, we are able to capture structure which does not have a simple parametric form.
 
 \paragraph{Searching over statistical models}
 
-GPSS was originally inspired by the search over matrix factorisation models by \citet{grosse2012exploiting}.
-Automatic model search is possible whenever 1) we can define a large space of models by combining a small number of components in a small number of different ways, 2) inference can be performed for all models in this space, and 3) a basic search procedure is sufficient to find accurate models.
-For example, \citet{kemp2008discovery} learned the structural form of a graph used to model human similarity judgments.  
+GPSS was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
+Automatic model search is possible whenever the following conditions are met: 1) we can define a large space of models by combining a small number of components in a small number of different ways, inference can be performed for all models in this space, and a basic search procedure is sufficient to find accurate models.  For example, \citet{kemp2008discovery} learned the structural form of a graph used to model human similarity judgments.  
 
-More generally, probabilistic programming \cite{goodman2008church} software automatically generates inference mechanisms for open-ended classes of models, enabling automatic model search.
-For example, \citet{VikashScene13} automatically search over models of 2D scenes.
+More generally, probabilistic programming [cite] software automatically generates inference mechanisms for open-ended classes of models, enabling automatic model search.  For example, \cite{VikashScene13} automatically searches over models of 2D scenes.
 
 %\NA{
 %This is also true of - can we also cite some sort of graphical model work?
@@ -953,9 +947,8 @@ For example, \citet{VikashScene13} automatically search over models of 2D scenes
 
 \paragraph{Natural-language descriptions of data}
 
-To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.
-% is novel (whereas parametric models are typically described by their parameters).
-However, grammar based techniques have previously been used to automatically understand images \cite{zhu2007stochastic}, and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
+To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.% is novel (whereas parametric models are typically described by their parameters).
+However, grammar based techniques have previously been used to automatically understand images \cite{zhu2007stochastic} and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
 
 
 
@@ -972,11 +965,11 @@ GPSS outperforms the other methods on average (\eg as measured by quantiles of p
 \NA{However, the variability of the results suggests that there is room to improve the robustness of GPSS.}
 \fTBD{I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
 
-\paragraph{Data sets}
+\subsection{Data sets}
 
 In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of GPSS and 5 other algorithms on 10 additional time series from the time series data library \citep{TSDL}; plots can be found at the beginning of the reports in the supplementary material.
 
-\paragraph{Algorithms}
+\subsection{Algorithms}
 
 We compare the structure search algorithm to equation learning (EL) using Eureqa \citep{Eureqa} and four other regression algorithms; additive nonparametric regression (SE) \citep[e.g.][]{buja1989linear}\fTBD{This reference is not quite correct}, change point modelling (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
 
@@ -988,67 +981,28 @@ For SE, SP and TCI this corresponds to a forward selection algorithm.
 We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.
 Producing model construction algorithms for this class of time-series model would be an interesting area for future research.
 
-\paragraph{Inference}
+\subsection{Inference}
 
 We use exact inference, as in \cite{DuvLloGroetal13}.
 \fTBD{JL: This is way to short - search operators?}
 
-\paragraph{Two versions of the algorithm}
+\subsection{Interpretability versus accuracy}
 
-\fTBD{Extend me!}
+Since the process of describing a model always converts a kernel into a sum of products we experimented with always keeping the kernel in this form.
+After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression.
+This variant (GPSS.SoP) of the search tends to produce models with fewer additive components improving interpretability but does not perform as well numerically.
 
-Since the process of translating a model always converts a kernel into a sum of products we experimented with always keeping the kernel in this form.
-After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression.% \eg
-%\begin{equation}
-%\kSE \times (\kWN + \kCP(\kC, \kPer) = \kWN + \kCP(\kSE, \kSE \times \kPer).
-%\end{equation}
-This variant of the search tends to produce models with fewer additive components which are easier to interpret.
-\NA{
-Further research is required to make rigorous statements about interpretability.
-}
+The research leading up to this manuscript has focused on interpretability.
+One could almost certainly improve the numerical results presented in this section by reintroducing $\kRQ$ and including Mat\'ern kernels as well as others.
+We leave a full exploration of the interpretability / accuracy trade-off for future work.
 
+\subsection{Extrapolation}
 
+To test extrapolation we trained all algorithms on the first 90\% of the data, and attempted to predict the remaining 10\% and then computed the root mean squared error (RMSE).
+The values of the RMSEs are then standardised by dividing by the smallest RMSE for each data set \ie the best performance on each data set will have a value of 1.
 
-\paragraph{Extrapolation}
-
-To test extrapolation we trained all algorithms on the first 90\% of the data, and attempted to predict the remaining 10\%.
-Figure~\ref{fig:box_extrap} shows the standardised log RMSEs across algorithms.
-GPSS again has lower quartiles than all other methods but the outliers of GPSS, TCI and SP have similar values again.
-
-
-%\begin{figure}[h]
-%\centering
-%\includegraphics[width=\columnwidth]{figures/box_extrap}
-%\caption{
-%Raw data, and box plot of standardised extrapolation RMSE (best performance = 1).
-%Outlier is the two spectral kernel methods (SP) are not shown.
-%}
-%\label{fig:box_extrap}
-%\end{figure}
-
-SP suffered from a large outlier on a dataset with a large and sharp discontinuity (see the call centre data in the supplementary material) which violates its assumptions of stationarity.
-In contrast, GPSS was the best performing algorithm on this dataset, correctly modelling the dataset as locally stationary using change points.
-
-Not shown on the plot is a very large outlier for EL of 274 (this was also on the call centre data).
-However, EL was the best performing algorithm on the wages dataset which shows an exponential increase after the industrial revolution.
-GPSS can approximate an exponential function with a polynomial by combining $\kLin$ kernels but this is not a succinct expression in the current language.
-\NA{Combining equation learning and the covariance learning of GPSS is likely to be a profitable area of future research.}\fTBD{We could just add the exponential function as a base kernel - much like linear - but where do we stop?}
-
-Somewhat surprisingly, TCI performs well despite its restrictive modelling assumptions (smooth functions and exact periodicity).
-Further inspection of the extrapolation has revealed that while TCI cannot model non-stationarity, its extrapolations of approximately periodic components can be quite effective.
-While GPSS and SP will quickly become uncertain about a roughly periodic component, TCI will predict the average which is often more effective.
-This suggests that models composed of kernels of the form $(\kSE + \kC) \times \kPer$ will be effective for extrapolating approximately periodic components.
-
-
-\subsection{Interpretabiltiy versus Accuracy}
-
-One can create different versions of GPSS - one that is numerically superior and one that produces more interpretable models.
-The numerical results presented in the previous section could almost certainly be improved upon by reintroducing $\kRQ$ and including Mat\'ern kernels as well as others.
-
-Conversely, one can probably improve interpretability by distributing all products during the search process (this results in more penalisation from BIC resulting in smaller models).
-The following figures show how this variant of the algorithm (labelled GPSS.int for `interpretable') would compare to the others.
-
-
+Figure~\ref{fig:box_extrap_dist} shows the standardised RMSEs across algorithms.
+Both versions of GPSS have lower quartiles than all other methods but the outliers of GPSS, TCI and SP have similar values.
 
 \begin{figure}[h]
 \centering
@@ -1060,19 +1014,24 @@ Ordered by median.
 \label{fig:box_extrap_dist}
 \end{figure}
 
-GPSS still comes out favourably.
-On interpolation, one of the variants of GPSS is the top performing model on 11 of the 13 datasets.
-These versions of the plots are probably more honest, showing that there is room for improvement.
+Not shown on the plot is a large outlier for SP of 11 on a dataset with a large and sharp discontinuity (see the call centre data in the supplementary material) which violates its assumptions of stationarity.
 
+Also not shown on the plot is a very large outlier for EL of 493 (this was also on the call centre data).
+However, EL was the best performing algorithm on the wages dataset which shows an exponential increase after the industrial revolution.
+GPSS can approximate an exponential function with a polynomial by combining $\kLin$ kernels but this is not a succinct expression in the current language.
+Expanding the modelling language of GPSS is a natural area for future research.
 
+Somewhat surprisingly, TCI performs well despite its restrictive modelling assumptions (smooth functions and exact periodicity).
+Further inspection of the extrapolation has revealed that while TCI cannot model non-stationarity, its extrapolations of approximately periodic components can be quite effective.
+While GPSS and SP will quickly become uncertain about a roughly periodic component, TCI will predict the average which is often more effective.
+This suggests that models composed of kernels of the form $(\kSE + \kC) \times \kPer$ will be effective for extrapolating approximately periodic components.
 
+\subsection{Interpolation}
 
+To test the ability of the methods to interpolate, we randomly divided each data set into equal amounts of training data and testing data.
+We trained each algorithm on the training half of the data, produced predictions for the remaining half and then computed standardised RMSEs.
 
-
-
-
-
-
+The results are similar to those for extrapolation and are deferred to the supplementary material for brevity.
 
 \section{Discussion}
 

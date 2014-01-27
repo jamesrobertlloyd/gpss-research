@@ -593,9 +593,8 @@ However, model checking for Gaussian processes, even those with simple kernels, 
 
 \section{Natural-language description of time series}
 \label{sec:examples}
-\fTBD{JTB: Remember that we have automated a few pages of GPML discussing Mauna Loa - especially since we automatically generate reports!}
-We demonstrate the ability of our procedure to describe a variety of patterns on two time series (full automatically produced reports for a greater number of data sets are provided as supplementary material).
-The automatic natural-language descriptions objectively\fTBD{RG: Whether or not they are good is subjective} demonstrate that the models produced are interpretable.
+We demonstrate the ability of our procedure to describe a variety of patterns on two time series (full automatically produced reports for 13 data sets are provided as supplementary material).
+The automatic natural-language descriptions objectively demonstrate that the models can be interpreted.
 However, it is difficult to quantify the quality of a verbal description so we also provide numerical evidence in support of our procedure in section~\ref{sec:numerical}.
 
 %Our report generation procedure takes as its starting point a dataset and a composite kernel, which together define a joint posterior probability distribution over a sum of functions.
@@ -641,16 +640,14 @@ The GPSS search procedure and automatic description clearly identify these two f
 
 \paragraph{Summary of main features}
 
-The syntax of the kernels corresponding to the first four components are as follows:
+The kernels corresponding to the first four components are as follows:
 \vspace{-0.5\baselineskip}
-\fTBD{RG: Add CW to notation section?}
-\fTBD{RG: Why not add constant to every kernel? JL: This would result in anti-correlation in the posterior - in general it is better to remove constants when possible}
 \begin{itemize}
   \itemsep0em
   \item $\kC$
-  \item $\kCW(\kC)$
-  \item $\kCW(\kSE)$
-  \item $\kCW(\kSE \times \kPer).$
+  \item $\kCW(\emptyset,\kC)$
+  \item $\kCW(\kSE,\emptyset)$
+  \item $\kCW(\kSE \times \kPer,\emptyset).$
 \end{itemize}
 \vspace{-\baselineskip}
 
@@ -661,8 +658,8 @@ The syntax of the kernels corresponding to the first four components are as foll
 An example of an automatically-generated summary of a dataset.  The dataset is decomposed into diverse structures with simple descriptions.}
 \label{fig:exec}
 \end{figure}
-Figure \ref{fig:exec} shows the natural-language summaries of these components.
-The short descriptions demonstrate how the kernel is split into univariate enveloping functions (from the change windows) and stationary kernels.
+Figure \ref{fig:exec} shows the natural-language summaries of these components produced by GPSS.
+%The short descriptions demonstrate how the kernel is split into univariate enveloping functions (from the change windows) and stationary kernels.
 %
 %
 %The model uses 9 additive components to explain the data, and reports that the first 4 components explain more than 90\% of the variance in the data.
@@ -831,7 +828,7 @@ International airline passenger data.}
 \end{figure}
 
 We also analysed international airline passenger data (figure~\ref{fig:airline}).
-The model constructed by GPSS has four components with the following syntax and descriptions given in figure~\ref{fig:exec-airline}.
+The model constructed by GPSS has four components with descriptions given in figure~\ref{fig:exec-airline}.
 \vspace{-0.5\baselineskip}
 \begin{itemize}
   \itemsep0em
@@ -852,7 +849,7 @@ Short descriptions and summary statistics for the four components of the airline
 
 \paragraph{Monotonic trend}
 
-No kernel in the current language can express a prior over monotonic functions.
+No model in the current language can express a prior over monotonic functions.
 However, it is simple to check the posterior for monotonicity and remark upon it when appropriate (figure~\ref{fig:monotonic}).
 
 \begin{figure}[h]
@@ -895,7 +892,7 @@ By multiplying a white noise kernel by a linear kernel the model is able to expr
 \subsection{Comparison to equation learning}
 
 Much of machine learning research focuses on numerical performance, with claims of interpretability generated post-hoc.
-In contrast, equation learning \citep{Schmidt2009b} can also be used to automate the process of interpretation/.
+In contrast, equation learning \citep{Schmidt2009b} can also be used to automate the process of interpretation.
 
 We include learned equations for these two data sets produced using Eureqa \citep{Eureqa} using the default mean absolute error performance metric\footnotemark.
 \footnotetext{We experimented with the root mean squared error with Akaike information criterion penalisation (this is most comparable to the Bayesian information criterion used by GPSS) but occasionally observed severe overfitting.}
@@ -913,12 +910,7 @@ The learned equation for the airline passenger data is
 \textrm{Passengers} = \alpha t + \beta\cos(\gamma - \delta t)\textrm{logistic}(\epsilon t - \zeta) - \eta
 \end{equation}
 which captures the approximately linear trend, and the periodic component with approximately linearly (logistic) increasing amplitude.
-However, the periodicity is heavily approximated with only a single sinusoid and the models searched over have no way of expressing heteroskedasticity.
-
-
-
-
-
+However, the periodicity is heavily approximated with only a single sinusoid and the model cannot capture heteroskedasticity.
 
 \section{Related work}
 
@@ -967,11 +959,11 @@ However, grammar based techniques have previously been used to automatically und
 
 \section{Numerical evaluation}
 \label{sec:numerical}
-\fTBD{RG: What is the motivation of this section - seems orthogonal JL: Added to satisfy reviewers who need numerical evaluations - but this depends on the conference it is aimed at I suppose}
 
 To complement our demonstration of the interpretability of our method, we conducted numerical experiments testing the ability of various model building algorithms to interpolate and extrapolate time-series.
 GPSS outperforms the other methods on average (\eg as measured by quantiles of performance metrics).
-\NA{However, the variability of the results suggests that there is room to improve the robustness of GPSS.}\fTBD{I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
+\NA{However, the variability of the results suggests that there is room to improve the robustness of GPSS.}
+\fTBD{I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
 
 \paragraph{Data sets}
 
@@ -979,31 +971,30 @@ In addition to the three time series analysed in \cite{DuvLloGroetal13} we evalu
 
 \paragraph{Algorithms}
 
-We compare the structure search algorithm to equation learning (EL) using Eureqa \citep{Eureqa}\fTBD{interpolation work in progress} and four other regression algorithms; additive nonparametric regression (SE) \citep[e.g.][]{buja1989linear}, change point modelling (cite) (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.\fTBD{I could add a single Sq-exp GP as a reference point?}
+We compare the structure search algorithm to equation learning (EL) using Eureqa \citep{Eureqa} and four other regression algorithms; additive nonparametric regression (SE) \citep[e.g.][]{buja1989linear}\fTBD{This reference is not quite correct}, change point modelling (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
 
 We use the default mean absolute error criterion when using Eureqa.
-The other four algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark (Bayesian information criterion) with appropriate restrictions to the grammar.
+The other four algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark~(Bayesian information criterion) with appropriate restrictions to the grammar.
 For SE, SP and TCI this corresponds to a forward selection algorithm.
-\footnotetext{We experimented with using unpenalised conditional likelihood as the search criterion but observed overfitting as is to be expected.} 
+\footnotetext{We experimented with using unpenalised conditional likelihood as the search criterion for other methods but observed overfitting as is to be expected.} 
 
 We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.
 Producing model construction algorithms for this class of time-series model would be an interesting area for future research.
 
 \paragraph{Inference}
 
-We use exact inference, as in \cite{DuvLloGroetal13}
+We use exact inference, as in \cite{DuvLloGroetal13}.
+\fTBD{JL: This is way to short - search operators?}
 
-\paragraph{Possible extra content}
+\paragraph{Two versions of the algorithm}
 
-\TBD{
-If we choose to present two versions of the algorithm (see figure \ref{fig:box_extrap_dist}) then we need to discuss how it works.
-}
+\fTBD{Extend me!}
 
 Since the process of translating a model always converts a kernel into a sum of products we experimented with always keeping the kernel in this form.
-After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression \eg
-\begin{equation}
-\kSE \times (\kWN + \kCP(\kC, \kPer) = \kWN + \kCP(\kSE, \kSE \times \kPer).
-\end{equation}
+After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression.% \eg
+%\begin{equation}
+%\kSE \times (\kWN + \kCP(\kC, \kPer) = \kWN + \kCP(\kSE, \kSE \times \kPer).
+%\end{equation}
 This variant of the search tends to produce models with fewer additive components which are easier to interpret.
 \NA{
 Further research is required to make rigorous statements about interpretability.

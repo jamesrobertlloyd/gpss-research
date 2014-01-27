@@ -317,10 +317,12 @@ Syntax of common regression motifs expressible in our language. * denotes a moti
 In this section we describe how the properties of \gp{} models allow one to reduce the task of describing the model produced by an arbitrary kernel expression into simple subproblems.
 %The text follows the flow of algorithm~\ref{alg:description}.
 
-\subsection{Overview}
+\subsection{Modular description of arbitrary kernel expressions}
+
+\subsubsection{Overview}
 
 The automatic description procedure begins by distributing a kernel expression into a sum of products and then applying simplification operations.
-A sum of kernels corresponds to a sum of functions which allows each product of kernel to be described separately.
+A sum of kernels corresponds to a sum of functions which allows each product of kernels to be described separately.
 Changepoints and linear kernels have a special form allowing them to be described independently of other kernels in a product.
 After the simplification operations there are relatively few combinations of the other kernels so their descriptions are templated based on their parameter values.
 The procedure is outlined in algorithm~\ref{alg:description}.
@@ -356,7 +358,7 @@ The procedure is outlined in algorithm~\ref{alg:description}.
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Sum of products form}
+\subsubsection{Sum of products form}
 
 Pointwise multiplication is distributive over addition for functions so we can distribute kernel multiplication over addition \eg $\kSE \times (\kC + \kLin) = \kSE \times \kC + \kSE \times \kLin$.
 
@@ -370,35 +372,45 @@ Changewindows can be represented similarly.
 After converting changepoints and changewindows into the form above and distributing multiplication over addition any kernel expression can be converted into a sum of products of the form
 \begin{equation}
 \prod_i k_i\prod_j\kLin_j\prod_m\Sigma_m
+\label{eq:sop}
 \end{equation}
 where the $k_i$ are base kernels excluding $\kLin$ and the $\Sigma_m$ are products of sigmoids.
 
-\paragraph{Sums of kernels are sums of functions}
+\subsubsection{Sums of kernels are sums of functions}
 
 If $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ then $f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)$.
 Therefore, each product of kernels corresponds to an independent additive function in the model and can be described separately.
 
-\paragraph{Simplification}
+\subsubsection{Simplification}
 
-Ignoring the specific parameters of kernels, $\kSE$ is idempotent \ie $\kSE \times \kSE = \kSE$ (simply, the product of two $\kSE$ kernels is another $\kSE$ kernel but with different parameters).
-For stationary kernels, $\kWN$ behaves like zero \eg $\kWN \times \kSE = \kWN \times \kPer =  \kWN$.
-The constant kernel $\kC$ behaves like the identity \eg $\kC \times \kLin = \kLin$.
+Ignoring the specific parameters of kernels, $\kSE$ is multiplicatively idempotent \ie $\kSE \times \kSE = \kSE$ (simply, the product of two $\kSE$ kernels is another $\kSE$ kernel but with different parameters).
+Similarly, $\kWN$ and $\kC$ are additively idempotent.
 
+For stationary kernels, $\kWN$ behaves like a multiplicative zero \eg $\kWN \times \kSE = \kWN \times \kPer =  \kWN$.
+The constant kernel $\kC$ behaves like a multiplicative identity \eg $\kC \times \kLin = \kLin$.
 
+\subsubsection{Kernel description templates}
 
-\subsection{Describing products of kernels}
+After applying all simplifications to a kernel expression in sum of products form the product of base kernels (excluding $\kLin$) will have of the following forms: $\kWN, \kC, \kSE, \kPer^n, \kSE\times\kPer^n$ where $n\in\mathbb{N}$.
 
-The extended GPSS language produces sentences composed of 5 base kernels (section~\ref{sec:notation}) and the arbitrary application of addition, multiplication, change point and change window operators. 
+The models produced by the base kernels are well understood so appropriate templates for their descriptions based on parameter values can be constructed from standard reference books \citep[e.g.][]{rasmussen38gaussian}.
 
-\paragraph{Changepoints}
+A description for $\kPer^n$ with ${n>1}$ can be constructed as follows.
+Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
+Then
+\begin{equation}
+{\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.
+\end{equation}
+Therefore $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.
+This description naturally extends to ${n>2}$.
+However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
 
-We use equation \eqref{eq:cp} to represent changepoints (and similarly change windows) using sums, products, base kernels and sigmoid functions.
+A description for $\kSE\times\kPer$ can be constructed as follows.
+If the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
+That is, the functional form of the periodicity varies like $\kSE$, giving rise to local periodicity.
+This argument extends to $\kSE\times\kPer^n$ again producing locally periodic functions.
 
-\paragraph{Distributivity}
-
-Pointwise multiplication is distributive over addition for functions so we can convert any kernel expression into a sum of products.
-
-\paragraph{Multiplication by linear kernels}
+\subsubsection{Linear kernels}
 
 $\kLin$ has the form $k(x,x') = a(x)a(x')$.
 This can be used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
@@ -409,48 +421,109 @@ This allows us to describe any linear kernels separately.
 For example, multiplying by a linear kernel means that the amplitude of the function grows linearly away from a central point.
 Multiplication by two linear kernels results in quadratic growth, etc.
 
-\paragraph{Changepoints and changewindows}
+\subsubsection{Changepoints}
 
-Representing changepoints/windows as sigmoid functions as shown in equation~\eqref{eq:cp} also results in kernels of the form $a(x)k(x,x')a(x')$ where $a(x)$ is a sigmoid (changepoint) or product of sigmoids (changewindow).
-Therefore the application of changepoint/window operators can be described separately as multiplication of functions by sigmoids.
-When the sigmoids transition between 0 and 1 sharply the effect is particularly trivial to express in natural-language \eg ``this component applies from 1700 to 1800''.
+The $\Sigma_m$ in the sum of products form shown in equation~\eqref{eq:sop} represent products of sigmoids which also have the form $a(x)a(x')$.
+For the purposes of description we assume that the sigmoids are step functions (the parameters of the sigmoids are restricted to make the sigmoids step and therefore this approximation is not severe).
 
-We now only need to describe the base kernels and products of the form $\kSE \times \prod \kPer$.
+These step functions can be represented as intervals (\ie where their value is 1), and their product is equivalent to taking the intersection of intervals.
+Computing the intersection is trivial and descriptions can be templated as `this function applies from [start] until [end]'.
 
-\paragraph{Base kernels}
+\subsection{Worked example}
 
-The priors induced by the base kernels are well understood, with simple descriptions of typical functions.
+Suppose we start with a kernel of the form
+\begin{align*}
+\kSE \times (\kWN \times \kLin + \kCP(\kC, \kPer)).
+\end{align*}
+This is converted to sum of products form
+\begin{align*}
+\kSE \times \kWN \times \kLin + \bar\Sigma\times\kSE \times \kC + \Sigma\times\kSE \times \kPer.
+\end{align*}
+which can be simplified to
+\begin{align*}
+\kWN \times \kLin + \bar\Sigma\times\kSE + \Sigma\times\kSE \times \kPer.
+\end{align*}
+Note that this can equivalently written as
+\begin{align*}
+\kWN \times \kLin + \kCP(\kSE, \emptyset) + \kCP(\emptyset, \kSE \times \kPer)
+\end{align*}
+where $\emptyset$ represents the zero function.
+We use this notation in the next section.
 
-\vspace{-0.5\baselineskip}
-\begin{table}[ht]
-\centering
-\begin{tabular}{c|c}
-Kernel & Function description \\
-\midrule
-$\kWN$ & White noise \\
-$\kC$ & Constant \\
-$\kLin$ & Linear \\
-$\kSE$ & Smooth \\
-$\kPer$ & Periodic \\
-\end{tabular}
-\label{table:base-kernels}
-\end{table}
-\vspace{-\baselineskip}
+%The kernel learned for solar was:
+%\begin{align*}
+%\kWN + \kC + \kCW(\kSE + \kSE + \kSE \times \kLin  + \kSE \times \kLin + \kSE \times \kPer, \kC)
+%\end{align*}
+%which is already in sum of products form except for the changewindow.
+%Distributing the changewindow results in the following additive components: $\kC$, $\kCW(\kC)$, $\kCW(\kSE)$, $\kCW(\kSE \times \kPer)$, $\kCW(\kSE)$, $\kWN$, $\kCW(\kSE \times \kLin)$, and $\kCW(\kSE \times \kLin)$
 
-%\paragraph{$\kSE \times \kPer$}
+%The first component, $\kC$ is the constant kernel - its description can be looked up.
 
-%gives rise to functions which are \emph{locally} periodic: they only approximately repeat.
-%More exactly, if the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
-%That is, the functional form of the periodicity varies like $\kSE$, giving rise to the local nature of the periodicity.
+%The second component, $\kCW(\kC)$, is the constant base kernel within a changewindow operator.
+%By inspecting the parameters of the change window, it can be deduced that this component is zero except in the region from 1644 to 1713\fTBD{It currently does not comment on the speed/slope of the transition} which can be translated using an appropriate template \eg `this function applies from 1644 until 1713'.
+%The constant base kernel is then described separately by looking up its description.
 
-\paragraph{Products of multiple periodic kernels}
+%The third component, $\kCW(\kSE)$, is similar to the second, but the $\kSE$ requires more description than $\kC$.
+%The lengthscale of the $\kSE$ is compared to the range of the input dimension of the data to determine an appropriate template to use (\ie is the function very smooth, smooth or quickly varying?).
+%For this component, the lengthscale is moderate so the function is described as smooth.
 
-Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
-Then
-\begin{equation}
-{\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.
-\end{equation}
-Therefore $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.  However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
+%The changewindow aspect of the fourth component, $\kCW(\kSE \times \kPer)$, is dealt with in the same manner as the above.
+%There are different templates for the $\kSE \times \kPer$ kernel expression which are selected based on the parameter values of the kernels in comparison to the dimensions of the dataset.
+
+%The seventh component, $\kCW(\kSE \times \kLin)$, is also translated in a modular fashion.
+%The changewindow is translated as before from a template 'This component applies until 1643 and from 1716 onwards'.
+%The linear kernel is translated separately, using an appropriate template based on parameter values resulting in `The marginal standard deviation of the function increases linearly away from 1701'.
+%The $\kSE$ is translated spearately from a template `This component is a rapidly varying but smooth function with a typical lengthscale of 2.2 months'.
+%The full description is actually these sentences in reverse order.
+
+%\subsection{Describing products of kernels}
+
+%The extended GPSS language produces sentences composed of 5 base kernels (section~\ref{sec:notation}) and the arbitrary application of addition, multiplication, change point and change window operators. 
+
+%\paragraph{Changepoints}
+
+%We use equation \eqref{eq:cp} to represent changepoints (and similarly change windows) using sums, products, base kernels and sigmoid functions.
+
+%\paragraph{Distributivity}
+
+%Pointwise multiplication is distributive over addition for functions so we can convert any kernel expression into a sum of products.
+
+%\paragraph{Changepoints and changewindows}
+
+%Representing changepoints/windows as sigmoid functions as shown in equation~\eqref{eq:cp} also results in kernels of the form $a(x)k(x,x')a(x')$ where $a(x)$ is a sigmoid (changepoint) or product of sigmoids (changewindow).
+%Therefore the application of changepoint/window operators can be described separately as multiplication of functions by sigmoids.
+%When the sigmoids transition between 0 and 1 sharply the effect is particularly trivial to express in natural-language \eg ``this component applies from 1700 to 1800''.
+
+%We now only need to describe the base kernels and products of the form $\kSE \times \prod \kPer$.
+
+%\paragraph{Base kernels}
+
+%The priors induced by the base kernels are well understood, with simple descriptions of typical functions.
+
+%\vspace{-0.5\baselineskip}
+%\begin{table}[ht]
+%\centering
+%\begin{tabular}{c|c}
+%Kernel & Function description \\
+%\midrule
+%$\kWN$ & White noise \\
+%$\kC$ & Constant \\
+%$\kLin$ & Linear \\
+%$\kSE$ & Smooth \\
+%$\kPer$ & Periodic \\
+%\end{tabular}
+%\label{table:base-kernels}
+%\end{table}
+%\vspace{-\baselineskip}
+
+%\paragraph{Products of multiple periodic kernels}
+
+%Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
+%Then
+%\begin{equation}
+%{\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.
+%\end{equation}
+%Therefore $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.  However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
 
 \subsection{Ordering additive components}
 
@@ -505,61 +578,6 @@ For example, a product of linear kernels has its own template.
 
 
 \section{Worked example of description}
-
-\subsection{Sum of products normal form}
-
-Products are distributed over addition and changepoints \eg
-\begin{align*}
-\kSE \times (\kWN + \kCP(\kC, \kPer)
-\end{align*}
-becomes
-\begin{align*}
-\kSE \times \kWN + \kCP(\kSE \times \kC, \kSE \times \kPer).
-\end{align*}
-This can be simplified to
-\begin{align*}
-\kWN + \kCP(\kSE, \kSE \times \kPer).
-\end{align*}
-Changepoints and changewindows are split into additive components
-\begin{align*}
-\kWN + \kCP(\kSE, \emptyset) + \kCP(\emptyset, \kSE \times \kPer).
-\end{align*}
-
-\TBD{To be improved and then worked into next section potentially}
-
-The kernel learned for solar was:
-\begin{align*}
-\kWN + \kC + \kCW(\kSE + \kSE + \kSE \times \kLin  + \kSE \times \kLin + \kSE \times \kPer, \kC)
-\end{align*}
-which is already in sum of products form except for the changewindow.
-Distributing the changewindow results in the following additive components: $\kC$, $\kCW(\kC)$, $\kCW(\kSE)$, $\kCW(\kSE \times \kPer)$, $\kCW(\kSE)$, $\kWN$, $\kCW(\kSE \times \kLin)$, and $\kCW(\kSE \times \kLin)$
-
-The first component, $\kC$ is the constant kernel - its description can be looked up.
-
-The second component, $\kCW(\kC)$, is the constant base kernel within a changewindow operator.
-By inspecting the parameters of the change window, it can be deduced that this component is zero except in the region from 1644 to 1713\fTBD{It currently does not comment on the speed/slope of the transition} which can be translated using an appropriate template \eg `this function applies from 1644 until 1713'.
-The constant base kernel is then described separately by looking up its description.
-
-The third component, $\kCW(\kSE)$, is similar to the second, but the $\kSE$ requires more description than $\kC$.
-The lengthscale of the $\kSE$ is compared to the range of the input dimension of the data to determine an appropriate template to use (\ie is the function very smooth, smooth or quickly varying?).
-For this component, the lengthscale is moderate so the function is described as smooth.
-
-The changewindow aspect of the fourth component, $\kCW(\kSE \times \kPer)$, is dealt with in the same manner as the above.
-There are different templates for the $\kSE \times \kPer$ kernel expression which are selected based on the parameter values of the kernels in comparison to the dimensions of the dataset.
-
-The seventh component, $\kCW(\kSE \times \kLin)$, is also translated in a modular fashion.
-The changewindow is translated as before from a template 'This component
-applies until 1643 and from 1716 onwards'.
-The linear kernel is translated separately, using an appropriate template based on parameter values resulting in `The marginal standard deviation of the function increases linearly away from 1701'.
-The $\kSE$ is translated spearately from a template `This component is a rapidly varying but smooth function with a typical lengthscale of 2.2 months'.
-The full description is actually these sentences in reverse order.
-
-
-
-
-
-
-
 
 \section{Additional remarks about the language}
 
@@ -903,6 +921,11 @@ However, the periodicity is heavily approximated with only a single sinusoid and
 
 
 \section{Related work}
+
+\paragraph{Structured GP covariance}
+
+Cite Edgar and Kaggle?
+Contrast with kernels preserving group symmetries???
 
 \paragraph{Equation learning}
 

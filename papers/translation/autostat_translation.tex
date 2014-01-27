@@ -877,29 +877,33 @@ However, the periodicity is heavily approximated with only a single sinusoid and
 
 \paragraph{Equation learning}
 
-In this work we have defined a search space of statistical models, where each model is characterised by a parametric covariance function.
-Previous work has considered searching over parametric functions \citep[e.g.][]{Schmidt2009b}.
-Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
+%In this work we have defined a search space of statistical models, where each model is characterised by a parametric covariance function.
+%Previous work has considered searching over parametric functions \citep[e.g.][]{Schmidt2009b}.
+%Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
+\cite{schmidt2009distilling}, \cite{todorovski1997declarative} and \cite{washio1999discovering} learn parametric forms of equations specifying time series, or relations between quantities.  Because our system specifies the more general covariance structure rather than the functions themselves, we are able to capture structure which does not have a simple parametric form.
 
 \paragraph{Searching over statistical models}
 
 GPSS was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
-This work and GPSS is possible for the following reasons: we can define a large space of models through a succinct langauge, inference can be performed for all sentences in this language and a basic search procedure is sufficient to find accurate models.
-\NA{
-This is also true of - can we also cite some sort of graphical model work?
-}
-\fTBD{RG: Cite Kemp + Tenenbaum?}
+Automatic model search is possible whenever the following conditions are met: 1) we can define a large space of models by combining a small number of components in a small number of different ways, inference can be performed for all models in this space, and a basic search procedure is sufficient to find accurate models.  For example, \citet{kemp2008discovery} learned the structural form of a graph used to model human similarity judgments.  
 
-\paragraph{Standard inference methods}
-\fTBD{RG: How is this relevant?}
-The GPSS language can express many regression motifs as \gp{}s for which inference is well understood.
-Probabilistic programming (cite) defines languages that describe generative models in such a way that inference can be performed in each model.
-Extending the model search ideas in GPSS to searches over probabilistic programs would be an interesting area for future research (cite Josh's workshop paper?).
+More generally, probabilistic programming [cite] software automatically generates inference mechanisms for open-ended classes of models, enabling automatic model search.  For example, \cite{VikashScene13} automatically searches over models of 2D scenes.
+
+%\NA{
+%This is also true of - can we also cite some sort of graphical model work?
+%}
+%\fTBD{RG: Cite Kemp + Tenenbaum?}
+
+%\paragraph{Standard inference methods}
+%\fTBD{RG: How is this relevant?}
+%The GPSS language can express many regression motifs as \gp{}s for which inference is well understood.
+%Probabilistic programming (cite) defines languages that describe generative models in such a way that %inference can be performed in each model.
+%Extending the model search ideas in GPSS to searches over probabilistic programs would be an interesting area for future research (cite Josh's workshop paper?).
 
 \paragraph{Natural-language descriptions of data}
 
 To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.% is novel (whereas parametric models are typically described by their parameters).
-However, grammar based techniques have previously been used to automatically understand images (cite something?) and recently (cite Gowers) have produced a theorem proving system that expresses its proof in natural language.
+However, grammar based techniques have previously been used to automatically understand images \cite{zhu2007stochastic} and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
 
 
 

@@ -1,0 +1,42 @@
+Experiment all_results for
+ datafile = ../data/tsdlr_5050/real-daily-wages-in-pounds-engla.mat
+
+ Running experiment:
+description = SE interpolation experiment,
+data_dir = ../data/tsdlr_5050/,
+max_depth = 1,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 1000,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2014-01-28-interp-SE/,
+iters = 250,
+base_kernels = SE,
+additive_form = True,
+mean = ff.MeanZero(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikGauss(sf=-np.Inf),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 10,
+max_period_heuristic = 5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'})],
+score = bic,
+period_heuristic_type = both,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=0.0277048313514), SqExpKernel(dimension=0, lengthscale=4.58536016099, sf=3.88437153706)]), likelihood=LikGauss(sf=-inf), nll=589.005174332, ndata=367)

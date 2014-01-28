@@ -1,17 +1,27 @@
-% Use the following line _only_ if you're still using LaTeX 2.09.
-%\documentstyle[icml2014,epsf,natbib]{article}
-% If you rely on Latex2e packages, like most modern people use this:
-\documentclass{article}
+\documentclass[letterpaper]{article}
+\usepackage{format/aaai}
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{courier}
+\frenchspacing
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
+\pdfinfo{
+/Title (Insert Your Title Here)
+/Author (Put All Your Authors Here, Separated by Commas)}
+\setcounter{secnumdepth}{0}  
+
+
 
 % use Times
-\usepackage{times}
+%\usepackage{times}
 % For figures
 \usepackage{graphicx} % more modern
 %\usepackage{epsfig} % less modern
 \usepackage{subfigure} 
 
 % For citations
-\usepackage{natbib}
+%\usepackage{natbib}
 
 % For algorithms
 %\usepackage{algorithm}
@@ -22,22 +32,24 @@
 % resulting PDF.  If this breaks your system, please commend out the
 % following usepackage line and replace \usepackage{icml2014} with
 % \usepackage[nohyperref]{icml2014} above.
-\usepackage{hyperref}
+%\usepackage{hyperref}
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
+\usepackage{algorithm}
+\usepackage{algorithmic}
 \newcommand{\theHalgorithm}{\arabic{algorithm}}
 
 % Employ the following version of the ``usepackage'' statement for
 % submitting the draft version of the paper for review.  This will set
 % the note in the first column to ``Under review.  Do not distribute.''
-\usepackage{format/icml2014} 
+%\usepackage{format/icml2014} 
 % Employ this version of the ``usepackage'' statement after the paper has
 % been accepted, when creating the final version.  This will set the
 % note in the first column to ``Proceedings of the...''
 %\usepackage[accepted]{icml2014}
 
-\usepackage{times}
+%\usepackage{times}
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{color}
@@ -60,7 +72,7 @@
     
 \usepackage{amsmath, amsfonts, bm, lipsum, capt-of}
 \usepackage{natbib, xcolor, wrapfig, booktabs, multirow, caption}
-\DeclareCaptionType{copyrightbox}
+%\DeclareCaptionType{copyrightbox}
 \usepackage{float}
 \usepackage{datetime}
 
@@ -118,32 +130,40 @@
 
 % The \icmltitle you define below is probably too long as a header.
 % Therefore, a short form for the running title is supplied here:
-\icmltitlerunning{Automatic construction and natural-language description of nonparametric regression models}
+%\icmltitlerunning{Automatic construction and natural-language description of nonparametric regression models}
 
-\begin{document} 
 
-\twocolumn[
-\icmltitle{Automatic Construction and Natural-language Description \\ of Nonparametric Regression Models
-}
+ \begin{document}
+% The file aaai.sty is the style file for AAAI Press 
+% proceedings, working notes, and technical reports.
+%
+\title{Automatic Construction and Natural-language Description \\ of Nonparametric Regression Models}
+\author{}
+\maketitle
+
+
+%\twocolumn[
+%\icmltitle{Automatic Construction and Natural-language Description \\ of Nonparametric Regression Models
+%}
 
 % It is OKAY to include author information, even for blind
 % submissions: the style file will automatically remove it for you
 % unless you've provided the [accepted] option to the icml2014
 % package.
-\icmlauthor{Your Name}{email@yourdomain.edu}
-\icmladdress{Your Fantastic Institute,
-            314159 Pi St., Palo Alto, CA 94306 USA}
-\icmlauthor{Your CoAuthor's Name}{email@coauthordomain.edu}
-\icmladdress{Their Fantastic Institute,
-            27182 Exp St., Toronto, ON M6H 2T1 CANADA}
+%\icmlauthor{Your Name}{email@yourdomain.edu}
+%\icmladdress{Your Fantastic Institute,
+%            314159 Pi St., Palo Alto, CA 94306 USA}
+%\icmlauthor{Your CoAuthor's Name}{email@coauthordomain.edu}
+%\icmladdress{Their Fantastic Institute,
+%            27182 Exp St., Toronto, ON M6H 2T1 CANADA}
 
 % You may provide any keywords that you 
 % find helpful for describing your paper; these are used to populate 
 % the "keywords" metadata in the PDF but will not be shown in the document
-\icmlkeywords{}
+%\icmlkeywords{}
 
-\vskip 0.3in
-]
+%\vskip 0.3in
+%]
 
 \begin{abstract} 
 Compiled on \today\ at \currenttime
@@ -156,7 +176,7 @@ We describe how the Gaussian process models being searched over naturally decomp
 The procedure contains many standard regression techniques as special cases, leading to superior extrapolation ability.
 \end{abstract} 
 
-\allowdisplaybreaks
+%\allowdisplaybreaks
 
 \section{Introduction}
 

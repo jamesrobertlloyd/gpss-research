@@ -326,9 +326,9 @@ In this section we describe how the properties of \gp{} models allow one to redu
 \paragraph{Overview}
 
 The automatic description procedure first distributes a kernel expression into a sum of products, and simpifies the resulting expression.
-A sum of kernels corresponds to a sum of functions and therefore each product of kernels can be described separately.
-Each kernel in a product modifies the resulting model in a consistent way, resulting in a highly modular text generation algorithm.
-There are also some special cases where the modularly produced wording is cumbersome.
+A sum of kernels corresponds to a sum of functions, and therefore each product of kernels can be described separately.
+Surprisingly, each kernel in a product modifies the resulting model in a consistent way, resulting in a highly modular text generation algorithm.
+%Some speciThere are also some special cases where the modularly produced wording is cumbersome.
 %Because each type of kernel modifies the resulting model in a consistent way\fTBD{We need to justify this claim}, the code to produce a natural-language desription can consider each type of kernel seperately.
 %This means that there is no need to write descriptions for every combination of kernels, although our procedure includes some special cases where the naive wording is cumbersome.
 %There are relatively few combinations of the other kernels so their descriptions are templated based on their parameter values.
@@ -366,7 +366,7 @@ The procedure is outlined in algorithm~\ref{alg:description}.
 \end{algorithm}
 
 
-\paragraph{Products of kernels distribute over addition}
+\paragraph{Products of kernels distribute over sums}
 
 Pointwise multiplication of functions is distributive over addition so we can distribute kernel multiplication over addition.
 For example, $\kSE \times (\kC + \kLin) = \kSE \times \kC + \kSE \times \kLin$.
@@ -382,7 +382,7 @@ Changewindows can be represented similarly.
 
 \paragraph{Simplification}
 
-%Ignoring the specific parameters of kernels, $\kSE$ is multiplicatively idempotent \ie $\kSE \times \kSE = \kSE$ (simply, 
+There are several properties of the kernels in our grammar which allow expressions to be further simplified.
 %
 The product of two $\kSE$ kernels is another $\kSE$ kernel, but with different parameters.
 Similarily, adding either two $\kWN$ or two $\kC$ kernels gives a single kernel of the same form.
@@ -412,19 +412,22 @@ Each additive component in a kernel expression corresponds to a different additi
 After distributing products and simplifying all kernel expressions will be a sum of kernels of one of the following forms:\fTBD{JL: Not enitrely clear / canonical - 1 form - or many - or something else?}
 \begin{align}
 \textnormal{constant:} \quad & \kC \\
-\textnormal{noise:} \quad & \kWN \prod_j\kLin_j \prod_m \sigma(x) \\
+\textnormal{noise:} \quad & \kWN \prod_j\kLin_j \prod_m \boldsymbol{\sigma}_m \\
 \textnormal{signal:} \quad & \kSE \prod_i \kPer_i \prod_j\kLin_j \prod_m \boldsymbol\sigma_m
 \label{eq:sop}
 \end{align}
 
+The task of describing models in our class is now broken down into these three tasks.
+Luckily, there are further properties of the base kernels which allow these tasks to be broken down even further.
+
 \paragraph{Description of a product of kernels is modular}
 
-As a simple example, a kernel of the form $\kSE \times \kPer \times  \kLin \times  \sigma(x)$ could be described as:
+As a simple example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \boldsymbol{\sigma}$ could be described as:
 \begin{align*}
 \underbrace{\kSE}_{\textnormal{\small locally}} \times 
 \underbrace{\kPer}_{\textnormal{\small periodic}} \times 
 \underbrace{\kLin}_{\textnormal{\small with linearly growing amplitude}} \times 
-\underbrace{\sigma}_{\small \textnormal{\small until 2100}}
+\underbrace{\boldsymbol{\bar\sigma}}_{\small \textnormal{\small until 2100}}
 \end{align*}
 where each kernel contributes one adjective, or modifier, to the description being generated.
 
@@ -434,20 +437,19 @@ However, the modularity of descriptions of products of kernels prevents an expon
 The following sections detail how we describe each type of kernel in the above expansions.
 
 \paragraph{Describing squared-exp kernels}
-As noted above, multiplying the $\kSE$ kernel by any other kernel $K$ causes the structure implied by $K$ to hold only locally.\fTBD{JL: This can be justified by explaining that the covariance goes to zero}
+As noted above, multiplying the $\kSE$ kernel by any other kernel $K$ causes the structure implied by $K$ to hold only locally. \fTBD{JL: This can be justified by explaining that the covariance goes to zero}
 We modify the description depending on the lengthscale of the $\kSE$ kernel to indicate just how locally the property holds.
 
 \paragraph{Describing products of linear kernels}
 \fTBD{JL: This is not justified without explaining the multiplication of a function interpretation / maths}
-The product of any number of linear kernels is simply a polynomial, so the contribution of any such products of kernels can be described by appending ``with linearly growing amplitude'', ``with quadratically growing amplitude'', etc.\ with the knots\fTBD{JL: Do you mean zeros?} of these polynomials described by appending ``growing away from $x_1$''.
+The product of any number of linear kernels is simply a polynomial, so the contribution of any such products of kernels can be described by appending ``with linearly growing amplitude'', ``with quadratically growing amplitude'', etc.\ with the location of the roots of these polynomials described by appending ``growing away from $x_1$''.
 
 \paragraph{Describing products of changepoints}
 \fTBD{JL: This is not justified without explaining the multiplication of a function interpretation / maths}
 Multiplying by a sigmoid ensures that any covariance structure ceases to hold in some region of the input space.  Thus, the contribution of changepoints can be expressed by appending ``until $x_1$'' or ``after $x_1$'', where $x_1$ is the time at which the change occurs.
 
 \paragraph{Describing products of periodics}
-There is no\fTBD{JL: Or maybe we haven't thought of it yet} simple way to describe all the properties of a product of periodic kernel, but it easy to describe the covariance of any product of kernels in the following way:
-%A description for $\prod_j \kPer_j$ can be constructed as follows.
+There is no obvious way to describe all the properties of a product of periodic kernels, but it easy to describe the covariance of any product of kernels in the following way:
 Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
 Then
 \begin{align}
@@ -489,20 +491,20 @@ Suppose we start with a kernel of the form
 \begin{align*}
 \kSE \times (\kWN \times \kLin + \kCP(\kC, \kPer)).
 \end{align*}
-This is converted to sum of products form\fTBD{JL: Again, $\sigma$ notation needs to be more precise}
+This is converted to a sum of products:
 \begin{align*}
-\kSE \times \kWN \times \kLin + (1-\sigma(x)) \times\kSE \times \kC + \sigma(x) \times\kSE \times \kPer.
+\kSE \times \kWN \times \kLin + \boldsymbol{\bar\sigma} \times\kSE \times \kC + \boldsymbol{\sigma} \times\kSE \times \kPer.
 \end{align*}
 which can be simplified to
 \begin{align*}
-\kWN \times \kLin + (1-\sigma(x)) \times\kSE + \sigma(x) \times\kSE \times \kPer.
+\kWN \times \kLin + \kSE \times \boldsymbol{\bar\sigma} + \kSE \times \kPer \times \boldsymbol{\sigma}.
 \end{align*}
 %where $\emptyset$ represents the zero function.
 %We use this notation in section~\ref{sec:solar}.
 
 To descibe the first component, the template for $\kWN$, `uncorrelated noise', is concatenated with a template (chosen based on parameter values) for $\kLin$, `with linearly increasing standard deviation'.
 %
-The second component could be described as `A smooth function with a lengthscale of [lengthscale]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\bar\Sigma$\fTBD{JL: out of date notation}.
+The second component could be described as `A smooth function with a lengthscale of [lengthscale]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\boldsymbol{\bar\sigma}$.
 %
 Finally, the third component could be described as `A locally periodic function with a period of [period] which applies from [changepoint]'.
 
@@ -887,17 +889,17 @@ Short descriptions and summary statistics for the four components of the airline
 \label{fig:exec-airline}
 \end{figure}
 
-\paragraph{Monotonic trend}
-\fTBD{JL: This will change to a linear trend in the official version - unless vetoed}
-No model in the current language can express a prior over monotonic functions.
-However, it is simple to check the posterior for monotonicity and remark upon it when appropriate (figure~\ref{fig:monotonic}).
+%\paragraph{Monotonic trend}
+%\fTBD{JL: This will change to a linear trend in the official version - unless vetoed}
+%No model in the current language can express a prior over monotonic functions.
+%However, it is simple to check the posterior for monotonicity and remark upon it when appropriate (figure~\ref{fig:monotonic}).
 
-\begin{figure}[h]
-\centering
-\fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/01-airline-separate-pages-3}}
-\caption{Describing monotonicity of the posterior}
-\label{fig:monotonic}
-\end{figure}
+%\begin{figure}[h]
+%\centering
+%\fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/01-airline-separate-pages-3}}
+%\caption{Describing monotonicity of the posterior}
+%\label{fig:monotonic}
+%\end{figure}
 
 \paragraph{Annual periodicity with linearly growing amplitude}
 
@@ -940,14 +942,14 @@ However, it is very unlikely that these data sets can be explained parsimoniousl
 
 The learned equation for the solar irradiance data is
 \begin{align*}
-\textrm{Irradiance} = 1361 + \alpha\sin(\beta + \gamma t)\sin(\delta + \epsilon t^2 - \zeta t)
+\textrm{Irradiance($t$)} = 1361 + \alpha\sin(\beta + \gamma t)\sin(\delta + \epsilon t^2 - \zeta t)
 \end{align*}
 where $t$ is time (the input to the regression) and we have replaced most constants with symbols for brevity.
 This equation captures the constant offset of the data and models the long term trends with a product of sinusoids but fails to capture the solar cycle or the Maunder-minimum.
 
 The learned equation for the airline passenger data is
 \begin{align*}
-\textrm{Passengers} = \alpha t + \beta\cos(\gamma - \delta t)\textrm{logistic}(\epsilon t - \zeta) - \eta
+\textrm{Passengers($t$)} = \alpha t + \beta\cos(\gamma - \delta t)\textrm{logistic}(\epsilon t - \zeta) - \eta
 \end{align*}
 which captures the approximately linear trend, and the periodic component with approximately linearly (logistic) increasing amplitude.
 However, the periodicity is heavily approximated with only a single sinusoid and the model cannot capture heteroscedasticity.

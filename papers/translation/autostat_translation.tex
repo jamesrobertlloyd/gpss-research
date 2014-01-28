@@ -279,11 +279,8 @@ The $\kLin$ and $\kPer$ kernels are typically parameterized with an implicit con
 By introducing a constant kernel $\kC$ we can remove this constant component from the above kernels, allowing us to model and report the constant component separately.% in order to more clearly decompose the different types of structure present.
 %The new form of linear kernel is necessary for the modular construction of descriptions of kernels (see section [blank]).
 
-This new form of periodic kernel\footnotemark~includes the cosine kernel ($\cos$) as a limiting form.
-%\citep{lazaro2010sparse}
-It was recently demonstrated \citep{WilAda13} that any stationary kernel can be arbitrarily well approximated by kernels of the form $\sum \kSE \times \cos$ by appealing to Bochner's theorem \citep{bochner1959lectures}.\fTBD{JL,DD: Also cite sparse spectrum GPs who made a similar observation}
-By using this new periodic kernel our language of kernels also attains this completeness property.
-More details are in the supplementary material.
+This new form of periodic kernel\footnotemark~includes the cosine kernel ($\cos$) as a limiting case.
+\citet{lazaro2010sparse} and \citet{WilAda13} demonstrated, using Bochner's theorem \citep{bochner1959lectures} that any stationary kernel can be arbitrarily well approximated using kernels of the form $\sum \cos$ or $\sum \kSE \times \cos$.
 
 \footnotetext{This kernel is now included in the GPML toolbox (\url{ www.gaussianprocess.org/gpml/code/}) as \texttt{covPeriodicNoDC}}
 

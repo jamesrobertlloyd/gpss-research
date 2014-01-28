@@ -71,6 +71,8 @@
 \let\oldemptyset\emptyset
 \let\emptyset 0
 
+\newcommand{\procedurename}{ABCD}
+
 %\author{
 %James Robert Lloyd\\
 %University of Cambridge\\
@@ -143,38 +145,37 @@
 \vskip 0.3in
 ]
 
-%\TBD{ZG: `natural-language summarization' might attract NLP reviewers}
-%\TBD{JL: How about `description' - also do we want to say we are doing regression models in the title?}
-\fTBD{JL: Capitalize English or use `natural-language'}
 \begin{abstract} 
 Compiled on \today\ at \currenttime
 \\
-%One aim of statistics is to produce accurate and concise descriptions of data.
-%Parametric techniques typically produce a concise description of data, but can be inaccurate when there are deviations from the strong assumptions implied by parametric forms.
-%In contrast, nonparametric methods are typically capable of providing accurate descriptions of many data sets but at the expense of succinct descriptions.
-%To address this apparent antagonism we demonstrate that a recently introduced nonparametric model construction technique allows for the automatic natural-language description of a data set while also constructing an accurate model.
-%We also extend the class of models that can be produced by this model construction method to include a wide variety of regression motifs.
-We present a nonparametric model construction procedure which also automatically produces natural-language descriptions of the model.
-The procedure takes a time-series as input, runs an open-ended model search and then produces a detailed report with figures and english text which decompose and describe the various patterns discovered.
-We show how the Gaussian process models being searched over naturally decompose into interpretable structures, which allow simple rule-based descriptions of arbitrarily complex models.
-The model search also provides competitive predictive performance.
+This paper presents the beginnings of an automatic statistician, which has the potential to aid in exploratory analysis of data.
+Specifically, we develop a nonparametric model construction procedure which also automatically produces natural-language descriptions of the model.
+The procedure takes a time-series as input, runs an open-ended model search and then produces a detailed report with figures and text which decompose and describe the various patterns discovered.
+We describe how the Gaussian process models being searched over naturally decompose into interpretable structures, which allow simple rule-based descriptions of arbitrarily complex models.
+%The model search also provides competitive predictive performance.
+The procedure contains many standard regression techniques as special cases, leading to superior extrapolation ability.
 \end{abstract} 
 
 \allowdisplaybreaks
 
 \section{Introduction}
-\fTBD{JL: Let's see what ZG and JBT have to say about this}
-One of the broad aims of statistics is to produce accurate and concise descriptions of data.
-Simple parametric regression models such as linear regression are usually easy to interpret, requiring only a table of regression coefficients and a few other parameters to describe a model.
-However, parametric models may often be too simple to accurately describe many data sets.
-In contrast, non-parametric regression models are more often able to capture more complex structures but are relatively difficult to summarize, with fitted parameters corresponding only to very high level concepts such as bandwidths or typical lengthscales.
+
+One of the aims of statistics is to produce accurate and concise descriptions of data.
+This requires the construction and fitting of an appropriate statistical model that can be interpreted by the user.
+For simple model classes this has largely already been automated.
+For example, many standard software packages are capable of performing variants of linear regression and reporting the results to the user. 
+
+%Simple parametric regression models such as linear regression are usually easy to interpret, requiring only a table of regression coefficients and a few other parameters to describe a model.
+However, simple parametric models such as linear regression may often be too simple to accurately describe many data sets.
+In contrast, non-parametric regression models are more often able to capture more complex structures but their construction typically requirees expertise.
+Moreover, these models are relatively difficult to summarize, with fitted parameters corresponding only to very high level concepts such as bandwidths or typical lengthscales.
 %typically require graphical descriptions of their fit, since any text description would be overly simplistic (\eg `a smooth function') and fitted parameters correspond only to very high level concepts such as bandwidths or typical lengthscales.
 
 Several recently proposed methods search over large classes of structured nonparametric regression models \citep[e.g.][]{diosan2007evolving, bing2010gp, DuvLloGroetal13, kronberger2013evolution}.
 In \cite{DuvLloGroetal13} it was noted that these models could be decomposed into sums of diverse components, and that the different components corresponded to interpretable features of the data.
 In that work, components discovered by the automatic model search were interpreted post-hoc by the authors.
 
-In this paper, we extend the work of \cite{DuvLloGroetal13} by demonstrating that the compositional structure of the models being searched over allows for the automatic natural-language description of patterns within a data set.
+In this manuscript we demonstrate that the compositional structure of Gaussian process models allows for the automatic natural-language description of patterns within a data set.
 We demonstrate a procedure which, given a dataset, runs an open-ended model search and then produces a detailed report describing the structures discovered by the model. % \ie the interpretable models are automatically interpreted!
 %
 This paper contains extracts of the natural-language reports automatically generated by our procedure.
@@ -188,72 +189,68 @@ The supplementary material to this paper includes 13 complete reports generated 
 \label{fig:periodic}
 \end{figure}
 
-Compared to the work of \cite{DuvLloGroetal13} we also extend and refine the components used in the model-construction process to improve the expressivity and interpretability of the models.
-This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}\fTBD{any suggestions for generic papers? - the Fox paper is quite focused on inference rather than the idea of using changepoints and addition}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and additive nonparametric regression \citep[e.g.][]{buja1989linear}\fTBD{Most classical references talk about one smoother per dimension - is MKL a better citation?}.
+We also extend and refine the components used in the model-construction process to improve the expressivity and interpretability of the models.
+This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and multiple kernel learning \citep[e.g.][]{bach2something}\fTBD{Insert cannonical MKL reference}.
 
 Finally, we demonstrate that our procedure is comparable or superior to other model construction techniques at extrapolation tasks.
 
-\section{Background}
-\label{sec:gpss}
+\section{Ingredients of an automatic statistician}
+\label{sec:ingredients}
 
-\subsection{Gaussian process models}
+In this section we discuss the different elements required to build a system that can automatically construct and then describe complex nonparametric regression models.
+
+\subsection{Probabilistic modelling}
+
+\subsection{Model selection}
+
+Marginal likelihood is good.
+BIC is practical.
+
+\subsection{Open ended model construction}
+
+Cite Gelman - mention that we are thinking about model checking as well.
+
+We need to be able to searcch trough the space.
+
+\subsection{Describing models}
+
+Models are no good (at least not for understanding) if you don't understand them.
+
+Open ended model classes need some sort of compisitional description procedure to avoid exponential blowup.
+
+\section{A language of regression models}
+\label{sec:improvements}
+
+\subsection{Gaussian processes}
 
 Gaussian processes (\gp{}) \citep{rasmussen38gaussian} can be used to perform Bayesian nonparametric regression.
 A \gp{} regression model uses a kernel function, ${\kernel : \mathcal{X}^2 \to \mathbb{R}}$, to define the prior covariance between any two function values, $\outputVar, \outputVar'$ evaluated at two inputs, $\inputVar,\inputVar'$ \ie ${\textrm{Cov}(\outputVar, \outputVar') = \kernel(\inputVar,\inputVar')}$.
 The kernel specifies which structures are likely under the \gp{} prior, which in turn determines the generalisation properties of the model.
 
 Different kernels can express a wide variety of structures that one might expect to find in functions.
-For example, a \gp{} with a squared-exponential (\kSE) kernel corresponds to a prior on smooth functions.
-In contrast, a \gp{} with a periodic (\kPer) kernel corresponds to a prior on periodic functions.  The exact properties of a kernel depend on the settings of its hyperparameters\fTBD{JL: I prefer saying parameters whenever possible}, which we omit from our notation for brevity.
-Definitions of all kernels are provided in the supplementary material.
+For example, a \gp{} with a squared-exponential kernel ($\kSE$) corresponds to a prior on smooth functions.
+Similarly, a \gp{} with a periodic kernel ($\kPer$) or linear kernel ($\kLin$) corresponds to a prior on periodic functions or linear functions respectively.
+Definitions of all kernels are provided in the supplementary mate\citep{lazaro2010sparse}rial.
+
+\subsection{Compositional model building using kernels}
 
 To express richer structures, new kernels can be constructed by taking products of existing ones.
 For example, the kernel $\kSE \times \kPer$ puts mass on functions which are locally periodic.
 Additive models can also be constructed by taking sums of kernels.
 For example, a \gp{} with kernel $\kSE + \kLin$ corresponds to a prior on smooth functions with a linear trend.
-A more detailed discussion with examples can be found in \cite{DuvLloGroetal13}.
-% and at \url{http://mlg.eng.cam.ac.uk/duvenaud/cookbook/}.
 
-\subsection{Gaussian Process Structure Search}
+These ideas were exploited by \citet{DuvLloGroetal13} where they introduced the Gaussian process structure search procedure (GPSS).
+GPSS searches over sums and products of a set of simple base kernels to produce an appropriate model for a data set.
+By combining kernels, the search procedure was able to construct novel nonparametric regression models.
+For example, when applied to airline passenger data (section~\ref{sec:airline}), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``locally periodic, with linearly growing amplitude''.
 
-The Gaussian process structure search (GPSS)\fTBD{RG: More specific name?} procedure \citep{DuvLloGroetal13} searches over sums and products of a set of simple base kernels to produce an appropriate model for a data set.
-The properties of \gp{}s and the structured nature of the kernels produced allows for the models to be decomposed into a sum of interpretable components.
-
-Since the search operates over an open-ended language of kernel structres, it can construct novel nonparametric regression models.
-For example, when applied to airline passenger data (section~\ref{sec:airline}), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which can be described as ``locally periodic, with linearly growing amplitude''.
-In \citep{DuvLloGroetal13}, the authors plotted these discovered components, and described each one by hand.
-
-In this paper we show that one can automatically generate natural-language descriptions of \gp{} models in this open-ended class.
-Combined with relevant plots of components of the posterior, our system automatically generates detailed reports discussing the varied structures present in a dataset.
-This system represents the beginnings of an ``automatic statistician'', which has the potential to aid in exploratory analysis of data.\fTBD{JL: I like this sentence - can we get it into the introduction?}
-
-%\subsection{Paper Outline}
-%
-%Section \ref{sec:improvements} reviews the language of models searched over by the GPSS procedure, introducing extensions and refinements.
-%We describe how any model in this class can be automatically described in natural language in section~\ref{sec:description}.
-%We discuss excerpts of the reports produced by GPSS in section~\ref{sec:examples}.
-%Section \ref{sec:numerical} compares the predictive power of GPSS against other model construction techniques.
-%As supplementary material we have included reports produced by our method on all of the 13 datasets used in section \ref{sec:numerical}.
-
-\section{A language of regression models}
-\label{sec:improvements}
-
-The work of \cite{DuvLloGroetal13} constructed a language of regression models by mutiplying and adding four base kernels.
-These four base kernels were $\kSE$ (smooth), $\kLin$ (linear), $\kPer$ (periodic), and $\kRQ$ (multi-scale smoothness).
-By combining these kernels, many structures can be expressed, such as periodic functions with long-term trends, or short-term deviations with linearly increasing amplitude through time.
-
-In this section we extend the language to include a greater variety of regression motifs.
-We also modify the base kernels to allow more succinct descriptions of the models produced.
-
-%to improve\fTBD{RG: Do we have direct comparisons JL: No - but we can demonstrate negative properties of previous of previous work if desired} the interpretability of the models produced by GPSS where we are guided by the principle that \emph{a model is interpretable if it can automatically be described in natural language}\fTBD{RG: Controversial}.
+In this section we extend the language defined by GPSS to include a greater variety of regression motifs.
+We also reparametrise the base kernels to allow the resulting models to be further decomposed into different types of structure.\fTBD{Roger can you help with this wording?}
 
 \subsection{Changepoints}
 
-The original GPSS language could not capture the non-linear non-stationarity exhibited in a solar irradiance data set (section~\ref{sec:solar}).
-To capture this type of phenomenon, we introduce changepoints into the modeling language.
-
 Hard changepoints have been considered by \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}.
-We construct smooth changepoints by multiplying by sigmoidal functions.
+We construct soft changepoints by multiplying by sigmoidal functions.
 \fTBD{DD: Let's add a small figure here to show what changepoints can do.}
 Suppose that $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ and define
 \begin{align}
@@ -268,30 +265,27 @@ Then $f(x) \dist \gp{}(0,\kernel)$ where
 %(see section~\ref{sec:description} for the properties to prove this identity).
 %
 We represent this kernel with the changepoint operator $\kCP(\kernel_1, \kernel_2)$.
-We also introduce a change window operator, $\kCW(\cdot,\cdot)$, which uses a product of two sigmoids to produce a smooth `hat-shaped' modulation of a function\fTBD{JL: between two functions}.
+We also introduce a change window operator, $\kCW(\cdot,\cdot)$, which uses a product of two sigmoids to produce a smooth `hat-shaped' modulation between two functions.
 
 \paragraph{Heteroscedasticity}
 
 To more flexibly model different types of noise, we introduce the white noise kernel, $\kWN$, as a base kernel.  Combined with linear kernels and changepoints, this addition allows models with noise levels which vary over time.
 %When multiplied by linear kernels and changepoints, this can express polynomially varying standard deviation as well as switching between different noise regimes.
-%The original GPSS procedure always assumed homoscedastic noise.
+%The original \procedurename procedure always assumed homoscedastic noise.
 
 \paragraph{A separate constant kernel}
 % included in typical definitions of $\kLin$ and $\kPer$ kernels.
-The $\kLin$ and $\kPer$ kernels are typically parameterized with an implicit constant added.  By introducing a constant kernel $\kC$ we can remove this constant component in order to more clearly decompose the different types of structure present.
+The $\kLin$ and $\kPer$ kernels are typically parameterized with an implicit constant added.
+By introducing a constant kernel $\kC$ we can remove this constant component from the above kernels, allowing us to model and report the constant component separately.% in order to more clearly decompose the different types of structure present.
 %The new form of linear kernel is necessary for the modular construction of descriptions of kernels (see section [blank]).
 
-This new form of periodic kernel\footnotemark~includes the cosine kernel as a limiting form.
+This new form of periodic kernel\footnotemark~includes the cosine kernel ($\cos$) as a limiting form.
+%\citep{lazaro2010sparse}
 It was recently demonstrated \citep{WilAda13} that any stationary kernel can be arbitrarily well approximated by kernels of the form $\sum \kSE \times \cos$ by appealing to Bochner's theorem \citep{bochner1959lectures}.\fTBD{JL,DD: Also cite sparse spectrum GPs who made a similar observation}
 By using this new periodic kernel our language of kernels also attains this completeness property.
 More details are in the supplementary material.
 
 \footnotetext{This kernel is now included in the GPML toolbox (\url{ www.gaussianprocess.org/gpml/code/}) as \texttt{covPeriodicNoDC}}
-
-\paragraph{Removal of $\kRQ$}
-The $\kRQ$ kernel is equivalent to a mixture of $\kSE$ covariance functions with different length-scales.
-In preliminary testing we observed that this allowed the kernel to simultaneously model aspects of the data that might be considered signal and noise.
-We therefore removed this kernel to improve the interpretability of the models produced.
 
 \subsection{A broad language of statistical models}
 
@@ -304,21 +298,23 @@ Motif & Example syntax \\
 \midrule
 Kernel ridge regression & $\kSE$ \\
 Linear regression & $\kC + \kLin$ \\
-Nonparametric additive& $\sum \kSE$ \\
+Multiple kernel learning & $\sum \kSE$ \\
 Trend, cyclical, irregular & $\sum \kSE + \sum \kPer$ \\
-%Fourier decomposition* & $\kC + \sum \cos$ \\
-Sparse spectrum \gp{}s* & $\sum \cos$ \\
-Spectral kernels* & $\sum \SE \times \cos$ \\
-Changepoints* & \eg $\kCP(\kSE, \kSE)$ \\
-Heteroscedasticity* & \eg $\kSE + \kLin \times \kWN$
+Fourier decomposition & $\kC + \sum \cos$ \\
+Sparse spectrum \gp{}s & $\sum \cos$ \\
+Spectral kernels & $\sum \SE \times \cos$ \\
+Changepoints & \eg $\kCP(\kSE, \kSE)$ \\
+Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$
 \end{tabular}
 \caption{
-Syntax of common regression motifs expressible in our language. * denotes a motif not expressible in the original language.
+Syntax of common regression motifs expressible in our language.
 }
 \label{table:motifs}
 \end{table}
 
 %In section~\ref{sec:example_description} we demonstrate the natural-language descriptions of some of these kernel forms.
+
+
 
 \section{Automatic natural-language description of regression models}
 \label{sec:description}
@@ -523,7 +519,7 @@ We use separate sets of templates to produce short summaries and detailed descri
 
 \subsection{Ordering additive components}
 
-The reports generated by GPSS attempt to present the most interesting or important features of a data set first.
+The reports generated by \procedurename attempt to present the most interesting or important features of a data set first.
 As a heuristic, we order components by always adding next the component which most reduces the 10-fold mean absolute error (using contiguous blocks) when added to the model.
 %This procedure is iterated to produce a complete ordering.
 
@@ -557,7 +553,7 @@ As a heuristic, we order components by always adding next the component which mo
 
 %\subsection{Describing products of kernels}
 
-%The extended GPSS language produces sentences composed of 5 base kernels (section~\ref{sec:notation}) and the arbitrary application of addition, multiplication, change point and change window operators. 
+%The extended \procedurename language produces sentences composed of 5 base kernels (section~\ref{sec:notation}) and the arbitrary application of addition, multiplication, change point and change window operators. 
 
 %\paragraph{Changepoints}
 
@@ -686,7 +682,7 @@ Solar irradiance data.}
 
 Here we show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011 (figure~\ref{fig:solar}).
 This time series has two pertinent features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
-The GPSS search procedure and automatic description clearly identify these two features, as discussed below.
+The \procedurename search procedure and automatic description clearly identify these two features, as discussed below.
 
 After distributing and simplifying, the kernel corresponding to the first four components is as follows:
 %\vspace{-0.5\baselineskip}
@@ -708,7 +704,7 @@ $\kC + \kCW(\emptyset,\kC) + \kCW(\kSE,\emptyset) + \kCW(\kSE \times \kPer,\empt
 An example of an automatically-generated summary of a dataset.  The dataset is decomposed into diverse structures with simple descriptions.}
 \label{fig:exec}
 \end{figure}
-Figure \ref{fig:exec} shows the natural-language summaries of these components produced by GPSS.
+Figure \ref{fig:exec} shows the natural-language summaries of these components produced by \procedurename.
 %The short descriptions demonstrate how the kernel is split into univariate enveloping functions (from the change windows) and stationary kernels.
 %
 %
@@ -753,7 +749,7 @@ Next, we discuss each component in greater detail.
 
 \paragraph{Maunder minimum}
 
-Figure \ref{fig:maunder} shows that GPSS has captured the unusual period of decreased solar activity from about 1645 to 1715, and is able to report this in natural language.
+Figure \ref{fig:maunder} shows that \procedurename has captured the unusual period of decreased solar activity from about 1645 to 1715, and is able to report this in natural language.
 
 \begin{figure}[ht]
 \centering
@@ -773,18 +769,18 @@ Having isolated the Maunder minimum, the model captures the long term trend of t
 \label{fig:smooth}
 \end{figure}
 
-% is a good example of a meaningful component discovered by GPSS, whose meaning would be unclear without an individual plot.  
+% is a good example of a meaningful component discovered by \procedurename, whose meaning would be unclear without an individual plot.  
 
 
 %In the history of solar activity, the Maunder minimum is a good example of a local change in covariance.  Specifically, 
-%The changepoint kernels used by GPSS encode changes in covariance structure.
+%The changepoint kernels used by \procedurename encode changes in covariance structure.
 %For example, from about 1645 to 1715, solar activity decreased.
 %, and very few sunspots were observed, a period called the Maunder Minimum \citep{lean1995reconstruction}.
 %This feature was captured by the model by multiplying a constant kernel by two changepoint kernels.
 
 \paragraph{Solar cycles}
 
-Figure \ref{fig:periodic} shows that GPSS has isolated the approximately 11 year solar cycle.
+Figure \ref{fig:periodic} shows that \procedurename has isolated the approximately 11 year solar cycle.
 By examining the parameters of the kernels comprising this component the description identifies that the shape of the periodicity is near sinusoidal \TBD{(it does in the latest version - update me)} and also quantifies how quickly the exact shape of the sinusoid changes.
 
 %with a pair of changepoint kernels.%shows exactly which sort of structure was recovered by this component.
@@ -796,11 +792,11 @@ By examining the parameters of the kernels comprising this component the descrip
 %\label{fig:smooth}
 %\end{figure}
 
-%\paragraph{Isolating the smoothly-varying component} Examining the dataset by eye, overall solar activity seems to change slowly over decades.  However, this intuition seems difficult to formalize.  Linear or quadratic regression is clearly inappropriate, and methods based on local smoothing would need to control for the periodic component.  Luckily, the GPSS procedure does exactly this, allowing us to isolate the slowly-varying component of the data, without having to forecast either the Maunder minimum or the periodic variation.  Figure \ref{fig:smooth} shows the automatically-generated summary of this component.
+%\paragraph{Isolating the smoothly-varying component} Examining the dataset by eye, overall solar activity seems to change slowly over decades.  However, this intuition seems difficult to formalize.  Linear or quadratic regression is clearly inappropriate, and methods based on local smoothing would need to control for the periodic component.  Luckily, the \procedurename procedure does exactly this, allowing us to isolate the slowly-varying component of the data, without having to forecast either the Maunder minimum or the periodic variation.  Figure \ref{fig:smooth} shows the automatically-generated summary of this component.
 
 
 
-%Figure \ref{fig:periodic} shows that GPSS has identified the approximately 11 year solar cycle.
+%Figure \ref{fig:periodic} shows that \procedurename has identified the approximately 11 year solar cycle.
 %By isolating this component in separate plots it is easy to see the exact nature of the solar cycle \eg how the amplitude of this periodic component varies over time.
 %This demonstrates one benefit of isolating individual components: we can now see, by eye, extra structure that was not explicitly captured by the model.  Specifically, we can see that the amplitude of the periodic component varies over time.
 
@@ -873,7 +869,7 @@ International airline passenger data.}
 \end{figure}
 
 Next, we present the analysis generated by our procedure on international airline passenger data (figure~\ref{fig:airline}).
-The model constructed by GPSS has four components: $\kSE + \kSE \times \kPer \times \kLin + \kSE + \kWN \times \kLin$, with descriptions given in figure~\ref{fig:exec-airline}.
+The model constructed by \procedurename has four components: $\kSE + \kSE \times \kPer \times \kLin + \kSE + \kWN \times \kLin$, with descriptions given in figure~\ref{fig:exec-airline}.
 %\vspace{-0.5\baselineskip}
 %\begin{itemize}
 %  \itemsep0em
@@ -942,7 +938,7 @@ Much of machine learning\fTBD{JL: Appropriate phrase if sending to AAAI?} resear
 In contrast, equation learning \citep[e.g.][]{Schmidt2009b} can also be used to automate interpretation.
 
 We include learned equations for these two data sets produced using Eureqa \citep{Eureqa} using the default mean absolute error performance metric\footnotemark.
-\footnotetext{We experimented with the root mean squared error with Akaike information criterion penalisation (analogous to the criterion used by GPSS) but occasionally observed severe overfitting.}
+\footnotetext{We experimented with the root mean squared error with Akaike information criterion penalisation (analogous to the criterion used by \procedurename) but occasionally observed severe overfitting.}
 However, it is very unlikely that these data sets can be explained parsimoniously with a parametric function.\fTBD{JL: Remove sentence?}
 
 The learned equation for the solar irradiance data is
@@ -977,7 +973,7 @@ Because our system specifies the more general\fTBD{JL: Sounds like we are claimi
 
 \paragraph{Searching over statistical models}
 
-GPSS was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
+\procedurename was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
 Automatic model search is possible whenever the following conditions are met: 1) we can define a large space of models by combining a small number of components in a small number of different ways,\fTBD{JL: The numbers stop!} inference can be performed for all models in this space, and a basic search procedure is sufficient to find accurate models.  For example, \citet{kemp2008discovery} learned the structural form of a graph used to model human similarity judgments.  
 
 More generally, probabilistic programming [cite]\fTBD{Is there a canonical reference yet \eg I don't think there are any books} software automatically generates inference mechanisms for open-ended classes of models, enabling automatic model search.
@@ -991,9 +987,9 @@ For example, \cite{VikashScene13} automatically searches over models of 2D scene
 
 %\paragraph{Standard inference methods}
 %\fTBD{RG: How is this relevant?}
-%The GPSS language can express many regression motifs as \gp{}s for which inference is well understood.
+%The \procedurename language can express many regression motifs as \gp{}s for which inference is well understood.
 %Probabilistic programming (cite) defines languages that describe generative models in such a way that %inference can be performed in each model.
-%Extending the model search ideas in GPSS to searches over probabilistic programs would be an interesting area for future research (cite Josh's workshop paper?).
+%Extending the model search ideas in \procedurename to searches over probabilistic programs would be an interesting area for future research (cite Josh's workshop paper?).
 
 \paragraph{Natural-language descriptions of data}
 
@@ -1011,13 +1007,13 @@ However, grammar based techniques have previously been used to automatically und
 \label{sec:numerical}
 
 To complement our demonstration of the interpretability of our method, we conducted numerical experiments testing the ability of various model building algorithms to interpolate and extrapolate time-series.
-GPSS outperforms the other methods on average (\eg as measured by quantiles of performance metrics).
-\NA{However, the variability of the results suggests that there is room to improve the robustness of GPSS.}
+\procedurename outperforms the other methods on average (\eg as measured by quantiles of performance metrics).
+\NA{However, the variability of the results suggests that there is room to improve the robustness of \procedurename.}
 \fTBD{JL: I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
 
 \subsection{Data sets}
 
-In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of GPSS and 5 other algorithms on 10 additional time series from the time series data library \citep{TSDL}; plots can be found at the beginning of the reports in the supplementary material\fTBD{Assuming all the reports fit within size constraints}.
+In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of \procedurename and 5 other algorithms on 10 additional time series from the time series data library \citep{TSDL}; plots can be found at the beginning of the reports in the supplementary material\fTBD{Assuming all the reports fit within size constraints}.
 
 \subsection{Algorithms}
 
@@ -1040,7 +1036,7 @@ Details are in the supplementary material.
 
 Since the process of describing a model always converts a kernel into a sum of products we experimented with always keeping the kernel in this form.
 After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression.
-This variant (GPSS.SoP) of the search tends to produce models with fewer additive components improving interpretability.
+This variant (\procedurename.SoP) of the search tends to produce models with fewer additive components improving interpretability.
 However, the results of this section show it does not perform as well numerically.
 
 The research leading up to this manuscript has focused on interpretability.
@@ -1053,7 +1049,7 @@ To test extrapolation we trained all algorithms on the first 90\% of the data, a
 The values of the RMSEs are then standardised by dividing by the smallest RMSE for each data set \ie the best performance on each data set will have a value of 1.
 
 Figure~\ref{fig:box_extrap_dist}\fTBD{JL: Figure will be updated} shows the standardised RMSEs across algorithms.
-Both versions of GPSS have lower quartiles than all other methods but the outliers of GPSS, TCI and SP have similar values.
+Both versions of \procedurename have lower quartiles than all other methods but the outliers of \procedurename, TCI and SP have similar values.
 
 \begin{figure}[h]
 \centering
@@ -1069,12 +1065,12 @@ Not shown on the plot is a large outlier for SP of 11 on a dataset with a large 
 
 Also not shown on the plot is a very large outlier for EL of 493 (this was also on the call centre data).
 However, EL was the best performing algorithm on the wages dataset which shows an exponential increase after the industrial revolution.
-GPSS can approximate an exponential function with a polynomial by combining $\kLin$ kernels but this is not a succinct expression in the current language.
-Expanding the modelling language of GPSS is a natural area for future research.
+\procedurename can approximate an exponential function with a polynomial by combining $\kLin$ kernels but this is not a succinct expression in the current language.
+Expanding the modelling language of \procedurename is a natural area for future research.
 
 Somewhat surprisingly, TCI performs well despite its restrictive modelling assumptions (smooth functions and exact periodicity).
 Further inspection of the extrapolation has revealed that while TCI cannot model non-stationarity, its extrapolations of approximately periodic components can be quite effective.
-While GPSS and SP will quickly become uncertain about a roughly periodic component, TCI will predict the average which is often more effective.
+While \procedurename and SP will quickly become uncertain about a roughly periodic component, TCI will predict the average which is often more effective.
 This suggests that models composed of kernels of the form $(\kSE + \kC) \times \kPer$ will be effective for extrapolating approximately periodic components.
 
 \fTBD{JL: Reintroduce comments on CP?}
@@ -1102,7 +1098,7 @@ In the earlier work of \cite{DuvLloGroetal13} the GPSS procedure was applied to 
 
 Changepoints and heteroscedasticity now included leading to increased expressivity and interpretability.
 
-GPSS superior at extrapolation and interpolation, but results are high variance - robustness needs to be improved (which probably means a better search algorithm).
+\procedurename superior at extrapolation and interpolation, but results are high variance - robustness needs to be improved (which probably means a better search algorithm).
 
 Automatically generating descriptions makes interpretability objective - rather than a post-hoc step performed by experts.
 
@@ -1117,13 +1113,13 @@ For statistical regression the ultimate measure of success is a scientific disco
 
 \subsection{When is a description of a model useful as a description of data?}
 
-GPSS produces models, $M$, of the form $f = \sum_i f_i$ where $f_i \dist \gp{}(0, \kernel_i)$.
+\procedurename produces models, $M$, of the form $f = \sum_i f_i$ where $f_i \dist \gp{}(0, \kernel_i)$.
 The form of $M$ is chosen to be that which best explains observations of $f$, denoted by $D$, as measured by approximate marginal likelihood.
 
-In the reports generated by GPSS, we show plots of the posterior $p(f_i^*\given M,D)$ but the natural-language descriptions are of typical elements of the prior $p(f_i^*\given M)$ given the fitted model \ie they are descriptions of the model rather than descriptions of the data.
+In the reports generated by \procedurename, we show plots of the posterior $p(f_i^*\given M,D)$ but the natural-language descriptions are of typical elements of the prior $p(f_i^*\given M)$ given the fitted model \ie they are descriptions of the model rather than descriptions of the data.
 
-Despite fitting the model to the data by maximising the marginal likelihood $p(D\given M)$ the selected model may be a poor description of the data if the data contains features not easily expressed by the language of models defined by GPSS.
-To test for when this is the case we have begun experimenting with posterior predictive checks to assess the models produced by GPSS following the techniques of \cite{Gelman1996} (see reports in the supplementary material).
+Despite fitting the model to the data by maximising the marginal likelihood $p(D\given M)$ the selected model may be a poor description of the data if the data contains features not easily expressed by the language of models defined by \procedurename.
+To test for when this is the case we have begun experimenting with posterior predictive checks to assess the models produced by \procedurename following the techniques of \cite{Gelman1996} (see reports in the supplementary material).
 In fact, the posterior predictive checks take the form of comparing the expectation of statistics under the prior and posterior of each component \ie they are testing whether or not typical elements of the posterior $p(f_i^*\given M,D)$ are typical elements of $p(f_i^*\given M)$.
 
 However, model checking for Gaussian processes, even those with simple kernels, is under-researched so we leave their description and more detailed analysis for future work.

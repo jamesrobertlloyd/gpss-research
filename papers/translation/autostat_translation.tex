@@ -71,7 +71,7 @@
 \let\oldemptyset\emptyset
 \let\emptyset 0
 
-\newcommand{\procedurename}{ABCD}
+\newcommand{\procedurename}{ABCD\ }
 
 %\author{
 %James Robert Lloyd\\
@@ -325,11 +325,12 @@ In this section we describe how the properties of \gp{} models allow one to redu
 
 \paragraph{Overview}
 
-The automatic description procedure first distributes a kernel expression into a sum of products.
-Because\fTBD{JL: Even though correct, starting sentences with `because' feels dirty to me} a sum of kernels corresponds to a sum of functions, each product of kernels can be described separately.
-Simplifications are then performed, and kernels of the same type are grouped together within each expression.
-Because each type of kernel modifies the resulting model in a consistent way\fTBD{We need to justify this claim}, the code to produce a natural-language desription can consider each type of kernel seperately.
-This means that there is no need to write descriptions for every combination of kernels, although our procedure includes some special cases where the naive wording is cumbersome.
+The automatic description procedure first distributes a kernel expression into a sum of products, and simpifies the resulting expression.
+A sum of kernels corresponds to a sum of functions and therefore each product of kernels can be described separately.
+Each kernel in a product modifies the resulting model in a consistent way, resulting in a highly modular text generation algorithm.
+There are also some special cases where the modularly produced wording is cumbersome.
+%Because each type of kernel modifies the resulting model in a consistent way\fTBD{We need to justify this claim}, the code to produce a natural-language desription can consider each type of kernel seperately.
+%This means that there is no need to write descriptions for every combination of kernels, although our procedure includes some special cases where the naive wording is cumbersome.
 %There are relatively few combinations of the other kernels so their descriptions are templated based on their parameter values.
 The procedure is outlined in algorithm~\ref{alg:description}.
 
@@ -364,48 +365,36 @@ The procedure is outlined in algorithm~\ref{alg:description}.
 \end{algorithmic}
 \end{algorithm}
 
-\fTBD{JL: This order does not match the algorithm nor the overview}
 
-\paragraph{Sums of kernels are sums of functions}
+\paragraph{Products of kernels distribute over addition}
 
-Each additive component in a kernel expression corresponds to a different additive function in the model, and can be described separately.  Formally, if $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ then $f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)$.
+Pointwise multiplication of functions is distributive over addition so we can distribute kernel multiplication over addition.
+For example, $\kSE \times (\kC + \kLin) = \kSE \times \kC + \kSE \times \kLin$.
 
-
-\paragraph{Products of kernels distribute into sums}
-
-Because\fTBD{JL: This sentence need not begin with because} pointwise multiplication of functions is distributive over addition, we can distribute kernel multiplication over addition.  For example, $\kSE \times (\kC + \kLin) = \kSE \times \kC + \kSE \times \kLin$.
-
-\paragraph{Changepoints are simply sums and products}
+\paragraph{Changepoints are sums and products}
 Changepoint kernels can be represented by multiplying sigmoidal functions with existing kernels.
 From equation \eqref{eq:cp} we can write\fTBD{JL: This is imprecise - drop $x$ or include $x'$}
 \begin{align}
-\kCP(k_1, k_2) = \sigma(x)\times k_1 + (1-\sigma(x)) \times k_2
+\kCP(k_1, k_2) = \boldsymbol\sigma\times k_1 + \boldsymbol{\bar\sigma} \times k_2
 \end{align}
+where $\boldsymbol\sigma = \sigma(x)\sigma(x')$ and $\boldsymbol{\bar\sigma} = (1-\sigma(x))(1-\sigma(x'))$.
 Changewindows can be represented similarly.
 
 \paragraph{Simplification}
 
 %Ignoring the specific parameters of kernels, $\kSE$ is multiplicatively idempotent \ie $\kSE \times \kSE = \kSE$ (simply, 
-There are several properties of the kernels in our grammar which allow expressions to be further simplified.\fTBD{JL: Is this sentence necessary?}  
 %
 The product of two $\kSE$ kernels is another $\kSE$ kernel, but with different parameters.
 Similarily, adding either two $\kWN$ or two $\kC$ kernels gives a single kernel of the same form.
 %
 Multiplying $\kWN$ by any stationary kernel (such as $\kSE$ or $\kPer$) is equivalent to another $\kWN$ kernel.
-Multipldying any kernel by the constant kernel, $\kC$ only changes its hyperparameters\fTBD{JL: Remove hyper?}.
+Multiplying any kernel by the constant kernel, $\kC$ only changes its parameters.
+
+\paragraph{Sums of kernels are sums of functions}
+
+Each additive component in a kernel expression corresponds to a different additive function in the model, and can be described separately.  Formally, if $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ then $f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)$.
 
 %paragraph{Kernel description templates}
-
-After
-% converting changepoints into sigmoids, distributing products, and
- simplifying\fTBD{JL: And sum of products form}, all kernel expressions will be a sum of kernels of one of the following forms:\fTBD{JL: I like this, but are these the natural three - are pure polynomials not also a special case?}
-\fTBD{JL: The $\sigma(x)$ notation is sloppy - either remove $x$ or add $x'$}
-\begin{align}
-\textnormal{constant:} \quad & \kC \\
-\textnormal{noise:} \quad & \kWN \prod_j\kLin_j \prod_m \sigma(x) \\
-\textnormal{signal:} \quad & \kSE \prod_i \kPer_i \prod_j\kLin_j \prod_m \sigma(x)
-\label{eq:sop}
-\end{align}
 %\begin{enumerate}
 %	\item constant: $\kC$
 %	\item noise: $\kWN \prod_j\kLin_j \prod_m \sigma(x)$
@@ -415,11 +404,22 @@ After
 %After applying all simplifications to a kernel expression in sum of products form the product of base kernels (excluding $\kLin$) will have of the following forms: $\kWN, \kC, \kSE, \kPer^n, \kSE\times\kPer^n$ where $n\in\mathbb{N}$.
 %The models produced by the base kernels are well understood so appropriate templates for their descriptions based on parameter values can be constructed from standard reference books \citep[e.g.][]{rasmussen38gaussian}.
 %
-The task of describing models in our class is now broken down into these three tasks.
-Luckily\fTBD{JL: Luck feels like an unusual phrasing}, there are further properties of the base kernels which allow these tasks to be broken down even further.
+%The task of describing models in our class is now broken down into these three tasks.
+%Luckily\fTBD{JL: Luck feels like an unusual phrasing}, there are further properties of the base kernels which allow these tasks to be broken down even further.
+
+\paragraph{A sum of products normal form of kernels}
+
+After distributing products and simplifying all kernel expressions will be a sum of kernels of one of the following forms:\fTBD{JL: Not enitrely clear / canonical - 1 form - or many - or something else?}
+\begin{align}
+\textnormal{constant:} \quad & \kC \\
+\textnormal{noise:} \quad & \kWN \prod_j\kLin_j \prod_m \sigma(x) \\
+\textnormal{signal:} \quad & \kSE \prod_i \kPer_i \prod_j\kLin_j \prod_m \boldsymbol\sigma_m
+\label{eq:sop}
+\end{align}
 
 \paragraph{Description of a product of kernels is modular}
-As simple example\fTBD{JL: Words}, a kernel of the form $\kSE \times \kPer \times  \kLin \times  \sigma(x)$ could be described as:
+
+As a simple example, a kernel of the form $\kSE \times \kPer \times  \kLin \times  \sigma(x)$ could be described as:
 \begin{align*}
 \underbrace{\kSE}_{\textnormal{\small locally}} \times 
 \underbrace{\kPer}_{\textnormal{\small periodic}} \times 

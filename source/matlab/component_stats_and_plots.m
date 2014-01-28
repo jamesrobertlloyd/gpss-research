@@ -1,7 +1,8 @@
 function component_stats_and_plots(X, y, mean_family, mean_params, ...
                      complete_covfunc, ...
                      complete_hypers, decomp_list, ...
-                     decomp_hypers, lik_family_, lik_params, figname, ...
+                     decomp_hypers, envelope_list, ...
+                     envelope_hypers, lik_family_, lik_params, figname, ...
                      idx)
 % Plots decomposition and extrapolations 
 % And saves some statistics
@@ -27,8 +28,11 @@ y = double(y);
 %y = y - mean(y);
 
 %%%% TODO - turn into parameters
-left_extend = 0.1;  % What proportion to extend beyond the data range.
-right_extend = 0.4;
+left_extend = 0.0;%0.1  % What proportion to extend beyond the data range.
+right_extend = 0.1;%0.4
+
+%%%% TODO - parameter
+env_thresh = 0.99; % Threshold above which a component is considered active
 
 %%%% TODO - parameter
 num_interpolation_points = 2000;
@@ -87,6 +91,8 @@ for j = 1:numel(decomp_list)
     i = idx(j);
     cur_cov = decomp_list{i};
     cur_hyp = decomp_hypers{i};
+    env_cov = envelope_list{i};
+    env_hyp = envelope_hypers{i};
     
     % Compute mean and variance for this kernel.
     decomp_sigma = feval(cur_cov{:}, cur_hyp, X);
@@ -95,20 +101,34 @@ for j = 1:numel(decomp_list)
     decomp_mean = decomp_sigma_star' / complete_sigma * y;
     decomp_var = diag(decomp_sigma_starstar - decomp_sigma_star' / complete_sigma * decomp_sigma_star);
     
+    envelope = diag(feval(env_cov{:}, env_hyp, X));
+    
     data_mean = decomp_sigma' / complete_sigma * y;
     diffs = data_mean(2:end) - data_mean(1:(end-1));
     data_covar = decomp_sigma - decomp_sigma' / complete_sigma * decomp_sigma;
     data_var = diag(data_covar);
     SNRs(j) = 10 * log10(sum(data_mean.^2)/sum(data_var));
     vars(j) = (1 - var(y - data_mean) / var(y)) * 100;
-    if all(diffs>0)
-        monotonic(j) = 1;
-    elseif all(diffs<0)
-        monotonic(j) = -1;
-    else
+    diffs_thresh = diffs((envelope(1:(end-1))>env_thresh) & (envelope(2:end)>env_thresh));
+    if isempty(diffs_thresh)
         monotonic(j) = 0;
+    else
+        if all(diffs_thresh>0)
+            monotonic(j) = 1;
+        elseif all(diffs_thresh<0)
+            monotonic(j) = -1;
+        else
+            monotonic(j) = 0;
+        end
     end
-    gradients(j) = (data_mean(end) - data_mean(1)) / (X(end) - X(1));
+    thresholded_data_mean = data_mean(envelope>env_thresh);
+    X_thresholded = X(envelope>env_thresh);
+    if isempty(thresholded_data_mean)
+        gradients(j) = 0;
+    else
+        gradients(j) = (thresholded_data_mean(end) - thresholded_data_mean(1)) ...
+                       / (X_thresholded(end) - X_thresholded(1));
+    end
     
     % Compute the remaining signal after removing the mean prediction from all
     % other parts of the kernel.

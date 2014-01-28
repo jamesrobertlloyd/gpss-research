@@ -1,4 +1,4 @@
-load '/tmp/tmpKLuxjQ.mat'  % Load the data, it should contain X and y.
+load '/tmp/tmp0mh1xP.mat'  % Load the data, it should contain X and y.
 X = double(X);
 y = double(y);
 
@@ -7,14 +7,15 @@ addpath(genpath('/scratch/home/Research/GPs/gpss-research/source/matlab'));
 
 mean_family = {@meanZero};
 mean_params = [  ];
-kernel_family = {@covSum, {{@covNoise}, {@covSEiso}, {@covSEiso}, {@covSEiso}, {@covProd, {{@covSEiso}, {@covPeriodicNoDC}}}}};
-kernel_params = [ -1.66464384598 -0.0440676317821 -0.551114423072 -1.93529780802 -1.67883681466 3.91656713552 3.63287360892 5.35253861999 -0.260252196287 0.35486612623 -0.000357361590088 1.02805636032 ];
+kernel_family = {@covSum, {{@covConst}, {@covChangeWindowMultiD, {1, {@covSum, {{@covSEiso}, {@covSEiso}, {@covProd, {{@covSEiso}, {@covPeriodicNoDC}}}, {@covChangeWindowMultiD, {1, {@covSum, {{@covNoise}, {@covProd, {{@covSEiso}, {@covPeriodicNoDC}}}}}, {@covSum, {{@covNoise}, {@covProd, {{@covSEiso}, {@covPeriodicNoDC}}}}}}}}}, {@covConst}}}}};
+kernel_params = [ 12.854331997 2004.99481794 4.06128276448 -3.38458432888 -2.26989862051 11.7485213309 -2.41710965162 11.0072010722 -4.65639575506 9.80245674081 -1.85883753482 -3.79436324097 -0.871270324273 2004.99380023 4.67558855662 -5.81486979703 7.58867295947 -1.51342385436 9.52658703296 -2.34543290102 -3.95420537034 0.18608717602 7.60453199293 -1.5632348502 9.45672257258 -2.35522240719 -3.81134355336 0.104461895461 9.43291433563 ];
 lik_family = {@likDelta};
 lik_params = [  ];
-kernel_family_list = { {@covNoise},{@covSEiso},{@covSEiso},{@covSEiso},{@covProd, {{@covSEiso}, {@covPeriodicNoDC}}} };
-kernel_params_list = { [ -1.66464384598 ],[ -0.0440676317821 -0.551114423072 ],[ -1.93529780802 -1.67883681466 ],[ 3.91656713552 3.63287360892 ],[ 5.35253861999 -0.260252196287 0.35486612623 -0.000357361590088 1.02805636032 ] };
-figname = '/scratch/home/Research/GPs/gpss-research/analyses/2014-01-08-collated/03-mauna/03-mauna';
-idx = [ 4 5 2 1 3 ];
-plot = true;
+kernel_family_list = { {@covConst},{@covChangeWindowMultiD, {1, {@covChangeWindowMultiD, {1, {@covNoise}, {@covZero}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covChangeWindowMultiD, {1, {@covProd, {{@covSEiso}, {@covPeriodicNoDC}}}, {@covZero}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covChangeWindowMultiD, {1, {@covZero}, {@covNoise}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covChangeWindowMultiD, {1, {@covZero}, {@covProd, {{@covSEiso}, {@covPeriodicNoDC}}}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covProd, {{@covSEiso}, {@covPeriodicNoDC}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covSEiso}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covSEiso}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covZero}, {@covConst}}} };
+kernel_params_list = { [ 12.854331997 ],[ 2004.99481794 4.06128276448 -3.38458432888 2004.99380023 4.67558855662 -5.81486979703 7.58867295947 ],[ 2004.99481794 4.06128276448 -3.38458432888 2004.99380023 4.67558855662 -5.81486979703 -1.51342385436 9.52658703296 -2.34543290102 -3.95420537034 0.18608717602 ],[ 2004.99481794 4.06128276448 -3.38458432888 2004.99380023 4.67558855662 -5.81486979703 7.60453199293 ],[ 2004.99481794 4.06128276448 -3.38458432888 2004.99380023 4.67558855662 -5.81486979703 -1.5632348502 9.45672257258 -2.35522240719 -3.81134355336 0.104461895461 ],[ 2004.99481794 4.06128276448 -3.38458432888 -4.65639575506 9.80245674081 -1.85883753482 -3.79436324097 -0.871270324273 ],[ 2004.99481794 4.06128276448 -3.38458432888 -2.26989862051 11.7485213309 ],[ 2004.99481794 4.06128276448 -3.38458432888 -2.41710965162 11.0072010722 ],[ 2004.99481794 4.06128276448 -3.38458432888 9.43291433563 ] };
+envelope_family_list = { {@covConst},{@covChangeWindowMultiD, {1, {@covChangeWindowMultiD, {1, {@covConst}, {@covZero}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covChangeWindowMultiD, {1, {@covProd, {{@covConst}, {@covConst}}}, {@covZero}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covChangeWindowMultiD, {1, {@covZero}, {@covConst}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covChangeWindowMultiD, {1, {@covZero}, {@covProd, {{@covConst}, {@covConst}}}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covProd, {{@covConst}, {@covConst}}}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covConst}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covConst}, {@covZero}}},{@covChangeWindowMultiD, {1, {@covZero}, {@covConst}}} };
+envelope_params_list = { [ 0 ],[ 2004.99481794 4.06128276448 -3.38458432888 2004.99380023 4.67558855662 -5.81486979703 0.0 ],[ 2004.99481794 4.06128276448 -3.38458432888 2004.99380023 4.67558855662 -5.81486979703 0.0 0.0 ],[ 2004.99481794 4.06128276448 -3.38458432888 2004.99380023 4.67558855662 -5.81486979703 0.0 ],[ 2004.99481794 4.06128276448 -3.38458432888 2004.99380023 4.67558855662 -5.81486979703 0.0 0.0 ],[ 2004.99481794 4.06128276448 -3.38458432888 0.0 0.0 ],[ 2004.99481794 4.06128276448 -3.38458432888 0.0 ],[ 2004.99481794 4.06128276448 -3.38458432888 0.0 ],[ 2004.99481794 4.06128276448 -3.38458432888 0.0 ] };
+figname = '/scratch/home/Research/GPs/gpss-research/analyses/2014-01-26-add/06-internet/06-internet';
+idx = [ 7 1 3 8 6 9 2 4 5 ];
 
-checking_stats(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, lik_family, lik_params, figname, idx, plot);
+component_stats_and_plots(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, envelope_family_list, envelope_params_list, lik_family, lik_params, figname, idx)

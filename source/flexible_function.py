@@ -564,6 +564,17 @@ class Kernel(FunctionWrapper):
             k.operands = new_ops
             return k
 
+    def cp_structure(self):
+        # Replaces most things with constants - useful for understanding structure of changepoints
+        k = self.copy()
+        if isinstance(k, ZeroKernel) or isinstance(k, NoneKernel): # TODO - can this be abstracted?
+            return k
+        elif not k.is_operator:
+            return ConstKernel(sf=0)
+        else:
+            k.operands = [op.cp_structure() for op in k.operands]
+            return k
+
 
 class Likelihood(FunctionWrapper):
     """Base likelihood function class with default properties and methods"""

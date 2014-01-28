@@ -263,10 +263,12 @@ lik_family = %(lik_syntax)s;
 lik_params = %(lik_params)s;
 kernel_family_list = %(kernel_syntax_list)s;
 kernel_params_list = %(kernel_params_list)s;
+envelope_family_list = %(envelope_syntax_list)s;
+envelope_params_list = %(envelope_params_list)s;
 figname = '%(figname)s';
 idx = %(component_order)s;
 
-component_stats_and_plots(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, lik_family, lik_params, figname, idx)
+component_stats_and_plots(X, y, mean_family, mean_params, kernel_family, kernel_params, kernel_family_list, kernel_params_list, envelope_family_list, envelope_params_list, lik_family, lik_params, figname, idx)
 exit();"""
 
 def component_stats(model, kernel_components, X, y, D, figname, component_order, skip_kernel_evaluation=False):
@@ -275,6 +277,7 @@ def component_stats(model, kernel_components, X, y, D, figname, component_order,
     print 'Saving to: %s' % figname
     
     kernel_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.param_vector) for k in kernel_components)
+    envelope_params_list = ','.join('[ %s ]' % ' '.join(str(p) for p in k.cp_structure().param_vector) for k in kernel_components)
     
     (fd1, temp_data_file) = standardise_and_save_data(X, y)
     
@@ -290,6 +293,8 @@ def component_stats(model, kernel_components, X, y, D, figname, component_order,
         'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
         'kernel_syntax_list': '{ %s }' % ','.join(str(k.get_gpml_expression(dimensions=D)) for k in kernel_components),
         'kernel_params_list': '{ %s }' % kernel_params_list,
+        'envelope_syntax_list': '{ %s }' % ','.join(str(k.cp_structure().get_gpml_expression(dimensions=D)) for k in kernel_components),
+        'envelope_params_list': '{ %s }' % envelope_params_list,
         'figname': figname,
         'component_order': '[ %s ]' % ' '.join(str(comp) for comp in component_order+1)}
     

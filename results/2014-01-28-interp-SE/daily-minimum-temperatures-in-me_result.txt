@@ -1,0 +1,42 @@
+Experiment all_results for
+ datafile = ../data/tsdlr_5050/daily-minimum-temperatures-in-me.mat
+
+ Running experiment:
+description = SE interpolation experiment,
+data_dir = ../data/tsdlr_5050/,
+max_depth = 1,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 1000,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2014-01-28-interp-SE/,
+iters = 250,
+base_kernels = SE,
+additive_form = True,
+mean = ff.MeanZero(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikGauss(sf=-np.Inf),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 10,
+max_period_heuristic = 5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'})],
+score = bic,
+period_heuristic_type = both,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=1.03656427426), SqExpKernel(dimension=0, lengthscale=-0.936685290549, sf=2.440040519)]), likelihood=LikGauss(sf=-inf), nll=1297.25625302, ndata=500)

@@ -247,11 +247,6 @@ Capturing statistical structure helps to provide good predictions.  However, par
 
 It is not clear what obstacles there are to building a system capable of explaining novel statistical structures.  However, in this work, we attempted to build such an automatic summarization procedure, and found that the properties of the model class being explored (Gaussian processes) allowed the models discovered to be explained in a modular way.  This modularity means that a large class of statistical structures can explained, without resorting to writing a special case for every possible structure in our open-ended set of models.
 
-\paragraph{Other systems}
-The system presented in this paper is just one example of a system combining these elements, for performing supervised regression.
-\citep{grosse2012exploiting} provides an earlier example with builds unsupervised models.
-Similar systems could be constructed in other learning scenarios, such as sequence modeling or semi-supervised learning. 
-
 \section{A language of regression models}
 \label{sec:improvements}
 
@@ -1147,15 +1142,18 @@ We trained each algorithm on the training half of the data, produced predictions
 
 The results are similar to those for extrapolation and are deferred to the supplementary material for brevity.
 
+
+
+
 \section{Discussion}
 
-\fTBD{JL: Let's see what ZG and JBT have to say about this}
-
-\TBD{Help requested - haven't thought of a definitive conclusion myself}
-
-No hard distinction between signal and noise.
-
 Towards the goal of automating the process of statistical analysis we have introduced a system that can automatically describe the complex statistical models it produces.
+Building this system raised several questions.
+
+\paragraph{No hard distinction between signal and noise}
+
+Although our model has an explicit kernel to represent white noise, in many situations there is little distinction between a white noise kernel, and a squared-exp kernel with a very short lengthscale.  These components, or changewindows with very short duration, may not be of interest to the user.  However, without knowing in advance what the model is going to be used for, it is difficult to make a distinction between the structures in a signal
+
 
 In the earlier work of \cite{DuvLloGroetal13} the GPSS procedure was applied to multidimensional inputs; we see no obstacles to extending the work in this manuscript to multidimensional inputs.
 
@@ -1188,6 +1186,14 @@ To test for when this is the case we have begun experimenting with posterior pre
 In fact, the posterior predictive checks take the form of comparing the expectation of statistics under the prior and posterior of each component \ie they are testing whether or not typical elements of the posterior $p(f_i^*\given M,D)$ are typical elements of $p(f_i^*\given M)$.
 
 However, model checking for Gaussian processes, even those with simple kernels, is under-researched so we leave their description and more detailed analysis for future work.
+
+
+\paragraph{Other systems}
+The system presented in this paper is just one example of a system combining these elements, for performing supervised regression.
+\citep{grosse2012exploiting} provides an earlier example with builds unsupervised models.
+Similar systems could be constructed in other learning scenarios, such as sequence modeling or semi-supervised learning. 
+
+
 
 \paragraph{Source Code}
 Source code to perform all experiments is available on github, available upon publication.

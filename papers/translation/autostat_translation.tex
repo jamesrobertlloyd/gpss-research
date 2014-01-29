@@ -210,7 +210,7 @@ The supplementary material to this paper includes 13 complete reports generated 
 \end{figure}
 
 We also extend and refine the components used in the model-construction process to improve the expressivity and interpretability of the models.
-This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and multiple kernel learning \citep[e.g.][]{bach2something}\fTBD{Insert cannonical MKL reference}.
+This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and multiple kernel learning \citep[e.g.][]{bach2004multiple}.
 
 Finally, we demonstrate that our procedure is comparable or superior to other model construction techniques at extrapolation tasks.
 
@@ -313,7 +313,7 @@ With these additions to the modelling language, we can express a wide variety of
 \begin{tabular}{l|l}
 Motif & Example syntax \\
 \midrule
-Kernel ridge regression & $\kSE$ \\
+\gp{} smoothing & $\kSE$ \\
 Linear regression & $\kC + \kLin$ \\
 Multiple kernel learning & $\sum \kSE$ \\
 Trend, cyclical, irregular & $\sum \kSE + \sum \kPer$ \\
@@ -331,15 +331,12 @@ Syntax of common regression motifs expressible in our language.
 
 %In section~\ref{sec:example_description} we demonstrate the natural-language descriptions of some of these kernel forms.
 
-
-
 \section{Automatic natural-language description of regression models}
 \label{sec:description}
 %\fTBD{RG: Does the algorithm clarify anything?}
 %\fTBD{RG, JBT: Section unclear} 
 
 In this section we describe how the properties of \gp{} models allow one to reduce the task of describing the model produced by an arbitrary kernel expression into simple subproblems.
-%The text follows the flow of algorithm~\ref{alg:description}.
 
 %\subsection{Modular description of arbitrary kernels}
 
@@ -347,7 +344,7 @@ In this section we describe how the properties of \gp{} models allow one to redu
 
 The automatic description procedure first distributes a kernel expression into a sum of products, and simpifies the resulting expression.
 A sum of kernels corresponds to a sum of functions, and therefore each product of kernels can be described separately.
-Surprisingly, each kernel in a product modifies the resulting model in a consistent way, resulting in a highly modular text generation algorithm.
+Each kernel in a product modifies the resulting model in a consistent way, resulting in a highly modular text generation algorithm.\fTBD{JL $\to$ DD: I really don't find this work as surprising as you! Can we stop using words like `surpsingly' and `luckily'? :)}
 %Some speciThere are also some special cases where the modularly produced wording is cumbersome.
 %Because each type of kernel modifies the resulting model in a consistent way\fTBD{We need to justify this claim}, the code to produce a natural-language desription can consider each type of kernel seperately.
 %This means that there is no need to write descriptions for every combination of kernels, although our procedure includes some special cases where the naive wording is cumbersome.
@@ -392,8 +389,9 @@ Pointwise multiplication of functions is distributive over addition so we can di
 For example, $\kSE \times (\kC + \kLin) = \kSE \times \kC + \kSE \times \kLin$.
 
 \paragraph{Changepoints are sums and products}
-Changepoint kernels can be represented by multiplying sigmoidal functions with existing kernels.
-From equation \eqref{eq:cp} we can write\fTBD{JL: This is imprecise - drop $x$ or include $x'$}
+
+%Changepoint operators can be represented by multiplying sigmoidal functions with existing kernels.
+From equation \eqref{eq:cp} we can write
 \begin{align}
 \kCP(k_1, k_2) = \boldsymbol\sigma\times k_1 + \boldsymbol{\bar\sigma} \times k_2
 \end{align}
@@ -402,13 +400,13 @@ Changewindows can be represented similarly.
 
 \paragraph{Simplification}
 
-There are several properties of the kernels in our grammar which allow expressions to be further simplified.
+%There are several properties of the kernels in our grammar which allow expressions to be further simplified.
 %
 The product of two $\kSE$ kernels is another $\kSE$ kernel, but with different parameters.
 Similarily, adding either two $\kWN$ or two $\kC$ kernels gives a single kernel of the same form.
 %
-Multiplying $\kWN$ by any stationary kernel (such as $\kSE$ or $\kPer$) is equivalent to another $\kWN$ kernel.
-Multiplying any kernel by the constant kernel, $\kC$ only changes its parameters.
+Multiplying $\kWN$ by any stationary kernel ($\kC$, $\kWN$, $\kSE$ or $\kPer$) is equal to another $\kWN$ kernel.
+Multiplying any kernel by $\kC$ only changes its parameters (specifically its overall scale).
 
 \paragraph{Sums of kernels are sums of functions}
 
@@ -429,57 +427,94 @@ Each additive component in a kernel expression corresponds to a different additi
 
 \paragraph{A sum of products normal form of kernels}
 
-After distributing products and simplifying all kernel expressions will be a sum of kernels of one of the following forms:\fTBD{JL: Not enitrely clear / canonical - 1 form - or many - or something else?}
+After the distribution of products and simplification all kernel expressions will be a sum of products of the form% of one of the following forms:\fTBD{JL: Not enitrely clear / canonical - 1 form - or many - or something else?}
+%\begin{align}
+%\textnormal{constant:} \quad & \kC \\
+%\textnormal{noise:} \quad & \kWN \prod_j\kLin_j \prod_m \boldsymbol{\sigma}_m \\
+%\textnormal{signal:} \quad & \kSE \prod_i \kPer_i \prod_j\kLin_j \prod_m \boldsymbol\sigma_m
+%\label{eq:sop}
+%\end{align}
 \begin{align}
-\textnormal{constant:} \quad & \kC \\
-\textnormal{noise:} \quad & \kWN \prod_j\kLin_j \prod_m \boldsymbol{\sigma}_m \\
-\textnormal{signal:} \quad & \kSE \prod_i \kPer_i \prod_j\kLin_j \prod_m \boldsymbol\sigma_m
+\prod_i \kernel_i \prod_j\kLin_j \prod_m \boldsymbol\sigma_m
 \label{eq:sop}
 \end{align}
+where $\prod_i \kernel_i$ is one of $\kWN, \kC, \kSE, \kPer^n$ or $\kSE\times\kPer^n$ for $n\in\mathbb{N}$.
+%where the $\kernel_i$ are one of $\kWN, \kC, \kSE$ and $\kPer$.
 
-The task of describing models in our class is now broken down into these three tasks.
-Luckily, there are further properties of the base kernels which allow these tasks to be broken down even further.
+%The task of describing models in our class is now broken down into these three tasks.
+%Luckily, there are further properties of the base kernels which allow these tasks to be broken down even further.
 
 \paragraph{Description of a product of kernels is modular}
 
-As a simple example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \boldsymbol{\sigma}$ could be described as:
+As an example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \boldsymbol{\sigma}$ can be described as an\fTBD{JL: Changed `local' to `approximate' based on poll in lab}
 \begin{align*}
-\underbrace{\kSE}_{\textnormal{\small locally}} \times 
-\underbrace{\kPer}_{\textnormal{\small periodic}} \times 
-\underbrace{\kLin}_{\textnormal{\small with linearly growing amplitude}} \times 
-\underbrace{\boldsymbol{\bar\sigma}}_{\small \textnormal{\small until 2100}}
+\underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times 
+\underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
+\underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+\underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700.}}
 \end{align*}
-where each kernel contributes one adjective, or modifier, to the description being generated.
+The $\kPer$ kernel is described as a noun phrase and the other kernels behave like adjectives or modifiers.\fTBD{JL: What is the proper NLP terminology?}
+In principle, any kernel could be chosen to act as the noun and kernel order could be arbitrary but this would produce cumbersome phrases\footnotemark.
+The language is currently small enough that simple heuristics to select the noun and phrase order are sufficient to produce intelligible text.\fTBD{JL: Can we make this sound more positive?}
+\footnotetext{In fact, all kernels could be described as adjectives by always multiplying the kernel product by the constant $\kC$ kernel to provide a noun.}
 
-Clearly, there are many issues with word order, and many special cases are necessary.\fTBD{JL: Weak and imprecise}
-For example, a special case is required to describe each kernel on its own.
-However, the modularity of descriptions of products of kernels prevents an exponential blowup in the number of special cases necessary.
-The following sections detail how we describe each type of kernel in the above expansions.
+\paragraph{Descriptions of kernels when acting as nouns}
 
-\paragraph{Describing squared-exp kernels}
-As noted above, multiplying the $\kSE$ kernel by any other kernel $K$ causes the structure implied by $K$ to hold only locally. \fTBD{JL: This can be justified by explaining that the covariance goes to zero}
-We modify the description depending on the lengthscale of the $\kSE$ kernel to indicate just how locally the property holds.
+The noun phrase descriptions of kernels are simply descriptions of the \gp{} prior represented by the kernel on its own.
+These priors are well understood and descriptions can be constructed from standard reference materials \citep[e.g.][]{rasmussen38gaussian}.
+For example, $\kSE$ produces `a smooth function' and $\kLin^n$ produces `a polynomial of degree $n$'.
 
-\paragraph{Describing products of linear kernels}
-\fTBD{JL: This is not justified without explaining the multiplication of a function interpretation / maths}
-The product of any number of linear kernels is simply a polynomial, so the contribution of any such products of kernels can be described by appending ``with linearly growing amplitude'', ``with quadratically growing amplitude'', etc.\ with the location of the roots of these polynomials described by appending ``growing away from $x_1$''.
+%Clearly, there are many issues with word order, and many special cases are necessary.\fTBD{JL: Weak and imprecise}
+%For example, a special case is required to describe each kernel on its own.
+%However, the modularity of descriptions of products of kernels prevents an exponential blowup in the number of special cases necessary.
+%The following sections detail how we describe each type of kernel in the above expansions.
 
-\paragraph{Describing products of changepoints}
-\fTBD{JL: This is not justified without explaining the multiplication of a function interpretation / maths}
-Multiplying by a sigmoid ensures that any covariance structure ceases to hold in some region of the input space.  Thus, the contribution of changepoints can be expressed by appending ``until $x_1$'' or ``after $x_1$'', where $x_1$ is the time at which the change occurs.
+\paragraph{Multiplication by $\SE$ kernels}
 
-\paragraph{Describing products of periodics}
-There is no obvious way to describe all the properties of a product of periodic kernels, but it easy to describe the covariance of any product of kernels in the following way:
+$\kSE$ encodes for a local covariance structure since $\kSE(x, x') \to 0$ as $|x - x'| \to \infty$ \ie distant points are uncorrelated.
+Multiplying by $\kSE$ removes any long range correlation; it modifies the covariance structure to hold only locally.
+For example, $\kPer$ encodes for exactly periodic functions but $\kSE \times \kPer$ encodes for locally / quasi / approximately periodic functions since distant points are uncorrelated whilst close points have approximately the same covariance structure as $\kPer$.\fTBD{JL: Long sentence}
+%As noted above, multiplying the $\kSE$ kernel by any other kernel $K$ causes the structure implied by $K$ to hold only locally. \fTBD{JL: This can be justified by explaining that the covariance goes to zero}
+%We modify the description depending on the lengthscale of the $\kSE$ kernel to indicate just how locally the property holds.
+
+\paragraph{Multiplication by $\kLin$ kernels}
+$\kLin$ has the form $k(x,x') = a(x)a(x')$.
+This can be used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
+Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
+Therefore multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) \sim \gp{}(0, k)$ by a linear function.
+Rather than describing this multiplication literally its effect can be described as \eg `lineary growing amplitude' depending on the parameters of the kernel.
+Similarly, multiplication by $\kLin^n$ can be described as `polynomially varying amplitude'.
+
+%The product of any number of linear kernels is simply a polynomial, so the contribution of any such products of kernels can be described by appending ``with linearly growing amplitude'', ``with quadratically growing amplitude'', etc.\ with the location of the roots of these polynomials described by appending ``growing away from $x_1$''.
+
+\paragraph{Multiplication by changepoints}
+
+The $\boldsymbol\sigma_m$ in equation~\eqref{eq:sop} represent products of sigmoids which also have the form $a(x)a(x')$ and therefore could also be described as multiplication of functions.
+For simplicity we assume that the sigmoids are step functions\footnotemark.
+These step functions can be represented as intervals (\ie where their value is 1), and their product is equivalent to taking the intersection of intervals.
+Computing the intersection is trivial and descriptions can be templated as \eg `this function applies from [start] until [end]'.
+
+\footnotetext{The parameters of the sigmoids are restricted to make the sigmoids steep and therefore this approximation is not too severe.}
+
+%Multiplying by a sigmoid ensures that any covariance structure ceases to hold in some region of the input space.  Thus, the contribution of changepoints can be expressed by appending ``until $x_1$'' or ``after $x_1$'', where $x_1$ is the time at which the change occurs.
+
+\paragraph{Multiplication by $\kPer$ kernels}
+%There is no obvious way to describe all the properties of a product of periodic kernels, but it easy to describe the covariance of any product of kernels in the following way:
 Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
 Then
 \begin{align}
 {\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.
 \end{align}
-Put simply, a \gp{} with covariance given by the product of two kernels has the same covariance as the distribution over products of functions drawn from \gp{}s with those kernels.  In general, however, the distribution of products of functions will not be Gaussian.
-
-We can use this property to state that $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.
+That is, a \gp{} with covariance given by the product of two kernels has the same covariance as the distribution over products of functions drawn from \gp{}s with those kernels.
+%
+%In general, however, the distribution of products of functions will not be Gaussian.
+%
+This property can be used to describe multiplication by $\kPer$ as producing the same covariance structure as multiplying the function by an independent periodic function.
+Admittedly, this is the most abstract description of all kernels and we hope to improve upon it.\fTBD{JL: This language can probably be improved}
+%We can use this property to state that $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.
 %This description naturally extends to ${n>2}$.
-%However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
+
+However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
 
 %A description for $\kSE\times\kPer$ can be constructed as follows.
 %If the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
@@ -513,18 +548,18 @@ Suppose we start with a kernel of the form
 \end{align*}
 This is converted to a sum of products:
 \begin{align*}
-\kSE \times \kWN \times \kLin + \boldsymbol{\bar\sigma} \times\kSE \times \kC + \boldsymbol{\sigma} \times\kSE \times \kPer.
+\kSE \times \kWN \times \kLin + \boldsymbol{\sigma} \times\kSE \times \kC + \boldsymbol{\bar\sigma} \times\kSE \times \kPer.
 \end{align*}
 which can be simplified to
 \begin{align*}
-\kWN \times \kLin + \kSE \times \boldsymbol{\bar\sigma} + \kSE \times \kPer \times \boldsymbol{\sigma}.
+\kWN \times \kLin + \kSE \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}.
 \end{align*}
 %where $\emptyset$ represents the zero function.
 %We use this notation in section~\ref{sec:solar}.
 
-To descibe the first component, the template for $\kWN$, `uncorrelated noise', is concatenated with a template (chosen based on parameter values) for $\kLin$, `with linearly increasing standard deviation'.
+To descibe the first component, the noun phrase template for $\kWN$, `uncorrelated noise', is concatenated with a template (chosen based on parameter values) for $\kLin$, `with linearly increasing standard deviation'.
 %
-The second component could be described as `A smooth function with a lengthscale of [lengthscale]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\boldsymbol{\bar\sigma}$.
+The second component could be described as `A smooth function with a lengthscale of [lengthscale]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\boldsymbol{\sigma}$.
 %
 Finally, the third component could be described as `A locally periodic function with a period of [period] which applies from [changepoint]'.
 
@@ -534,7 +569,7 @@ Finally, the third component could be described as `A locally periodic function 
 %When both $\kPer$ and $\kLin$ are present in a product, we change the description for $\kLin^n$ from discussing `varying standard deviation' to `varying amplitude'.
 %These separate cases are not necessary, but make the generated text more natural.
 
-We use separate sets of templates to produce short summaries and detailed descriptions of kernels.
+We use separate sets of templates to produce short summaries and detailed descriptions of kernels.\fTBD{JL: This sentence can probably be cut given that there are many other missing details}
 
 \subsection{Ordering additive components}
 

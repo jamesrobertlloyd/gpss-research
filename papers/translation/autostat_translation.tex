@@ -1066,22 +1066,22 @@ However, grammar based techniques have previously been used to automatically und
 \section{Numerical evaluation}
 \label{sec:numerical}
 
-To complement our demonstration of the interpretability of our method, we conducted numerical experiments testing the ability of various model building algorithms to interpolate and extrapolate time-series.
+To complement our demonstration of the interpretability of \procedurename we conducted numerical experiments testing the ability of various model building algorithms to interpolate and extrapolate time-series.
 \procedurename outperforms the other methods on average (\eg as measured by quantiles of performance metrics).
 \NA{However, the variability of the results suggests that there is room to improve the robustness of \procedurename.}
 \fTBD{JL: I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
 
 \subsection{Data sets}
 
-In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of \procedurename and 7 other algorithms on 10 additional time series from the time series data library \citep{TSDL}; plots of the data can be found at the beginning of the reports in the supplementary material\fTBD{Assuming all the reports fit within size constraints}.
+In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of the algorithms listed below on 10 additional time series from the time series data library \citep{TSDL}; plots of the data can be found at the beginning of the reports in the supplementary material\fTBD{Assuming all the reports fit within size constraints}.
 
 \subsection{Algorithms}
 
-We compare the structure search algorithm to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms; linear regression (LR), \gp{} regression with a single $\kSE$ kernel, multiple kernel learning (MKL) \citep[e.g.][]{bach2004multiple}-, change point modelling (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
+We compare the structure search algorithm to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms; linear regression, \gp{} regression with a single $\kSE$ kernel (squared exponential), a Bayesian variant of multiple kernel learning \citep[e.g.][]{bach2004multiple}-, change point modelling (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
 
 We use the default mean absolute error criterion when using Eureqa.
-The other four algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark~(Bayesian information criterion) with appropriate restrictions to the grammar.
-For SE, SP and TCI this corresponds to a forward selection algorithm.
+All other algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark~(Bayesian information criterion) with appropriate restrictions to the grammar.
+For MKL, trend-cyclical-irregular and spectral kernels this corresponds to a forward selection algorithm.
 \footnotetext{We experimented with using unpenalised conditional likelihood as the search criterion for other methods but observed overfitting as is to be expected.} 
 
 We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.
@@ -1096,11 +1096,11 @@ Details are in the supplementary material.
 
 Since the process of describing a model always converts a kernel into a sum of products we experimented with always keeping the kernel in this form.
 After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression.
-This variant (\procedurename.SoP) of the search tends to produce models with fewer additive components improving interpretability.
-However, the results of this section show it does not perform as well numerically.
-
-The research leading up to this manuscript has focused on interpretability.
-One could almost certainly improve the numerical results presented in this section by reintroducing $\kRQ$ and including Mat\'ern kernels as well as others.
+This variant (\procedurename interpretability) of the search tends to produce models with fewer additive components improving interpretability.
+We also include the unrestricted version of the search (\procedurename accuracy) which tends to produce models that are better at extrapolation and interpolation.
+%
+%The research leading up to this manuscript has focused on interpretability.
+%One could almost certainly improve the numerical results presented in this section by reintroducing $\kRQ$ and including Mat\'ern kernels as well as others.
 We leave a full exploration of the interpretability / accuracy trade-off for future work.
 
 \subsection{Extrapolation}
@@ -1108,7 +1108,7 @@ We leave a full exploration of the interpretability / accuracy trade-off for fut
 To test extrapolation we trained all algorithms on the first 90\% of the data, and attempted to predict the remaining 10\% and then computed the root mean squared error (RMSE).
 The values of the RMSEs are then standardised by dividing by the smallest RMSE for each data set \ie the best performance on each data set will have a value of 1.
 
-Figure~\ref{fig:box_extrap_dist}\fTBD{JL: Figure will be updated} shows the standardised RMSEs across algorithms.
+Figure~\ref{fig:box_extrap_dist} shows the standardised RMSEs across algorithms.
 Both versions of \procedurename have lower quartiles than all other methods but the outliers of \procedurename, TCI and SP have similar values.
 
 \begin{figure}[h]
@@ -1121,29 +1121,28 @@ Ordered by median.
 \label{fig:box_extrap_dist}
 \end{figure}
 
-Not shown on the plot is a large outlier for SP of 11 on a dataset with a large and sharp discontinuity (see the call centre data in the supplementary material) which violates its assumptions of stationarity.
+Overall, the model construction methods with the greater capacity perform better \eg trend cyclical irregular outperforms Bayesian MKL which outperforms squared exponential.
+Eureqa performs relatively poorly since very few datasets are well explained by a parametric equation.
 
-Also not shown on the plot is a very large outlier for EL of 493 (this was also on the call centre data).
-However, EL was the best performing algorithm on the wages dataset which shows an exponential increase after the industrial revolution.
-\procedurename can approximate an exponential function with a polynomial by combining $\kLin$ kernels but this is not a succinct expression in the current language.
-Expanding the modelling language of \procedurename is a natural area for future research.
+Not shown on the plot are large outliers for spectral kernels, Eureqa, squared exponential and linear regression with values of 11, 493, 22 and 29 respectively.
+All of these outliers occurred on a data set with a large and sharp discontinuity (see the call centre data in the supplementary material).
+All methods attempted to model this discontinuity using inappropriate components resulting in wild predictions.
 
-Somewhat surprisingly, TCI performs well despite its restrictive modelling assumptions (smooth functions and exact periodicity).
-Further inspection of the extrapolation has revealed that while TCI cannot model non-stationarity, its extrapolations of approximately periodic components can be quite effective.
-While \procedurename and SP will quickly become uncertain about a roughly periodic component, TCI will predict the average which is often more effective.
-This suggests that models composed of kernels of the form $(\kSE + \kC) \times \kPer$ will be effective for extrapolating approximately periodic components.
+%Also not shown on the plot is a very large outlier for EL of 493 (this was also on the call centre data).
+%However, EL was the best performing algorithm on the wages dataset which shows an exponential increase after the industrial revolution.
+%\procedurename can approximate an exponential function with a polynomial by combining $\kLin$ kernels but this is not a succinct expression in the current language.
+%Expanding the modelling language of \procedurename is a natural area for future research.
 
-\fTBD{JL: Reintroduce comments on CP?}
+%Somewhat surprisingly, TCI performs well despite its restrictive modelling assumptions (smooth functions and exact periodicity).
+%Further inspection of the extrapolation has revealed that while TCI cannot model non-stationarity, its extrapolations of approximately periodic components can be quite effective.
+%While \procedurename and SP will quickly become uncertain about a roughly periodic component, TCI will predict the average which is often more effective.
+%This suggests that models composed of kernels of the form $(\kSE + \kC) \times \kPer$ will be effective for extrapolating approximately periodic components.
 
 \subsection{Interpolation}
 
 To test the ability of the methods to interpolate, we randomly divided each data set into equal amounts of training data and testing data.
 We trained each algorithm on the training half of the data, produced predictions for the remaining half and then computed standardised RMSEs.
-
 The results are similar to those for extrapolation and are deferred to the supplementary material for brevity.
-
-
-
 
 \section{Discussion}
 

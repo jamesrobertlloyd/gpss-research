@@ -223,9 +223,9 @@ Finally, we demonstrate that the extended model construction procedure is compar
 \section{Ingredients of an automatic statistician}
 \label{sec:ingredients}
 %\fTBD{JL: Has RG written anything on this?}
-\citet{gelman2013philblogpost} asks ``How can an Artificial Intelligence do statistics? ... It needs not just an inference engine, but also a way to construct new models and a way to check models. Currently, those steps are performed by humans, but the AI would have to do it itself.''
+\citet{gelman2013philblogpost} asks ``How can an artificial intelligence do statistics? ... It needs not just an inference engine, but also a way to construct new models and a way to check models. Currently, those steps are performed by humans, but the AI would have to do it itself.''
 
-In this section, we discuss in more detail the elements required to build a system that can automatically construct and then describe complex nonparametric models.  
+In this section, we discuss in more detail the elements required to build a system that can automatically construct and then describe complex nonparametric models.
 
 %\begin{enumerate}
 %\item An open-ended language of models.
@@ -233,19 +233,41 @@ In this section, we discuss in more detail the elements required to build a syst
 %\item A way of cehcking model fit, or comparing models.
 %\end{enumerate}
 
-\paragraph{1. An open-ended language of models}  There exist many statistical procedures which consider all models in a class of fixed size - for instance, DAG structure search algorithms search over connectivity graphs for a given set of nodes.  These methods can be relatively powerful.  However, in order for a procedure to be as powerful as a human statistician, it must be able to add to a model in a wide variety of ways, building arbitrarily complex models if the data demands it.
+\paragraph{1. An open-ended language of models}
+Many statistical procedures consider all models in a class of fixed size - for example, graphical model construction algorithms\fTBD{Cite} search over connectivity graphs for a given set of nodes.
+While these methods can be powerful, human statisticians are capable of deriving novel model classes when required by the modelling task.
+%An open ended language can 
+An automatic search through an open-ended class of models can achieve some of this flexibility, growing the complexity of the model to fit the task at hand, and possibly combining existing structures in novel ways.
+%However, in order for a procedure to be as powerful as a human statistician, it must be able to add to a model in a wide variety of ways, building arbitrarily complex models if the data demands it.
 
 \paragraph{2. Searching through model space}
-Any procedure which considers a large space of models must use a search procedure to examine models of this class, based on the results of previous model fits.  Because not all models in an open-ended space can be examined, the search algorithm hcan have a large effect on whether the overall procedure is consistent.
+%Just as a human statistician cannot try every possible model, 
+An open-ended space of models cannot be searched exhaustively.
+Just as human researchers iteratively refine their models, search procedures can propose new search directions based on the results of previous model fits.
+Because any search in an open-ended space must start with relatively simple models before moving on to more complex ones, any model search in an open-ended space will likely resemble a model-building procedure.% based on the results of simpler model fits.
+%The search algorithm can have a large effect on whether the overall procedure is consistent.
 
-\paragraph{3. Checking model fit}
-Finally, a practically and philsophically interesting question is how to compare models, or how to check whether there is statistical structure not being captured by a given model.  \citet{gelman2012philosophy} reviews the literature on these questions.  In this work, we use approximate marginal likelihood to compare models, penalizing complexity using the Bayesian Information Criterion as a heurstic.\fTBD{JL: Model checking and comparision are related but maybe not obviously - can we stick to talking about checking?}
+
+\paragraph{3. Model comparison and checking model fit}
+A practically and philsophically interesting question is how to compare models, and how to check whether there is statistical structure not being captured by a given model. 
+
+\fTBD{Struggling with this section - do we need to defend marginal likelihood or discuss the options}
+
+\TBD{\citet{gelman2012philosophy} reviews the literature on these questions. 
+In this work, we use approximate marginal likelihood to compare models, penalizing complexity using the Bayesian Information Criterion as a heuristic.}
 
 \subsection{Describing models}
 
-Capturing statistical structure helps to provide good predictions.  However, part of the value of statistical models comes from enabling humans to understand a dataset or a phenomenon.  Furthermore, a clear description of the statistical structure found in a dataset helps a user to notice when the dataset has errors, the wrong question was asked, the model-building procedure failed to capture known structure, a relevant peice of data or constraint is missing, or when a novel statistical structure has been found.
+%Capturing statistical structure helps to provide good predictions. 
+Part of the value of statistical models comes from enabling humans to understand a dataset or a phenomenon.
+Furthermore, a clear description of the statistical structure found in a dataset helps a user to notice when the dataset has errors, the wrong question was asked, the model-building procedure failed to capture known structure, a relevant peice of data or constraint is missing, or when a novel statistical structure has been found.
 
-It is not clear\fTBD{JL: Weak} what obstacles there are to building a system capable of explaining novel statistical structures.  However, in this work, we attempted to build such an automatic summarization procedure, and found that the properties of the model class being explored (Gaussian processes) allowed the models discovered to be explained in a modular way.  This modularity means that a large class of statistical structures can explained, without resorting to writing a special case for every possible structure in our open-ended set of models.
+%It is not clear\fTBD{JL: Weak} what obstacles there are to building a system capable of explaining novel statistical structures.
+In this work, we 
+%attempted to build such an automatic summarization procedure, and 
+demonstrate that the properties of Gaussian processes allow for a modular description generation procedure.
+%This modularity means that a large class of statistical structures can explained, without resorting to writing a special case for every possible structure in our open-ended set of models.
+Whether or not such modularity is present in other open-ended model classes is an open question.
 
 \section{A language of regression models}
 \label{sec:improvements}
@@ -1111,15 +1133,15 @@ The values of the RMSEs are then standardised by dividing by the smallest RMSE f
 Figure~\ref{fig:box_extrap_dist} shows the standardised RMSEs across algorithms.
 Both versions of \procedurename have lower quartiles than all other methods but the outliers of \procedurename, TCI and SP have similar values.
 
-\begin{figure}[h]
+\begin{figure*}[ht]
 \centering
-\includegraphics[width=\columnwidth]{figures/box_extrap}
+\includegraphics[width=\textwidth]{figures/box_extrap_wide}
 \caption{
 Raw data, and box plot of standardised extrapolation RMSE (best performance = 1).
 Ordered by median.
 }
 \label{fig:box_extrap_dist}
-\end{figure}
+\end{figure*}
 
 Overall, the model construction methods with the greater capacity perform better \eg trend cyclical irregular outperforms Bayesian MKL which outperforms squared exponential.
 Eureqa performs relatively poorly since very few datasets are well explained by a parametric equation.

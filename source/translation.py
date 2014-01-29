@@ -787,8 +787,8 @@ The Automatic Statistician
 \maketitle
 
 \\begin{abstract}
-This report was produced automatically by the Gaussian process structure search algorithm.
-See \url{http://arxiv.org/abs/1302.4922} and \url{http://www-kd.iai.uni-bonn.de/cml/proceedings/papers/2.pdf} for preliminary papers.
+This report was produced by the Automatic Bayesian Covariance Discovery (ABCD) algorithm.
+%%See \url{http://arxiv.org/abs/1302.4922} and \url{http://www-kd.iai.uni-bonn.de/cml/proceedings/papers/2.pdf} for preliminary papers.
 \end{abstract}
 
 \section{Executive summary}

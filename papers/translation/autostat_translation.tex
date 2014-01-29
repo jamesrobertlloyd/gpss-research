@@ -215,29 +215,42 @@ This allows for the procedure to fit and describe many well established modellin
 Finally, we demonstrate that the extended model construction procedure is comparable or superior to other model construction techniques at extrapolation tasks.
 \fTBD{JL: We need to introduce the acronym ABCD}
 
+
+
+
+
+
 \section{Ingredients of an automatic statistician}
 \label{sec:ingredients}
-\fTBD{JL: Has RG written anything on this?}
-In this section we discuss the different elements required to build a system that can automatically construct and then describe complex nonparametric regression models.
+%\fTBD{JL: Has RG written anything on this?}
+\citet{gelman2013philblogpost} asks ``How can an Artificial Intelligence do statistics? ... It needs not just an inference engine, but also a way to construct new models and a way to check models. Currently, those steps are performed by humans, but the AI would have to do it itself.''
 
-\subsection{Probabilistic modelling}
+In this section, we discuss in more detail the elements required to build a system that can automatically construct and then describe complex nonparametric models.  
 
-\subsection{Model selection}
+%\begin{enumerate}
+%\item An open-ended language of models.
+%\item A way of searching in this model class.
+%\item A way of cehcking model fit, or comparing models.
+%\end{enumerate}
 
-Marginal likelihood is good.
-BIC is practical.
+\paragraph{1. An open-ended language of models}  There exist many statistical procedures which consider all models in a class of fixed size - for instance, DAG structure search algorithms search over connectivity graphs for a given set of nodes.  These methods can be relatively powerful.  However, in order for a procedure to be as powerful as a human statistician, it must be able to add to a model in a wide variety of ways, building arbitrarily complex models if the data demands it.
 
-\subsection{Open ended model construction}
+\paragraph{2. Searching through model space}
+Any procedure which considers a large space of models must use a search procedure to examine models of this class, based on the results of previous model fits.  Because not all models in an open-ended space can be examined, the search algorithm hcan have a large effect on whether the overall procedure is consistent.
 
-Cite Gelman - mention that we are thinking about model checking as well.
-
-We need to be able to searcch trough the space.
+\paragraph{3. Checking model fit}
+Finally, a practically and philsophically interesting question is how to compare models, or how to check whether there is statistical structure not being captured by a given model.  \citet{gelman2012philosophy} reviews the literature on these questions.  In this work, we use approximate marginal likelihood to compare models, penalizing complexity using the Bayesian Information Criterion as a heurstic.
 
 \subsection{Describing models}
 
-Models are no good (at least not for understanding) if you don't understand them.
+Capturing statistical structure helps to provide good predictions.  However, part of the value of statistical models comes from enabling humans to understand a dataset or a phenomenon.  Furthermore, a clear description of the statistical structure found in a dataset helps a user to notice when the dataset has errors, the wrong question was asked, the model-building procedure failed to capture known structure, a relevant peice of data or constraint is missing, or when a novel statistical structure has been found.
 
-Open ended model classes need some sort of compisitional description procedure to avoid exponential blowup.
+It is not clear what obstacles there are to building a system capable of explaining novel statistical structures.  However, in this work, we attempted to build such an automatic summarization procedure, and found that the properties of the model class being explored (Gaussian processes) allowed the models discovered to be explained in a modular way.  This modularity means that a large class of statistical structures can explained, without resorting to writing a special case for every possible structure in our open-ended set of models.
+
+\paragraph{Other systems}
+The system presented in this paper is just one example of a system combining these elements, for performing supervised regression.
+\citep{grosse2012exploiting} provides an earlier example with builds unsupervised models.
+Similar systems could be constructed in other learning scenarios, such as sequence modeling or semi-supervised learning. 
 
 \section{A language of regression models}
 \label{sec:improvements}

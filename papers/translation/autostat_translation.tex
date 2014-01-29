@@ -204,7 +204,7 @@ The supplementary material to this paper includes 13 complete reports generated 
 
 \begin{figure}[t]
 \centering
-\fbox{\includegraphics[trim=0cm 0cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-7}}
+\fbox{\includegraphics[trim=0cm 4.75cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/pg_0007-crop}}
 \caption{Extract from an automatically-generated report describing the model components discovered by automatic model search.  This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minumum.}
 \label{fig:periodic}
 \end{figure}
@@ -213,6 +213,7 @@ We also extend and refine the components used in the model-construction process 
 This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and multiple kernel learning \citep[e.g.][]{bach2004multiple}.
 
 Finally, we demonstrate that the extended model construction procedure is comparable or superior to other model construction techniques at extrapolation tasks.
+\fTBD{JL: We need to introduce the acronym ABCD}
 
 \section{Ingredients of an automatic statistician}
 \label{sec:ingredients}
@@ -264,7 +265,7 @@ GPSS searches over sums and products of a set of simple base kernels to produce 
 By combining kernels, the search procedure was able to construct novel nonparametric regression models.
 For example, when applied to airline passenger data (see `describing heteroscedasticity'), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``approximately periodic, with linearly growing amplitude''.\fTBD{JL: Approximate chosen over local in lab poll}
 
-In this section we extend the language defined by GPSS to include a greater variety of regression motifs.
+In the rest of this section we extend the language defined by GPSS to include a greater variety of regression motifs.
 We also reparametrise the base kernels resulting in clearer decompositions and descriptions of the models produced.
 
 \subsection{Changepoints}
@@ -345,7 +346,7 @@ In this section we describe how the properties of \gp{} models allow one to redu
 
 The automatic description procedure first distributes a kernel expression into a sum of products, and simpifies the resulting expression.
 A sum of kernels corresponds to a sum of functions, and therefore each product of kernels can be described separately.
-Each kernel in a product modifies the resulting model in a consistent way, resulting in a highly modular text generation algorithm.\fTBD{JL $\to$ DD: I really don't find this work as surprising as you! Can we stop using words like `surpsingly' and `luckily'? :)}
+Each kernel in a product modifies the resulting model in a consistent way, resulting in a highly modular text generation algorithm.
 %Some speciThere are also some special cases where the modularly produced wording is cumbersome.
 %Because each type of kernel modifies the resulting model in a consistent way\fTBD{We need to justify this claim}, the code to produce a natural-language desription can consider each type of kernel seperately.
 %This means that there is no need to write descriptions for every combination of kernels, although our procedure includes some special cases where the naive wording is cumbersome.
@@ -409,10 +410,6 @@ Similarily, adding either two $\kWN$ or two $\kC$ kernels gives a single kernel 
 Multiplying $\kWN$ by any stationary kernel ($\kC$, $\kWN$, $\kSE$ or $\kPer$) is equal to another $\kWN$ kernel.
 Multiplying any kernel by $\kC$ only changes its parameters (specifically its overall scale).
 
-\paragraph{Sums of kernels are sums of functions}
-
-Each additive component in a kernel expression corresponds to a different additive function in the model, and can be described separately.  Formally, if $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ then $f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)$.
-
 %paragraph{Kernel description templates}
 %\begin{enumerate}
 %	\item constant: $\kC$
@@ -445,9 +442,13 @@ where $\prod_i \kernel_i$ is one of $\kWN, \kC, \kSE, \kPer^n$ or $\kSE\times\kP
 %The task of describing models in our class is now broken down into these three tasks.
 %Luckily, there are further properties of the base kernels which allow these tasks to be broken down even further.
 
+\paragraph{Sums of kernels are sums of functions}
+
+Each additive component in a kernel expression corresponds to a different additive function in the model, and can be described separately.  Formally, if $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ then $f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)$.
+
 \paragraph{Description of a product of kernels is modular}
 
-As an example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \boldsymbol{\sigma}$ can be described as an\fTBD{JL: Changed `local' to `approximate' based on poll in lab}
+As an example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \boldsymbol{\sigma}$ can be described as an
 \begin{align*}
 \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times 
 \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
@@ -457,13 +458,13 @@ As an example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \bol
 The $\kPer$ kernel is described as a noun phrase and the other kernels behave like adjectives or modifiers.\fTBD{JL: What is the proper NLP terminology?}
 In principle, any kernel could be chosen to act as the noun and kernel order could be arbitrary but this would produce cumbersome phrases\footnotemark.
 The language is currently small enough that simple heuristics to select the noun and phrase order are sufficient to produce intelligible text.\fTBD{JL: Can we make this sound more positive?}
-\footnotetext{In fact, all kernels could be described as adjectives by always multiplying the kernel product by the constant $\kC$ kernel to provide a noun.}
+\footnotetext{In fact, all kernels could be described as adjectives by always multiplying the kernel product by the constant kernel, $\kC$, to provide a default noun phrase.}
 
 \paragraph{Descriptions of kernels when acting as nouns}
 
 The noun phrase descriptions of kernels are simply descriptions of the \gp{} prior represented by the kernel on its own.
 These priors are well understood and descriptions can be constructed from standard reference materials \citep[e.g.][]{rasmussen38gaussian}.
-For example, $\kSE$ produces `a smooth function' and $\kLin^n$ produces `a polynomial of degree $n$'.
+For example, $\kSE$ produces a `smooth function' and $\kLin^n$ produces a `polynomial of degree $n$'.
 
 %Clearly, there are many issues with word order, and many special cases are necessary.\fTBD{JL: Weak and imprecise}
 %For example, a special case is required to describe each kernel on its own.
@@ -560,9 +561,9 @@ which can be simplified to
 
 To descibe the first component, the noun phrase template for $\kWN$, `uncorrelated noise', is concatenated with a template (chosen based on parameter values) for $\kLin$, `with linearly increasing standard deviation'.
 %
-The second component could be described as `A smooth function with a lengthscale of [lengthscale]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\boldsymbol{\sigma}$.
+The second component could be described as `A smooth function with a lengthscale of [lengthscale] [units]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\boldsymbol{\sigma}$.
 %
-Finally, the third component could be described as `A locally periodic function with a period of [period] which applies from [changepoint]'.
+Finally, the third component could be described as `A locally periodic function with a period of [period] [units] which applies from [changepoint]'.
 
 %\subsection{Breaks from modularity and other corner cases}
 
@@ -694,7 +695,8 @@ As a heuristic, we order components by always adding next the component which mo
 
 \section{Example descriptions of time series}
 \label{sec:examples}
-We demonstrate the ability of our procedure to describe a variety of patterns on two time series.  The full automatically produced reports for 13 data sets are provided as supplementary material.
+We demonstrate the ability of our procedure to describe a variety of patterns on two time series.
+Full reports for 13 data sets are provided as supplementary material.
 %These automatic natural-language descriptions objectively demonstrate that the models can be interpreted.
 %However, it is difficult to quantify the quality of a verbal description so we also provide numerical evidence in support of our procedure in section~\ref{sec:numerical}.
 
@@ -729,7 +731,7 @@ We demonstrate the ability of our procedure to describe a variety of patterns on
 
 \begin{figure}[h]
 \centering
-\includegraphics[trim=0.5cm 11.0cm 9cm 1.7cm, clip, width=0.98\columnwidth, height=0.55\columnwidth]{solarpages/02-solar-seperate-pages-2}
+\includegraphics[trim=0.2cm 18.0cm 8cm 2cm, clip, width=0.98\columnwidth, height=0.45\columnwidth]{solarpages/pg_0002-crop}
 \caption{
 Solar irradiance data.}
 \label{fig:solar}
@@ -754,7 +756,7 @@ $\kC + \kCW(\emptyset,\kC) + \kCW(\kSE,\emptyset) + \kCW(\kSE \times \kPer,\empt
 
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 3.4cm 0cm 6.3cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-2}}
+\fbox{\includegraphics[trim=0cm 10.8cm 0cm 6.3cm, clip, width=0.98\columnwidth]{solarpages/pg_0002-crop}}
 \caption{
 An example of an automatically-generated summary of a dataset.  The dataset is decomposed into diverse structures with simple descriptions.}
 \label{fig:exec}
@@ -808,7 +810,7 @@ Figure \ref{fig:maunder} shows that \procedurename has captured the unusual peri
 
 \begin{figure}[ht]
 \centering
-\fbox{\includegraphics[trim=0cm 0cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-5}}
+\fbox{\includegraphics[trim=0cm 4.75cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/pg_0005-crop}}
 \caption{Discovering the Maunder minimum.}
 \label{fig:maunder}
 \end{figure}
@@ -819,7 +821,7 @@ Having isolated the Maunder minimum, the model captures the long term trend of t
 
 \begin{figure}[h!]
 \centering
-\fbox{\includegraphics[width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-6}}
+\fbox{\includegraphics[trim=0cm 4.75cm 0cm 1cm, clip, width=0.98\columnwidth]{solarpages/pg_0006-crop}}
 \caption{Characterizing the medium-term smoothness of solar activity levels.  By allowing other components to explain the periodicity, noise, and the Maunder minimum, we can isolate the part of the signal best explained by a slowly-varying trend.}
 \label{fig:smooth}
 \end{figure}
@@ -836,7 +838,7 @@ Having isolated the Maunder minimum, the model captures the long term trend of t
 \paragraph{Solar cycles}
 
 Figure \ref{fig:periodic} shows that \procedurename has isolated the approximately 11 year solar cycle.
-By examining the parameters of the kernels comprising this component the description identifies that the shape of the periodicity is near sinusoidal \TBD{(it does in the latest version - update me)} and also quantifies how quickly the exact shape of the sinusoid changes.
+By examining the parameters of the kernels comprising this component the description identifies that the shape of the periodicity is near sinusoidal and also quantifies how quickly the exact shape of the sinusoid changes.
 
 %with a pair of changepoint kernels.%shows exactly which sort of structure was recovered by this component.
 %
@@ -917,14 +919,14 @@ By examining the parameters of the kernels comprising this component the descrip
 
 \begin{figure}[h]
 \centering
-\includegraphics[trim=0.4cm 12.5cm 9cm 1.7cm, clip, width=0.98\columnwidth, height=0.55\columnwidth]{airlinepages/01-airline-separate-pages-2}
+\includegraphics[trim=0.4cm 16.8cm 8cm 2cm, clip, width=0.98\columnwidth, height=0.45\columnwidth]{airlinepages/pg_0002-crop}
 \caption{
 International airline passenger data.}
 \label{fig:airline}
 \end{figure}
 
 Next, we present the analysis generated by our procedure on international airline passenger data (figure~\ref{fig:airline}).
-The model constructed by \procedurename has four components: $\kSE + \kSE \times \kPer \times \kLin + \kSE + \kWN \times \kLin$, with descriptions given in figure~\ref{fig:exec-airline}.
+The model constructed by \procedurename has four components: $\kLin + \kSE \times \kPer \times \kLin + \kSE + \kWN \times \kLin$, with descriptions given in figure~\ref{fig:exec-airline}.
 %\vspace{-0.5\baselineskip}
 %\begin{itemize}
 %  \itemsep0em
@@ -939,7 +941,7 @@ The model constructed by \procedurename has four components: $\kSE + \kSE \times
 
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 3cm 0cm 6cm, clip, width=0.98\columnwidth]{airlinepages/01-airline-separate-pages-2}}
+\fbox{\includegraphics[trim=0cm 6.8cm 0cm 6cm, clip, width=0.98\columnwidth]{airlinepages/pg_0002-crop}}
 \caption{
 Short descriptions and summary statistics for the four components of the airline model.}
 \label{fig:exec-airline}
@@ -959,11 +961,11 @@ Short descriptions and summary statistics for the four components of the airline
 
 \paragraph{Annual periodicity with linearly growing amplitude}
 
-The second component (figure~\ref{fig:lin_periodic}) is correctly described as approximately\fTBD{JL: Make sure that the report says `locally'} ($\kSE$) periodic ($\kPer$) with linearly growing amplitude ($\kLin$).
+The second component (figure~\ref{fig:lin_periodic}) is correctly described as approximately ($\kSE$) periodic ($\kPer$) with linearly growing amplitude ($\kLin$).
 
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/01-airline-separate-pages-4}}
+\fbox{\includegraphics[trim=0cm 4.75cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/pg_0004-crop}}
 \caption{Capturing non-stationary periodicity in the airline data}
 \label{fig:lin_periodic}
 \end{figure}
@@ -982,7 +984,7 @@ By multiplying a white noise kernel by a linear kernel, the model is able to exp
 
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/01-airline-separate-pages-6}}
+\fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/pg_0006-crop}}
 \caption{Modelling heteroscedasticity}
 \label{fig:heteroscedastic}
 \end{figure}
@@ -1014,8 +1016,8 @@ However, the periodicity is heavily approximated with only a single sinusoid and
 
 \paragraph{Building Structured Covariance Functions}
 
-\cite{rasmussen38gaussian} devotes 4 pages to constructing a complex kernel to model the time series of Mauna Loa carbon dioxode conentrations over time.
-A report generated by our procedure on this data set is included in the supplementary material and describes a very similar model. 
+\cite{rasmussen38gaussian} devote 4 pages to constructing a complex kernel to model the time series of Mauna Loa carbon dioxode conentrations over time.
+A report generated by \procedurename on this data set is included in the supplementary material and describes a very similar model. 
 Other examples of papers whose main contribution is constructing and fitting a compound \gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}.\fTBD{JL: Sentence a bit vague - maybe?}
 
 \paragraph{Equation learning}
@@ -1024,12 +1026,14 @@ Other examples of papers whose main contribution is constructing and fitting a c
 %Previous work has considered searching over parametric functions \citep[e.g.][]{Schmidt2009b}.
 %Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
 \cite{schmidt2009distilling}, \cite{todorovski1997declarative} and \cite{washio1999discovering} learn parametric forms of equations specifying time series, or relations between quantities.
-Because our system specifies the more general\fTBD{JL: Sounds like we are claiming we are a super set of equation learning - we need more kernels to make this claim} covariance structure rather than the functions themselves, we are able to capture structure which does not have a simple parametric form.
+In constrast, \procedurename learns a parametric form of the covariance allowing it to model functions without a simple parametric form.
+%Because our system specifies the more general\fTBD{JL: Sounds like we are claiming we are a super set of equation learning - we need more kernels to make this claim} covariance structure rather than the functions themselves, we are able to capture structure which does not have a simple parametric form.
 
 \paragraph{Searching over statistical models}
 
-\procedurename was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
-Automatic model search is possible whenever the following conditions are met: 1) we can define a large space of models by combining a small number of components in a small number of different ways,\fTBD{JL: The numbers stop!} inference can be performed for all models in this space, and a basic search procedure is sufficient to find accurate models.  For example, \citet{kemp2008discovery} learned the structural form of a graph used to model human similarity judgments.  
+The line of work leading to \procedurename was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
+Automatic model search is possible whenever the following conditions are met: 1) we can define a large space of models by combining a small number of components in a small number of different ways; 2) inference can be performed for all models in this space; 3) a basic search procedure is sufficient to find accurate models.
+These conditions were also met for example in \citet{kemp2008discovery} where they learned the structural form of a graph used to model human similarity judgments.  
 
 More generally, probabilistic programming [cite]\fTBD{Is there a canonical reference yet \eg I don't think there are any books} software automatically generates inference mechanisms for open-ended classes of models, enabling automatic model search.
 For example, \cite{VikashScene13} automatically searches over models of 2D scenes.
@@ -1051,13 +1055,6 @@ For example, \cite{VikashScene13} automatically searches over models of 2D scene
 To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.
 However, grammar based techniques have previously been used to automatically understand images \cite{zhu2007stochastic} and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
 
-
-
-
-
-
-
-
 \section{Numerical evaluation}
 \label{sec:numerical}
 
@@ -1068,11 +1065,11 @@ To complement our demonstration of the interpretability of our method, we conduc
 
 \subsection{Data sets}
 
-In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of \procedurename and 5 other algorithms on 10 additional time series from the time series data library \citep{TSDL}; plots can be found at the beginning of the reports in the supplementary material\fTBD{Assuming all the reports fit within size constraints}.
+In addition to the three time series analysed in \cite{DuvLloGroetal13} we evaluate the performance of \procedurename and 7 other algorithms on 10 additional time series from the time series data library \citep{TSDL}; plots of the data can be found at the beginning of the reports in the supplementary material\fTBD{Assuming all the reports fit within size constraints}.
 
 \subsection{Algorithms}
 
-We compare the structure search algorithm to equation learning (EL) using Eureqa \citep{Eureqa} and four other regression algorithms; additive nonparametric regression (SE) \citep[e.g.][]{buja1989linear}\fTBD{This reference is not quite correct}, change point modelling (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
+We compare the structure search algorithm to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms; linear regression (LR), \gp{} regression with a single $\kSE$ kernel, multiple kernel learning (MKL) \citep[e.g.][]{bach2004multiple}-, change point modelling (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
 
 We use the default mean absolute error criterion when using Eureqa.
 The other four algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark~(Bayesian information criterion) with appropriate restrictions to the grammar.

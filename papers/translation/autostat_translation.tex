@@ -178,11 +178,10 @@ The procedure contains many standard regression techniques as special cases, lea
 %\allowdisplaybreaks
 
 \section{Introduction}
-\fTBD{JL: Incorporate ZG comments when available}
 \fTBD{JBT: Stress the \emph{automation}}
 One of the aims of statistics is to produce accurate and concise descriptions of data.
 This requires the construction and fitting of an appropriate statistical model that can be interpreted by the user.
-For simple model classes this has largely already been automated.
+For some simple model classes, this has largely already been automated.
 For example, many standard software packages are capable of performing variants of linear regression and reporting the results to the user. 
 
 %Simple parametric regression models such as linear regression are usually easy to interpret, requiring only a table of regression coefficients and a few other parameters to describe a model.
@@ -213,8 +212,6 @@ We also extend and refine the components used in the model-construction process 
 This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and multiple kernel learning \citep[e.g.][]{bach2004multiple}.
 
 Finally, we demonstrate that the extended model construction procedure is comparable or superior to other model construction techniques at extrapolation tasks.
-\fTBD{JL: We need to introduce the acronym ABCD}
-
 
 
 
@@ -225,13 +222,9 @@ Finally, we demonstrate that the extended model construction procedure is compar
 %\fTBD{JL: Has RG written anything on this?}
 \citet{gelman2013philblogpost} asks ``How can an artificial intelligence do statistics? ... It needs not just an inference engine, but also a way to construct new models and a way to check models. Currently, those steps are performed by humans, but the AI would have to do it itself.''
 
-In this section, we discuss in more detail the elements required to build a system that can automatically construct and then describe complex nonparametric models.
+%In this section, we discuss in more detail the elements required to build a system that can automatically construct and then describe complex nonparametric models.
 
-%\begin{enumerate}
-%\item An open-ended language of models.
-%\item A way of searching in this model class.
-%\item A way of cehcking model fit, or comparing models.
-%\end{enumerate}
+In this section, we discuss in more detail the elements we believe are required to build an artificial intelligence that can do statistics.
 
 \paragraph{1. An open-ended language of models}
 Many statistical procedures consider all models in a class of fixed size - for example, graphical model construction algorithms\fTBD{Cite} search over connectivity graphs for a given set of nodes.
@@ -241,33 +234,29 @@ An automatic search through an open-ended class of models can achieve some of th
 %However, in order for a procedure to be as powerful as a human statistician, it must be able to add to a model in a wide variety of ways, building arbitrarily complex models if the data demands it.
 
 \paragraph{2. Searching through model space}
-%Just as a human statistician cannot try every possible model, 
 An open-ended space of models cannot be searched exhaustively.
 Just as human researchers iteratively refine their models, search procedures can propose new search directions based on the results of previous model fits.
-Because any search in an open-ended space must start with relatively simple models before moving on to more complex ones, any model search in an open-ended space will likely resemble a model-building procedure.% based on the results of simpler model fits.
-%The search algorithm can have a large effect on whether the overall procedure is consistent.
-
+Because any search in an open-ended space must start with relatively simple models before moving on to more complex ones, any model search in an open-ended space will likely resemble a model-building procedure.% based 
 
 \paragraph{3. Model comparison and checking model fit}
-A practically and philsophically interesting question is how to compare models, and how to check whether there is statistical structure not being captured by a given model. 
+An automatic statistician should be able to question the models it has constructed, and formal procedures from model checking provide a way for it to do this.
+%A practically and philsophically interesting question is how to compare models, and how to check whether there is statistical structure not being captured by a given model. 
+%\fTBD{Struggling with this section - do we need to defend marginal likelihood or discuss the options}
+\citet{gelman2012philosophy} review the literature on model checking.
+\TBD{In this work, we use approximate marginal likelihood to compare models, penalizing complexity using the Bayesian Information Criterion as a heuristic.}
 
-\fTBD{Struggling with this section - do we need to defend marginal likelihood or discuss the options}
-
-\TBD{\citet{gelman2012philosophy} reviews the literature on these questions. 
-In this work, we use approximate marginal likelihood to compare models, penalizing complexity using the Bayesian Information Criterion as a heuristic.}
-
-\subsection{Describing models}
+\paragraph{4. Describing models}
 
 %Capturing statistical structure helps to provide good predictions. 
 Part of the value of statistical models comes from enabling humans to understand a dataset or a phenomenon.
-Furthermore, a clear description of the statistical structure found in a dataset helps a user to notice when the dataset has errors, the wrong question was asked, the model-building procedure failed to capture known structure, a relevant peice of data or constraint is missing, or when a novel statistical structure has been found.
+Furthermore, a clear description of the statistical structure found in a dataset helps a user to notice when the dataset has errors, the wrong question was asked, the model-building procedure failed to capture known structure, a relevant piece of data or constraint is missing, or when a novel statistical structure has been found.
 
 %It is not clear\fTBD{JL: Weak} what obstacles there are to building a system capable of explaining novel statistical structures.
 In this work, we 
 %attempted to build such an automatic summarization procedure, and 
 demonstrate that the properties of Gaussian processes allow for a modular description generation procedure.
 %This modularity means that a large class of statistical structures can explained, without resorting to writing a special case for every possible structure in our open-ended set of models.
-Whether or not such modularity is present in other open-ended model classes is an open question.
+Whether or not such modularity and interpretability is present in other open-ended model classes is an open question.
 
 \section{A language of regression models}
 \label{sec:improvements}
@@ -290,17 +279,17 @@ For example, the kernel $\kSE \times \kPer$ puts mass on functions which are loc
 Additive models can also be constructed by taking sums of kernels.
 For example, a \gp{} with kernel $\kSE + \kLin$ corresponds to a prior on smooth functions with a linear trend.
 
-These ideas were exploited by \citet{DuvLloGroetal13} where they introduced the Gaussian process structure search procedure (GPSS).
+These ideas were exploited by \citet{DuvLloGroetal13},  who introduced the Gaussian process structure search procedure (GPSS).
 GPSS searches over sums and products of a set of simple base kernels to produce an appropriate model for a data set.
 By combining kernels, the search procedure was able to construct novel nonparametric regression models.
 For example, when applied to airline passenger data (see `describing heteroscedasticity'), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``approximately periodic, with linearly growing amplitude''.\fTBD{JL: Approximate chosen over local in lab poll}
 
 In the rest of this section we extend the language defined by GPSS to include a greater variety of regression motifs.
-We also reparametrise the base kernels resulting in clearer decompositions and descriptions of the models produced.
+We also reparametrise the base kernels resulting in clearer decompositions and descriptions of the models produced.  We call the new procedure Automatic Bayesian Covariance Discovery (\procedurename). \fTBD{DD:  or maybe GP structure discovery - GPSD?}
 
 \subsection{Changepoints}
 
-Hard changepoints have been considered by \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}.
+\gp{}s with hard changepoints have been considered by \citet{garnett2010sequential} and \citet{FoxDunson:NIPS2012}.
 We construct soft changepoints by multiplying by sigmoidal functions.
 \fTBD{DD: Let's add a small figure here to show what changepoints can do.}
 Suppose that $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ and define
@@ -938,32 +927,6 @@ By examining the parameters of the kernels comprising this component the descrip
 %\paragraph{Extrapolating individual components}
 %We can also examine the model's expectations about the future behavior of individual components through sampling.  Further plots in the extrapolation section show posterior samples for each individual additive component. %For example, in figure \ref{fig:extrap-smooth}, we are shown samples of the predictive distribution of the smooth component of variation.  This plot indicates that the model considers a wide range of future average intensities to be plausible, but that it always expects those average intensities to vary smoothly.
 
-%\section{Related Work}
-
-%There exists a vast literature on both model visualization and model checking.
-
-
-%\paragraph{Structure learning in Bayesian networks}
-%Similar idea of discovering semantics via model search.
-%Semantics are more vague though \ie a probability table is not an entirely concise summary
-
-%\paragraph{Linear model}
-%These discover highly interpretable semantics but are limited in expressivity
-
-%\paragraph{Nonparametric additive models}
-%Highly flexible but semantics are vague \ie can only talk about smooth functions
-
-%\paragraph{Equation learning}
-%Very flexible but semantics of equations do not map onto human understanding \eg saw tooth vs Fourier decomposition of a saw tooth - which is more human understandable?
-%How would you explain a sensor error with Eureqa style equations.
-
-%\paragraph{Deep learning}
-%Again very flexible but the semantics are not usually human interpretable.
-%How can we understand the output of complex representation learning algorithms without human intervention (\eg recognising that your deep net has become a cat classifier).
-
-%\paragraph{Kernel search}
-%Can use the precise semantics of linear models or the vague semantics of nonparametric additive models and other components along this spectrum.
-%Flexible modelling with components that a human might use to describe what is going on.
 
 \subsection{Describing heteroscedasticity}
 \label{sec:airline}
@@ -1063,13 +1026,16 @@ The learned equation for the airline passenger data is
 which captures the approximately linear trend, and the periodic component with approximately linearly (logistic) increasing amplitude.
 However, the periodicity is heavily approximated with only a single sinusoid and the model cannot capture heteroscedasticity.
 
+
+
+
+
 \section{Related work}
 
 \paragraph{Building Structured Covariance Functions}
-
-\cite{rasmussen38gaussian} devote 4 pages to constructing a complex kernel to model the time series of Mauna Loa carbon dioxode conentrations over time.
-A report generated by \procedurename on this data set is included in the supplementary material and describes a very similar model. 
-Other examples of papers whose main contribution is constructing and fitting a compound \gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}.\fTBD{JL: Sentence a bit vague - maybe?}
+\cite{rasmussen38gaussian} devote 4 pages to manually constructing a complex kernel to model the time series of Mauna Loa carbon dioxode conentrations over time.
+A report automatically generated by \procedurename on this data set is included in the supplementary material and discovers a very similar model. 
+Other examples of papers whose main contribution is to use domain knowledge to manually construct and fit a compound \gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}.
 
 \paragraph{Equation learning}
 
@@ -1084,7 +1050,7 @@ In constrast, \procedurename learns a parametric form of the covariance allowing
 
 The line of work leading to \procedurename was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
 Automatic model search is possible whenever the following conditions are met: 1) we can define a large space of models by combining a small number of components in a small number of different ways; 2) inference can be performed for all models in this space; 3) a basic search procedure is sufficient to find accurate models.
-These conditions were also met for example in \citet{kemp2008discovery} where they learned the structural form of a graph used to model human similarity judgments.  
+These conditions were also met for example in \citet{kemp2008discovery} who learned the structural form of a graph used to model human similarity judgments.  
 
 More generally, probabilistic programming [cite]\fTBD{Is there a canonical reference yet \eg I don't think there are any books} software automatically generates inference mechanisms for open-ended classes of models, enabling automatic model search.
 For example, \cite{VikashScene13} automatically searches over models of 2D scenes.
@@ -1104,7 +1070,7 @@ For example, \cite{VikashScene13} automatically searches over models of 2D scene
 \paragraph{Natural-language descriptions of data}
 
 To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.
-However, grammar based techniques have previously been used to automatically understand images \cite{zhu2007stochastic} and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
+However, grammar-based techniques have previously been used to automatically understand images \cite{zhu2007stochastic} and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
 
 
 
@@ -1188,11 +1154,11 @@ All methods attempted to model this discontinuity using inappropriate components
 %While \procedurename and SP will quickly become uncertain about a roughly periodic component, TCI will predict the average which is often more effective.
 %This suggests that models composed of kernels of the form $(\kSE + \kC) \times \kPer$ will be effective for extrapolating approximately periodic components.
 
-\subsection{Interpolation}
-
+\paragraph{Interpolation}
 To test the ability of the methods to interpolate, we randomly divided each data set into equal amounts of training data and testing data.
-We trained each algorithm on the training half of the data, produced predictions for the remaining half and then computed standardised RMSEs.
-The results are similar to those for extrapolation and are deferred to the supplementary material for brevity.
+%We trained each algorithm on the training half of the data, produced predictions for the remaining half and then computed standardised RMSEs.
+The results are similar to those for extrapolation, can be found in the supplementary material.
+
 
 \section{Discussion}
 
@@ -1200,23 +1166,33 @@ Towards the goal of automating the process of statistical analysis we have intro
 To the best of our knowledge this is the first system that can automatically describe any model in an open-ended class of nonparametric models in natural language.
 We have also demonstrated that out procedure has competitive extrapolation and interpolation performance compared to other model construction techniques.
 
-Thinking towards extending this line of work many questions and challenges are raised which we briefly outline.
+%Thinking towards extending this line of work many questions and challenges are raised which we briefly outline.
 
 \paragraph{Accuracy versus interpretability}
 
-Typical machine learning\fTBD{JL: Suitable language for AAAI?} research focuses on numerical performance rather than interpretability, likely due to the difficulty of assessing the interpretability of a method in an objective manner.
+Typical machine learning research focuses on numerical performance rather than interpretability, likely due to the difficulty of assessing the interpretability of a method in an objective manner.
+Requiring that statistical models can be automatically described constrains the models that can be used over and above the traditional constraints of tractability.
 
-\paragraph{A sufficiently large class of models}
-
-To be non-trivial.
+%\paragraph{A sufficiently large class of models}
+%To be non-trivial.
 
 \paragraph{Computational complexity}
+%If the search space is large, how do we search it without a supercomputer?
+The \procedurename procedure is embarassingly parallel, and can be run overnight on a cluster.
+This is computationally expensive compared to fitting only one or a small number of models.
+However, this computational cost may be reasonable when compared to the cost of having a human researcher iteratively propose, fit, and refine a series of models, especially when one considers the size and scope of the space of models that is searched, and the fact that all steps of model construction, evaluation and search are automatic.
+%, it doesn't seem like such an expensive process.
 
-If the search space is large, how do we search it without a supercomputer?
 
-\paragraph{Automatic description of methods}
+In our experience, working statisticians, machine learners, and data scientists rarely if ever explore such a space so systematically, partly because of the cost in terms of both their own time and computation time.
+The ``artificial intellgience'' presented in this paper is still quite primitive and naive, and the space of models we can consider automatically is still quite limited compared to what humans can do.
+However, in evaluating the limitations of these methods, and prospects for future work of this sort, other factors might loom larger than computational efficiency.
 
-Requiring that statistical models can be automatically described constrains the models that can be used over and above the traditional constraints of tractability etc
+
+
+%\paragraph{Automatic description of methods}
+
+
 
 %\paragraph{When is a description of a model useful as a description of data?}
 

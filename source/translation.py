@@ -498,7 +498,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                     else:
                         descriptions.append('Across periods the shape of this function varies smoothly with a typical lengthscale of %s' % english_length(lengthscale, unit))   
                         extrap_descriptions.append('The shape of the function is assumed to vary smoothly between periods but will return to the prior') 
-                    (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier='approximately ')
+                    (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier='')#approximately ')
                     descriptions.append(var_description)
                     extrap_descriptions.append(var_extrap_description)
                     summary += ' and %s' % var_summary
@@ -550,7 +550,7 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 extrap_descriptions.append('Consequently the pointwise posterior will appear to lose its periodicity, but this merely reflects the uncertainty in the shape and phase of the functions')
                 extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble the prior]')
             if lin_count + exp_count > 0:
-                qualifier = 'approximately ' if (los_count > 0) else ''
+                qualifier = ''#approximately ' if (los_count > 0) else ''
                 (var_summary, var_description, var_extrap_description) = translate_parametric_window(X, unit=unit, lin_count=lin_count, exp_count=exp_count, lin_location=lin_location, exp_rate=exp_rate, quantity='amplitude', component='function', qualifier=qualifier)
                 descriptions.append(var_description)
                 extrap_descriptions.append(var_extrap_description)

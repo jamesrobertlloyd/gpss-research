@@ -381,7 +381,7 @@ Each kernel in a product modifies the resulting model in a consistent way, resul
 %Because each type of kernel modifies the resulting model in a consistent way\fTBD{We need to justify this claim}, the code to produce a natural-language desription can consider each type of kernel seperately.
 %This means that there is no need to write descriptions for every combination of kernels, although our procedure includes some special cases where the naive wording is cumbersome.
 %There are relatively few combinations of the other kernels so their descriptions are templated based on their parameter values.
-The procedure is outlined in algorithm~\ref{alg:description}.
+The procedure is outlined in algorithm~\ref{alg:description}.\fTBD{JL: Make sure this is up to date with the noun phrase description or delete if cumbersome}
 
 %Generating descriptions for any product of kernels is possible because, conveniently, multiplying any kernel by a base kernel modifies the properties of the resulting model in consistent ways. Loosely speaking, each kernel corresponds to an adjective in the model description.
 
@@ -478,22 +478,37 @@ Each additive component in a kernel expression corresponds to a different additi
 
 \paragraph{Description of a product of kernels is modular}
 
-As an example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \boldsymbol{\sigma}$ can be described as an
+Each product of kernels is described as a noun phrase of the form
+\begin{align*}
+\textnormal{Determiner}	+	\textnormal{Pre-modifiers} +	\textnormal{Noun}	+	\textnormal{Postmodifiers}
+\end{align*}
+where one kernel is selected to be the head noun of the phrase and the other kernels are represented as pre-modifiers and post-modifiers.
+As an example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \boldsymbol{\sigma}$ could be described as an
 \begin{align*}
 \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times 
 \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
 \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
 \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700.}}
 \end{align*}
-The $\kPer$ kernel is described as a noun phrase and the other kernels behave like adjectives or modifiers.\fTBD{JL: What is the proper NLP terminology?}
-In principle, any kernel could be chosen to act as the noun and kernel order could be arbitrary but this would produce cumbersome phrases\footnotemark.
-The language is currently small enough that simple heuristics to select the noun and phrase order are sufficient to produce intelligible text.\fTBD{JL: Can we make this sound more positive?}
-\footnotetext{In fact, all kernels could be described as adjectives by always multiplying the kernel product by the constant kernel, $\kC$, to provide a default noun phrase.}
+where $\kPer$ has been selected as the head noun.
 
-\paragraph{Descriptions of kernels when acting as nouns}
+In principle, any assignment of kernels in a product to these different phrasal roles is possible, but in practice, certain assignments produce much more interpretable phrases than others.  
+Our language is currently small enough that simple heuristics can be used to select which kernel in a given product is assigned to the head noun and which are assigned to pre- and post-modifiers in which order, to produce maximally intelligible and natural-sounding text.
 
-The noun phrase descriptions of kernels are simply descriptions of the \gp{} prior represented by the kernel on its own.
-These priors are well understood and descriptions can be constructed from standard reference materials \citep[e.g.][]{rasmussen38gaussian}.
+\paragraph{Selecting the head noun and ordering modifiers}
+
+The head noun is chosen according to the following ordering
+\begin{align*}
+\kPer > \kWN, \kSE, \kC > \prod_j \kLin_j > \prod_m \boldsymbol\sigma_m
+\end{align*}
+\ie $\kPer$ is always chosen as the head noun when present.
+Products of $\kLin$ and $\boldsymbol\sigma$ can always be intelligbly described as postmodifiers (see below).
+$\kSE$ is the only other kernel that acts as a modifier (when multiplied by $\kPer$) in our small language; when it does so it acts as a premodifier.
+
+\paragraph{Head noun descriptions of kernels}
+
+The head noun descriptions of kernels are simply descriptions of the \gp{} prior represented by the kernel on its own.
+These priors are well understood and templates can be constructed from standard reference materials \citep[e.g.][]{rasmussen38gaussian}.
 For example, $\kSE$ produces a `smooth function' and $\kLin^n$ produces a `polynomial of degree $n$'.
 
 %Clearly, there are many issues with word order, and many special cases are necessary.\fTBD{JL: Weak and imprecise}
@@ -505,7 +520,8 @@ For example, $\kSE$ produces a `smooth function' and $\kLin^n$ produces a `polyn
 
 $\kSE$ encodes for a local covariance structure since $\kSE(x, x') \to 0$ as $|x - x'| \to \infty$ \ie distant points are uncorrelated.
 Multiplying by $\kSE$ removes any long range correlation; it modifies the covariance structure to hold only locally.
-For example, $\kPer$ encodes for exactly periodic functions but $\kSE \times \kPer$ encodes for locally / quasi / approximately periodic functions since distant points are uncorrelated whilst close points have approximately the same covariance structure as $\kPer$.\fTBD{JL: Long sentence}
+In our small language $\kSE$ only acts as a modifier when $\kPer$ is present which can be described as making the periodicity `approximate'.
+%For example, $\kPer$ encodes for exactly periodic functions but $\kSE \times \kPer$ encodes for locally / quasi / approximately periodic functions since distant points are uncorrelated whilst close points have approximately the same covariance structure as $\kPer$.\fTBD{JL: Long sentence}
 %As noted above, multiplying the $\kSE$ kernel by any other kernel $K$ causes the structure implied by $K$ to hold only locally. \fTBD{JL: This can be justified by explaining that the covariance goes to zero}
 %We modify the description depending on the lengthscale of the $\kSE$ kernel to indicate just how locally the property holds.
 
@@ -514,8 +530,13 @@ $\kLin$ has the form $k(x,x') = a(x)a(x')$.
 This can be used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
 Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
 Therefore multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) \sim \gp{}(0, k)$ by a linear function.
-Rather than describing this multiplication literally its effect can be described as \eg `lineary growing amplitude' depending on the parameters of the kernel.
+Rather than describing this multiplication literally its effect can be described as \eg `lineary growing standard deviations'.
 Similarly, multiplication by $\kLin^n$ can be described as `polynomially varying amplitude'.
+
+We include a special case when $\kPer$ is the head noun \eg `linearly growing amplitude' to produce more natural sounding text.
+In an expanded version of this language it may be desirable to allow all modifiers to depend on the head noun.
+% depending on the parameters of the kernel.
+%Similarly, multiplication by $\kLin^n$ can be described as `polynomially varying amplitude'.
 
 %The product of any number of linear kernels is simply a polynomial, so the contribution of any such products of kernels can be described by appending ``with linearly growing amplitude'', ``with quadratically growing amplitude'', etc.\ with the location of the roots of these polynomials described by appending ``growing away from $x_1$''.
 
@@ -542,11 +563,11 @@ That is, a \gp{} with covariance given by the product of two kernels has the sam
 %In general, however, the distribution of products of functions will not be Gaussian.
 %
 This property can be used to describe multiplication by $\kPer$ as producing the same covariance structure as multiplying the function by an independent periodic function.
-Admittedly, this is the most abstract description of all kernels and we hope to improve upon it.\fTBD{JL: This language can probably be improved}
+Since $\kPer$ is always chosen as the head noun we instead use this property to include a bespoke description of kernels of the form $\kPer^n$.\fTBD{JL:This sentence can be improved}
 %We can use this property to state that $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.
 %This description naturally extends to ${n>2}$.
 
-However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
+%However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
 
 %A description for $\kSE\times\kPer$ can be constructed as follows.
 %If the input space is restricted to a grid with spacing equal to the period of the periodic kernel, then $\kSE \times \kPer = \kSE$.
@@ -589,11 +610,11 @@ which can be simplified to
 %where $\emptyset$ represents the zero function.
 %We use this notation in section~\ref{sec:solar}.
 
-To descibe the first component, the noun phrase template for $\kWN$, `uncorrelated noise', is concatenated with a template (chosen based on parameter values) for $\kLin$, `with linearly increasing standard deviation'.
+To descibe the first component, the head noun template for $\kWN$, `uncorrelated noise', is concatenated with a modifier template (chosen based on parameter values) for $\kLin$, `with linearly increasing standard deviation'.
 %
 The second component could be described as `A smooth function with a lengthscale of [lengthscale] [units]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\boldsymbol{\sigma}$.
 %
-Finally, the third component could be described as `A locally periodic function with a period of [period] [units] which applies from [changepoint]'.
+Finally, the third component could be described as `An approximately periodic function with a period of [period] [units] which applies from [changepoint]'.
 
 %\subsection{Breaks from modularity and other corner cases}
 
@@ -601,7 +622,7 @@ Finally, the third component could be described as `A locally periodic function 
 %When both $\kPer$ and $\kLin$ are present in a product, we change the description for $\kLin^n$ from discussing `varying standard deviation' to `varying amplitude'.
 %These separate cases are not necessary, but make the generated text more natural.
 
-We use separate sets of templates to produce short summaries and detailed descriptions of kernels.\fTBD{JL: This sentence can probably be cut given that there are many other missing details}
+We use separate sets of templates to produce short summaries and detailed descriptions of kernels.
 
 \subsection{Ordering additive components}
 

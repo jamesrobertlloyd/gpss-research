@@ -357,9 +357,9 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
             k = per_kernels[0] if per_count == 1 else cos_kernels[0]
             if (lin_count + exp_count == 0) and (los_count == 0):
                 # Pure periodic
-                summary = 'An exactly '
-                main_description = 'This component is exactly '
-                extrap_description = 'This component is assumed to continue exactly '
+                summary = 'A '
+                main_description = 'This component is '
+                extrap_description = 'This component is assumed to continue '
                 if per_count == 1:
                     summary += 'periodic function '
                     main_description += 'periodic '
@@ -430,9 +430,9 @@ def translate_product(prod, X, monotonic, gradient, unit=''):
                 extrap_descriptions.append('[This is a placeholder for a description of how quickly the posterior will start to resemble the prior]')
             elif (lin_count + exp_count > 0) and (los_count == 0):
                 # Pure periodic but with changing amplitude
-                summary = 'An exactly '
-                main_description = 'This component is exactly '
-                extrap_description = 'This component is assumed to continue exactly '
+                summary = 'A '
+                main_description = 'This component is '
+                extrap_description = 'This component is assumed to continue '
                 if per_count == 1:
                     summary += 'periodic function '
                     main_description += 'periodic '

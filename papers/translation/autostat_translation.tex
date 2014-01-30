@@ -1084,10 +1084,16 @@ For example, \cite{VikashScene13} automatically searches over models of 2D scene
 To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.
 However, grammar based techniques have previously been used to automatically understand images \cite{zhu2007stochastic} and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
 
-\section{Numerical evaluation}
+
+
+
+
+
+%\section{Numerical evaluation}
+\section{Predictive Accuracy}
 \label{sec:numerical}
 
-To complement our demonstration of the interpretability of \procedurename we conducted numerical experiments testing the ability of various model building algorithms to interpolate and extrapolate time-series.
+To complement our demonstration of the interpretability of \procedurename, we compared the predictive accuracy of various model-building algorithms at interpolating and extrapolating time-series.
 \procedurename outperforms the other methods on average (\eg as measured by quantiles of performance metrics).
 \NA{However, the variability of the results suggests that there is room to improve the robustness of \procedurename.}
 \fTBD{JL: I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
@@ -1108,10 +1114,11 @@ For MKL, trend-cyclical-irregular and spectral kernels this corresponds to a for
 We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.
 Producing model construction algorithms for this class of time-series model would be an interesting area for future research.
 
-\subsection{Inference}
+\subsection{Model Search and Inference}
 
-We use the same inference techniques as \cite{DuvLloGroetal13} but we introduce new search operators to accommodate the changepoint and change window operators.
-Details are in the supplementary material.
+As in \citep{DuvLloGroetal13}, \procedurename searched through models using a greedy search, using exact \gp{} inference to evaluate marginal likelihood, and conjugate gradient descent to optimize kernel parameters.
+%In these experiments, \procedurename uses exact \gp{} inference,  \cite{DuvLloGroetal13} but we introduce new search operators to accommodate the changepoint and change window operators.
+The search operators used are provided in the supplementary material.
 
 \subsection{Interpretability versus accuracy}
 

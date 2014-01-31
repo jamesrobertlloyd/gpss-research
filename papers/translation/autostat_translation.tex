@@ -239,6 +239,7 @@ Just as human researchers iteratively refine their models, search procedures can
 Because any search in an open-ended space must start with relatively simple models before moving on to more complex ones, any model search in an open-ended space will likely resemble a model-building procedure.% based 
 
 \paragraph{3. Model comparison and checking model fit}
+\fTBD{JL: Two sections perhaps - or are they completely intertwined?}
 An automatic statistician should be able to question the models it has constructed, and formal procedures from model checking provide a way for it to do this.
 %A practically and philsophically interesting question is how to compare models, and how to check whether there is statistical structure not being captured by a given model. 
 %\fTBD{Struggling with this section - do we need to defend marginal likelihood or discuss the options}
@@ -282,10 +283,13 @@ For example, a \gp{} with kernel $\kSE + \kLin$ corresponds to a prior on smooth
 These ideas were exploited by \citet{DuvLloGroetal13},  who introduced the Gaussian process structure search procedure (GPSS).
 GPSS searches over sums and products of a set of simple base kernels to produce an appropriate model for a data set.
 By combining kernels, the search procedure was able to construct novel nonparametric regression models.
-For example, when applied to airline passenger data (see `describing heteroscedasticity'), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``approximately periodic, with linearly growing amplitude''.\fTBD{JL: Approximate chosen over local in lab poll}
+For example, when applied to airline passenger data (see `describing heteroscedasticity'), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``approximately periodic, with linearly growing amplitude''.
 
 In the rest of this section we extend the language defined by GPSS to include a greater variety of regression motifs.
-We also reparametrise the base kernels resulting in clearer decompositions and descriptions of the models produced.  We call the new procedure Automatic Bayesian Covariance Discovery (\procedurename). \fTBD{DD:  or maybe GP structure discovery - GPSD?}
+We also reparametrise the base kernels resulting in clearer decompositions and descriptions of the models produced.
+We call the new procedure Automatic Bayesian Covariance Discovery (\procedurename)\fTBD{Careful with always adding a space after the procedurename name - do we need a gp\{\} construction?}.
+\fTBD{DD:  or maybe GP structure discovery - GPSD?}
+\fTBD{JL: Is this the correct point at which to introduce the name - we have only talked about the language at this stage - maybe it should be introduced at the end of the previous section - \eg we attempt to address all of the above with our new algorithm \procedurename}
 
 \subsection{Changepoints}
 
@@ -612,6 +616,7 @@ Finally, the third component could be described as `An approximately periodic fu
 %These separate cases are not necessary, but make the generated text more natural.
 
 We use separate sets of templates to produce short summaries and detailed descriptions of kernels.
+\fTBD{JL: We should also mention that the detailed descriptions are less modular - but not necessarily so}
 
 \subsection{Ordering additive components}
 
@@ -1005,12 +1010,12 @@ By multiplying a white noise kernel by a linear kernel, the model is able to exp
 
 \subsection{Comparison to equation learning}
 
-Much of machine learning\fTBD{JL: Appropriate phrase if sending to AAAI?} research focuses on numerical performance, with claims of interpretability generated post-hoc.
+Much of machine learning research focuses on numerical performance, with claims of interpretability generated post-hoc.
 In contrast, equation learning \citep[e.g.][]{Schmidt2009b} can also be used to automate interpretation.
 
 We include learned equations for these two data sets produced using Eureqa \citep{Eureqa} using the default mean absolute error performance metric\footnotemark.
 \footnotetext{We experimented with the root mean squared error with Akaike information criterion penalisation (analogous to the criterion used by \procedurename) but occasionally observed severe overfitting.}
-However, it is very unlikely that these data sets can be explained parsimoniously with a parametric function.\fTBD{JL: Remove sentence?}
+%However, it is very unlikely that these data sets can be explained parsimoniously with a parametric function.\fTBD{JL: Remove sentence?}
 
 The learned equation for the solar irradiance data is
 \begin{align*}
@@ -1177,6 +1182,8 @@ Requiring that statistical models can be automatically described constrains the 
 %To be non-trivial.
 
 \paragraph{Computational complexity}
+\fTBD{JL,DD: This can potentially be shortened - or even removed}
+\fTBD{JL: At the least it should not be a verbatim quote of JBT}
 %If the search space is large, how do we search it without a supercomputer?
 The \procedurename procedure is embarassingly parallel, and can be run overnight on a cluster.
 This is computationally expensive compared to fitting only one or a small number of models.

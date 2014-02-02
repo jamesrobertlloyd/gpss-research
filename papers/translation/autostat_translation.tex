@@ -597,7 +597,7 @@ In an expanded version of this language it may be desirable to allow all modifie
 %\paragraph{Multiplication by changepoints}
 \item {\bf Changepoints.}
 The $\boldsymbol\sigma_m$ in equation~\eqref{eq:sop} represent products of sigmoids which also have the form $a(x)a(x')$ and therefore could also be described as multiplication of functions.
-For simplicity we assume that the sigmoids are step functions\footnotemark.
+For simplicity we describe these sigmoids as step functions\footnotemark.
 These step functions can be represented as intervals (\ie where their value is 1), and their product is equivalent to taking the intersection of intervals.
 Computing the intersection is trivial and descriptions can be templated as \eg `this function applies from [start] until [end]'.
 
@@ -1162,6 +1162,16 @@ Our space of \gp{} models is closely based on that of \citet{DuvLloGroetal13}, w
 \section{Predictive Accuracy}
 \label{sec:numerical}
 
+\begin{figure*}[ht]
+\centering
+\includegraphics[width=\textwidth]{figures/box_extrap_wide}
+\caption{
+Raw data, and box plot of standardised extrapolation RMSE (best performance = 1).
+Ordered by median.
+}
+\label{fig:box_extrap_dist}
+\end{figure*}
+
 To complement our demonstration of the interpretability of \procedurename{}, we compared the predictive accuracy of various model-building algorithms at interpolating and extrapolating time-series.
 On these datasets, \procedurename{} on average outperforms the other methods.% on average (\eg as measured by quantiles of performance metrics).
 %\NA{However, the variability of the results suggests that there is room to improve the robustness of \procedurename.}
@@ -1207,16 +1217,6 @@ The RMSEs are then standardised by dividing by the smallest RMSE for each data s
 %
 Figure~\ref{fig:box_extrap_dist} shows the standardised RMSEs across algorithms.
 %Both versions of \procedurename{} have lower quartiles than all other methods but the outliers of \procedurename{}, TCI and SP have similar values.
-
-\begin{figure*}[ht]
-\centering
-\includegraphics[width=\textwidth]{figures/box_extrap_wide}
-\caption{
-Raw data, and box plot of standardised extrapolation RMSE (best performance = 1).
-Ordered by median.
-}
-\label{fig:box_extrap_dist}
-\end{figure*}
 
 Overall, the model construction methods with the greater capacity perform better: trend-cyclical-irregular outperforms Bayesian MKL, which outperforms squared exponential.
 Eureqa performs relatively poorly, since very few datasets are well explained by a parametric equation.

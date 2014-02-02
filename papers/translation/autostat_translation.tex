@@ -1186,12 +1186,14 @@ In addition to the three time series analysed by \cite{DuvLloGroetal13} we evalu
 
 \paragraph{Algorithms}
 
-We compare the structure search algorithm to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms; linear regression, \gp{} regression with a single $\kSE$ kernel (squared exponential), a Bayesian variant of multiple kernel learning \citep[e.g.][]{bach2004multiple}-, change point modelling (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
+We compare the structure search algorithm to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms: linear regression, \gp{} regression with a single $\kSE$ kernel (squared exponential), a Bayesian variant of multiple kernel learning \citep{bach2004multiple}, change point modelling
+% / multi resolution Gaussian processes 
+\citep{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels \citep{WilAda13} and trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
 
 We use the default mean absolute error criterion when using Eureqa.
 All other algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark~(Bayesian information criterion) with appropriate restrictions to the grammar.
-For MKL, trend-cyclical-irregular and spectral kernels this corresponds to a forward-selection algorithm.
-\footnotetext{We experimented with using unpenalised conditional likelihood as the search criterion for other methods but observed overfitting as is to be expected.} 
+For MKL, trend-cyclical-irregular and spectral kernels, this search corresponds to forward-selection.
+\footnotetext{We experimented with using unpenalised conditional likelihood as the search criterion for other methods but observed overfitting, as is to be expected.} 
 
 We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.
 Producing model construction algorithms for this class of time-series model would be an interesting area for future research.

@@ -83,7 +83,7 @@
 \let\oldemptyset\emptyset
 \let\emptyset 0
 
-\newcommand{\procedurename}{ABCD\ }
+\newcommand{\procedurename}{ABCDE}
 
 %\author{
 %James Robert Lloyd\\
@@ -119,13 +119,13 @@
 \input{include/commenting.tex}
 
 %% For submission, make all render blank.
-\renewcommand{\LATER}[1]{}
-\renewcommand{\fLATER}[1]{}
-\renewcommand{\TBD}[1]{}
-\renewcommand{\fTBD}[1]{}
-\renewcommand{\PROBLEM}[1]{}
-\renewcommand{\fPROBLEM}[1]{}
-\renewcommand{\NA}[1]{#1}  % Note, NA's pass through!
+%\renewcommand{\LATER}[1]{}
+%\renewcommand{\fLATER}[1]{}
+%\renewcommand{\TBD}[1]{}
+%\renewcommand{\fTBD}[1]{}
+%\renewcommand{\PROBLEM}[1]{}
+%\renewcommand{\fPROBLEM}[1]{}
+%\renewcommand{\NA}[1]{#1}  % Note, NA's pass through!
 
 
 % The \icmltitle you define below is probably too long as a header.
@@ -179,22 +179,21 @@ The procedure contains many standard regression techniques as special cases, lea
 %\allowdisplaybreaks
 
 \section{Introduction}
-\fTBD{JBT: Stress the \emph{automation}}
-One aim of statistics is to produce accurate and concise descriptions of data which yield insight into underlying sources of variability.
-This requires the construction and fitting of an appropriate statistical model that can be interpreted by the user.
-For some simple model classes, such as linear regression, there already exist standard software packages which automatically fit the model and report results to the user.
+%One aim of statistics is to produce accurate and concise descriptions of data which yield insight into underlying sources of variability.
+%This requires the construction and fitting of an appropriate statistical model that can be interpreted by the user.
+%For some simple model classes, such as linear regression, there already exist standard software packages which automatically fit the model and report results to the user.
 
 %Simple parametric regression models such as linear regression are usually easy to interpret, requiring only a table of regression coefficients and a few other parameters to describe a model.
 %However, simple parametric models such as linear regression may often be too simple to accurately describe many data sets.
-However, many datasets are too complex to be accurately described by simple parametric models such as linear regression.
-Non-parametric regression models are flexible enough to model complex distributions over observables, but their construction can require considerable expertise.
-Moreover, non-parametric models can be difficult to summarize, since the fitted parameters (e.g.~bandwidths or typical lengthscales) relate only indirectly to the data.
+Many datasets are too complex to be accurately described by simple parametric models such as linear regression.
+Non-parametric regression models are flexible enough to model complex distributions over observables, but their construction can require considerable expertise, and understanding the structures discovered by such methods still requires analysis and interpretation by human experts.
+%Moreover, non-parametric models can be difficult to summarize, since the fitted parameters (e.g.~bandwidths or typical lengthscales) relate only indirectly to the data.
 %with fitted parameters corresponding only to very high level concepts such as bandwidths or typical lengthscales.
 %typically require graphical descriptions of their fit, since any text description would be overly simplistic (\eg `a smooth function') and fitted parameters correspond only to very high level concepts such as bandwidths or typical lengthscales.
 
-Several methods have been proposed for automatically constructing structured nonparametric models from data \citep{diosan2007evolving, bing2010gp, DuvLloGroetal13, kronberger2013evolution}. However, this does not solve the problem of interpretability, as complex kernel structures can obscure the underlying modeling assumptions.
-\citet{DuvLloGroetal13} observed that Gaussian process models could be decomposed into sums of diverse components, and that the different components often corresponded to interpretable features of the data.
-Unfortunately, the outputs of their procedure still required analysis and interpretation by human experts.
+%Several methods have been proposed for automatically constructing structured nonparametric models from data \citep{diosan2007evolving, bing2010gp, DuvLloGroetal13, kronberger2013evolution}. However, this does not solve the problem of interpretability, as complex kernel structures can obscure the underlying modeling assumptions.
+%\citet{DuvLloGroetal13} observed that Gaussian process models could be decomposed into sums of diverse components, and that the different components often corresponded to interpretable features of the data.
+%Unfortunately, the outputs of their procedure .
 %In that work, components discovered by the automatic model search were interpreted post-hoc by the authors.
 
 Consider what would be required for a system that automates enough of this process to be usable by non-experts:
@@ -204,6 +203,13 @@ Consider what would be required for a system that automates enough of this proce
 \item {\bf Methods for evaluating the fit of a model} in terms of the complexity of the model and the degree of fit to the data
 \item {\bf Automatic generation of reports} which explain and visualize different factors underlying the data, make explicit the chosen modeling assumptions, and quantify how each component improves the predictive power of the model
 \end{itemize}
+
+\begin{figure}[t]
+\centering
+\fbox{\includegraphics[trim=0cm 4.75cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/pg_0007-crop}}
+\caption{Extract from an automatically-generated report describing the model components discovered by automatic model search.  This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minumum.}
+\label{fig:periodic}
+\end{figure}
 
 
 In this manuscript, we present a procedure which uses the compositional structure of Gaussian process kernels to automatically produce natural-language descriptions of patterns in a data set.
@@ -216,12 +222,6 @@ We show examples of automatically generated natural language reports which highl
 %The text descriptions within these reports clearly communicate interpretable features of the data, supplemented by appropriate figures.
 The supplementary material to this paper includes 13 complete reports generated by our method.
 
-\begin{figure}[t]
-\centering
-\fbox{\includegraphics[trim=0cm 4.75cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/pg_0007-crop}}
-\caption{Extract from an automatically-generated report describing the model components discovered by automatic model search.  This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minumum.}
-\label{fig:periodic}
-\end{figure}
 
 %We also\fTBD{RBG: This makes it sound like an independent contribution. Any way to tie it together with the natural language stuff, e.g.~evidence that the changes improve interpretability?} extend and refine the components used in the model construction process to improve the expressivity and interpretability of the models.
 %This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and multiple kernel learning \citep[e.g.][]{bach2004multiple}.
@@ -302,8 +302,8 @@ By combining kernels, the search procedure was able to construct novel nonparame
 For example, when applied to airline passenger data (see `describing heteroscedasticity'), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``approximately periodic, with linearly growing amplitude''.
 
 While the procedure of \citet{DuvLloGroetal13} was able to decompose a variety of datasets into interpretable components, interpreting the final models required human time, expertise, and judgment. Our contribution is a method of automatically generating natural language reports from the outputs of a GP structure search system.
-
-{\bf TODO: introduce ABCD}
+%
+We call the entire model-search and description procedure automatic Bayesian covariance decomposition and explanation (\procedurename{}).
 
 
 %Different kernels can express a wide variety of structures that one might expect to find in functions.
@@ -325,9 +325,7 @@ While the procedure of \citet{DuvLloGroetal13} was able to decompose a variety o
 
 In the rest of this section we extend the language defined by GPSS to include a greater variety of regression motifs.
 We also reparametrise the base kernels resulting in clearer decompositions and descriptions of the models produced.
-We call the new procedure Automatic Bayesian Covariance Discovery (\procedurename)\fTBD{Careful with always adding a space after the procedurename name - do we need a gp\{\} construction?}.
-\fTBD{DD:  or maybe GP structure discovery - GPSD?}
-\fTBD{JL: Is this the correct point at which to introduce the name - we have only talked about the language at this stage - maybe it should be introduced at the end of the previous section - \eg we attempt to address all of the above with our new algorithm \procedurename}
+
 
 \subsection{Changepoints}
 
@@ -396,7 +394,7 @@ Syntax of common regression motifs expressible in our language.
 
 \fi
 
-\section{Automatic natural-language description of regression models}
+\section{Automatic description of regression models}
 \label{sec:description}
 %\fTBD{RG: Does the algorithm clarify anything?}
 %\fTBD{RG, JBT: Section unclear} 
@@ -411,7 +409,9 @@ First, we note that because products distribute over sums, any kernel in our spa
 
 \paragraph{Coversion to canonical form}
 
-As described above, we first use distributivity to rewrite the kernel expression as a sum of product kernels. {\bf [[TODO: mention changepoints?  But if we present changepoints originally as a sum of products, we don't need to discuss the special case here.]]} The individual product terms can be further simplified. In particular, the product of two $\kSE$ kernels is a $\kSE$ kernel with the same form. Multiplying $\kWN$ by any stationary kernel ($\kC$, $\kWN$, $\kSE$, or $\kPer$) gives another $\kWN$ kernel. Multiplying any kernel by $\kC$ only changes the parameters of that kernel. By applying these rules, the kernel family can be rewritten such that all of the terms have the following form:
+As described above, we first use rewrite the kernel expression as a sum of product kernels. 
+%{\bf [[TODO: mention changepoints?  But if we present changepoints originally as a sum of products, we don't need to discuss the special case here.]]} 
+The individual product terms can be further simplified. In particular, the product of two $\kSE$ kernels is a $\kSE$ kernel with the same form. Multiplying $\kWN$ by any stationary kernel ($\kC$, $\kWN$, $\kSE$, or $\kPer$) gives another $\kWN$ kernel. Multiplying any kernel by $\kC$ only changes the parameters of that kernel. By applying these rules, the kernel family can be rewritten such that all of the terms have the following form:
 \begin{align}
 \prod_i \kernel_i \prod_j\kLin_j \prod_m \boldsymbol\sigma_m
 \label{eq:sop}
@@ -438,29 +438,20 @@ where $\prod_i \kernel_i$ is one of $\kWN, \kC, \kSE, \kPer^n$ or $\kSE\times\kP
 
 %Each of these separate description tasks is now small enough that sentences can be templated based on parameter values and basic properties of the posterior.
 
-\begin{algorithm}[tb]
-   \caption{Natural-language Description of Model}
-   \label{alg:description}
-\begin{algorithmic}
-   \STATE {\bfseries Input:} kernel expression $e$
-   %\STATE $e = {ChangePointsToSumsAndProducts}(e)$
-   \STATE $e = {\textnormal{ \sc DistributeProducts}}(e)$
-   \STATE $e = {\textnormal{ \sc Simplify}}(e)$
-   \FOR{$k$ in {\sc SummandsOf}$(e)$}
-%   \STATE {\textnormal{ \sc DescribeStationaryComponents}} $(k)$
-%   \STATE {\textnormal{ \sc DescribeLinearComponents}} $(k)$
-%   \STATE {\textnormal{ \sc DescribeChangepointComponents}} $(k)$
-   %\STATE \COMMENT{Individual summands can be described separately}
-    % \REPEAT
-    % \UNTIL $k$ is unchanged
-       \FOR{$m$ in {\sc ProductsOf}$(k)$}
-            \STATE {\textnormal{ \sc Describe}} $(m)$
-     %\STATE $DescribeChangePointComponents(k)$
-     %\STATE $DescribeStationaryComponents(k)$
-       \ENDFOR
-   \ENDFOR
-\end{algorithmic}
-\end{algorithm}
+%\begin{algorithm}[tb]
+%   \caption{Natural-language Description of Model}
+%   \label{alg:description}
+%\begin{algorithmic}
+%   \STATE {\bfseries Input:} kernel expression $e$
+%   \STATE $e = {\textnormal{ \sc DistributeProducts}}(e)$
+%   \STATE $e = {\textnormal{ \sc Simplify}}(e)$
+%   \FOR{$k$ in {\sc SummandsOf}$(e)$}
+%       \FOR{$m$ in {\sc ProductsOf}$(k)$}
+%            \STATE {\textnormal{ \sc Describe}} $(m)$
+%       \ENDFOR
+%   \ENDFOR
+%\end{algorithmic}
+%\end{algorithm}
 
 
 % \paragraph{Products of kernels distribute over sums}
@@ -675,7 +666,7 @@ We use separate sets of templates to produce short summaries and detailed descri
 
 \subsection{Ordering additive components}
 
-The reports generated by \procedurename attempt to present the most interesting or important features of a data set first.
+The reports generated by \procedurename{} attempt to present the most interesting or important features of a data set first.
 As a heuristic, we order components by always adding next the component which most reduces the 10-fold mean absolute error (using contiguous blocks) when added to the model.
 %This procedure is iterated to produce a complete ordering.
 
@@ -839,7 +830,7 @@ Solar irradiance data.}
 
 Here we show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011 (figure~\ref{fig:solar}).
 This time series has two pertinent features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
-The \procedurename search procedure and automatic description clearly identify these two features, as discussed below.
+The \procedurename{} search procedure and automatic description clearly identify these two features, as discussed below.
 
 After distributing and simplifying, the kernel corresponding to the first four components is as follows:
 %\vspace{-0.5\baselineskip}
@@ -861,7 +852,7 @@ $\kC + \kCW(\emptyset,\kC) + \kCW(\kSE,\emptyset) + \kCW(\kSE \times \kPer,\empt
 An example of an automatically-generated summary of a dataset.  The dataset is decomposed into diverse structures with simple descriptions.}
 \label{fig:exec}
 \end{figure}
-Figure \ref{fig:exec} shows the natural-language summaries of these components produced by \procedurename.
+Figure \ref{fig:exec} shows the natural-language summaries of these components produced by \procedurename{}.
 %The short descriptions demonstrate how the kernel is split into univariate enveloping functions (from the change windows) and stationary kernels.
 %
 %
@@ -904,42 +895,42 @@ Next, we discuss each component in greater detail.
 
 %A second paragraph explains the improvement in predictive performance gained by including this component in the model. This is the same informatino as included in the executive summary.
 
-\paragraph{Maunder minimum}
+%\paragraph{Maunder minimum}
 
-Figure \ref{fig:maunder} shows that \procedurename has captured the unusual period of decreased solar activity from about 1645 to 1715, and is able to report this in natural language.
-
+Figure \ref{fig:maunder} shows that \procedurename{} has captured the unusual period of decreased solar activity from about 1645 to 1715, and is able to report this in natural language.
+%
 \begin{figure}[ht]
 \centering
 \fbox{\includegraphics[trim=0cm 4.75cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/pg_0005-crop}}
 \caption{Discovering the Maunder minimum.}
 \label{fig:maunder}
 \end{figure}
-
-\paragraph{Long term trend}
-
-Having isolated the Maunder minimum, the model captures the long term trend of the rest of the data, shown in figure~\ref{fig:smooth}.
-
+%
+%\paragraph{Long term trend}
+%
+Having isolated the Maunder minimum, the model captures the long-term trend of the rest of the data, shown in figure~\ref{fig:smooth}.
+%
 \begin{figure}[h!]
 \centering
 \fbox{\includegraphics[trim=0cm 4.75cm 0cm 1cm, clip, width=0.98\columnwidth]{solarpages/pg_0006-crop}}
-\caption{Characterizing the medium-term smoothness of solar activity levels.  By allowing other components to explain the periodicity, noise, and the Maunder minimum, we can isolate the part of the signal best explained by a slowly-varying trend.}
+\caption{Characterizing the medium-term smoothness of solar activity levels.  By allowing other components to explain the periodicity, noise, and the Maunder minimum, \procedurename{} can isolate the part of the signal best explained by a slowly-varying trend.}
 \label{fig:smooth}
 \end{figure}
-
+%
 % is a good example of a meaningful component discovered by \procedurename, whose meaning would be unclear without an individual plot.  
-
-
+%
+%
 %In the history of solar activity, the Maunder minimum is a good example of a local change in covariance.  Specifically, 
 %The changepoint kernels used by \procedurename encode changes in covariance structure.
 %For example, from about 1645 to 1715, solar activity decreased.
 %, and very few sunspots were observed, a period called the Maunder Minimum \citep{lean1995reconstruction}.
 %This feature was captured by the model by multiplying a constant kernel by two changepoint kernels.
-
-\paragraph{Solar cycles}
-
-Figure \ref{fig:periodic} shows that \procedurename has isolated the approximately 11 year solar cycle.
+%
+%\paragraph{Solar cycles}
+%
+Figure \ref{fig:periodic} shows that \procedurename{} has isolated the approximately 11 year solar cycle.
 By examining the parameters of the kernels comprising this component the description identifies that the shape of the periodicity is near sinusoidal and also quantifies how quickly the exact shape of the sinusoid changes.
-
+%
 %with a pair of changepoint kernels.%shows exactly which sort of structure was recovered by this component.
 %
 %\begin{figure}[h!]
@@ -948,7 +939,7 @@ By examining the parameters of the kernels comprising this component the descrip
 %\caption{Characterizing the medium-term smoothness of solar activity levels.  By allowing other components to explain the periodicity, noise, and the Maunder minimum, we can isolate the part of the signal best explained by a slowly-varying trend.}
 %\label{fig:smooth}
 %\end{figure}
-
+%
 %\paragraph{Isolating the smoothly-varying component} Examining the dataset by eye, overall solar activity seems to change slowly over decades.  However, this intuition seems difficult to formalize.  Linear or quadratic regression is clearly inappropriate, and methods based on local smoothing would need to control for the periodic component.  Luckily, the \procedurename procedure does exactly this, allowing us to isolate the slowly-varying component of the data, without having to forecast either the Maunder minimum or the periodic variation.  Figure \ref{fig:smooth} shows the automatically-generated summary of this component.
 
 
@@ -1000,7 +991,7 @@ International airline passenger data.}
 \end{figure}
 
 Next, we present the analysis generated by our procedure on international airline passenger data (figure~\ref{fig:airline}).
-The model constructed by \procedurename has four components: $\kLin + \kSE \times \kPer \times \kLin + \kSE + \kWN \times \kLin$, with descriptions given in figure~\ref{fig:exec-airline}.
+The model constructed by \procedurename{} has four components: $\kLin + \kSE \times \kPer \times \kLin + \kSE + \kWN \times \kLin$, with descriptions given in figure~\ref{fig:exec-airline}.
 %\vspace{-0.5\baselineskip}
 %\begin{itemize}
 %  \itemsep0em
@@ -1010,9 +1001,7 @@ The model constructed by \procedurename has four components: $\kLin + \kSE \time
 %  \item $\kWN \times \kLin$
 %\end{itemize}
 %\vspace{-\baselineskip}
-
-
-
+%
 \begin{figure}[h]
 \centering
 \fbox{\includegraphics[trim=0cm 6.8cm 0cm 6cm, clip, width=0.98\columnwidth]{airlinepages/pg_0002-crop}}
@@ -1020,7 +1009,7 @@ The model constructed by \procedurename has four components: $\kLin + \kSE \time
 Short descriptions and summary statistics for the four components of the airline model.}
 \label{fig:exec-airline}
 \end{figure}
-
+%
 %\paragraph{Monotonic trend}
 %\fTBD{JL: This will change to a linear trend in the official version - unless vetoed}
 %No model in the current language can express a prior over monotonic functions.
@@ -1033,17 +1022,17 @@ Short descriptions and summary statistics for the four components of the airline
 %\label{fig:monotonic}
 %\end{figure}
 
-\paragraph{Annual periodicity with linearly growing amplitude}
+%\paragraph{Annual periodicity with linearly growing amplitude}
 
 The second component (figure~\ref{fig:lin_periodic}) is correctly described as approximately ($\kSE$) periodic ($\kPer$) with linearly growing amplitude ($\kLin$).
-
+%
 \begin{figure}[h]
 \centering
 \fbox{\includegraphics[trim=0cm 4.75cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/pg_0004-crop}}
 \caption{Capturing non-stationary periodicity in the airline data}
 \label{fig:lin_periodic}
 \end{figure}
-
+%
 %\begin{figure}[h]
 %\centering
 %\fbox{\includegraphics[trim=0cm 17cm 0cm 3.5cm, clip, width=0.98\columnwidth]{airlinepages/01-airline-separate-pages-5}}
@@ -1051,11 +1040,11 @@ The second component (figure~\ref{fig:lin_periodic}) is correctly described as a
 %A caption.}
 %\label{fig:exec}
 %\end{figure}
-
-\paragraph{Linear heteroscedasticity}
-
+%
+%\paragraph{Linear heteroscedasticity}
+%
 By multiplying a white noise kernel by a linear kernel, the model is able to express heteroscedasticity (figure~\ref{fig:heteroscedastic}).
-
+%
 \begin{figure}[h]
 \centering
 \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/pg_0006-crop}}
@@ -1065,19 +1054,20 @@ By multiplying a white noise kernel by a linear kernel, the model is able to exp
 
 \subsection{Comparison to equation learning}
 
-Much of machine learning research focuses on numerical performance, with claims of interpretability generated post-hoc.
-In contrast, equation learning \citep[e.g.][]{Schmidt2009b} can also be used to automate interpretation.
+%Much of machine learning research focuses on numerical performance, with claims of interpretability generated post-hoc.
+%In contrast, equation learning \citep[e.g.][]{Schmidt2009b} can also be used to automate interpretation.
 
-We include learned equations for these two data sets produced using Eureqa \citep{Eureqa} using the default mean absolute error performance metric\footnotemark.
-\footnotetext{We experimented with the root mean squared error with Akaike information criterion penalisation (analogous to the criterion used by \procedurename) but occasionally observed severe overfitting.}
-%However, it is very unlikely that these data sets can be explained parsimoniously with a parametric function.\fTBD{JL: Remove sentence?}
+Eureqa \citep{Eureqa} is a system capable of producing parametric descriptions of time-series.
+Here, we show equations produced by Eureqa for the data sets shown above, using the default mean absolute error performance metric.
+%\footnotetext{We experimented with the root mean squared error with Akaike information criterion penalisation (analogous to the criterion used by \procedurename{}) but occasionally observed severe overfitting.}
+
 
 The learned equation for the solar irradiance data is
 \begin{align*}
 \textrm{Irradiance($t$)} = 1361 + \alpha\sin(\beta + \gamma t)\sin(\delta + \epsilon t^2 - \zeta t)
 \end{align*}
-where $t$ is time (the input to the regression) and we have replaced most constants with symbols for brevity.
-This equation captures the constant offset of the data and models the long term trends with a product of sinusoids but fails to capture the solar cycle or the Maunder-minimum.
+where $t$ is time (the input to the regression) and constants are replaced with symbols for brevity.
+This equation captures the constant offset of the data, and models the long term trends with a product of sinusoids, but fails to capture the solar cycle or the Maunder-minimum.
 
 The learned equation for the airline passenger data is
 \begin{align*}
@@ -1095,7 +1085,7 @@ However, the periodicity is heavily approximated with only a single sinusoid and
 
 \paragraph{Building Structured Covariance Functions}
 \cite{rasmussen38gaussian} devote 4 pages to manually constructing a complex kernel to model the time series of Mauna Loa carbon dioxode conentrations over time.
-A report automatically generated by \procedurename on this data set is included in the supplementary material and discovers a very similar model. 
+A report automatically generated by \procedurename{} on this data set is included in the supplementary material and discovers a very similar model. 
 Other examples of papers whose main contribution is to use domain knowledge to manually construct and fit a compound \gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}.
 
 \paragraph{Equation learning}
@@ -1104,12 +1094,12 @@ Other examples of papers whose main contribution is to use domain knowledge to m
 %Previous work has considered searching over parametric functions \citep[e.g.][]{Schmidt2009b}.
 %Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
 \cite{schmidt2009distilling}, \cite{todorovski1997declarative} and \cite{washio1999discovering} learn parametric forms of equations specifying time series, or relations between quantities.
-In constrast, \procedurename learns a parametric form of the covariance allowing it to model functions without a simple parametric form.
+In constrast, \procedurename{} learns a parametric form of the covariance allowing it to model functions without a simple parametric form.
 %Because our system specifies the more general\fTBD{JL: Sounds like we are claiming we are a super set of equation learning - we need more kernels to make this claim} covariance structure rather than the functions themselves, we are able to capture structure which does not have a simple parametric form.
 
 \paragraph{Searching over statistical models}
 
-The line of work leading to \procedurename was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
+The line of work leading to \procedurename{} was originally inspired by the search over matrix factorisation models by \cite{grosse2012exploiting}.
 Automatic model search is possible whenever the following conditions are met: 1) we can define a large space of models by combining a small number of components in a small number of different ways; 2) inference can be performed for all models in this space; 3) a basic search procedure is sufficient to find accurate models.
 These conditions were also met for example in \citet{kemp2008discovery} who learned the structural form of a graph used to model human similarity judgments.  
 
@@ -1137,10 +1127,10 @@ However, grammar-based techniques have previously been used to automatically und
 
 Our space of \gp{} models is closely based on that of \citet{DuvLloGroetal13}, with several improvements which yield more interpretable models. We briefly summarize the differences and the motivations for them:
 \begin{itemize}
-\item We added the changepoint and window operators, which capture phenomena which occur only during certain time periods.
+\item We added changepoint and window operators, which capture structure occuring only during certain time periods.
 \item We introduced the white noise kernel ($\kWN$); combined with linear kernels or changepoints, this can produce heteroskedastic models, i.e.~ones with time-varying noise.
-\item We added the constant kernel ($\kC$) explicitly, rather than implicitly adding a constant function to all kernels. This allows constant components to be reported separately in the reports.
-\item We replaced the periodic kernel with a more flexible one which includes the cosine kernel of \citet{WilAda13} as a limiting case. \citet{WilAda13} demonstrated that any stationary kernel can be approximated as a sum of kernels of this form.
+\item We added the constant kernel ($\kC$) explicitly, rather than implicitly adding a constant function to all kernels. This allows constant components to be reported separately.% in the reports.
+\item We replaced the periodic kernel with a more flexible one which includes the cosine kernel as a limiting case. \citet{bochner1959lectures} demonstrated that any stationary kernel can be approximated as a sum of kernels of this form.
 \end{itemize}
 
 
@@ -1150,16 +1140,16 @@ Our space of \gp{} models is closely based on that of \citet{DuvLloGroetal13}, w
 \section{Predictive Accuracy}
 \label{sec:numerical}
 
-To complement our demonstration of the interpretability of \procedurename, we compared the predictive accuracy of various model-building algorithms at interpolating and extrapolating time-series.
-\procedurename outperforms the other methods on average (\eg as measured by quantiles of performance metrics).
-\NA{However, the variability of the results suggests that there is room to improve the robustness of \procedurename.}
-\fTBD{JL: I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
+To complement our demonstration of the interpretability of \procedurename{}, we compared the predictive accuracy of various model-building algorithms at interpolating and extrapolating time-series.
+On these datasets, \procedurename{} on average outperforms the other methods.% on average (\eg as measured by quantiles of performance metrics).
+%\NA{However, the variability of the results suggests that there is room to improve the robustness of \procedurename.}
+%\fTBD{JL: I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
 
-\subsection{Data sets}
+\paragraph{Data sets}
 
 In addition to the three time series analysed by \cite{DuvLloGroetal13} we evaluate the performance of the algorithms listed below on 10 additional time series from the time series data library \citep{TSDL}; plots of the data can be found at the beginning of the reports in the supplementary material\fTBD{Assuming all the reports fit within size constraints}.
 
-\subsection{Algorithms}
+\paragraph{Algorithms}
 
 We compare the structure search algorithm to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms; linear regression, \gp{} regression with a single $\kSE$ kernel (squared exponential), a Bayesian variant of multiple kernel learning \citep[e.g.][]{bach2004multiple}-, change point modelling (CP) / multi resolution Gaussian processes \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels (SP) \citep{WilAda13} and trend-cyclical-irregular (TCI) \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
 
@@ -1171,30 +1161,30 @@ For MKL, trend-cyclical-irregular and spectral kernels this corresponds to a for
 We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.
 Producing model construction algorithms for this class of time-series model would be an interesting area for future research.
 
-\subsection{Model Search and Inference}
+\paragraph{Model Search and Inference}
 
-As in \citep{DuvLloGroetal13}, \procedurename searched through models using a greedy search, using exact \gp{} inference to evaluate marginal likelihood, and conjugate gradient descent to optimize kernel parameters.
-%In these experiments, \procedurename uses exact \gp{} inference,  \cite{DuvLloGroetal13} but we introduce new search operators to accommodate the changepoint and change window operators.
+As in \citep{DuvLloGroetal13}, \procedurename{} searched through models using a greedy search, using exact \gp{} inference to evaluate marginal likelihood, and conjugate gradient descent to optimize kernel parameters.
+%In these experiments, \procedurename{} uses exact \gp{} inference,  \cite{DuvLloGroetal13} but we introduce new search operators to accommodate the changepoint and change window operators.
 The search operators used are provided in the supplementary material.
 
-\subsection{Interpretability versus accuracy}
+\paragraph{Interpretability versus accuracy}
 
 Since the process of describing a model always converts a kernel into a sum of products we experimented with always keeping the kernel in this form.
 After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression.
-This variant (\procedurename interpretability) of the search tends to produce models with fewer additive components improving interpretability.
-We also include the unrestricted version of the search (\procedurename accuracy) which tends to produce models that are better at extrapolation and interpolation.
+This variant (\procedurename{} interpretability) of the search tends to produce models with fewer additive components improving interpretability.
+We also include the unrestricted version of the search (\procedurename{} accuracy) which tends to produce models that are better at extrapolation and interpolation.
 %
 %The research leading up to this manuscript has focused on interpretability.
 %One could almost certainly improve the numerical results presented in this section by reintroducing $\kRQ$ and including Mat\'ern kernels as well as others.
 We leave a full exploration of the interpretability / accuracy trade-off for future work.
 
-\subsection{Extrapolation}
+\paragraph{Extrapolation}
 
 To test extrapolation we trained all algorithms on the first 90\% of the data, and attempted to predict the remaining 10\% and then computed the root mean squared error (RMSE).
-The values of the RMSEs are then standardised by dividing by the smallest RMSE for each data set \ie the best performance on each data set will have a value of 1.
-
+The RMSEs are then standardised by dividing by the smallest RMSE for each data set, so that the best performance on each data set will have a value of 1.
+%
 Figure~\ref{fig:box_extrap_dist} shows the standardised RMSEs across algorithms.
-Both versions of \procedurename have lower quartiles than all other methods but the outliers of \procedurename, TCI and SP have similar values.
+%Both versions of \procedurename{} have lower quartiles than all other methods but the outliers of \procedurename{}, TCI and SP have similar values.
 
 \begin{figure*}[ht]
 \centering
@@ -1206,12 +1196,12 @@ Ordered by median.
 \label{fig:box_extrap_dist}
 \end{figure*}
 
-Overall, the model construction methods with the greater capacity perform better \eg trend cyclical irregular outperforms Bayesian MKL which outperforms squared exponential.
-Eureqa performs relatively poorly since very few datasets are well explained by a parametric equation.
+Overall, the model construction methods with the greater capacity perform better: trend-cyclical-irregular outperforms Bayesian MKL, which outperforms squared exponential.
+Eureqa performs relatively poorly, since very few datasets are well explained by a parametric equation.
 
 Not shown on the plot are large outliers for spectral kernels, Eureqa, squared exponential and linear regression with values of 11, 493, 22 and 29 respectively.
 All of these outliers occurred on a data set with a large and sharp discontinuity (see the call centre data in the supplementary material).
-All methods attempted to model this discontinuity using inappropriate components resulting in wild predictions.
+%All methods attempted to model this discontinuity using inappropriate components resulting in wild predictions.
 
 %Also not shown on the plot is a very large outlier for EL of 493 (this was also on the call centre data).
 %However, EL was the best performing algorithm on the wages dataset which shows an exponential increase after the industrial revolution.
@@ -1229,6 +1219,9 @@ To test the ability of the methods to interpolate, we randomly divided each data
 The results are similar to those for extrapolation, can be found in the supplementary material.
 
 
+
+
+
 \section{Discussion}
 
 Towards the goal of automating the process of statistical analysis we have introduced a system that can automatically construct and describe complex statistical models.
@@ -1237,27 +1230,24 @@ We have also demonstrated that out procedure has competitive extrapolation and i
 
 %Thinking towards extending this line of work many questions and challenges are raised which we briefly outline.
 
-\paragraph{Accuracy versus interpretability}
-
-Typical machine learning research focuses on numerical performance rather than interpretability, likely due to the difficulty of assessing the interpretability of a method in an objective manner.
-Requiring that statistical models can be automatically described constrains the models that can be used over and above the traditional constraints of tractability.
+%\paragraph{Accuracy versus interpretability}
+% DD: we already talk about this in the experimental section
+%Typical machine learning research focuses on predictive performance rather than interpretability, likely due to the difficulty of assessing the interpretability of a method in an objective manner.
+%Requiring that statistical models can be automatically described constrains the models that can be used over and above the traditional constraints of tractability.
 
 %\paragraph{A sufficiently large class of models}
 %To be non-trivial.
 
-\paragraph{Computational complexity}
-\fTBD{JL,DD: This can potentially be shortened - or even removed}
-\fTBD{JL: At the least it should not be a verbatim quote of JBT}
-%If the search space is large, how do we search it without a supercomputer?
-The \procedurename procedure is embarassingly parallel, and can be run overnight on a cluster.
-This is computationally expensive compared to fitting only one or a small number of models.
-However, this computational cost may be reasonable when compared to the cost of having a human researcher iteratively propose, fit, and refine a series of models, especially when one considers the size and scope of the space of models that is searched, and the fact that all steps of model construction, evaluation and search are automatic.
-%, it doesn't seem like such an expensive process.
+%\paragraph{Computational complexity}
+%\fTBD{JL,DD: This can potentially be shortened - or even removed}
+%\fTBD{JL: At the least it should not be a verbatim quote of JBT}
+%\procedurename{} is embarassingly parallel, and can be run overnight on a cluster.
+%This is computationally expensive compared to fitting only one or a small number of models.
+%However, this computational cost may be reasonable when compared to the cost of having a human researcher iteratively propose, fit, and refine a series of models, especially when one considers the size and scope of the space of models that is searched, and the fact that all steps of model construction, evaluation and search are automatic.
 
-
-In our experience, working statisticians, machine learners, and data scientists rarely if ever explore such a space so systematically, partly because of the cost in terms of both their own time and computation time.
-The artificial intellgience presented in this paper is still quite primitive and naive, and the space of models we can consider automatically is still quite limited compared to what humans can do.
-However, in evaluating the limitations of these methods, and prospects for future work of this sort, other factors might loom larger than computational efficiency.
+%In our experience, working statisticians, machine learners, and data scientists rarely if ever explore such a space so systematically, partly because of the cost in terms of both their own time and computation time.
+%The artificial intellgience presented in this paper is still quite primitive and naive, and the space of models we can consider automatically is still quite limited compared to what humans can do.
+%However, in evaluating the limitations of these methods, and prospects for future work of this sort, other factors might loom larger than computational efficiency.
 
 
 

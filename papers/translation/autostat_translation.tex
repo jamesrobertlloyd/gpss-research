@@ -197,7 +197,17 @@ Several methods have been proposed for automatically constructing structured non
 Unfortunately, the outputs of their procedure still required analysis and interpretation by human experts.
 %In that work, components discovered by the automatic model search were interpreted post-hoc by the authors.
 
+Consider what would be required for a system that automates enough of this process to be usable by non-experts:
+\begin{itemize}
+\item {\bf An open-ended language of models} which is expressive enough to capture many of the modeling assumptions and model construction techniques applied by human statisticians
+\item {\bf A search procedure} which proposes promising models to fit based on the results of fitting previous models
+\item {\bf Methods for evaluating the fit of a model} in terms of the complexity of the model and the degree of fit to the data
+\item {\bf Automatic generation of reports} which explain and visualize different factors underlying the data, make explicit the chosen modeling assumptions, and quantify how each component improves the predictive power of the model
+\end{itemize}
+
+
 In this manuscript, we present a procedure which uses the compositional structure of Gaussian process kernels to automatically produce natural-language descriptions of patterns in a data set.
+This procedure fulfills all four of the desiderata listed above.
 %demonstrate that the compositional structure of Gaussian process models allows for the automatic natural-language description of patterns within a data set.
 Given a data set, it runs an open-ended model search and produces a detailed report describing the structures it discovered. % \ie the interpretable models are automatically interpreted!
 %
@@ -213,8 +223,8 @@ The supplementary material to this paper includes 13 complete reports generated 
 \label{fig:periodic}
 \end{figure}
 
-We also\fTBD{RBG: This makes it sound like an independent contribution. Any way to tie it together with the natural language stuff, e.g.~evidence that the changes improve interpretability?} extend and refine the components used in the model construction process to improve the expressivity and interpretability of the models.
-This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and multiple kernel learning \citep[e.g.][]{bach2004multiple}.
+%We also\fTBD{RBG: This makes it sound like an independent contribution. Any way to tie it together with the natural language stuff, e.g.~evidence that the changes improve interpretability?} extend and refine the components used in the model construction process to improve the expressivity and interpretability of the models.
+%This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and multiple kernel learning \citep[e.g.][]{bach2004multiple}.
 
 %Finally, we demonstrate that the extended model construction procedure is comparable or superior to other model construction techniques at extrapolation tasks.
 As a test of our procedure's ability to model the underlying structure of a dataset, we compare our procedure against existing model construction techniques on a variety of extrapolation tasks. We find comparable or superior performance. We believe our system is a step towards automating much of the process of model construction, fitting, and analysis, and should allow a broader range of non-experts to fit and interpret nonparametric regression models.
@@ -222,6 +232,7 @@ As a test of our procedure's ability to model the underlying structure of a data
 
 
 
+\iffalse
 
 \section{Ingredients of an automatic statistician}
 \label{sec:ingredients}
@@ -265,31 +276,52 @@ demonstrate that the properties of Gaussian processes allow for a modular descri
 %This modularity means that a large class of statistical structures can explained, without resorting to writing a special case for every possible structure in our open-ended set of models.
 Whether or not such modularity and interpretability is present in other open-ended model classes is an open question.
 
+\fi
+
 \section{A language of regression models}
 \label{sec:improvements}
 
-\subsection{Gaussian processes}
 
-Gaussian processes (\gp{}) \citep{rasmussen38gaussian} can be used to perform Bayesian nonparametric regression.
-A \gp{} regression model uses a kernel function, ${\kernel : \mathcal{X}^2 \to \mathbb{R}}$, to define the prior covariance between any two function values, $\outputVar, \outputVar'$ evaluated at two inputs, $\inputVar,\inputVar'$ \ie ${\textrm{Cov}(\outputVar, \outputVar') = \kernel(\inputVar,\inputVar')}$.
-The kernel specifies which structures are likely under the \gp{} prior, which in turn determines the generalisation properties of the model.
 
-Different kernels can express a wide variety of structures that one might expect to find in functions.
-For example, a \gp{} with a squared-exponential kernel ($\kSE$) corresponds to a prior on smooth functions.
-Similarly, a \gp{} with a periodic kernel ($\kPer$) or linear kernel ($\kLin$) corresponds to a prior on periodic functions or linear functions respectively.
-Definitions of all kernels are provided in the supplementary material.
+%\subsection{Gaussian processes}
 
-\subsection{Compositional model building using kernels}
+Gaussian processes (\gp{}) \citep{rasmussen38gaussian} are distributions over functions such that the values evaluated at any finite set of points are jointly Gaussian.
+Because of their flexibility, they are commonly used for nonparametric regression.
+A \gp{} regression model is specified in terms of a kernel function ${\kernel : \mathcal{X}^2 \to \mathbb{R}}$, which defines the covariance between the function values $(\outputVar, \outputVar')$ evaluated at two inputs $(\inputVar,\inputVar')$, \ie ${\textrm{Cov}(\outputVar, \outputVar') = \kernel(\inputVar,\inputVar')}$.
+Because the kernel determines which structures are likely under the \gp{} prior, it determines the model's patterns of generalization.
 
-To express richer structures, new kernels can be constructed by taking products of existing ones.
-For example, the kernel $\kSE \times \kPer$ puts mass on functions which are locally periodic.
-Additive models can also be constructed by taking sums of kernels.
-For example, a \gp{} with kernel $\kSE + \kLin$ corresponds to a prior on smooth functions with a linear trend.
+\citet{DuvLloGroetal13} presented a space of Gaussian process kernels defined compositionally through addition and multiplication of a handful of simple kernels.
+In this work, we focus on a similar space of models, but with improvements which are discussed in section~\ref{sec:related-work}. 
 
-These ideas were exploited by \citet{DuvLloGroetal13},  who introduced the Gaussian process structure search procedure (GPSS).
-GPSS searches over sums and products of a set of simple base kernels to produce an appropriate model for a data set.
+The buildling blocks of our model space are a handful of ``base'' kernel families with simple parametric forms. Each kernel family has one or more parameters; when the parameters are specified, it defines a kernel function. Each kernel family favors particular kinds of structure; e.g., a \gp{} with a squared-exponential kernel (denoted $\kSE$) favors smooth functions, while a \gp{} with a periodic kernel ($\kPer$) favors periodic functions. The full set of base kernel families is given in Table~{\bf TODO}.
+
+Because the set of kernel functions is closed under addition and multiplication, any algebraic expression consisting of $+$, $\times$, and base kernel families defines a kernel family. 
+Such composite kernels can describe richer structures not representable by the base kernels.
+For example, the kernel $\kSE \times \kPer$ puts mass on functions which are locally periodic, while a \gp{} with kernel $\kSE + \kLin$ corresponds to a prior on smooth functions with a linear trend. The procedure of \citet{DuvLloGroetal13} automatically searched over the space of composite kernels (represented as algebraic expressions), where the search operators consisted of modifying sub-expressions. 
 By combining kernels, the search procedure was able to construct novel nonparametric regression models.
 For example, when applied to airline passenger data (see `describing heteroscedasticity'), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``approximately periodic, with linearly growing amplitude''.
+
+While the procedure of \citet{DuvLloGroetal13} was able to decompose a variety of datasets into interpretable components, interpreting the final models required human time, expertise, and judgment. Our contribution is a method of automatically generating natural language reports from the outputs of a GP structure search system.
+
+{\bf TODO: introduce ABCD}
+
+
+%Different kernels can express a wide variety of structures that one might expect to find in functions.
+%For example, a \gp{} with a squared-exponential kernel ($\kSE$) corresponds to a prior on smooth functions.
+%Similarly, a \gp{} with a periodic kernel ($\kPer$) or linear kernel ($\kLin$) corresponds to a prior on periodic functions or linear functions respectively.
+%Definitions of all kernels are provided in the supplementary material.
+
+%\subsection{Compositional model building using kernels}
+
+%To express richer structures, new kernels can be constructed by taking products of existing ones.
+%For example, the kernel $\kSE \times \kPer$ puts mass on functions which are locally periodic.
+%Additive models can also be constructed by taking sums of kernels.
+%For example, a \gp{} with kernel $\kSE + \kLin$ corresponds to a prior on smooth functions with a linear trend.
+
+%These ideas were exploited by \citet{DuvLloGroetal13},  who introduced the Gaussian process structure search procedure (GPSS).
+%GPSS searches over sums and products of a set of simple base kernels to produce an appropriate model for a data set.
+
+\iffalse
 
 In the rest of this section we extend the language defined by GPSS to include a greater variety of regression motifs.
 We also reparametrise the base kernels resulting in clearer decompositions and descriptions of the models produced.
@@ -361,6 +393,8 @@ Syntax of common regression motifs expressible in our language.
 \end{table}
 
 %In section~\ref{sec:example_description} we demonstrate the natural-language descriptions of some of these kernel forms.
+
+\fi
 
 \section{Automatic natural-language description of regression models}
 \label{sec:description}
@@ -1042,6 +1076,7 @@ However, the periodicity is heavily approximated with only a single sinusoid and
 
 
 \section{Related work}
+\label{sec:related-work}
 
 \paragraph{Building Structured Covariance Functions}
 \cite{rasmussen38gaussian} devote 4 pages to manually constructing a complex kernel to model the time series of Mauna Loa carbon dioxode conentrations over time.
@@ -1083,7 +1118,15 @@ For example, \cite{VikashScene13} automatically searches over models of 2D scene
 To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.
 However, grammar-based techniques have previously been used to automatically understand images \cite{zhu2007stochastic} and recently \citet{GanesalingamG13} produced a theorem proving system that expresses its proofs in natural language.
 
+\subsection{Improvements to the previous grammar}
 
+Our space of \gp{} models is closely based on that of \citet{DuvLloGroetal13}, with several improvements which yield more interpretable models. We briefly summarize the differences and the motivations for them:
+\begin{itemize}
+\item We added the changepoint and window operators, which capture phenomena which occur only during certain time periods.
+\item We introduced the white noise kernel ($\kWN$); combined with linear kernels or changepoints, this can produce heteroskedastic models, i.e.~ones with time-varying noise.
+\item We added the constant kernel ($\kC$) explicitly, rather than implicitly adding a constant function to all kernels. This allows constant components to be reported separately in the reports.
+\item We replaced the periodic kernel with a more flexible one which includes the cosine kernel of \citet{WilAda13} as a limiting case. \citet{WilAda13} demonstrated that any stationary kernel can be approximated as a sum of kernels of this form.
+\end{itemize}
 
 
 

@@ -185,8 +185,9 @@ The procedure contains many standard regression techniques as special cases, lea
 
 %Simple parametric regression models such as linear regression are usually easy to interpret, requiring only a table of regression coefficients and a few other parameters to describe a model.
 %However, simple parametric models such as linear regression may often be too simple to accurately describe many data sets.
-Many datasets are too complex to be accurately described by simple parametric models such as linear regression.
-Non-parametric regression models are flexible enough to model complex distributions over observables, but their construction can require considerable expertise, and understanding the structures discovered by such methods still requires analysis and interpretation by human experts.
+One aim of statistics is to produce accurate and concise descriptions of data which yield insight into underlying sources of variability.
+%Many datasets are too complex to be accurately described by simple parametric models such as linear regression.
+Non-parametric regression models such as Gaussian processes are flexible enough to model complex nonlinear phenomena. Unfortunately, their design and interpretation can require considerable human time and expertise, and the results are inevitably filtered through the preconceived notions of the researchers.
 %Moreover, non-parametric models can be difficult to summarize, since the fitted parameters (e.g.~bandwidths or typical lengthscales) relate only indirectly to the data.
 %with fitted parameters corresponding only to very high level concepts such as bandwidths or typical lengthscales.
 %typically require graphical descriptions of their fit, since any text description would be overly simplistic (\eg `a smooth function') and fitted parameters correspond only to very high level concepts such as bandwidths or typical lengthscales.
@@ -196,7 +197,7 @@ Non-parametric regression models are flexible enough to model complex distributi
 %Unfortunately, the outputs of their procedure .
 %In that work, components discovered by the automatic model search were interpreted post-hoc by the authors.
 
-Consider what would be required for a system that automates enough of this process to be usable by non-experts:
+Consider what would be required of a system that automates enough of the modeling process to be usable by non-experts and to avoid the biases of human interpretation:
 \begin{itemize}
 \item {\bf An open-ended language of models} which is expressive enough to capture many of the modeling assumptions and model construction techniques applied by human statisticians
 \item {\bf A search procedure} which proposes promising models to fit based on the results of fitting previous models

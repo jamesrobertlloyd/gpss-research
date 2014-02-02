@@ -573,7 +573,7 @@ The remaining terms in the product each contribute modifiers to the noun phrase.
 \item {\bf $\kSE$ kernels.}
 $\kSE$ encodes for a local covariance structure since $\kSE(x, x') \to 0$ as $|x - x'| \to \infty$ \ie distant points are uncorrelated.
 Multiplying by $\kSE$ removes any long range correlation; it modifies the covariance structure to hold only locally.
-In our small language $\kSE$ only acts as a modifier when $\kPer$ is present which can be described as making the periodicity `approximate'.
+In our small language $\kSE$ only acts as a modifier when $\kPer$ is present which is described as making the periodicity `approximate'.
 %For example, $\kPer$ encodes for exactly periodic functions but $\kSE \times \kPer$ encodes for locally / quasi / approximately periodic functions since distant points are uncorrelated whilst close points have approximately the same covariance structure as $\kPer$.\fTBD{JL: Long sentence}
 %As noted above, multiplying the $\kSE$ kernel by any other kernel $K$ causes the structure implied by $K$ to hold only locally. \fTBD{JL: This can be justified by explaining that the covariance goes to zero}
 %We modify the description depending on the lengthscale of the $\kSE$ kernel to indicate just how locally the property holds.
@@ -581,11 +581,11 @@ In our small language $\kSE$ only acts as a modifier when $\kPer$ is present whi
 %\paragraph{Multiplication by $\kLin$ kernels}
 \item {\bf $\kLin$ kernels.}
 $\kLin$ has the form $k(x,x') = a(x)a(x')$.
-This can be used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
+This is used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
 Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
 Therefore multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) \sim \gp{}(0, k)$ by a linear function.
-Rather than describing this multiplication literally its effect can be described as \eg `lineary growing standard deviations'.
-Similarly, multiplication by $\kLin^n$ can be described as `polynomially varying amplitude'.
+Rather than describing this multiplication literally its effect is described as \eg `lineary growing standard deviations'.
+Similarly, multiplication by $\kLin^n$ is described as `polynomially varying amplitude'.
 
 We include a special case when $\kPer$ is the head noun \eg `linearly growing amplitude' to produce more natural sounding text.
 In an expanded version of this language it may be desirable to allow all modifiers to depend on the head noun.
@@ -596,10 +596,12 @@ In an expanded version of this language it may be desirable to allow all modifie
 
 %\paragraph{Multiplication by changepoints}
 \item {\bf Changepoints.}
+
 The $\boldsymbol\sigma_m$ in equation~\eqref{eq:sop} represent products of sigmoids which also have the form $a(x)a(x')$ and therefore could also be described as multiplication of functions.
 For simplicity we describe these sigmoids as step functions\footnotemark.
 These step functions can be represented as intervals (\ie where their value is 1), and their product is equivalent to taking the intersection of intervals.
 Computing the intersection is trivial and descriptions can be templated as \eg `this function applies from [start] until [end]'.
+
 
 \footnotetext{The parameters of the sigmoids are restricted to make the sigmoids steep and therefore this approximation is not too severe.}
 
@@ -669,7 +671,7 @@ This is converted to a sum of products:
 \begin{align*}
 \kSE \times \kWN \times \kLin + \boldsymbol{\sigma} \times\kSE \times \kC + \boldsymbol{\bar\sigma} \times\kSE \times \kPer.
 \end{align*}
-which can be simplified to
+which is simplified to
 \begin{align*}
 \kWN \times \kLin + \kSE \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}.
 \end{align*}
@@ -678,9 +680,9 @@ which can be simplified to
 
 To descibe the first component, the head noun template for $\kWN$, `uncorrelated noise', is concatenated with a modifier template (chosen based on parameter values) for $\kLin$, `with linearly increasing standard deviation'.
 %
-The second component could be described as `A smooth function with a lengthscale of [lengthscale] [units]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\boldsymbol{\sigma}$.
+The second component is described as `A smooth function with a lengthscale of [lengthscale] [units]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\boldsymbol{\sigma}$.
 %
-Finally, the third component could be described as `An approximately periodic function with a period of [period] [units] which applies from [changepoint]'.
+Finally, the third component is described as `An approximately periodic function with a period of [period] [units] which applies from [changepoint]'.
 
 %\subsection{Breaks from modularity and other corner cases}
 

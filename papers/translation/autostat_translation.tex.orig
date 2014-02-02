@@ -1167,7 +1167,6 @@ Our space of \gp{} models is closely based on that of \citet{DuvLloGroetal13}, w
 \begin{figure*}[ht]
 \centering
 \includegraphics[width=\textwidth]{figures/box_extrap_wide}
-\vspace{-0.8cm}
 \caption{
 Raw data, and box plot of standardised extrapolation RMSE (best performance = 1).
 Ordered by median.
@@ -1190,7 +1189,7 @@ We compare the structure search algorithm to equation learning using Eureqa \cit
 
 We use the default mean absolute error criterion when using Eureqa.
 All other algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark~(Bayesian information criterion) with appropriate restrictions to the grammar.
-For MKL, trend-cyclical-irregular and spectral kernels this corresponds to a forward-selection algorithm.
+For MKL, trend-cyclical-irregular and spectral kernels this corresponds to a forward selection algorithm.
 \footnotetext{We experimented with using unpenalised conditional likelihood as the search criterion for other methods but observed overfitting as is to be expected.} 
 
 We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.

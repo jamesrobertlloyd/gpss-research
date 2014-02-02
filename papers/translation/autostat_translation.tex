@@ -516,7 +516,7 @@ where $\prod_i \kernel_i$ is one of $\kWN, \kC, \kSE, \kPer^n$ or $\kSE\times\kP
 
 % Each additive component in a kernel expression corresponds to a different additive function in the model, and can be described separately.  Formally, if $f_1(x) \dist \gp{}(0, \kernel_1)$ and $f_2(x) \dist \gp{}(0, \kernel_2)$ then $f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)$.
 
-\paragraph{Description of a product of kernels is modular}
+\paragraph{Describing a product of kernels}
 
 Each product of kernels is described as a noun phrase of the form
 \begin{align*}
@@ -532,32 +532,45 @@ As an example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \bol
 \end{align*}
 where $\kPer$ has been selected as the head noun.
 
-In principle, any assignment of kernels in a product to these different phrasal roles is possible, but in practice, certain assignments produce much more interpretable phrases than others.  
-Our language is currently small enough that simple heuristics can be used to select which kernel in a given product is assigned to the head noun and which are assigned to pre- and post-modifiers in which order, to produce maximally intelligible and natural-sounding text.
-
-\paragraph{Selecting the head noun and ordering modifiers}
-
-The head noun is chosen according to the following ordering
+In principle, any assignment of kernels in a product to these different phrasal roles is possible, but in practice, we found certain assignments to produce more interpretable phrases than others.  
+%Our language is currently small enough that simple heuristics can be used to select which kernel in a given product is assigned to the head noun and which are assigned to pre- and post-modifiers in which order, to produce maximally intelligible and natural-sounding text.
+%\paragraph{Selecting the head noun and ordering modifiers}
+The head noun is chosen according to the following ordering:
 \begin{align*}
 \kPer > \kWN, \kSE, \kC > \prod_j \kLin_j > \prod_m \boldsymbol\sigma_m
 \end{align*}
 \ie $\kPer$ is always chosen as the head noun when present.
-Products of $\kLin$ and $\boldsymbol\sigma$ can always be intelligbly described as postmodifiers (see below).
-$\kSE$ is the only other kernel that acts as a modifier (when multiplied by $\kPer$) in our small language; when it does so it acts as a premodifier.
+This ordering is based on our intuitive judgment of which component contributes the most to the overall structure of the kernel; e.g., $\kSE \times \kPer$ is more similar to $\kPer$ than to $\kSE$, and $\kLin \times \kSE$ is more similar to $\kSE$ than to $\kLin$.
+%Products of $\kLin$ and $\boldsymbol\sigma$ can always be intelligbly described as postmodifiers (see below).
+%$\kSE$ is the only other kernel that acts as a modifier (when multiplied by $\kPer$) in our small language; when it does so it acts as a premodifier.
 
-\paragraph{Head noun descriptions of kernels}
+%\paragraph{Head noun descriptions of kernels}
 
 The head noun descriptions of kernels are simply descriptions of the \gp{} prior represented by the kernel on its own.
 These priors are well understood and templates can be constructed from standard reference materials \citep[e.g.][]{rasmussen38gaussian}.
-For example, $\kSE$ produces a `smooth function' and $\kLin^n$ produces a `polynomial of degree $n$'.
+%For example, $\kSE$ produces a `smooth function' and $\kLin^n$ produces a `polynomial of degree $n$'.
+In particular, we use the following head nouns {\bf [[TODO: is head noun the right terminology, since these are noun phrases?]]}:
+
+\begin{tabular}{ll}
+$\kPer$ & periodic function \\
+$\kSE$ & smooth function \\
+$\kWN$ & uncorrelated noise \\
+$\kC$ & constant \\
+$\kLin$ & linear function \\
+$\kLin^n$ & polynomial of degree $n$ ($n \geq 2$) \\
+\end{tabular}
 
 %Clearly, there are many issues with word order, and many special cases are necessary.\fTBD{JL: Weak and imprecise}
 %For example, a special case is required to describe each kernel on its own.
 %However, the modularity of descriptions of products of kernels prevents an exponential blowup in the number of special cases necessary.
 %The following sections detail how we describe each type of kernel in the above expansions.
 
-\paragraph{Multiplication by $\SE$ kernels}
+The remaining terms in the product each contribute modifiers to the noun phrase. Because $\kPer$ kernels are always chosen as the head noun and $\kC$ terms are absorbed into other kernels, the only terms which can contribute modifiers are $\kSE$, $\kLin$, and changepoints.\footnote{While products of multiple $\kPer$ kernels are technically possible, we found this to be rare, so we omit this case for brevity.} The modifiers are as follows:
 
+\begin{itemize}
+
+%\paragraph{Multiplication by $\SE$ kernels}
+\item {\bf $\kSE$ kernels.}
 $\kSE$ encodes for a local covariance structure since $\kSE(x, x') \to 0$ as $|x - x'| \to \infty$ \ie distant points are uncorrelated.
 Multiplying by $\kSE$ removes any long range correlation; it modifies the covariance structure to hold only locally.
 In our small language $\kSE$ only acts as a modifier when $\kPer$ is present which can be described as making the periodicity `approximate'.
@@ -565,7 +578,8 @@ In our small language $\kSE$ only acts as a modifier when $\kPer$ is present whi
 %As noted above, multiplying the $\kSE$ kernel by any other kernel $K$ causes the structure implied by $K$ to hold only locally. \fTBD{JL: This can be justified by explaining that the covariance goes to zero}
 %We modify the description depending on the lengthscale of the $\kSE$ kernel to indicate just how locally the property holds.
 
-\paragraph{Multiplication by $\kLin$ kernels}
+%\paragraph{Multiplication by $\kLin$ kernels}
+\item {\bf $\kLin$ kernels.}
 $\kLin$ has the form $k(x,x') = a(x)a(x')$.
 This can be used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
 Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
@@ -580,8 +594,8 @@ In an expanded version of this language it may be desirable to allow all modifie
 
 %The product of any number of linear kernels is simply a polynomial, so the contribution of any such products of kernels can be described by appending ``with linearly growing amplitude'', ``with quadratically growing amplitude'', etc.\ with the location of the roots of these polynomials described by appending ``growing away from $x_1$''.
 
-\paragraph{Multiplication by changepoints}
-
+%\paragraph{Multiplication by changepoints}
+\item {\bf Changepoints.}
 The $\boldsymbol\sigma_m$ in equation~\eqref{eq:sop} represent products of sigmoids which also have the form $a(x)a(x')$ and therefore could also be described as multiplication of functions.
 For simplicity we assume that the sigmoids are step functions\footnotemark.
 These step functions can be represented as intervals (\ie where their value is 1), and their product is equivalent to taking the intersection of intervals.
@@ -589,23 +603,27 @@ Computing the intersection is trivial and descriptions can be templated as \eg `
 
 \footnotetext{The parameters of the sigmoids are restricted to make the sigmoids steep and therefore this approximation is not too severe.}
 
+\end{itemize}
+
+{\bf [[TODO: mention additional postmodifiers associated with the hyperparameters of the head noun]]}
+
 %Multiplying by a sigmoid ensures that any covariance structure ceases to hold in some region of the input space.  Thus, the contribution of changepoints can be expressed by appending ``until $x_1$'' or ``after $x_1$'', where $x_1$ is the time at which the change occurs.
 
-\paragraph{Multiplication by $\kPer$ kernels}
-%There is no obvious way to describe all the properties of a product of periodic kernels, but it easy to describe the covariance of any product of kernels in the following way:
-Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
-Then
-\begin{align}
-{\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.
-\end{align}
-That is, a \gp{} with covariance given by the product of two kernels has the same covariance as the distribution over products of functions drawn from \gp{}s with those kernels.
-%
-%In general, however, the distribution of products of functions will not be Gaussian.
-%
-This property can be used to describe multiplication by $\kPer$ as producing the same covariance structure as multiplying the function by an independent periodic function.
-Since $\kPer$ is always chosen as the head noun we instead use this property to include a bespoke description of kernels of the form $\kPer^n$.\fTBD{JL:This sentence can be improved}
-%We can use this property to state that $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.
-%This description naturally extends to ${n>2}$.
+% \paragraph{Multiplication by $\kPer$ kernels}
+% %There is no obvious way to describe all the properties of a product of periodic kernels, but it easy to describe the covariance of any product of kernels in the following way:
+% Suppose that ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$.
+% Then
+% \begin{align}
+% {\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.
+% \end{align}
+% That is, a \gp{} with covariance given by the product of two kernels has the same covariance as the distribution over products of functions drawn from \gp{}s with those kernels.
+% %
+% %In general, however, the distribution of products of functions will not be Gaussian.
+% %
+% This property can be used to describe multiplication by $\kPer$ as producing the same covariance structure as multiplying the function by an independent periodic function.
+% Since $\kPer$ is always chosen as the head noun we instead use this property to include a bespoke description of kernels of the form $\kPer^n$.\fTBD{JL:This sentence can be improved}
+% %We can use this property to state that $\kPer \times \kPer$ defines a prior on functions whose covariance is the same as the product of independent periodic functions.
+% %This description naturally extends to ${n>2}$.
 
 %However, note that a product of periodic functions drawn from \gp{} priors will not be distributed according to a \gp{}.
 

@@ -322,6 +322,9 @@ We call the entire model-search and description procedure automatic Bayesian cov
 %These ideas were exploited by \citet{DuvLloGroetal13},  who introduced the Gaussian process structure search procedure (GPSS).
 %GPSS searches over sums and products of a set of simple base kernels to produce an appropriate model for a data set.
 
+
+
+
 \iffalse
 
 In the rest of this section we extend the language defined by GPSS to include a greater variety of regression motifs.
@@ -400,24 +403,31 @@ Syntax of common regression motifs expressible in our language.
 %\fTBD{RG: Does the algorithm clarify anything?}
 %\fTBD{RG, JBT: Section unclear} 
 
-We have presented a space of \gp{} kernels defined compositionally in terms of adding and multiplying a handful of base kernels. These base kernels and operators map onto natural language phrases which can be used to describe the models. In this section, we outline the mapping and describe how we use it to generate natural language descriptions of models.
+%We have presented a space of \gp{} kernels defined compositionally in terms of adding and multiplying a handful of base kernels. These base kernels and operators map onto natural language phrases which can be used to describe the models. In this section, we outline the mapping and describe how we use it to generate natural language descriptions of models.
 
+In this section, we outline the procedure by which we generate natural-language descriptions of any composition of base kernels.
+%
 First, we note that because products distribute over sums, any kernel in our space can be rewritten as a sum of products of base kernels. For example, $\kSE \times (\kC + \kLin) = \kSE \times \kC + \kSE \times \kLin$. We observe that addition and multiplication appear to play complementary roles: a sum of multiple kernels corresponds to a superposition of different functions. Therefore, we report to the user a list of components, given as noun phrases, one for each term in the sum. By contrast, multiplying one kernel by another often corresponds to modifying the original kernel in a particular way. Different terms in the product correspond to different parts of the noun phrase.
 
 %In this section we describe how the properties of \gp{} models allow one to reduce the task of describing the model produced by an arbitrary kernel expression into simple subproblems.
 
 %\subsection{Modular description of arbitrary kernels}
 
-\paragraph{Coversion to canonical form}
+\paragraph{Simplification}
 
-As described above, we first use rewrite the kernel expression as a sum of product kernels. 
+%As described above, we first use rewrite the kernel expression as a sum of product kernels. 
 %{\bf [[TODO: mention changepoints?  But if we present changepoints originally as a sum of products, we don't need to discuss the special case here.]]} 
 The individual product terms can be further simplified. In particular, the product of two $\kSE$ kernels is a $\kSE$ kernel with the same form. Multiplying $\kWN$ by any stationary kernel ($\kC$, $\kWN$, $\kSE$, or $\kPer$) gives another $\kWN$ kernel. Multiplying any kernel by $\kC$ only changes the parameters of that kernel. By applying these rules, the kernel family can be rewritten such that all of the terms have the following form:
+%\begin{align}
+%\prod_i \kernel_i \prod_j\kLin_j \prod_m \boldsymbol\sigma_m
+%\label{eq:sop}
+%\end{align}
+%where $\prod_i \kernel_i$ is one of $\kWN, \kC, \kSE, \kPer^n$ or $\kSE\times\kPer^n$ for $n\in\mathbb{N}$.
+
 \begin{align}
-\prod_i \kernel_i \prod_j\kLin_j \prod_m \boldsymbol\sigma_m
+\{ \kWN, \kC, \kSE, \kPer^k \textnormal{ or } \kSE\times\kPer^k \} \times \kLin^m \times \boldsymbol\sigma^n
 \label{eq:sop}
 \end{align}
-where $\prod_i \kernel_i$ is one of $\kWN, \kC, \kSE, \kPer^n$ or $\kSE\times\kPer^n$ for $n\in\mathbb{N}$.
 
 
 
@@ -537,7 +547,7 @@ In principle, any assignment of kernels in a product to these different phrasal 
 %\paragraph{Selecting the head noun and ordering modifiers}
 The head noun is chosen according to the following ordering:
 \begin{align*}
-\kPer > \kWN, \kSE, \kC > \prod_j \kLin_j > \prod_m \boldsymbol\sigma_m
+\kPer > \kWN, \kSE, \kC > \kLin^m > \boldsymbol\sigma^n
 \end{align*}
 \ie $\kPer$ is always chosen as the head noun when present.
 This ordering is based on our intuitive judgment of which component contributes the most to the overall structure of the kernel; e.g., $\kSE \times \kPer$ is more similar to $\kPer$ than to $\kSE$, and $\kLin \times \kSE$ is more similar to $\kSE$ than to $\kLin$.
@@ -549,7 +559,7 @@ This ordering is based on our intuitive judgment of which component contributes 
 The head noun descriptions of kernels are simply descriptions of the \gp{} prior represented by the kernel on its own.
 These priors are well understood and templates can be constructed from standard reference materials \citep[e.g.][]{rasmussen38gaussian}.
 %For example, $\kSE$ produces a `smooth function' and $\kLin^n$ produces a `polynomial of degree $n$'.
-In particular, we use the following head nouns {\bf [[TODO: is head noun the right terminology, since these are noun phrases?]]}:
+In particular, we use the following head nouns: \fTBD{ is head noun the right terminology, since these are noun phrases?}
 
 \begin{tabular}{ll}
 $\kPer$ & periodic function \\

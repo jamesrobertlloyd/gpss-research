@@ -304,7 +304,7 @@ For example, when applied to airline passenger data (see section \ref{sec:airlin
 
 While the procedure of \citet{DuvLloGroetal13} was able to decompose a variety of datasets into interpretable components, interpreting the final models required human time, expertise, and judgment. Our contribution is a method of automatically generating natural language reports from the outputs of a GP structure search system.
 %
-We call the entire model-search and description procedure automatic Bayesian covariance decomposition (\procedurename{}).
+We call the entire model-search and description procedure automatic Bayesian covariance decomposition \fTBD{DD: D for decomposition or description?  We can also add E for explanation or extrapolation.} (\procedurename{}).
 
 
 %Different kernels can express a wide variety of structures that one might expect to find in functions.
@@ -429,7 +429,7 @@ The individual product terms can be further simplified. In particular, the produ
 \{ \kWN, \kC, \kSE, \kPer^k \textnormal{ or } \kSE\times\kPer^k \} \times \kLin^m \times \boldsymbol\sigma^n
 \label{eq:sop}
 \end{align}
-
+\fTBD{DD: We're not sure about notation here}
 
 
 % \paragraph{Overview}
@@ -591,6 +591,7 @@ In our small language $\kSE$ only acts as a modifier when $\kPer$ is present whi
 
 %\paragraph{Multiplication by $\kLin$ kernels}
 \item {\bf $\kLin$ kernels.}
+\fTBD{DD: This paragraph is baroque and confusing.}
 $\kLin$ has the form $k(x,x') = a(x)a(x')$.
 This is used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
 Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
@@ -607,17 +608,18 @@ In an expanded version of this language it may be desirable to allow all modifie
 
 %\paragraph{Multiplication by changepoints}
 \item {\bf Changepoints.}
-The $\boldsymbol\sigma_m$ in equation~\eqref{eq:sop} represent products of sigmoids which also have the form $a(x)a(x')$ and therefore could also be described as multiplication of functions.
-For simplicity we describe these sigmoids as step functions\footnotemark.
-These step functions can be represented as intervals (\ie where their value is 1), and their product is equivalent to taking the intersection of intervals.
-Computing the intersection is trivial and descriptions can be templated as \eg `this function applies from [start] until [end]'.
+The changepoint kernel $\boldsymbol\sigma$ in equation~\eqref{eq:sop} is simply a product of sigmoids, $\sigma(x)\sigma(x')$.  Its modifier can therefore be described as multiplication by a sigmoid, meaning that the function being modeled goes to zero in some region.
+%For simplicity we describe these sigmoids as step functions\footnotemark.
+Products of sigmoids correspond to intervals (where their value is close to 1).
+%, and their product is equivalent to taking the intersection of intervals.
+Computing these intervals is straightforward, and can be simply described by \eg `this function applies from [start] until [end]'.
 
 
-\footnotetext{The parameters of the sigmoids are restricted to make the sigmoids steep and therefore this approximation is not too severe.}
+%\footnotetext{The parameters of the sigmoids are restricted to make the sigmoids steep and therefore this approximation is not too severe.}
 
 \end{itemize}
 
-{\bf [[TODO: mention additional postmodifiers associated with the hyperparameters of the head noun]]}
+Additional modifiers are added depending on the parameters of the head noun.  \fTBD{add some examples}
 
 %Multiplying by a sigmoid ensures that any covariance structure ceases to hold in some region of the input space.  Thus, the contribution of changepoints can be expressed by appending ``until $x_1$'' or ``after $x_1$'', where $x_1$ is the time at which the change occurs.
 

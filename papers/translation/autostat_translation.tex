@@ -591,16 +591,17 @@ In our language, $\kSE$ corresponds to a modifier only when $\kPer$ is present; 
 
 %\paragraph{Multiplication by $\kLin$ kernels}
 \item {\bf $\kLin$ kernels.}
-\fTBD{DD: This paragraph is baroque and confusing.}
-$\kLin$ has the form $k(x,x') = a(x)a(x')$.
-This is used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
-Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
-Therefore multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) \sim \gp{}(0, k)$ by a linear function.
-Rather than describing this multiplication literally its effect is described as \eg \genText{`lineary growing standard deviations'}.
-Similarly, multiplication by $\kLin^n$ is described as \genText{`polynomially varying amplitude'}.
+%\fTBD{DD: This paragraph is baroque and confusing.}
+%$\kLin$ has the form $k(x,x') = a(x)a(x')$.
+%This is used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
+Observe that if $f(x)$ is a draw from a \gp{} with kernel $k$, and $a(x)$ is a deterministic function, then 
+$a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
+Since $\kLin$ has this form, where $a(x)$ is linear, multiplying by $\kLin$ is equivalent to multiplying the draw $f(x))$ by a linear function.
+This is described with the modifier \genText{`with lineary growing standard deviation'}.
+Similarly, multiplication by $\kLin^n$ corresponds to the modifier \genText{`with polynomially varying standard deviation}.\footnote{For stylistic reasons, we use \genText{'linearly growing amplitude'} in place of \genText{'linearly growing standard deviation'} when $\kPer$ is the head noun.}
 
-We include a special case when $\kPer$ is the head noun \eg \genText{`linearly growing amplitude'} to produce more natural sounding text.
-In an expanded version of this language it may be desirable to allow all modifiers to depend on the head noun.
+%We include a special case when $\kPer$ is the head noun \eg \genText{`linearly growing amplitude'} to produce more natural sounding text.
+%In an expanded version of this language it may be desirable to allow all modifiers to depend on the head noun.
 % depending on the parameters of the kernel.
 %Similarly, multiplication by $\kLin^n$ can be described as `polynomially varying amplitude'.
 
@@ -610,9 +611,9 @@ In an expanded version of this language it may be desirable to allow all modifie
 \item {\bf Changepoints.}
 The changepoint kernel $\boldsymbol\sigma$ in equation~\eqref{eq:sop} is simply a product of sigmoids, $\sigma(x)\sigma(x')$.  Its modifier can therefore be described as multiplication by a sigmoid, meaning that the function being modeled goes to zero in some region.
 %For simplicity we describe these sigmoids as step functions\footnotemark.
-Products of sigmoids correspond to intervals (where their value is close to 1).
+Products of sigmoids can be seen as intervals (regions where their value is close to 1).
 %, and their product is equivalent to taking the intersection of intervals.
-Computing these intervals is straightforward, and can be simply described by \eg \genText{`this function applies from [start] until [end]'}.
+This corresponds to the post-modifier \genText{`this function applies from [start] until [end]'}.
 
 
 %\footnotetext{The parameters of the sigmoids are restricted to make the sigmoids steep and therefore this approximation is not too severe.}
@@ -704,6 +705,7 @@ Finally, the third component is described as \genText{`An approximately periodic
 
 We use separate sets of templates to produce short summaries and detailed descriptions of kernels.
 \fTBD{JL: We should also mention that the detailed descriptions are less modular - but not necessarily so}
+\fTBD{RBG: We don't necessarily need to mention this, as long as the generation isn't conceptually different.}
 
 
 

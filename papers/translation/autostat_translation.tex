@@ -84,6 +84,7 @@
 \let\emptyset 0
 
 \newcommand{\procedurename}{ABCD}
+\newcommand{\genText}[1]{{\sf #1}}
 
 %\author{
 %James Robert Lloyd\\
@@ -300,7 +301,7 @@ Because the set of kernel functions is closed under addition and multiplication,
 Such composite kernels can describe richer structures not representable by the base kernels.
 For example, the kernel $\kSE \times \kPer$ puts mass on functions which are locally periodic, while a \gp{} with kernel $\kSE + \kLin$ corresponds to a prior on smooth functions with a linear trend. The procedure of \citet{DuvLloGroetal13} automatically searched over the space of composite kernels (represented as algebraic expressions), where the search operators consisted of modifying sub-expressions. 
 By combining kernels, the search procedure was able to construct novel nonparametric regression models.
-For example, when applied to airline passenger data (see section \ref{sec:airline}), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``approximately periodic, with linearly growing amplitude''.
+For example, when applied to airline passenger data (see section \ref{sec:airline}), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as \genText{``approximately periodic, with linearly growing amplitude''}.
 
 While the procedure of \citet{DuvLloGroetal13} was able to decompose a variety of datasets into interpretable components, interpreting the final models required human time, expertise, and judgment. Our contribution is a method of automatically generating natural language reports from the outputs of a GP structure search system.
 %
@@ -562,12 +563,12 @@ These priors are well understood and templates can be constructed from standard 
 In particular, we use the following head nouns: \fTBD{ is head noun the right terminology, since these are noun phrases?}
 
 \begin{tabular}{ll}
-$\kPer$ & periodic function \\
-$\kSE$ & smooth function \\
-$\kWN$ & uncorrelated noise \\
-$\kC$ & constant \\
-$\kLin$ & linear function \\
-$\kLin^n$ & polynomial of degree $n$ ($n \geq 2$) \\
+$\kPer$ & \genText{periodic function} \\
+$\kSE$ & \genText{smooth function} \\
+$\kWN$ & \genText{uncorrelated noise} \\
+$\kC$ & \genText{constant} \\
+$\kLin$ & \genText{linear function} \\
+$\kLin^n$ & \genText{polynomial of degree $n$} ($n \geq 2$) \\
 \end{tabular}
 
 %Clearly, there are many issues with word order, and many special cases are necessary.\fTBD{JL: Weak and imprecise}
@@ -581,9 +582,9 @@ The remaining terms in the product each contribute modifiers to the noun phrase.
 
 %\paragraph{Multiplication by $\SE$ kernels}
 \item {\bf $\kSE$ kernels.}
-$\kSE$ encodes for a local covariance structure since $\kSE(x, x') \to 0$ as $|x - x'| \to \infty$ \ie distant points are uncorrelated.
-Multiplying by $\kSE$ removes any long range correlation; it modifies the covariance structure to hold only locally.
-In our small language $\kSE$ only acts as a modifier when $\kPer$ is present which is described as making the periodicity `approximate'.
+%$\kSE$ encodes for a local covariance structure since $\kSE(x, x') \to 0$ as $|x - x'| \to \infty$ \ie distant points are uncorrelated.
+Under an $\kSE$ kernel, distant points are uncorrelated. Multiplying by $\kSE$ removes any long range correlation, i.e.~it modifies a global covariance structure to hold only locally.
+In our language, $\kSE$ corresponds to a modifier only when $\kPer$ is present; it contributes the modifier \genText{`approximately'}.
 %For example, $\kPer$ encodes for exactly periodic functions but $\kSE \times \kPer$ encodes for locally / quasi / approximately periodic functions since distant points are uncorrelated whilst close points have approximately the same covariance structure as $\kPer$.\fTBD{JL: Long sentence}
 %As noted above, multiplying the $\kSE$ kernel by any other kernel $K$ causes the structure implied by $K$ to hold only locally. \fTBD{JL: This can be justified by explaining that the covariance goes to zero}
 %We modify the description depending on the lengthscale of the $\kSE$ kernel to indicate just how locally the property holds.
@@ -595,10 +596,10 @@ $\kLin$ has the form $k(x,x') = a(x)a(x')$.
 This is used as follows: suppose that $f(x) \dist \gp{}(0, \kernel)$ and $a : \mathcal{X} \to \mathcal{Y}$ is a deterministic function.
 Then $a(x)f(x) \dist \gp{}\left(0, a(x) k(x, x') a(x') \right)$.
 Therefore multiplying a kernel, $\kernel$, by the linear kernel is equivalent to multiplying $f(x) \sim \gp{}(0, k)$ by a linear function.
-Rather than describing this multiplication literally its effect is described as \eg `lineary growing standard deviations'.
-Similarly, multiplication by $\kLin^n$ is described as `polynomially varying amplitude'.
+Rather than describing this multiplication literally its effect is described as \eg \genText{`lineary growing standard deviations'}.
+Similarly, multiplication by $\kLin^n$ is described as \genText{`polynomially varying amplitude'}.
 
-We include a special case when $\kPer$ is the head noun \eg `linearly growing amplitude' to produce more natural sounding text.
+We include a special case when $\kPer$ is the head noun \eg \genText{`linearly growing amplitude'} to produce more natural sounding text.
 In an expanded version of this language it may be desirable to allow all modifiers to depend on the head noun.
 % depending on the parameters of the kernel.
 %Similarly, multiplication by $\kLin^n$ can be described as `polynomially varying amplitude'.
@@ -611,7 +612,7 @@ The changepoint kernel $\boldsymbol\sigma$ in equation~\eqref{eq:sop} is simply 
 %For simplicity we describe these sigmoids as step functions\footnotemark.
 Products of sigmoids correspond to intervals (where their value is close to 1).
 %, and their product is equivalent to taking the intersection of intervals.
-Computing these intervals is straightforward, and can be simply described by \eg `this function applies from [start] until [end]'.
+Computing these intervals is straightforward, and can be simply described by \eg \genText{`this function applies from [start] until [end]'}.
 
 
 %\footnotetext{The parameters of the sigmoids are restricted to make the sigmoids steep and therefore this approximation is not too severe.}
@@ -689,11 +690,11 @@ which is simplified to
 %where $\emptyset$ represents the zero function.
 %We use this notation in section~\ref{sec:solar}.
 
-To descibe the first component, the head noun template for $\kWN$, `uncorrelated noise', is concatenated with a modifier template (chosen based on parameter values) for $\kLin$, `with linearly increasing standard deviation'.
+To descibe the first component, the head noun template for $\kWN$, \genText{`uncorrelated noise'}, is concatenated with a modifier template (chosen based on parameter values) for $\kLin$, \genText{`with linearly increasing standard deviation'}.
 %
-The second component is described as `A smooth function with a lengthscale of [lengthscale] [units]', corresponding to the $\kSE$, 'which applies until [changepoint]', which corresponds to the $\boldsymbol{\sigma}$.
+The second component is described as \genText{`A smooth function with a lengthscale of [lengthscale] [units]'}, corresponding to the $\kSE$, \genText{'which applies until [changepoint]'}, which corresponds to the $\boldsymbol{\sigma}$.
 %
-Finally, the third component is described as `An approximately periodic function with a period of [period] [units] which applies from [changepoint]'.
+Finally, the third component is described as \genText{`An approximately periodic function with a period of [period] [units] which applies from [changepoint]'}.
 
 %\subsection{Breaks from modularity and other corner cases}
 

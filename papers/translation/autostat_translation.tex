@@ -855,7 +855,7 @@ Here we show excerpts from the report automatically generated on annual solar ir
 This time series has two pertinent features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.  This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
 The \procedurename{} search procedure and automatic description clearly identify these two features, as discussed below.
 
-After distributing and simplifying, the kernel corresponding to the first four components is as follows:
+%After distributing and simplifying, the kernel corresponding to the first four components is as follows:
 %\vspace{-0.5\baselineskip}
 %\begin{itemize}
 %  \itemsep0em
@@ -865,7 +865,7 @@ After distributing and simplifying, the kernel corresponding to the first four c
 %  \item $\kCW(\kSE \times \kPer,\emptyset).$
 %\end{itemize}
 %\vspace{-\baselineskip}
-$\kC + \kCW(\emptyset,\kC) + \kCW(\kSE,\emptyset) + \kCW(\kSE \times \kPer,\emptyset).$
+%$\kC + \kCW(\emptyset,\kC) + \kCW(\kSE,\emptyset) + \kCW(\kSE \times \kPer,\emptyset).$
 
 
 \begin{figure}[h]
@@ -875,14 +875,16 @@ $\kC + \kCW(\emptyset,\kC) + \kCW(\kSE,\emptyset) + \kCW(\kSE \times \kPer,\empt
 An example of an automatically-generated summary of a dataset.  The dataset is decomposed into diverse structures with simple descriptions.}
 \label{fig:exec}
 \end{figure}
-Figure \ref{fig:exec} shows the natural-language summaries of these components produced by \procedurename{}.
+Figure \ref{fig:exec} shows the natural-language summaries of the top four components chosen by \procedurename{}.
 %The short descriptions demonstrate how the kernel is split into univariate enveloping functions (from the change windows) and stationary kernels.
 %
 %
 %The model uses 9 additive components to explain the data, and reports that the first 4 components explain more than 90\% of the variance in the data.
 %This might seem incongruous with the observation that there are two main features of the data, but if we examine the first four components, we see that the first component is describing the mean of the dataset, the second is the Maunder minimum, the third describes the long-term trend, and the fourth describes the 11-year periodicity.
-From these short summaries, we can see that the model has identified the Maunder minimum (second component) and 11-year solar cycle (fourth component).
-Next, we discuss each component in greater detail.
+From these short summaries, we can see that our system has identified the Maunder minimum (second component) and 11-year solar cycle (fourth component). These components are visualized in figures~\ref{fig:maunder} and \ref{fig:periodic}, respectively. 
+By examining the parameters of the kernels to the solar cycle, our system identified that the shape of the periodicity is near sinusoidal and also quantifies how quickly the exact shape of the sinusoid changes.
+The third component corresponds to long-term trends, as visualized in figure~\ref{fig:smooth}.
+%Next, we discuss each component in greater detail.
 %This might seem incongruous with the observation that there are two main features of the data, but if we examine the first four components, we see that the first component is describing the mean of the dataset, the second is the Maunder minimum, the third describes the long-term trend, and the fourth describes the 11-year periodicity.
 
 %\subsubsection{Signal versus Noise}
@@ -915,23 +917,20 @@ Next, we discuss each component in greater detail.
 %This progression of plots 
 %By contrasting each of these plots with plots of earlier components, we can see 
 %shows qualitatively how each component contributes to an overall explanation of the data.
-
 %A second paragraph explains the improvement in predictive performance gained by including this component in the model. This is the same informatino as included in the executive summary.
-
 %\paragraph{Maunder minimum}
-
-Figure \ref{fig:maunder} shows that \procedurename{} has captured the unusual period of decreased solar activity from about 1645 to 1715, and is able to report this in natural language.
+%Figure \ref{fig:maunder} shows that \procedurename{} has captured the unusual period of decreased solar activity from about 1645 to 1715, and is able to report this in natural language.
 %
 \begin{figure}[ht]
 \centering
 \fbox{\includegraphics[trim=0cm 4.75cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/pg_0005-crop}}
-\caption{Discovering the Maunder minimum.}
+\caption{One of the learned components corresponds to the Maunder minimum.}
 \label{fig:maunder}
 \end{figure}
 %
 %\paragraph{Long term trend}
 %
-Having isolated the Maunder minimum, the model captures the long-term trend of the rest of the data, shown in figure~\ref{fig:smooth}.
+%Having isolated the Maunder minimum, the model captures the long-term trend of the rest of the data, shown in figure~\ref{fig:smooth}.
 %
 \begin{figure}[h!]
 \centering
@@ -951,8 +950,8 @@ Having isolated the Maunder minimum, the model captures the long-term trend of t
 %
 %\paragraph{Solar cycles}
 %
-Figure \ref{fig:periodic} shows that \procedurename{} has isolated the approximately 11 year solar cycle.
-By examining the parameters of the kernels comprising this component the description identifies that the shape of the periodicity is near sinusoidal and also quantifies how quickly the exact shape of the sinusoid changes.
+%Figure \ref{fig:periodic} shows that \procedurename{} has isolated the approximately 11 year solar cycle.
+
 %
 %with a pair of changepoint kernels.%shows exactly which sort of structure was recovered by this component.
 %

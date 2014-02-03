@@ -83,7 +83,7 @@
 \let\oldemptyset\emptyset
 \let\emptyset 0
 
-\newcommand{\procedurename}{ABCDE}
+\newcommand{\procedurename}{ABCD}
 
 %\author{
 %James Robert Lloyd\\
@@ -286,25 +286,25 @@ Whether or not such modularity and interpretability is present in other open-end
 
 %\subsection{Gaussian processes}
 
-Gaussian processes (\gp{}) \citep{rasmussen38gaussian} are distributions over functions such that the values evaluated at any finite set of points are jointly Gaussian.
-Because of their flexibility, they are commonly used for nonparametric regression.
+Gaussian processes (\gp{}) \citep{rasmussen38gaussian} are distributions over functions such that function values any finite set of points are jointly Gaussian.
+Because of their flexibility, \gp{}s are commonly used for nonparametric regression.
 A \gp{} regression model is specified in terms of a kernel function ${\kernel : \mathcal{X}^2 \to \mathbb{R}}$, which defines the covariance between the function values $(\outputVar, \outputVar')$ evaluated at two inputs $(\inputVar,\inputVar')$, \ie ${\textrm{Cov}(\outputVar, \outputVar') = \kernel(\inputVar,\inputVar')}$.
-Because the kernel determines which structures are likely under the \gp{} prior, it determines the model's patterns of generalization.
+The kernel determines which structures are likely under the \gp{} prior, which determines the way in which the model generalizes or extrapolates.
 
 \citet{DuvLloGroetal13} presented a space of Gaussian process kernels defined compositionally through addition and multiplication of a handful of simple kernels.
 In this work, we focus on a similar space of models, but with improvements which are discussed in section~\ref{sec:related-work}. 
 
-The buildling blocks of our model space are a handful of ``base'' kernel families with simple parametric forms. Each kernel family has one or more parameters; when the parameters are specified, it defines a kernel function. Each kernel family favors particular kinds of structure; e.g., a \gp{} with a squared-exponential kernel (denoted $\kSE$) favors smooth functions, while a \gp{} with a periodic kernel ($\kPer$) favors periodic functions. The full set of base kernel families is given in Table~{\bf TODO}.
+\fTBD{DD: Do we want to distinguish between kernels and kernel families?}The buildling blocks of our model space are a handful of ``base'' kernel families with simple parametric forms. Each kernel family has one or more parameters; when the parameters are specified, it defines a kernel function. Each kernel family favors particular kinds of structure; e.g., a \gp{} with a squared-exponential kernel (denoted $\kSE$) favors smooth functions, while a \gp{} with a periodic kernel ($\kPer$) favors periodic functions. The full set of base kernel families is given in Table~{\bf TODO}.
 
 Because the set of kernel functions is closed under addition and multiplication, any algebraic expression consisting of $+$, $\times$, and base kernel families defines a kernel family. 
 Such composite kernels can describe richer structures not representable by the base kernels.
 For example, the kernel $\kSE \times \kPer$ puts mass on functions which are locally periodic, while a \gp{} with kernel $\kSE + \kLin$ corresponds to a prior on smooth functions with a linear trend. The procedure of \citet{DuvLloGroetal13} automatically searched over the space of composite kernels (represented as algebraic expressions), where the search operators consisted of modifying sub-expressions. 
 By combining kernels, the search procedure was able to construct novel nonparametric regression models.
-For example, when applied to airline passenger data (see `describing heteroscedasticity'), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``approximately periodic, with linearly growing amplitude''.
+For example, when applied to airline passenger data (see section \ref{sec:airline}), the resulting kernel contained a component of the form $\kSE \times \kPer \times \kLin$, which captured a feature of the data which can be described as ``approximately periodic, with linearly growing amplitude''.
 
 While the procedure of \citet{DuvLloGroetal13} was able to decompose a variety of datasets into interpretable components, interpreting the final models required human time, expertise, and judgment. Our contribution is a method of automatically generating natural language reports from the outputs of a GP structure search system.
 %
-We call the entire model-search and description procedure automatic Bayesian covariance decomposition and explanation (\procedurename{}).
+We call the entire model-search and description procedure automatic Bayesian covariance decomposition (\procedurename{}).
 
 
 %Different kernels can express a wide variety of structures that one might expect to find in functions.
@@ -402,6 +402,7 @@ Syntax of common regression motifs expressible in our language.
 \label{sec:description}
 %\fTBD{RG: Does the algorithm clarify anything?}
 %\fTBD{RG, JBT: Section unclear} 
+\fTBD{DD: This section should emphasize the main ideas that make automatic description possible}
 
 %We have presented a space of \gp{} kernels defined compositionally in terms of adding and multiplying a handful of base kernels. These base kernels and operators map onto natural language phrases which can be used to describe the models. In this section, we outline the mapping and describe how we use it to generate natural language descriptions of models.
 

@@ -1218,14 +1218,14 @@ The search operators used are provided in the supplementary material.
 
 \paragraph{Interpretability versus accuracy}
 
-Since the process of describing a model always converts a kernel into a sum of products we experimented with always keeping the kernel in this form.
-After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression.
-This variant (\procedurename{} interpretability) of the search tends to produce models with fewer additive components improving interpretability.
-We also include the unrestricted version of the search (\procedurename{} accuracy) which tends to produce models that are better at extrapolation and interpolation.
+The search procedure sometimes produces kernel expressions having many nested products of sums, resulting in descriptions containing many relatively uninterpretable components.  In order to encourage the search to report fewer, more interpretable components, we experimented with forcing the search procedure to always distribute products during search.  We call this procedure \procedurename{}-interpretability, in contrast to the unrestricted version of the search, \procedurename{}-accuracy, which tends to produce models with better predictive performance.  \procedurename{}-interpretability was used to produce the reports shown in this paper, and we compare the performance of both in the prediction experiments.
+%After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression.
+%This variant (\procedurename{} interpretability) of the search tends to produce models with fewer additive components improving interpretability.
+%We also include the unrestricted version of the search (\procedurename{} accuracy) which tends to produce models that are better at extrapolation and interpolation.
 %
 %The research leading up to this manuscript has focused on interpretability.
 %One could almost certainly improve the numerical results presented in this section by reintroducing $\kRQ$ and including Mat\'ern kernels as well as others.
-We leave a full exploration of the interpretability / accuracy trade-off for future work.
+%We leave a full exploration of the interpretability / accuracy trade-off for future work.
 
 \paragraph{Extrapolation}
 

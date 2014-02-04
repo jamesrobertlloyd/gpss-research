@@ -764,19 +764,6 @@ To the best of our knowledge, our procedure is the first example of automatic de
 However, systems with natural language outputs have been built in the areas of video interpretation \citep{barbu2012video} and automated theorem proving \citep{GanesalingamG13}.
 We agree with \citet{GanesalingamG13} that natural language outputs make it more obvious whether an algorithm's internal representations are meaningful and cognitively plausible\fTBD{JL: Strong - but I like it}.
 
-\subsection{Improvements to the previous grammar}
-
-Our space of \gp{} models is closely based on that of \citet{DuvLloGroetal13}, with several improvements which yield more interpretable models. We briefly summarize the differences and the motivations for them:
-\begin{itemize}
-\item We added changepoint and window operators, which capture structure occuring only during certain time periods.
-\item We introduced the white noise kernel ($\kWN$); combined with linear kernels or changepoints, this can produce heteroskedastic models, i.e.~ones with time-varying noise.
-\item We added the constant kernel ($\kC$) explicitly, rather than implicitly adding a constant function to all\fTBD{JL: It is not all} kernels. This allows constant components to be reported separately.% in the reports.
-\item We replaced the periodic kernel with a more flexible one which includes the cosine kernel as a limiting case. \citet{bochner1959lectures}\fTBD{JL: Bochner did not do this} demonstrated that any stationary kernel can be approximated as a sum of kernels of this form.
-\end{itemize}
-
-
-
-
 %\section{Numerical evaluation}
 \section{Predictive Accuracy}
 \label{sec:numerical}
@@ -814,12 +801,6 @@ For MKL, trend-cyclical-irregular and spectral kernels, this search corresponds 
 
 We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.
 Producing model construction algorithms for this class of time-series model would be an interesting area for future research.
-
-\paragraph{Model Search and Inference}
-
-As in \citep{DuvLloGroetal13}, \procedurename{} searched through models using a greedy search, using exact \gp{} inference to evaluate marginal likelihood, and conjugate gradient descent to optimize kernel parameters.
-%In these experiments, \procedurename{} uses exact \gp{} inference,  \cite{DuvLloGroetal13} but we introduce new search operators to accommodate the changepoint and change window operators.
-The search operators used are provided in the supplementary material.\fTBD{JL: Depth 10 - any other details?}
 
 \paragraph{Interpretability versus accuracy}
 

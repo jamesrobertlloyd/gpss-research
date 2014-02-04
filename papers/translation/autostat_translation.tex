@@ -1,8 +1,8 @@
 \documentclass[letterpaper]{article}
 \usepackage{format/aaai}
 \usepackage{times}
-\usepackage{helvet}
-\usepackage{courier}
+\usepackage{helvet} % ZG
+\usepackage{courier} % ZG
 \frenchspacing
 \setlength{\pdfpagewidth}{8.5in}
 \setlength{\pdfpageheight}{11in}
@@ -170,126 +170,176 @@
 \begin{abstract} 
 %Compiled on \today\ at \currenttime
 %\\
-This paper presents the beginnings of an automatic statistician, which has the potential to aid in exploratory analysis of data.
-Specifically, we develop a nonparametric model construction procedure which also automatically produces natural-language descriptions of the model.
-The procedure takes a data set as input, runs an open-ended model search and then produces a detailed report with figures and text which decompose and describe the various patterns discovered.
-We describe how the Gaussian process models being searched over naturally decompose into interpretable structures, which allow simple rule-based descriptions of arbitrarily complex models.
-The procedure contains many standard regression techniques as special cases, leading to superior extrapolation ability.
+  This paper presents the beginnings of an automatic statistician,
+  focusing on regression problems. Our system explores an open-ended
+  space of possible statistical models to discover a good explanation
+  of the data, and then produces a detailed report with figures and
+  natural-language text.
+
+% Unlike classical equation learning systems, 
+
+Our approach treats unknown functions nonparametrically using Gaussian
+processes, which has two important consequences.
+
+First, Gaussian processes model functions in terms of high-level
+properties (e.g.\ smoothness, trends, periodicity,
+changepoints). This, taken together with the compositional structure of
+our language of models, allows us to automatically describe functions 
+through a decomposition into additive parts.
+
+Second, the use of flexible nonparametric models and a rich
+language for composing them in an open-ended manner also results
+in state-of-the-art extrapolation performance evaluated over 13 real time
+series data sets from various domains.
+
 \end{abstract} 
 
 %\allowdisplaybreaks
 
 \section{Introduction}
-%One aim of statistics is to produce accurate and concise descriptions of data which yield insight into underlying sources of variability.
-%This requires the construction and fitting of an appropriate statistical model that can be interpreted by the user.
-%For some simple model classes, such as linear regression, there already exist standard software packages which automatically fit the model and report results to the user.
 
-%Simple parametric regression models such as linear regression are usually easy to interpret, requiring only a table of regression coefficients and a few other parameters to describe a model.
-%However, simple parametric models such as linear regression may often be too simple to accurately describe many data sets.
-One aim of statistics is to produce accurate and concise descriptions of data which yield insight into underlying sources of variability.
-%Many datasets are too complex to be accurately described by simple parametric models such as linear regression.
-Non-parametric regression models such as Gaussian processes are flexible enough to model complex nonlinear phenomena.
-Unfortunately, their design and interpretation can require considerable human time and expertise, and the results are inevitably filtered through the preconceived notions of the researchers\fTBD{JL: I like this paragraph, but maybe this last clause is a little strong}.
-%Moreover, non-parametric models can be difficult to summarize, since the fitted parameters (e.g.~bandwidths or typical lengthscales) relate only indirectly to the data.
-%with fitted parameters corresponding only to very high level concepts such as bandwidths or typical lengthscales.
-%typically require graphical descriptions of their fit, since any text description would be overly simplistic (\eg `a smooth function') and fitted parameters correspond only to very high level concepts such as bandwidths or typical lengthscales.
-
-%Several methods have been proposed for automatically constructing structured nonparametric models from data \citep{diosan2007evolving, bing2010gp, DuvLloGroetal13, kronberger2013evolution}. However, this does not solve the problem of interpretability, as complex kernel structures can obscure the underlying modeling assumptions.
-%\citet{DuvLloGroetal13} observed that Gaussian process models could be decomposed into sums of diverse components, and that the different components often corresponded to interpretable features of the data.
-%Unfortunately, the outputs of their procedure .
-%In that work, components discovered by the automatic model search were interpreted post-hoc by the authors.
-
-Consider what would be required of a system that automates enough of the modeling process to be usable by non-experts and to avoid the biases of human interpretation:
+One aim of statistics is to produce accurate and concise descriptions
+of data which yield insight into underlying sources of variability.
+While simple models (such as linear regression) are largely automated
+by standard software packages, there has been little work on the
+automatic construction of flexible but interpretable models. 
+Automating the process of statistical modelling would have a tremedous
+impact fields that currently rely on  expert statisticians, machine
+learning researchers, and data scientists.
+What are the ingredients required for an Artificial Intelligence
+system to be able to perform statistical modelling automatically? 
+In this paper we conjecture that the following ingredients may be
+useful for building an AI system for statistics, and we develop a
+working system which incorporates them: 
 \begin{itemize}
-\item {\bf An open-ended language of models} expressive enough to capture many of the modeling assumptions and model construction techniques applied by human statisticians
-\item {\bf A search procedure} which proposes promising models to fit based on the results of fitting previous models
-\item {\bf Methods for evaluating a model} in terms of the complexity of the model and the degree of fit to the data
-\item {\bf Automatic generation of reports} which explain and visualize different factors underlying the data, make the chosen modeling assumptions explicit, and quantify how each component improves the predictive power of the model
+\item {\bf An open-ended language of models} expressive enough to
+  capture many of the modeling assumptions and model composition
+  techniques  applied by human statisticians to capture real-world phenomena
+\item {\bf A search procedure} to efficiently explore the space of
+  models spanned by the language
+\item {\bf A principled method for evaluating models} during the
+  search in terms of their complexity and their degree of fit to the
+  data
+\item {\bf A procedure for automatically generating reports} which
+  explain and visualize different factors underlying the data, make
+  the chosen modeling assumptions explicit, and quantify how each
+  component improves the predictive power of the model 
 \end{itemize}
 
 \begin{figure}[t]
 \centering
 \fbox{\includegraphics[trim=0cm 4.75cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/pg_0007-crop}}
-\caption{Extract from an automatically-generated report describing the model components discovered by automatic model search.  This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minumum.}
+\caption{Extract from an automatically-generated report describing the model components discovered by automatic model search.  This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minimum.}
 \label{fig:periodic}
 \end{figure}
 
+In this paper,  we introduce a system for modelling time-series data
+ containing the above ingredients which we call the Automatic
+Bayesian Covariance Discovery (ABCD) system. The system defines an open-ended
+language of Gaussian process models via a compositional grammar. The
+space is searched greedily, using marginal likelihood computations and
+the Bayesian Information Criterion (BIC) to evaluate models. The 
+compositional structure of the language allows us to develop a method
+for automatically translating components of the model into
+natural-language descriptions of patterns in the data .
 
-In this manuscript, we present a procedure\fTBD{JL: introduce the name here?} which uses the compositional structure of Gaussian process kernels to automatically produce natural-language descriptions of patterns in a data set.
-This procedure fulfills all four of the desiderata listed above.
-%demonstrate that the compositional structure of Gaussian process models allows for the automatic natural-language description of patterns within a data set.
-Given a data set, it runs an open-ended model search and produces a detailed report describing the structures it discovered. % \ie the interpretable models are automatically interpreted!
-%
-We show examples of automatically generated reports which highlight interpretable features of a variety of data sets.
-%This paper contains extracts of the natural-language reports automatically generated by our procedure.
-%The text descriptions within these reports clearly communicate interpretable features of the data, supplemented by appropriate figures.
-The supplementary material to this paper includes 13 complete reports generated by our method, all using the same code with no hand-tuned parameters.
-
+We show examples of automatically generated reports which highlight
+interpretable features discovered in a variety of data sets (e.g.\
+Figure~\ref{fig:periodic}).  The supplementary material to this paper
+includes 13 complete reports automatically generated by ABCD.
 
 %We also\fTBD{RBG: This makes it sound like an independent contribution. Any way to tie it together with the natural language stuff, e.g.~evidence that the changes improve interpretability?} extend and refine the components used in the model construction process to improve the expressivity and interpretability of the models.
 %This allows for the procedure to fit and describe many well established modelling motifs including linear regression, Fourier analysis, sparse spectrum \gp{}s \citep{lazaro2010sparse}, changepoints \citep[e.g.][]{garnett2010sequential, FoxDunson:NIPS2012}, heteroscedasiticity, trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?} and multiple kernel learning \citep[e.g.][]{bach2004multiple}.
 
-%Finally, we demonstrate that the extended model construction procedure is comparable or superior to other model construction techniques at extrapolation tasks.
-As a test of our procedure's ability to model the underlying structure of a dataset, we compare our procedure against existing model construction techniques on a variety of extrapolation tasks\fTBD{JL: This sentence would make me think we did more than just try lots of data sets}. We find comparable or superior performance. We believe our system is a step towards automating much of the process of model construction, fitting, and analysis, and should allow a broader range of non-experts to fit and interpret nonparametric regression models.
+%Finally, we demonstrate that the extended model construction
+%procedure is comparable or superior to other model construction
+%techniques at extrapolation tasks.
 
 
+Of course, good statistical modelling requires not only
+interpretability but predictive accuracy. We compare ABCD against
+existing model construction techniques in terms of predictive
+performance at extrapolation, and we find state-of-the-art performance
+over the 13 time series. In the remainder of the paper we describe the
+components of ABCD in detail. 
 
-
-\iffalse
-
-\section{Ingredients of an automatic statistician}
-\label{sec:ingredients}
-%\fTBD{JL: Has RG written anything on this?}
-\citet{gelman2013philblogpost} asks ``How can an artificial intelligence do statistics? ... It needs not just an inference engine, but also a way to construct new models and a way to check models. Currently, those steps are performed by humans, but the AI would have to do it itself.''
-
-%In this section, we discuss in more detail the elements required to build a system that can automatically construct and then describe complex nonparametric models.
-
-In this section, we discuss in more detail the elements we believe are required to build an artificial intelligence that can do statistics.
-
-\paragraph{1. An open-ended language of models}
-Many statistical procedures consider all models in a class of fixed size - for example, graphical model construction algorithms\fTBD{Cite} search over connectivity graphs for a given set of nodes.
-While these methods can be powerful, human statisticians are capable of deriving novel model classes when required by the modelling task.
-%An open ended language can 
-An automatic search through an open-ended class of models can achieve some of this flexibility, growing the complexity of the model to fit the task at hand, and possibly combining existing structures in novel ways.
-%However, in order for a procedure to be as powerful as a human statistician, it must be able to add to a model in a wide variety of ways, building arbitrarily complex models if the data demands it.
-
-\paragraph{2. Searching through model space}
-An open-ended space of models cannot be searched exhaustively.
-Just as human researchers iteratively refine their models, search procedures can propose new search directions based on the results of previous model fits.
-Because any search in an open-ended space must start with relatively simple models before moving on to more complex ones, any model search in an open-ended space will likely resemble a model-building procedure.% based 
-
-\paragraph{3. Model comparison and checking model fit}
-\fTBD{JL: Two sections perhaps - or are they completely intertwined?}
-An automatic statistician should be able to question the models it has constructed, and formal procedures from model checking provide a way for it to do this.
-%A practically and philsophically interesting question is how to compare models, and how to check whether there is statistical structure not being captured by a given model. 
-%\fTBD{Struggling with this section - do we need to defend marginal likelihood or discuss the options}
-\citet{gelman2012philosophy} review the literature on model checking.
-\TBD{In this work, we use approximate marginal likelihood to compare models, penalizing complexity using the Bayesian Information Criterion as a heuristic.}
-
-\paragraph{4. Describing models}
-
-%Capturing statistical structure helps to provide good predictions. 
-Part of the value of statistical models comes from enabling humans to understand a dataset or a phenomenon.
-Furthermore, a clear description of the statistical structure found in a dataset helps a user to notice when the dataset has errors, the wrong question was asked, the model-building procedure failed to capture known structure, a relevant piece of data or constraint is missing, or when a novel statistical structure has been found.
-
-%It is not clear\fTBD{JL: Weak} what obstacles there are to building a system capable of explaining novel statistical structures.
-In this work, we 
-%attempted to build such an automatic summarization procedure, and 
-demonstrate that the properties of Gaussian processes allow for a modular description generation procedure.
-%This modularity means that a large class of statistical structures can explained, without resorting to writing a special case for every possible structure in our open-ended set of models.
-Whether or not such modularity and interpretability is present in other open-ended model classes is an open question.
-
-\fi
+% We believe our system is a step towards automating much of the
+% process of model construction, fitting, and analysis, and should
+% allow a broader range of non-experts to fit and interpret
+% nonparametric regression models. 
 
 \section{A language of regression models}
 \label{sec:improvements}
+
+% what is regression
+The general problem of regression consists of learning a function $f$
+mapping from some input space $\mathcal{X}$ to some output space
+$\mathcal{Y}$. We would like an expressive language which can
+represent both simple parametric forms of $f$ such as linear,
+polynomial, etc, and also some complex nonparametric functions
+specified in terms of properties such as smoothness, periodicity,
+etc. Fortunately, Gaussian processes (\gp{}s) provide a very general
+and analytically tractable way of capturing both simple and complex
+functions. 
+
+
+
+% what is a GP /  kernel
+Gaussian processes are distributions over functions $f$ such that any
+finite subset of function evaluations, $(f(x_1), f(x_2), \ldots
+f(x_N))$, have a joint Gaussian distribution
+\citep{rasmussen38gaussian}. A \gp{} is completely specified by its
+mean function, $\mu(x)=E(f(x))$ and kernel (or covariance) function
+$k(x,x') = Cov(f(x),f(x'))$. It common practice to assume zero mean,
+since marginalizing over an unknown mean function can be equivalently
+expressed as a zero-mean \gp{} with a new kernel. The structure of the
+kernel captures high-level properties of the unknown function $f$,
+which in turn determines how the model generalizes or extrapolates to
+new data.  We therefore can define a language of regression models by
+specifying a language of kernels.
+
+% kernels can be composed
+The elements of this language of kernels are a set of  base
+kernels capturing different function properties, and a set of
+composition rules which combine kernels to yield other valid kernels. 
+Our base kernels are <base kernels> which on their own encode for
+following properties:  <properties>.  The composition operators are
+<blah>, where ``+'' means $k(x,x') = k_1(x,x') + k_2(x,x')$ for all
+$x$,$x'$. 
+Changepoint means <blah>
+
+Using these base kernels and composition rules, it is possible to
+express a wide variety of common regression motifs (<table>).
+
+% relation to previous paper
+This kernel composition framework builds upon the work of Duvenaud et
+al (ref). We have expanded the framework of Duvenaud et al in the
+following ways. <add here> In particular, we have found that
+incorporating changepoints into the language is essential for
+realistic models of time series (e.g.\ Figure~1). Moreover, in order
+to achieve the goal of producing an interpretable decomposition of the
+function, we had to take care to ensure that our base kernels were
+parameterised so as to be roughly orthogonal and amenable to automatic
+description. For example, the periodic kernel in Duvenaud et al, has a
+constant component that can be removed to improve interpretability,
+and the RQ kernel used by Duvenaud can be expressed as a sum of SE
+kernels.
+
 
 
 
 %\subsection{Gaussian processes}
 
-Gaussian processes (\gp{}) \citep{rasmussen38gaussian} are distributions over functions such that any finite subset of points have a joint Gaussian distribution.
-Because of their flexibility, \gp{}s are commonly used for nonparametric regression.\fTBD{JL: I think these first two sentences can be improved - maybe start of with a more abstract definition and then explain that this allows them to specify flexible distributions over functions - hence the use for nonparametric regression}
+OLD STUFF FOLLOWS:
+
+Because of their flexibility, \gp{}s are commonly used for
+nonparametric regression.
+
+\fTBD{JL: I think these first two sentences can be improved - maybe
+  start of with a more abstract definition and then explain that this
+  allows them to specify flexible distributions over functions - hence
+  the use for nonparametric regression}
+
 A \gp{} regression model is typically specified by a kernel function ${\kernel : \mathcal{X}^2 \to \mathbb{R}}$, which defines the covariance between the function values $(\outputVar, \outputVar')$ evaluated at two inputs $(\inputVar,\inputVar')$, \ie ${\textrm{Cov}(\outputVar, \outputVar') = \kernel(\inputVar,\inputVar')}$.
 The kernel determines which structures are likely under the \gp{} prior, which determines how the model generalizes or extrapolates.
 
@@ -403,6 +453,28 @@ Syntax of common regression motifs expressible in our language.
 %In section~\ref{sec:example_description} we demonstrate the natural-language descriptions of some of these kernel forms.
 
 \fi
+
+\section{Model Search and Evaluation}
+
+Search is greedy breadth first search using the same search operators
+as Duvenaud plus extra ones to incorporate changepoints and others
+(see Supplementary Material). 
+
+After each model is proposed its kernel hyperparameters are optimised
+(cite RasWil). 
+
+We evaluate the fit of a model to the data by using the following
+score function 
+\[
+score_D(m) = \log P(D|m) - \frac{p}{2} \log n
+\]
+where $p$ is the number of optimised hyperparameters in the
+kernel, and $\log P(D|m)$ is the \gp{} marginal likelihood which can
+be evaluated analytically, and BIC (ref Schwartz 1978) is a complexity
+penalty. This combined score trades off model fit and complexity and
+implements what is known as ``Bayesian Occam's Razor'' (cite MacKay;
+Carl+ZG).
+
 
 \section{Automatic description of regression models}
 \label{sec:description}

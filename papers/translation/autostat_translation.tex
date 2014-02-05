@@ -121,13 +121,13 @@
 \input{include/commenting.tex}
 
 %% For submission, make all render blank.
-%\renewcommand{\LATER}[1]{}
-%\renewcommand{\fLATER}[1]{}
-%\renewcommand{\TBD}[1]{}
-%\renewcommand{\fTBD}[1]{}
-%\renewcommand{\PROBLEM}[1]{}
-%\renewcommand{\fPROBLEM}[1]{}
-%\renewcommand{\NA}[1]{#1}  % Note, NA's pass through!
+\renewcommand{\LATER}[1]{}
+\renewcommand{\fLATER}[1]{}
+\renewcommand{\TBD}[1]{}
+\renewcommand{\fTBD}[1]{}
+\renewcommand{\PROBLEM}[1]{}
+\renewcommand{\fPROBLEM}[1]{}
+\renewcommand{\NA}[1]{#1}  % Note, NA's pass through!
 
 
 % The \icmltitle you define below is probably too long as a header.
@@ -183,7 +183,7 @@ series data sets from various domains.
 
 \end{abstract} 
 
-%\allowdisplaybreaks
+\allowdisplaybreaks
 
 \section{Introduction}
 
@@ -208,7 +208,7 @@ In this paper we conjecture that the following ingredients may be useful for bui
 \begin{figure}[t]
 \centering
 \fbox{\includegraphics[trim=0cm 4.75cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/pg_0007-crop}}
-\caption{Extract from an automatically-generated report describing the model components discovered by automatic model search.  This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minimum.}
+\caption{Extract from an automatically-generated report describing the model components discovered by automatic model search.  This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minimum \citep{lean1995reconstruction}.}
 \label{fig:periodic}
 \end{figure}
 
@@ -276,7 +276,7 @@ k_1 + k_2 =& \,\, k_1(x,x') + k_2(x,x')\\
 k_1 \times k_2 =& \,\, k_1(x,x') \times k_2(x,x')
 \end{align}
 
-\fTBD{This would be a good place to mention how kernels combine to form megatron}
+Combining kernels using these operations can yield kernels expressing richer structures such as approximate periodicity ($\kSE \times \kPer$) or a smooth function with a linear trend ($\kSE + \kLin$).
 
 % relation to previous paper
 This kernel composition framework (with different base kernels) was described by \citet{DuvLloGroetal13}.
@@ -302,7 +302,7 @@ Table~\ref{table:motifs} lists common regression models that can be expressed by
 \begin{table}[ht]
 \centering
 \begin{tabular}{l|l}
-Motif & Example kernel \\
+Model & Example kernel \\
 \midrule
 \gp{} smoothing & $\kSE$ \\
 Linear regression & $\kC + \kLin$ \\
@@ -315,7 +315,7 @@ Changepoints & \eg $\kCP(\kSE, \kSE)$ \\
 Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$
 \end{tabular}
 \caption{
-Syntax of common regression motifs expressible in our language.
+Common regression models expressible in our language.
 }
 \label{table:motifs}
 \end{table}
@@ -372,9 +372,8 @@ This lets us describe each product of kernels separately.
 
 
 \paragraph{Each kernel in a product modifies a model in a consistent way}
-This property allows us to describe the contribution of each kernel in a product with a different adjective.
-
-Next, we describe how each type of kernel modifies a model and the corresponding description.
+This allows us to describe the contribution of each kernel in a product as an adjective, or more generally as a modifier of a noun.
+We now describe how each kernel modifies a model and how this can be described in natural language:
 
 \begin{itemize}
 \item {\bf Multiplication by $\kSE$} removes long range correlations from a model since $\kSE(x,x')$ decreases monotonically to 0 as $|x - x'|$ increases.
@@ -391,13 +390,13 @@ This can be described as \eg `from [time]' or `until [time]'.
 modifies the correlation structure in the same way as multiplying the function by an indepedent periodic functions.
 Formally, if ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$ then
 \begin{align}
-{\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.
+{\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.\nonumber
 \end{align}
-This can be loosely described as \eg `modulated by a periodic function with a period of [period] [units]'.
+This can be described as \eg `modulated by a periodic function with a period of [period] [units]'.
 \end{itemize}
 
 \paragraph{Constructing a complete sentence}
-To produce a complete description, we choose one kernel to be a noun which is modified by the other kernels in the product.
+To produce a complete description of a product of kernels, we choose one kernel to act as a noun which is modified by the other kernels in the product.
 That is, we construct noun phrases of the form:
 \begin{align*}
 \textnormal{Determiner}	+	\textnormal{Premodifiers} +	\textnormal{Noun}	+	\textnormal{Postmodifiers}
@@ -419,8 +418,7 @@ The head noun is chosen according to the following ordering:
 \end{align*}
 \ie $\kPer$ is always chosen as the head noun when present.
 The description for the head noun is based on the type of function that the kernel encodes for when by itself. 
-
-
+\fTBD{Quick example and/or citation}
 
 \subsection{Worked example}
 
@@ -445,13 +443,16 @@ The second component is described as `A smooth function with a lengthscale of [l
 %
 Finally, the third component is described as `An approximately periodic function with a period of [period] [units] which applies from [changepoint]'.
 
+%Descriptions are sometimes modified depending on kernel parameters.  
+%Also, a separate description procedure is used to produce the detailed descriptions of each component, which operates on the same principles.
+
 \fTBD{JL: We should also mention that the detailed descriptions are less modular - but not necessarily so}
 \fTBD{JL: Talk about different templates based on parameters}
 
 \section{Example descriptions of time series}
 \label{sec:examples}
-We demonstrate the ability of our procedure to describe a variety of patterns on two time series.
-Full reports for 13 data sets are provided as supplementary material.
+We demonstrate the ability of our procedure to discover and describe a variety of patterns on two time series.
+Full automatically-generated reports for 13 data sets are provided as supplementary material.
 
 \subsection{Summarizing 400 Years of Solar Activity}
 \label{sec:solar}
@@ -464,10 +465,10 @@ Solar irradiance data.}
 \label{fig:solar}
 \end{figure}
 
-Here we show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011 (figure~\ref{fig:solar}).
+We show excerpts from the report automatically generated on annual solar irradiation data from 1610 to 2011 (figure~\ref{fig:solar}).
 This time series has two pertinent features: a roughly 11-year cycle of solar activity, and a period lasting from 1645 to 1715 with much smaller variance than the rest of the dataset.
 This flat region corresponds to the Maunder minimum, a period in which sunspots were extremely rare \citep{lean1995reconstruction}.
-The \procedurename{} search procedure\fTBD{JL: Should we mention the search procedure - or just say that \procedurename{} has clearly identified?} and automatic description clearly identify these two features, as discussed below.
+\procedurename{} clearly identifies these two features, as discussed below.
 
 %After distributing and simplifying, the kernel corresponding to the first four components is as follows:
 %\vspace{-0.5\baselineskip}
@@ -486,7 +487,8 @@ The \procedurename{} search procedure\fTBD{JL: Should we mention the search proc
 \centering
 \fbox{\includegraphics[trim=0cm 10.8cm 0cm 6.3cm, clip, width=0.98\columnwidth]{solarpages/pg_0002-crop}}
 \caption{
-An example of an automatically-generated summary of a dataset.  The dataset is decomposed into diverse structures with simple descriptions.}
+Automatically generated descriptions of the components discovered by \procedurename{} on the solar irradiance data set.
+The dataset has been decomposed into diverse structures with simple descriptions.}
 \label{fig:exec}
 \end{figure}
 Figure \ref{fig:exec} shows the natural-language summaries of the top four components chosen by \procedurename{}.
@@ -497,148 +499,37 @@ Figure \ref{fig:exec} shows the natural-language summaries of the top four compo
 %This might seem incongruous with the observation that there are two main features of the data, but if we examine the first four components, we see that the first component is describing the mean of the dataset, the second is the Maunder minimum, the third describes the long-term trend, and the fourth describes the 11-year periodicity.
 From these short summaries, we can see that our system has identified the Maunder minimum (second component) and 11-year solar cycle (fourth component).
 These components are visualized in figures~\ref{fig:maunder} and \ref{fig:periodic}, respectively. 
-By examining the parameters of the kernels representing the solar cycle, \procedurename{} identified that the shape of the periodicity is near sinusoidal and also quantifies how quickly the exact shape of the sinusoid changes.
+%By examining the parameters of the kernels representing the solar cycle, \procedurename{} identified that the shape of the periodicity is near sinusoidal and also quantifies how quickly the exact shape of the sinusoid changes.
 The third component corresponds to long-term trends, as visualized in figure~\ref{fig:smooth}.
-%Next, we discuss each component in greater detail.
-%This might seem incongruous with the observation that there are two main features of the data, but if we examine the first four components, we see that the first component is describing the mean of the dataset, the second is the Maunder minimum, the third describes the long-term trend, and the fourth describes the 11-year periodicity.
 
-%\subsubsection{Signal versus Noise}
-%
-%One design challenge we encountered was seperating the recovered structure into signal and noise.  Originally, the model always included a term corresponding to \iid{} additive Gaussian noise.  However, in practice, the distinction between signal and noise is unclear for two reasons.  First, a component which varies arbitrarily quickly in time can be indistinguishable from noise.  Second, the variance of the noise may change over time (called heteroscedasticity), and this sort of pattern may be considered part of the signal.
-%Because of the blurry distinction between signal and noise, we include a table which summarizes the relative contribution of each component in terms of held-out predictive power.%  To do this, we order the components in terms of how much each one improves predictive performance in a 10-fold cross-validation procedure.  The intuition for this metric is that noise-like components do not contribute much to the extrapolation performance of the model, but that signal-like components do.
-%
-%
-%\begin{figure}
-%\centering
-%\fbox{\includegraphics[width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-3}}
-%\caption{A table summarizing the relative contribution of the 9 different components of the model in terms of predictive performance.}
-%\label{fig:table}
-%\end{figure}
-%
-%Figure \ref{fig:table} show an example of this table on the solar dataset.
-
-%Because the user may be interested in local or noisy components, we report all components to the user.  
-%An interactive version of our procedure could allow users to specify which components are of interest, and group the remaining components into a single noise component.
-
-%\paragraph{Decomposition plots}
-
-%The second section of each report contains a detailed discussion of each component.
-%Every component is plotted, and properties of the covariance structure are described.
-%Some components are not meaningful when plotted on their own, so we also include plots of the cumulative sum of components.
-%\paragraph{Automatic Plotting}
-%The posterior of the individual component and sum of all components so far is visualised by plots of the posterior mean and variance.
-%First, the posterior mean and variance of each component is plotted on its own.
-%Second, the posterior mean and variance of all components shown so far is plotted against the data.
-%This progression of plots 
-%By contrasting each of these plots with plots of earlier components, we can see 
-%shows qualitatively how each component contributes to an overall explanation of the data.
-%A second paragraph explains the improvement in predictive performance gained by including this component in the model. This is the same informatino as included in the executive summary.
-%\paragraph{Maunder minimum}
-%Figure \ref{fig:maunder} shows that \procedurename{} has captured the unusual period of decreased solar activity from about 1645 to 1715, and is able to report this in natural language.
-%
 \begin{figure}[ht]
 \centering
 \fbox{\includegraphics[trim=0cm 4.75cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/pg_0005-crop}}
 \caption{One of the learned components corresponds to the Maunder minimum.}
 \label{fig:maunder}
 \end{figure}
-%
-%\paragraph{Long term trend}
-%
-%Having isolated the Maunder minimum, the model captures the long-term trend of the rest of the data, shown in figure~\ref{fig:smooth}.
-%
+
 \begin{figure}[h!]
 \centering
 \fbox{\includegraphics[trim=0cm 4.75cm 0cm 1cm, clip, width=0.98\columnwidth]{solarpages/pg_0006-crop}}
 \caption{Characterizing the medium-term smoothness of solar activity levels.  By allowing other components to explain the periodicity, noise, and the Maunder minimum, \procedurename{} can isolate the part of the signal best explained by a slowly-varying trend.}
 \label{fig:smooth}
 \end{figure}
-%
-% is a good example of a meaningful component discovered by \procedurename, whose meaning would be unclear without an individual plot.  
-%
-%
-%In the history of solar activity, the Maunder minimum is a good example of a local change in covariance.  Specifically, 
-%The changepoint kernels used by \procedurename encode changes in covariance structure.
-%For example, from about 1645 to 1715, solar activity decreased.
-%, and very few sunspots were observed, a period called the Maunder Minimum \citep{lean1995reconstruction}.
-%This feature was captured by the model by multiplying a constant kernel by two changepoint kernels.
-%
-%\paragraph{Solar cycles}
-%
-%Figure \ref{fig:periodic} shows that \procedurename{} has isolated the approximately 11 year solar cycle.
 
-%
-%with a pair of changepoint kernels.%shows exactly which sort of structure was recovered by this component.
-%
-%\begin{figure}[h!]
-%\centering
-%\fbox{\includegraphics[width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-6}}
-%\caption{Characterizing the medium-term smoothness of solar activity levels.  By allowing other components to explain the periodicity, noise, and the Maunder minimum, we can isolate the part of the signal best explained by a slowly-varying trend.}
-%\label{fig:smooth}
-%\end{figure}
-%
-%\paragraph{Isolating the smoothly-varying component} Examining the dataset by eye, overall solar activity seems to change slowly over decades.  However, this intuition seems difficult to formalize.  Linear or quadratic regression is clearly inappropriate, and methods based on local smoothing would need to control for the periodic component.  Luckily, the \procedurename procedure does exactly this, allowing us to isolate the slowly-varying component of the data, without having to forecast either the Maunder minimum or the periodic variation.  Figure \ref{fig:smooth} shows the automatically-generated summary of this component.
-
-
-
-%Figure \ref{fig:periodic} shows that \procedurename has identified the approximately 11 year solar cycle.
-%By isolating this component in separate plots it is easy to see the exact nature of the solar cycle \eg how the amplitude of this periodic component varies over time.
-%This demonstrates one benefit of isolating individual components: we can now see, by eye, extra structure that was not explicitly captured by the model.  Specifically, we can see that the amplitude of the periodic component varies over time.
-
-%and by comparing with figure \ref{fig:smooth}, we can see that it varies roughly in proportion to the overall magnitude of the signal.
-%  This pattern suggests that some sort of log-transform might be appropriate for this dataset, or that the model should be extended in some way to capture this structure.
-
-%\paragraph{Extrapolation plots}
-%
-%The third section of each report shows extrapolations into the future, as well as posterior samples from each individual component of the model.  These samples help to characterize the uncertainty expressed by the model, and the extent to which different components contribute to predicting the future behavior of a time series.
-%%
-%The predictive mean and variance of the signals shown in the summary plots are useful, but do not capture the joint correlation structure in the posterior.  Showing posterior samples is a simple and universal way to illustrate joint statistical structure.
-%%
-%\begin{figure}[ht]
-%\centering
-%\fbox{\includegraphics[trim=0cm 0cm 0cm 2.8cm, clip, width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-13}}
-%\caption{Sampling from the posterior.  These samples help show not just the predictive mean and variance, but also the predictive covariance structure.  Note, for example, that the predictive mean (left) does not exhibit periodicity, but the samples (right) do.}
-%\label{fig:extrap-full}
-%\end{figure}
-%%
-%For example,
-%%  shows the predictive mean and variance given the entire model. 
-%it is not clear from the left-hand plot in figure \ref{fig:extrap-full} whether or not the periodicity of the dataset is expected to continue into the future.  However, from the samples on the right-hand size, we can see that this is indeed the case.  
-
-%\begin{figure}[h!]
-%\centering
-%\fbox{\includegraphics[width=0.98\columnwidth]{solarpages/02-solar-seperate-pages-16}}
-%\caption{Extrapolating a single component of the model.  Because our model class allows us to isolate individual components, we can show the extent to which the model expects different trends to continue.  We also observe that the posterior samples are quite different from the posterior mean, away from the data.}
-%\label{fig:extrap-smooth}
-%\end{figure}
-
-%\paragraph{Extrapolating individual components}
-%We can also examine the model's expectations about the future behavior of individual components through sampling.  Further plots in the extrapolation section show posterior samples for each individual additive component. %For example, in figure \ref{fig:extrap-smooth}, we are shown samples of the predictive distribution of the smooth component of variation.  This plot indicates that the model considers a wide range of future average intensities to be plausible, but that it always expects those average intensities to vary smoothly.
-
-
-\subsection{Describing heteroscedasticity}
+\subsection{Finding heteroscedasticity in air traffic data}
 \label{sec:airline}
 
 \begin{figure}[h]
 \centering
 \includegraphics[trim=0.4cm 16.8cm 8cm 2cm, clip, width=0.98\columnwidth, height=0.45\columnwidth]{airlinepages/pg_0002-crop}
 \caption{
-International airline passenger data.}
+International airline passenger monthly volume \citep[e.g.][]{box2013time}.}
 \label{fig:airline}
 \end{figure}
 
 Next, we present the analysis generated by our procedure on international airline passenger data (figure~\ref{fig:airline}).
-The model constructed by \procedurename{} has four components: $\kLin + \kSE \times \kPer \times \kLin + \kSE + \kWN \times \kLin$, with descriptions given in figure~\ref{fig:exec-airline}\fTBD{JL: The table could be cut for brevity}.
-%\vspace{-0.5\baselineskip}
-%\begin{itemize}
-%  \itemsep0em
-%  \item $\kSE$
-%  \item $\kSE \times \kPer \times \kLin$
-%  \item $\kSE$
-%  \item $\kWN \times \kLin$
-%\end{itemize}
-%\vspace{-\baselineskip}
-%
+The model constructed by \procedurename{} has four components: $\kLin + \kSE \times \kPer \times \kLin + \kSE + \kWN \times \kLin$, with descriptions given in figure~\ref{fig:exec-airline}.
+
 \begin{figure}[h]
 \centering
 \fbox{\includegraphics[trim=0cm 6.8cm 0cm 6cm, clip, width=0.98\columnwidth]{airlinepages/pg_0002-crop}}
@@ -646,22 +537,8 @@ The model constructed by \procedurename{} has four components: $\kLin + \kSE \ti
 Short descriptions and summary statistics for the four components of the airline model.}
 \label{fig:exec-airline}
 \end{figure}
-%
-%\paragraph{Monotonic trend}
-%\fTBD{JL: This will change to a linear trend in the official version - unless vetoed}
-%No model in the current language can express a prior over monotonic functions.
-%However, it is simple to check the posterior for monotonicity and remark upon it when appropriate (figure~\ref{fig:monotonic}).
 
-%\begin{figure}[h]
-%\centering
-%\fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/01-airline-separate-pages-3}}
-%\caption{Describing monotonicity of the posterior}
-%\label{fig:monotonic}
-%\end{figure}
-
-%\paragraph{Annual periodicity with linearly growing amplitude}
-
-The second component (figure~\ref{fig:lin_periodic}) is correctly described as approximately ($\kSE$) periodic ($\kPer$) with linearly growing amplitude ($\kLin$).
+The second component (figure~\ref{fig:lin_periodic}) is accurately described as approximately ($\kSE$) periodic ($\kPer$) with linearly growing amplitude ($\kLin$).
 %
 \begin{figure}[h]
 \centering
@@ -692,55 +569,49 @@ By multiplying a white noise kernel by a linear kernel, the model is able to exp
 \subsection{Comparison to equation learning}
 \label{sec:eqn-learning-comp}
 
-%Much of machine learning research focuses on numerical performance, with claims of interpretability generated post-hoc.
-%In contrast, equation learning \citep[e.g.][]{Schmidt2009b} can also be used to automate interpretation.
-
-Eureqa \citep{Eureqa} is a system capable of producing parametric descriptions of time-series.
-Here, we show equations produced by Eureqa for the data sets shown above, using the default mean absolute error performance metric.
+We now compare the descriptions generated by \procedurename{} to parametric functions produced by an equation learning system.
+%We now compare the descriptions generated by \procedurename{} to those generated by Eureqa \citep{Eureqa}, an equation learning system.
+%Eureqa \citep{Eureqa} is a system capable of producing parametric descriptions of time-series.
+We show equations produced by Eureqa \citep{Eureqa} for the data sets shown above, using the default mean absolute error performance metric.
 %\footnotetext{We experimented with the root mean squared error with Akaike information criterion penalisation (analogous to the criterion used by \procedurename{}) but occasionally observed severe overfitting.}
 
 
-The learned equation for the solar irradiance data is
+The learned function for the solar irradiance data is
 \begin{align*}
 \textrm{Irradiance($t$)} = 1361 + \alpha\sin(\beta + \gamma t)\sin(\delta + \epsilon t^2 - \zeta t)
 \end{align*}
-where $t$ is time (the input to the regression) and constants are replaced with symbols for brevity.
-This equation captures the constant offset of the data, and models the long term trends with a product of sinusoids, but fails to capture the solar cycle or the Maunder-minimum.
+where $t$ is time and constants are replaced with symbols for brevity.
+This equation captures the constant offset of the data, and models the long-term trend with a product of sinusoids, but fails to capture the solar cycle or the Maunder minimum.
 
-The learned equation for the airline passenger data is
+The learned function for the airline passenger data is
 \begin{align*}
 \textrm{Passengers($t$)} = \alpha t + \beta\cos(\gamma - \delta t)\textrm{logistic}(\epsilon t - \zeta) - \eta
 \end{align*}
 which captures the approximately linear trend, and the periodic component with approximately linearly (logistic) increasing amplitude.
-However, the periodicity is heavily approximated with only a single sinusoid and the model cannot capture heteroscedasticity.
-
-
-
-
+However, the annual cycle is heavily approximated by a sinusoid and the model does not capture heteroscedasticity.
 
 \section{Related work}
 \label{sec:related-work}
 
-\paragraph{Building Structured Covariance Functions}
-\cite{rasmussen38gaussian} devote 4 pages to manually constructing a complex kernel to model a time series of carbon dioxode conentrations.
+\paragraph{Building Structured Kernel Functions}
+\cite{rasmussen38gaussian} devote 4 pages to manually constructing a composite kernel to model a time series of carbon dioxode concentrations.
 In the supplementary material, we include a report automatically generated by \procedurename{} for this dataset; our procedure chose a model similar to the one they constructed by hand.
 %A report automatically generated by \procedurename{} on this data set is included in the supplementary material and discovers a very similar model. 
-Other examples of papers whose main contribution is to use domain knowledge to manually construct and fit a compound \gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}.
+Other examples of papers whose main contribution is to manually construct and fit a composite \gp{} kernel are \cite{klenske2012nonparametric} and \cite{lloydgefcom2012}.
+\citet{diosan2007evolving, bing2010gp} and \citet{kronberger2013evolution} search over a similar space of models as \procedurename{} using genetic algorithms but do not interpret the resulting models.
+Our procedure is based on the model construction method of \citet{DuvLloGroetal13} which automatically decomposed models but components were interpreted manually and the space of models searched over was smaller than that in this work. 
 
-\paragraph{Equation learning} \fTBD{RBG: not equation discovery?}
-%In this work we have defined a search space of statistical models, where each model is characterised by a parametric covariance function.
-%Previous work has considered searching over parametric functions \citep[e.g.][]{Schmidt2009b}.
-%Some functions are well explained parametrically \eg a logistic function, whereas others are best described by their covariance \eg an approximately periodic function.
-\cite{schmidt2009distilling}, \cite{todorovski1997declarative} and \cite{washio1999discovering} learn parametric forms of equations specifying time series, or relations between quantities.
-In constrast, \procedurename{} models the covariance structure, allowing it to model functions without a simple parametric form.
+\paragraph{Equation learning}
+\cite{todorovski1997declarative}, \cite{washio1999discovering} and \cite{schmidt2009distilling} learn parametric forms of functions specifying time series, or relations between quantities.
+In contrast, \procedurename{} learns a parametric form for the covariance, allowing it to model functions without a simple parametric form.
 %(We compare against an equation learning system in section~\ref{sec:eqn-learning-comp}.)
 %Because our system specifies the more general\fTBD{JL: Sounds like we are claiming we are a super set of equation learning - we need more kernels to make this claim} covariance structure rather than the functions themselves, we are able to capture structure which does not have a simple parametric form.
 
 \paragraph{Searching over open-ended model spaces}
 
-This work was inspired by previous successes at searching over open-ended model spaces: matrix decompositions \citep{grosse2012exploiting}, graph structures \citep{kemp2008discovery}, and 3D scenes \cite{VikashScene13}.\fTBD{RBG: I'm not familiar with the Vikash reference; does it fit in this context?}
-In all three cases, the model spaces were defined compositionally in terms of a handful of components and operators, and models were selected using criteria which trade off model complexity and closeness of fit.
-Our work differs in that our procedure automatically interprets the model for the user, making the system accessible to non-experts and attenuating the biases of human interpretation.
+This work was inspired by previous successes at searching over open-ended model spaces: matrix decompositions \citep{grosse2012exploiting} and graph structures \citep{kemp2008discovery}.
+In both cases, the model spaces were defined compositionally through a handful of components and operators, and models were selected using criteria which trade off model complexity and goodness of fit.
+Our work differs in that our procedure automatically interprets the chosen model, making the results accessible to non-experts.
 %In another related paper, \cite{VikashScene13} automatically searches over models of 2D scenes.
 %Automatic model search is possible whenever the following conditions are met: 1) we can define a large space of models by combining a small number of components in a small number of different ways; 2) inference can be performed for all models in this space; 3) a basic search procedure is sufficient to find accurate models.
 %These conditions were also met for example in \citet{kemp2008discovery} who learned the structural form of a graph used to model human similarity judgments.  
@@ -759,10 +630,9 @@ Our work differs in that our procedure automatically interprets the model for th
 %Probabilistic programming (cite) defines languages that describe generative models in such a way that %inference can be performed in each model.
 %Extending the model search ideas in \procedurename to searches over probabilistic programs would be an interesting area for future research (cite Josh's workshop paper?).
 
-\paragraph{Natural-language outputs}
+\paragraph{Natural-language output}
 To the best of our knowledge, our procedure is the first example of automatic description of nonparametric statistical models.
-However, systems with natural language outputs have been built in the areas of video interpretation \citep{barbu2012video} and automated theorem proving \citep{GanesalingamG13}.
-We agree with \citet{GanesalingamG13} that natural language outputs make it more obvious whether an algorithm's internal representations are meaningful and cognitively plausible\fTBD{JL: Strong - but I like it}.
+However, systems with natural language output have been built in the areas of video interpretation \citep{barbu2012video} and automated theorem proving \citep{GanesalingamG13}.
 
 %\section{Numerical evaluation}
 \section{Predictive Accuracy}
@@ -773,59 +643,58 @@ We agree with \citet{GanesalingamG13} that natural language outputs make it more
 \includegraphics[width=\textwidth]{figures/box_extrap_wide}
 \vspace{-0.8cm}
 \caption{
-Raw data, and box plot of standardised extrapolation RMSE (best performance = 1).
-Ordered by median.
+Raw data, and box plot (showing median and quartiles) of standardised extrapolation RMSE (best performance = 1) on 13 time-series.
+The methods are ordered by median.
 }
 \label{fig:box_extrap_dist}
 \end{figure*}
 
-To complement our demonstration of the interpretability of \procedurename{}, we compared the predictive accuracy of various model-building algorithms at interpolating and extrapolating time-series.
+In addition to our demonstration of the interpretability of \procedurename{}, we compared the predictive accuracy of various model-building algorithms at interpolating and extrapolating time-series.
 On these datasets, \procedurename{} outperforms the other methods on average.% on average (\eg as measured by quantiles of performance metrics).
 %\NA{However, the variability of the results suggests that there is room to improve the robustness of \procedurename.}
 %\fTBD{JL: I'm trying to avoid claims of oversell - any thoughts on a measured statement?}
 
 \paragraph{Data sets}
 
-In addition to the three time series analysed by \cite{DuvLloGroetal13} we evaluate the performance of the algorithms listed below on 10 additional time series from the time series data library \citep{TSDL}; plots of the data can be found at the beginning of the reports in the supplementary material.
+We evaluate the performance of the algorithms listed below on 13 real time-series from various domains from the time series data library \citep{TSDL}; plots of the data can be found at the beginning of the reports in the supplementary material.
 
 \paragraph{Algorithms}
 
-We compare the structure search algorithm to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms: linear regression, \gp{} regression with a single $\kSE$ kernel (squared exponential), a Bayesian variant of multiple kernel learning \citep{bach2004multiple}, change point modelling
+We compare the \procedurename{} to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms: linear regression, \gp{} regression with a single $\kSE$ kernel (squared exponential), a Bayesian variant of multiple kernel learning (MKL) \citep{bach2004multiple}, change point modelling
 % / multi resolution Gaussian processes 
-\citep{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels \citep{WilAda13} and trend-cyclical-irregular \citep[e.g.][]{lind2006basic}\fTBD{Can anyone find a more academic reference?}.
+\citep{garnett2010sequential, FoxDunson:NIPS2012}, spectral kernels \citep{WilAda13} and trend-cyclical-irregular models \citep[e.g.][]{lind2006basic}.
 
+% details of algorithms
 We use the default mean absolute error criterion when using Eureqa.
-All other algorithms can be expressed as restrictions of our modelling language (see table~\ref{table:motifs})\fTBD{JL: This link needs to be fixed or the table reintroduced EARLY} so we perform inference using the same search methodology and selection criterion\footnotemark~(Bayesian information criterion) with appropriate restrictions to the grammar.
-For MKL, trend-cyclical-irregular and spectral kernels, this search corresponds to forward-selection.
-\footnotetext{We experimented with using unpenalised conditional likelihood as the search criterion for other methods but observed overfitting, as is to be expected.} 
+All other algorithms can be expressed as restrictions of our modeling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark~with appropriate restrictions to the language.
+For MKL, trend-cyclical-irregular and spectral kernels, the greedy search procedure corresponds to a forward-selection algorithm. 
+\footnotetext{We experimented with using unpenalised marginal likelihood as the search criterion but observed overfitting, as is to be expected.} 
 
-We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series \citep[e.g.][]{box2013time}.
-Producing model construction algorithms for this class of time-series model would be an interesting area for future research.
+We restricted to regression algorithms for comparability; this excludes models which regress on previous values of times series, such as autoregressive or moving-average models \citep[e.g.][]{box2013time}.
+Constructing a language for this class of time-series model would be an interesting area for future research.
 
 \paragraph{Interpretability versus accuracy}
 
-The search procedure sometimes produces kernel expressions having many nested products of sums, resulting in descriptions containing many relatively uninterpretable components\fTBD{JL: This is a weak sentence - maybe we should revert to the previous version}.  In order to encourage the search to report fewer, more interpretable components, we experimented with forcing the search procedure to always distribute products during search.  We call this procedure \procedurename{}-interpretability, in contrast to the unrestricted version of the search, \procedurename{}-accuracy, which tends to produce models with better predictive performance.  \procedurename{}-interpretability was used to produce the reports shown in this paper, and we compare the performance of both in the prediction experiments.
-%After applying search operators to a kernel we distributed all products over addition, changepoint and changewindow operators and simplified the resulting expression.
-%This variant (\procedurename{} interpretability) of the search tends to produce models with fewer additive components improving interpretability.
-%We also include the unrestricted version of the search (\procedurename{} accuracy) which tends to produce models that are better at extrapolation and interpolation.
-%
-%The research leading up to this manuscript has focused on interpretability.
-%One could almost certainly improve the numerical results presented in this section by reintroducing $\kRQ$ and including Mat\'ern kernels as well as others.
-%We leave a full exploration of the interpretability / accuracy trade-off for future work.
+BIC trades off model fit and complexity by penalizing the number of parameters in a kernel expression.
+This can result in \procedurename{} favoring kernel expressions with nested products of sums, producing descriptions involving many additive components.
+While these models have good predictive performance the large number of components can make them less interpretable.
+We experimented with distributing all products over addition during the search, causing models with many additive components to be more heavily penalized by BIC.
+We call this procedure \procedurename{}-interpretability, in contrast to the unrestricted version of the search, \procedurename{}-accuracy.
 
 \paragraph{Extrapolation}
 
 To test extrapolation we trained all algorithms on the first 90\% of the data, predicted the remaining 10\% and then computed the root mean squared error (RMSE).
 The RMSEs are then standardised by dividing by the smallest RMSE for each data set so that the best performance on each data set will have a value of 1.
-%
-Figure~\ref{fig:box_extrap_dist} shows the standardised RMSEs across algorithms.
-%Both versions of \procedurename{} have lower quartiles than all other methods but the outliers of \procedurename{}, TCI and SP have similar values.
 
-Overall, the model construction methods with the greater capacity perform better: trend-cyclical-irregular outperforms Bayesian MKL, which outperforms squared exponential.
-Eureqa performs relatively poorly, since very few datasets are well explained by a parametric equation.
+Figure~\ref{fig:box_extrap_dist} shows the standardised RMSEs across algorithms.
+\procedurename{}-accuracy outperforms \procedurename{}-interpretability but both versions of have lower quartiles than all other methods.
+%but the outliers of \procedurename{}, TCI and SP have similar values.
+
+Overall, the model construction methods with greater capacity perform better: \procedurename{} outperforms trend-cyclical-irregular, which outperforms Bayesian MKL, which outperforms squared exponential.
+Despite searching over a rich model class, Eureqa performs relatively poorly, since very few datasets are parsimoniously explained by a parametric equation.
 
 Not shown on the plot are large outliers for spectral kernels, Eureqa, squared exponential and linear regression with values of 11, 493, 22 and 29 respectively.
-All of these outliers occurred on a data set with a large and sharp discontinuity (see the call centre data in the supplementary material).
+All of these outliers occurred on a data set with a large discontinuity (see the call centre data in the supplementary material).
 %All methods attempted to model this discontinuity using inappropriate components resulting in wild predictions.
 
 %Also not shown on the plot is a very large outlier for EL of 493 (this was also on the call centre data).
@@ -843,17 +712,13 @@ To test the ability of the methods to interpolate, we randomly divided each data
 %We trained each algorithm on the training half of the data, produced predictions for the remaining half and then computed standardised RMSEs.
 The results are similar to those for extrapolation and are included in the supplementary material.
 
+\section{Conclusion}
 
-
-
-
-\section{Discussion}
-
-We have introduced a system that can automatically find\fTBD{JL: Surely construct or build?} appropriate models from an open-ended space and generate natural language reports which highlight\fTBD{JL: Explain / describe?} underlying sources of variability.
+Towards the goal of automating statistical modeling we have presented a system which constructs an appropriate model from an open-ended language and automatically generates detailed reports that describe patterns in the data captured by the model.
+We have demonstrated that our procedure can discover and describe a variety of patterns on several time series.
 %To the best of our knowledge this is the first system that can automatically describe any model in an open-ended class of nonparametric models in natural language.
-Our procedure's extrapolation and interpolation performance are also competitive with existing model construction techniques.
-This can be seen as the beginnings of an automated statistician, which would make nonparametric regression models accessible to non-experts.
-
+Our procedure's extrapolation and interpolation performance on time-series are state-of-the-art compared to existing model construction techniques.
+We believe this procedure has the potential to make powerful statistical model-building techniques accessible to non-experts.
 
 %Thinking towards extending this line of work many questions and challenges are raised which we briefly outline.
 

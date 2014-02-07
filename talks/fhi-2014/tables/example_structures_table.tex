@@ -1,0 +1,28 @@
+\newcommand{\fhbig}{2.35cm}
+\newcommand{\fwbig}{2.4cm}
+\newcommand{\kernpic}[1]{\includegraphics[height=\fhbig,width=\fwbig]{../figures/structure_examples/#1}}
+\newcommand{\kernpicr}[1]{\rotatebox{90}{\includegraphics[height=\fwbig,width=\fhbig]{../figures/structure_examples/#1}}}
+\newcommand{\largeplus}{\tabbox{{\Large+}}}
+\newcommand{\largeeq}{\tabbox{{\Large=}}}
+\newcommand{\largetimes}{\tabbox{{\Large$\times$}}}
+\begin{figure*}
+\centering
+\renewcommand{\tabularxcolumn}[1]{>{\arraybackslash}m{#1}}
+\begin{tabular}{m{\fwbig}m{0.01\textwidth}m{\fwbig}m{0.01\textwidth}m{\fwbig}m{\fwbig}m{\fwbig}}
+%\begin{tabularx}{\textwidth}{XXXXX|X|X}
+base kernel & & base kernel & & composite \newline kernel & draws from GP & GP posterior \\ \toprule
+\kernpicr{se_kernel} & \largetimes& \kernpicr{per_kernel} & \largeeq & \kernpicr{se_times_per} & \kernpic{se_times_per_draws} & \kernpic{se_times_per_post} \\
+sq-exp & $\times$ & periodic & = & locally periodic & & \\  \midrule
+\kernpicr{se_kernel} & \largeplus & \kernpicr{per_kernel} & \largeeq & \kernpicr{se_plus_per} & \kernpic{se_plus_per_draws} & \kernpic{se_plus_per_post} \\
+sq-exp & + & periodic & = & perdiodic with local noise & & \\ \midrule
+\kernpic{lin_kernel} & \largetimes & \kernpic{lin_kernel} & \largeeq & \kernpic{lin_times_lin} & \kernpic{lin_times_lin_draws} & \kernpic{lin_times_lin_post} \\
+linear & $\times$ & linear & = & quadratic & & \\ \midrule
+\kernpic{lin_kernel} & \largetimes & \kernpicr{se_kernel} & \largeeq & \kernpicr{se_times_lin} & \kernpic{se_times_lin_draws} & \kernpic{se_times_lin_post} \\
+linear & $\times$ & sq-exp & = & increasing local variation & & \\ \midrule
+\kernpic{lin_kernel} & \largetimes & \kernpicr{per_kernel} & \largeeq & \kernpic{lin_times_per} & \kernpic{lin_times_per_draws} & \kernpic{lin_times_per_post} \\
+linear & $\times$ & periodic & = & growing amplitude & & \\ \midrule
+\kernpic{lin_kernel} & \largeplus & \kernpicr{per_kernel} & \largeeq & \kernpic{lin_plus_per} & \kernpic{lin_plus_per_draws} & \kernpic{lin_plus_per_post} \\
+linear & + & periodic & = & periodic with trend & & \\
+\end{tabular}
+\label{fig:kernels}
+\end{figure*}

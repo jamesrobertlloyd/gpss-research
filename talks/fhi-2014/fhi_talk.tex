@@ -1,0 +1,829 @@
+\input{header_beamer}
+\usepackage{etex}
+%\include{macros}
+%\documentclass[usenames,dvipsnames]{beamer}
+%\usepackage{beamerthemesplit}
+%\usepackage{graphics}
+%\usepackage{amsmath}
+%\usepackage{rotating}
+%\usepackage{array}
+%\usepackage{nth}
+\usepackage{xcolor}
+\usepackage{textcomp}
+\input{matlab_setup}
+
+\usepackage{tabularx}
+\usepackage{picins}
+\usepackage{tikz}
+\usepackage{changepage}
+
+\usetikzlibrary{shapes.geometric,arrows,chains,matrix,positioning,scopes,calc}
+\tikzstyle{mybox} = [draw=white, rectangle]
+
+\definecolor{camlightblue}{rgb}{0.601 , 0.8, 1}
+\definecolor{camdarkblue}{rgb}{0, 0.203, 0.402}
+\definecolor{camred}{rgb}{1, 0.203, 0}
+\definecolor{camyellow}{rgb}{1, 0.8, 0}
+\definecolor{lightblue}{rgb}{0, 0, 0.80}
+\definecolor{white}{rgb}{1, 1, 1}
+\definecolor{whiteblue}{rgb}{0.80, 0.80, 1}
+
+\newcolumntype{x}[1]{>{\centering\arraybackslash\hspace{0pt}}m{#1}}
+\newcommand{\tabbox}[1]{#1}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Some look and feel definitions
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setlength{\columnsep}{0.03\textwidth}
+\setlength{\columnseprule}{0.0018\textwidth}
+\setlength{\parindent}{0.0cm}
+
+%\include{macros}
+\usepackage{preamble}
+\hypersetup{colorlinks=true,citecolor=blue}
+%\pdfmapfile{+sansmathaccent.map}
+
+\title{Automatic Model Construction}
+
+\author{
+\includegraphics[height=0.2\textwidth, trim=20mm 25mm 0mm 25mm, clip]{figures/david2}
+\qquad
+\includegraphics[height=0.2\textwidth]{figures/JamesLloyd4}
+\qquad
+\includegraphics[height=0.2\textwidth]{figures/roger-photo}
+\\
+David Duvenaud, James Robert Lloyd, Roger Grosse,\\
+\includegraphics[height=0.2\textwidth, trim=0mm 7mm 0mm 0mm, clip]{figures/josh2}
+\qquad
+\includegraphics[height=0.2\textwidth]{figures/zg2}\\
+Joshua Tenenbaum, Zoubin Ghahramani
+}
+\institute{
+%\includegraphics[width=0.4\textwidth]{figures/spiral_main}
+}
+%\date{}
+
+
+\begin{document}
+
+\frame[plain] {
+\titlepage
+}
+
+\setbeamercolor{toc}{fg=black}
+
+\frame[plain] {
+\frametitle{Outline}
+\tableofcontents
+
+\begin{itemize} 
+%	\item Motivation
+	\item Structure discovery in regression
+	\begin{itemize} 
+		\item Gaussian processes
+		\item Structures expressible through covariance
+%		\item A massive missing piece
+		\item Grammar \& model search
+		\item Examples
+	\end{itemize}
+	\item Structure discovery in matrix models
+	\begin{itemize} 
+		\item diverse models as matrix decompositions
+		\item Grammar \& Special cases
+		\item Structure discovered in natural images
+	\end{itemize}
+	\item Automating Statistics
+	\begin{itemize} 
+		\item model checking and marginal likelihood
+		\item espistemological questions
+	\end{itemize}	
+\end{itemize}   
+}
+
+
+
+
+\frame[plain]{
+\frametitle{Typical statistical modelling}
+\begin{itemize} 
+	\item models typically built by hand, or chosen from a fixed set
+	\begin{center}
+		\includegraphics[width=9cm, trim=1.39cm 15cm 35cm 0cm, clip]{figures/plot_classifier_comparison_1}\\
+		\includegraphics[width=9cm, trim=35cm 15cm 1.35cm 0cm, clip]{figures/plot_classifier_comparison_1}
+\end{center}
+%	\begin{itemize} 
+%	  \vspace{\baselineskip}
+%		\item Example: Scikit-learn
+			\item Building by hand requires considerable expertise% and understanding of the dataset 
+%	\begin{itemize}
+%	  \item Can become an entire research project
+%	\end{itemize}
+%	\end{itemize}
+%	\vspace{\baselineskip}
+	\item Just being nonparametric isn't good enough
+	\begin{itemize}
+	  \item Nonparametric does not mean assumption-free!
+	\end{itemize}
+%	\vspace{\baselineskip}
+	\item Can silently fail
+	\begin{itemize}
+	  \item How to tell if none of the models fit the data well?
+	\end{itemize}
+\end{itemize}
+}
+
+
+
+
+
+
+
+
+\frame[plain]{
+\frametitle{Can we do better?}
+	\begin{itemize} 
+	\item Andrew Gelman asks:  How could an AI do statistics?
+	\vspace{\baselineskip}
+	\item An artificial statistician would need:
+			\begin{itemize} 
+			\item a language that could describe arbitrarily complicated models
+			\item a method of searching over those models
+			\item a procedure to check model fit
+		\end{itemize}
+	\vspace{\baselineskip}
+	\item We construct such a language over regression models, a procedure to search over it, and a method to describe in natural language the properties of the resulting models
+%	\begin{itemize}
+%		\item Working on automatic model-checking\ldots
+%	\end{itemize}
+\end{itemize}
+}
+
+
+\definecolor{verylightblue}{rgb}{0.97,0.97,1}
+\setlength{\fboxsep}{0pt}
+
+\newcommand{\ltrim}{ 2 }
+\newcommand{\rictrim}{ 2 }
+%\newcommand{\airlinefig}[1]{\includegraphics[trim=20 0 12 20, clip, width=0.207\textwidth]{figures/#1}}
+%\newcommand{\airlinefigtwo}[1]{}
+\newcommand{\olduptext}[1]{\hspace{-1cm} \raisebox{ 0.8cm}{ {#1}} \hspace{-0.75cm} }
+\newcommand{\uptext}[1]{\raisebox{1cm}{#1}}
+
+\frame[plain]{
+\frametitle{Example: An automatic analysis}
+
+
+\begin{adjustwidth}{-1cm}{}
+\begin{tabular}{@{}c@{}}
+%\airlinefig{01-airline-months_all}&\hspace{0.6cm}\olduptext{$=$} \hspace{-0.1cm}
+%\airlinefig{01-airline-months_1} & \olduptext{$+$}
+%\airlinefig{01-airline-months_2} & \olduptext{$+$}
+%\airlinefig{/01-airline-months_3} \\
+%\hspace{-3.5mm}
+%\fbox{
+
+%\hspace{-3.5mm}
+\begin{tabular}{@{}cc@{}}
+%\\[-0.7em]
+%\fcolorbox{blue}{white}{
+\includegraphics[trim=7.8cm 14.5cm 0cm 2cm, clip, width=0.5\columnwidth]{figures/airline-pages/pg_0002-crop} 
+%}
+ & \uptext{$=$} \\
+%{\scriptsize Original data} & 
+\end{tabular}
+
+\\
+\begin{tabular}{p{3.4cm}p{0.05cm}p{3.45cm}p{0.05cm}p{3.45cm}}
+\\%[1cm]
+\includegraphics[trim=0.4cm 6cm 8.4cm 2.75cm, clip, width=0.32\columnwidth]{figures/airline-pages/pg_0003-crop} & 
+ \uptext{$+$}  &  
+\includegraphics[trim=0.4cm 6cm 8.4cm 2.88cm, clip, width=0.33\columnwidth]{figures/airline-pages/pg_0004-crop} & 
+\uptext{$+$} &  
+\includegraphics[trim=0.4cm 6cm 8.4cm 2.75cm, clip, width=0.32\columnwidth]{figures/airline-pages/pg_0005-crop} \\
+{\scriptsize A very smooth, monotonically increasing function }
+& & 
+{\scriptsize An approximately periodic function with a period of 1.0 years and with
+approximately linearly increasing amplitude}
+& & 
+{\scriptsize An exactly periodic function with a period of 4.3 years but with linearly
+increasing amplitude }
+\end{tabular}
+\end{tabular}
+
+\end{adjustwidth}
+}
+
+\newcommand{\Nt}[2]{\mathcal{N}\!\left(#1,#2\right)}
+
+\frame[plain]{
+\frametitle{Gaussian Process Regression}
+%Assume $\vy = f(\vX) + \epsilon$
+
+%\baselineskip
+
+$f \sim \mathcal{GP}\left(\mu, k(\cdot, \cdot)\right)$ means that, for any points $x_1, x_2, \dots, x_N$,
+
+%\begin{equation*}
+%p( f(\vx) ) = \mathcal{N}( \mu(\vX), k(\vX, \vX))
+%\end{equation*}
+
+\begin{align*}
+\left[ \!\! \begin{array}{c} f(x_1) \\ f(x_2) \\ \vdots \\ f(x_N) \end{array} \!\! \right]
+\sim
+\Nt{\left[ \!\! \begin{array}{c} \mu(x_1) \\ \mu(x_2)  \\ \vdots \\ \mu(x_N) \end{array} \!\! \right]
+}
+{\left[ \!\! \begin{array}{cccccc} 
+k(x_1, x_1) & k(x_1, x_2) & \dots & k(x_1, x_N) \\
+k(x_2, x_1) & k(x_2, x_2) & \dots & k(x_2, x_N) \\
+\vdots & \vdots & \ddots & \vdots \\
+k(x_N, x_1) & k(x_N, x_2) & \dots & k(x_N, x_N) \\
+\end{array} \!\! \right]
+}
+\end{align*}
+
+
+%where k
+%\begin{equation*}
+%K_{ij} = k( \vX_i, \vX_j ) 
+%\end{equation*}
+\textit{covariance function} or \textit{kernel} gives $k( x, x' ) = \cov\left[f(x), f(x')\right]$
+
+%\pause
+\vspace{0.5cm}
+Typically, if $x_1, x_2$ are close, then $f(x_1), f(x_2)$ are correlated:
+%
+
+\begin{columns}
+\begin{column}[r]{2cm}
+\begin{equation*}
+k_{\SE}( x, x' ) = \exp ( -\frac{1}{2\theta} | x - x' |_2^2 )
+\end{equation*}
+\end{column}
+\begin{column}[l]{1cm}
+\hspace{1cm}\includegraphics[width=3cm]{figures/kernel}
+\end{column}
+\end{columns}
+%
+
+}
+
+
+\frame[plain]{
+\frametitle{Conditional Posterior}
+
+\begin{align*}
+%f(x^*) | \vX, \vy \sim \mathcal{N}(  
+\textnormal{mean}(f(x^\star)) & = k( x^*, \vX ) K^{-1} \vy \\
+\textnormal{variance}(f(x^\star)) & = k( x^*, x^* ) - k( x^*, \vX ) K^{-1} k( \vX, x^* )
+\end{align*}
+
+
+With SE kernel:
+    \begin{figure}
+        \includegraphics<1>[width=6cm]{figures/gp_demo/1d_posterior_and_0_data}
+        \includegraphics<2>[width=6cm]{figures/gp_demo/1d_posterior_and_1_data}
+        \includegraphics<3>[width=6cm]{figures/gp_demo/1d_posterior_and_2_data}
+        \includegraphics<4>[width=6cm]{figures/gp_demo/1d_posterior_and_3_data}
+        \includegraphics<5>[width=6cm]{figures/gp_demo/1d_posterior_and_4_data}
+    \end{figure}
+}
+
+
+
+\frame[plain]{
+\frametitle{Kernels determine structure of GPs}
+\begin{itemize} 
+	\item Kernel determines almost all the properties of a GP prior
+	\item Many different kinds, with very different properties:
+\end{itemize}
+\input{tables/simple_kernels_table_v4}
+}
+
+
+\frame[plain]{
+\frametitle{Kernels can be composed}
+\begin{itemize} 
+	\item Two main operations: addition, multiplication
+\end{itemize}
+\input{tables/comp1v2}
+}
+
+%\frame[plain]{
+%\frametitle{Kernels can be composed}
+%\begin{itemize} 
+%	\item Can be composed across multiple dimensions
+%\end{itemize}
+%\input{tables/comp2v2}
+%}
+
+\frame[plain]{
+\frametitle{A language of regression models}
+\begin{itemize} 
+	\item We define a language of regression models by defining a language over kernel functions
+	\vspace{\baselineskip}
+	\item We start with a small set of base kernels and define a grammar
+		\begin{itemize}
+		\item $ K \rightarrow K + K$ 
+		\item $ K \rightarrow K \times K$ 
+		\item $ K \rightarrow \{ \SE, \Lin, \Per \}$
+		\item $ K \rightarrow CP( K, K)$ 		
+	\end{itemize}
+%	\begin{itemize}
+%	  \item Expansion rules include addition, multiplication and change-points
+%	\end{itemize}
+	\vspace{\baselineskip}
+	\item The language is open-ended, every model in it is tractable%, but its structure makes natural-language description simple
+\end{itemize}
+}
+
+\frame[plain]{
+\frametitle{Special cases in this language}
+%\begin{center}
+%  \begin{tabular}{l|l}
+%  Bayesian linear regression & $\Lin$ \\
+%  %Bayesian quadratric regression & $\Lin \times \Lin$ \\
+%  Bayesian polynomial regression & $\Lin \times \Lin \times \ldots$\\
+%  Generalized Fourier decomposition & $\Per + \Per + \ldots$ \\
+%  Generalized additive models & $\sum_{d=1}^D \SE_d$ \\
+%  Automatic relevance determination & $\prod_{d=1}^D \SE_d$ \\
+%  Linear trend with deviations & $\Lin + \SE$ \\
+%  Linearly growing amplitude & $\Lin \times \SE$
+%  \end{tabular}
+%\end{center}
+\begin{center}
+\begin{tabular}{l|l}
+Regression motif & Example kernel \\
+\midrule
+Bayesian Linear regression & $\kLin$ \\
+Bayesian polynomial regression & $\Lin \times \Lin \times \ldots$\\
+Generalized Fourier decomposition & $\Per + \Per + \ldots$ \\
+%Fourier analysis & $\sum \cos$ \\
+%Sparse spectrum \gp{}s & $\sum \cos$ \\
+%Spectral kernels & $\sum \SE \times \cos$ \\
+Changepoints & $\kCP(K_1, K_2)$ \\
+Generalized additive models & $\sum_{d=1}^D \SE_d$ \\
+Automatic relevance determination & $\prod_{d=1}^D \SE_d$ \\
+\end{tabular}
+\end{center}
+}
+
+
+%\frame[plain]{
+%\frametitle{Compositional structure search}
+%\begin{itemize}
+%	\item Define grammar over kernels:
+
+%	\vspace{\baselineskip}
+%	\item Search the space of kernels greedily by applying local search operators, maximising approximate marginal likelihood.
+%\end{itemize}
+%}
+
+
+
+
+\tikzset{hide on/.code={\only<#1>{\color{white}}}}
+
+\frame[plain]{
+\frametitle{Compositional Structure Search}
+\hspace{-1.2cm}
+\only<1>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_0/03-mauna2003-s_all_small.pdf}}
+\only<2>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_1/03-mauna2003-s_all_small.pdf}}
+\only<3>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_2/03-mauna2003-s_all_small.pdf}}
+\only<4>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_3/03-mauna2003-s_all_small.pdf}}
+
+\vspace{-3.5cm}
+\begin{minipage}[t][14cm][t]{1.14\linewidth}
+\begin{flushleft}
+\hspace{5.5cm}
+\vspace{-8cm}
+\makebox[\textwidth][c]{
+\raisebox{10cm}{
+\vspace{-8cm}
+\begin{tikzpicture}
+[sibling distance=0.18\columnwidth,-,thick, level distance=0.13\columnwidth]
+%\footnotesize
+\node[shape=rectangle,draw,thick] {Start}
+%\pause
+  child {node {$\SE$}}
+%  fill=camlightblue!30
+  child {node[shape=rectangle,draw,thick] {$\RQ$}
+    [sibling distance=0.16\columnwidth]
+%    {\visible<2->{ child {node {\ldots}}}}
+    child [hide on=-1] {node {$\SE$ + \RQ}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node[shape=rectangle,draw,thick] {$\Per + \RQ$}
+      [sibling distance=0.23\columnwidth]
+      child [hide on=-2] {node {$\SE + \Per + \RQ$}}
+      child [hide on=-2] {node {\ldots}}
+      child [hide on=-2] {node[shape=rectangle,draw,thick] {$\SE \times (\Per + \RQ)$}
+        [sibling distance=0.14\columnwidth]
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+      }
+      child [hide on=-2] {node {\ldots}}
+    }
+    %child {node {$\RQ \times \SE$}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node {$\Per \times \RQ$}}
+  }
+  child {node {$\Lin$}}
+  child {node {$\Per$}}
+  ;
+\end{tikzpicture}}
+}\end{flushleft}
+\end{minipage}
+\only<4>{}
+}
+
+
+
+\frame[plain]{
+\frametitle{Distributivity helps Interpretability}
+
+We can write all kernels as sums of products of base kernels:
+$${\SE \times (\RQ + \Lin) = (\SE \times \RQ) + (\SE \times \Lin)}.$$
+
+\vspace{\baselineskip}
+\vspace{\baselineskip}
+
+Sums of kernels are equivalent to sums of functions.
+
+
+
+If $f_1, f_2$ are independent, and ${f_1 \sim \GP(\mu_1, k_1)}$, ${f_2 \sim \GP(\mu_2, k_2)}$ then $${(f_1 + f_2) \sim \GP(\mu_1 + \mu_2, k_1 + k_2)}$$
+}
+
+\frame[plain]{
+\frametitle{Example Decomposition: Airline }
+\begin{center}
+  \input{figures/fig_airline_text_kern.tex}
+\end{center}
+}
+
+
+\frame[plain]{
+\frametitle{Summary}
+\begin{itemize}
+	\item Choosing form of kernel is currently done by hand.
+	\item Compositions of kernels lead to more interesting priors on functions than typically considered.
+	\item A simple grammar specifies all such compositions, and can be searched over automatically.
+	\item Composite kernels lead to interpretable decompositions \dots automatically?
+\end{itemize}
+}
+
+
+\frame[plain]{
+\frametitle{Example Decomposition: Airline }
+\begin{center}
+  \input{figures/fig_airline_text_kern.tex}
+\end{center}
+}
+
+
+
+
+\frame[plain]{
+\frametitle{Describing Kernels}
+
+Each kernel acts as a modifier in a standard way: an ``adjective''.
+\vspace{0.5cm}
+
+\begin{tabular}{l|l}
+Kernel & Becomes \\
+\midrule
+$K \times \kSE$ & 'locally' or 'approximately' \\
+$K \times \kLin$ & 'with linearly growing amplitude' \\
+$K \times \kPer$ & 'periodic' \\
+$\kCP(K1, K2)$ & '\dots changing at $x$ to \dots' \\
+\end{tabular}
+
+\vspace{0.5cm}
+\begin{itemize}
+\item Special cases for when they're on their own
+\item Extra adjectives depending on hyperparameters
+\end{itemize}
+}
+
+
+\frame[plain]{
+\frametitle{Example Kernel Descriptions}
+\centering
+\begin{tabular}{l|l}
+Product of Kernels & Description \\
+\midrule
+$\kPer$ & An exactly periodic function \\
+$\kPer \times \kSE$ & An approximately periodic function \\
+$\kPer \times \kSE \times \kLin$ & An approximately periodic function \\ &  with linearly varying amplitude \\
+%$\kLin$ & A linear function \\
+%$\kLin \times \kLin$ & A quadratic function \\
+%$\kPer \times \kLin \times \kLin$ & An exactly periodic function \\ & with quadratically varying amplitude\\
+\end{tabular}
+}
+
+
+\frame[plain]{
+\frametitle{This analysis was automatically generated}
+
+\vspace{0.5\baselineskip}
+
+\begin{center}
+\includegraphics[trim=0cm 9.5cm 0cm 0.7cm, clip, width=0.98\columnwidth]{figures/airline-pages/pg_0002-crop.pdf}
+
+
+\end{center}
+}
+
+\frame[plain]{
+\frametitle{This analysis was automatically generated}
+
+\begin{center}
+\vspace{0.5\baselineskip}
+
+\only<1>{
+\includegraphics[trim=0cm 6cm 0cm 0.9cm, clip, width=0.98\columnwidth]{figures/airline-pages/pg_0003-crop.pdf}}
+
+\only<2>{\includegraphics[trim=0cm 6cm 0cm 0.0cm, clip, width=0.98\columnwidth]{figures/airline-pages/pg_0004-crop.pdf}}
+
+%\only<3>{
+%\fbox{\includegraphics[trim=0cm 6cm 0cm 0.0cm, clip, width=0.98\columnwidth]{figures/airline-pages/pg_0005-crop.pdf}}}
+
+\end{center}
+}
+
+
+
+\frame[plain]{
+\frametitle{Summary}
+\begin{itemize}
+	\item Constructed a language of regression models through kernel composition
+%	\vspace{\baselineskip}
+	\item Searched over this language greedily
+%	\vspace{\baselineskip}
+	\item Kernel sums and products modify prior in predictable ways, allowing automatic natural-language description of models
+%	\vspace{\baselineskip}
+%	\item Open questions:
+%	\begin{itemize}
+%		\item Interpretability versus flexibility
+%		\item Automatic Model-checking
+%	\end{itemize}
+\end{itemize}
+}
+
+
+
+\frame[plain]{
+\frametitle{Grammars for Matrix decompositions}
+
+Previous work introduced idea of grammar of compositions:
+	\begin{itemize}
+		\item Exploiting compositionality to explore a large space of model structures, UAI 2012
+		\\
+		Roger Grosse, Ruslan Salakhutdinov, \\William T. Freeman, Joshua Tenenbaum
+		\item Similar (and earlier) work on unsupervised learning
+		\item Slides that follow are from Roger Grosse
+	\end{itemize}
+}
+
+
+\frame[plain]{
+\frametitle{Matrix decomposition}
+\begin{center}
+	\includegraphics[width=0.8\textwidth]{matrix_figures/input}
+\end{center}
+}
+
+
+\frame[plain]{
+\frametitle{Recursive Matrix decomposition}
+
+\begin{center}
+	\includegraphics[width=1\textwidth]{matrix_figures/fig1}
+\end{center}
+
+\begin{itemize}
+	\item Main idea:  Matrices can be recursively decomposed
+	\item Example: Co-clustering by clustering cluster assignments.
+\end{itemize}
+}
+
+%\frame[plain]{
+%\frametitle{Building Blocks}
+%\begin{center}
+%	\includegraphics[width=1.05\textwidth]{matrix_figures/buildingblocks}
+%\end{center}
+%}
+
+\frame[plain]{
+\frametitle{Matrix decomposition: Grammar}
+
+\begin{center}
+	\includegraphics[width=1.05\textwidth]{matrix_figures/grammar}
+\end{center}
+}
+
+\frame[plain]{
+\frametitle{Matrix decomposition: Special cases}
+
+\begin{adjustwidth}{-0.5cm}{}
+\begin{center}
+	\includegraphics[width=1.1\textwidth]{matrix_figures/modeltree}
+\end{center}
+\end{adjustwidth}
+}
+
+
+%\frame[plain]{
+%\frametitle{Evolution of Image Models}
+%\begin{center}
+%	\includegraphics[width=1.05\textwidth]{matrix_figures/cartoon}
+%\end{center}
+%}
+
+
+\frame[plain]{
+\frametitle{Application to Natural Image Patches}
+\begin{center}
+	\includegraphics[width=1.05\textwidth]{matrix_figures/images}
+\end{center}
+}
+
+
+\frame[plain]{
+\frametitle{Evolution of Image Models}
+\begin{center}
+	\includegraphics[width=1.05\textwidth]{matrix_figures/cartoon}
+\end{center}
+}
+
+
+
+
+
+
+
+\frame[plain]{
+\frametitle{Summary}
+
+ How could an AI do statistics?
+	\begin{itemize}
+%		\item Model-building is currently done mostly by hand.
+		\item Grammars over composite structures are a simple way to specify open-ended model classes.
+		\item Composite structures often imply interpretable decompositions of the data.
+		\item Searching over these model classes is a step towards automating statistical analysis.
+	\end{itemize}
+}
+
+
+\frame[plain]{
+\frametitle{A Puzzle}
+	\begin{itemize} 
+	\item How could an AI do statistics?
+	\vspace{\baselineskip}
+	\item An artificial statistician would need:
+			\begin{itemize} 
+			\item a language that could describe arbitrarily complicated models
+			\item a method of searching over those models
+			\item {\color{red} a procedure to check model fit}
+		\end{itemize}
+	\vspace{\baselineskip}
+\end{itemize}
+}
+
+
+
+\frame[plain]{
+\frametitle{Model selection}
+\begin{itemize}
+	\item Looking only at tractable models
+	\begin{itemize}
+		\item ``Searching for the keys where the light is''
+		\item Selecting/weighting based on marginal likelihood only optimal when truth is in model class
+		\item Maybe don't trust marginal likelihood, need model checking
+	\end{itemize}
+
+%	\vspace{\baselineskip}
+%	\item What does marginal likelihood tell us?
+%	\vspace{\baselineskip}
+	\item What does automatic model-checking look like?
+		\begin{itemize}
+		\item searching for patterns in residuals
+		\begin{itemize}
+			\item need to average over free parameters to prevent overfitting...
+		\end{itemize}	
+%		\item propose structure that captures those patterns		
+	\end{itemize}	
+
+	\item Is there a difference between sufficiently thorough model-checking, and marginal likelihood comparison in a larger model class?
+	
+%	\item Epistemological Puzzle: What kinds of distinctions can we draw between model checking and 
+	%\item Do we only care about model checks we can do something about?	
+%	\vspace{\baselineskip}
+%	\item Open questions:
+%	\begin{itemize}
+%		\item Interpretability versus flexibility
+%		\item Automatic Model-checking
+%	\end{itemize}
+	
+	\pause
+	\centering
+	{
+		\hfill 
+		
+		Thanks!\hfill
+	}
+\end{itemize}
+}
+
+
+
+
+
+\frame[plain]{
+\frametitle{Bibliography}
+
+Talk based on two papers:
+	\begin{itemize}
+		\item Structure Discovery in Nonparametric Regression through Compositional Kernel Search [ICML 2013]
+		\\
+		{David Duvenaud, James Robert Lloyd, Roger Grosse, Joshua B. Tenenbaum, Zoubin Ghahramani}
+		\item Exploiting compositionality to explore a large space of model structures [UAI 2012]
+		\\
+		Roger B. Grosse, Ruslan Salakhutdinov, \\William T. Freeman, Joshua B. Tenenbaum
+	\end{itemize}
+}
+
+
+
+
+\frame[plain]{
+\frametitle{Extra Slides}
+}
+
+
+
+
+\frame[plain]{
+\frametitle{Sampling from a GP}
+
+\hspace{-1cm}
+\begin{columns}
+\begin{column}[r]{6cm}
+\lstset{language=Matlab} 
+\lstset{columns=fullflexible}
+
+\lstinputlisting{simple_gp_sample.m} 
+\end{column}
+\begin{column}[r]{4cm}
+    \begin{figure}
+    	\hspace{-1cm}
+        \includegraphics<1>[width=4cm]{figures/simple_draw4}    	
+        \includegraphics<2>[width=4cm]{figures/simple_draw2}
+        \includegraphics<3>[width=4cm]{figures/simple_draw3}
+        \includegraphics<4>[width=4cm]{figures/simple_draw}                
+    \end{figure}                            
+\end{column}
+\end{columns}
+}
+
+\frame[plain]{
+\frametitle{Sampling from a GP}
+
+\hspace{-1cm}
+\begin{columns}
+\begin{column}[r]{6cm}
+\lstset{language=Matlab} 
+\lstset{columns=fullflexible}
+
+\lstinputlisting{sin_gp_sample.m} 
+\end{column}
+\begin{column}[r]{4cm}
+    \begin{figure}
+    	\hspace{-1cm}
+        \includegraphics<1>[width=4cm]{figures/sin_draw}
+    \end{figure}                            
+\end{column}
+\end{columns}
+}
+
+
+\frame[plain]{
+\frametitle{Describing Kernels}
+
+Products of same type of kernel collapse.
+\vspace{0.5cm}
+
+\centering
+\begin{tabular}{l|l}
+Product of Kernels & Becomes \\
+\midrule
+$\kSE \times \kSE \times \kSE \dots$ & \kSE \\
+$\kLin \times \kLin \times \Lin \dots$ & A polynomial \\
+$\kPer \times \kPer \times \kPer$ & Same covariance as \\ & product of periodic functions
+\end{tabular}
+}
+
+\end{document}

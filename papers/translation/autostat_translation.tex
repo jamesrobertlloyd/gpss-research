@@ -121,13 +121,13 @@
 \input{include/commenting.tex}
 
 %% For submission, make all render blank.
-\renewcommand{\LATER}[1]{}
-\renewcommand{\fLATER}[1]{}
-\renewcommand{\TBD}[1]{}
-\renewcommand{\fTBD}[1]{}
-\renewcommand{\PROBLEM}[1]{}
-\renewcommand{\fPROBLEM}[1]{}
-\renewcommand{\NA}[1]{#1}  % Note, NA's pass through!
+%\renewcommand{\LATER}[1]{}
+%\renewcommand{\fLATER}[1]{}
+%\renewcommand{\TBD}[1]{}
+%\renewcommand{\fTBD}[1]{}
+%\renewcommand{\PROBLEM}[1]{}
+%\renewcommand{\fPROBLEM}[1]{}
+%\renewcommand{\NA}[1]{#1}  % Note, NA's pass through!
 
 
 % The \icmltitle you define below is probably too long as a header.
@@ -298,20 +298,20 @@ Table~\ref{table:motifs} lists common regression models that can be expressed by
 %to achieve the goal of producing an interpretable decomposition of the
 %function, we reparameterised some kerenls.
 %For example, the periodic kernel in \citep{DuvLloGroetal13} has a constant component that can be removed to improve interpretability, and the RQ kernel used by Duvenaud can be expressed as a sum of SE kernels.
-
+\fTBD{JL: Have I added $\kWN$ in appropriate places?}
 \begin{table}[ht]
 \centering
 \begin{tabular}{l|l}
 Model & Example kernel \\
 \midrule
-\gp{} smoothing & $\kSE$ \\
-Linear regression & $\kC + \kLin$ \\
+\gp{} smoothing & $\kSE + \kWN$ \\
+Linear regression & $\kC + \kLin + \kWN$ \\
 Multiple kernel learning & $\sum \kSE$ \\
-Trend, cyclical, irregular & $\sum \kSE + \sum \kPer$ \\
+Trend, cyclical, irregular & $\sum \kSE + \sum \kPer$ + \kWN\\
 Fourier decomposition & $\kC + \sum \cos$ \\
-Sparse spectrum \gp{}s & $\sum \cos$ \\
-Spectral kernels & $\sum \SE \times \cos$ \\
-Changepoints & \eg $\kCP(\kSE, \kSE)$ \\
+Sparse spectrum \gp{}s & $\sum \cos$ + \kWN\\
+Spectral kernels & $\sum \SE \times \cos$ + \kWN\\
+Changepoints & \eg $\kCP(\kSE, \kSE) + \kWN$ \\
 Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$
 \end{tabular}
 \caption{
@@ -416,7 +416,6 @@ The head noun is chosen according to the following ordering:
 \end{align*}
 \ie $\kPer$ is always chosen as the head noun when present.
 %The description for the head noun is based on the type of function that the kernel encodes for when by itself. 
-\fTBD{Quick example and/or citation}
 
 \subsection{Worked example}
 
@@ -445,7 +444,7 @@ Finally, the third component is described as `An approximately periodic function
 %Also, a separate description procedure is used to produce the detailed descriptions of each component, which operates on the same principles.
 
 \fTBD{JL: We should also mention that the detailed descriptions are less modular - but not necessarily so}
-\fTBD{JL: Talk about different templates based on parameters}
+\fTBD{JL: Talk about different templates based on parameters?}
 
 \section{Example descriptions of time series}
 \label{sec:examples}

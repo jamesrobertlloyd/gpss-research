@@ -1,0 +1,68 @@
+\input{include/header_beamer}
+\usepackage{etex}
+
+\usepackage{tabularx}
+\usepackage{include/picins}
+\usepackage{include/preamble}
+\usepackage{tikz}
+
+\usetikzlibrary{shapes.geometric,arrows,chains,matrix,positioning,scopes,calc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Some look and feel definitions
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setlength{\columnsep}{0.03\textwidth}
+\setlength{\columnseprule}{0.0018\textwidth}
+\setlength{\parindent}{0.0cm}
+
+\tikzstyle{mybox} = [draw=white, rectangle]
+
+\definecolor{camlightblue}{rgb}{0.601 , 0.8, 1}
+\definecolor{camdarkblue}{rgb}{0, 0.203, 0.402}
+\definecolor{camred}{rgb}{1, 0.203, 0}
+\definecolor{camyellow}{rgb}{1, 0.8, 0}
+\definecolor{lightblue}{rgb}{0, 0, 0.80}
+\definecolor{white}{rgb}{1, 1, 1}
+\definecolor{whiteblue}{rgb}{0.80, 0.80, 1}
+
+\newcolumntype{x}[1]{>{\centering\arraybackslash\hspace{0pt}}m{#1}}
+\newcommand{\tabbox}[1]{#1}
+
+\hypersetup{colorlinks=true,citecolor=blue}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The talk
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Building an automatic statistician}
+
+\author{
+\includegraphics[height=0.2\textwidth]{figures/JamesLloyd4}
+\qquad
+\includegraphics[height=0.2\textwidth, trim=20mm 25mm 0mm 25mm, clip]{figures/david2}
+\qquad
+\includegraphics[height=0.2\textwidth]{figures/roger-photo}
+\\
+James Robert Lloyd, David Duvenaud, Roger Grosse,\\
+\includegraphics[height=0.2\textwidth, trim=0mm 7mm 0mm 0mm, clip]{figures/josh2}
+\qquad
+\includegraphics[height=0.2\textwidth]{figures/zg2}\\
+Joshua Tenenbaum, Zoubin Ghahramani
+}
+
+\begin{document}
+
+\frame[plain] {
+\titlepage
+}
+
+\begin{frame}{Title}
+  Content
+\end{frame}
+
+\end{document}

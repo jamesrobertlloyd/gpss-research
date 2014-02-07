@@ -298,17 +298,17 @@ Table~\ref{table:motifs} lists common regression models that can be expressed by
 %to achieve the goal of producing an interpretable decomposition of the
 %function, we reparameterised some kerenls.
 %For example, the periodic kernel in \citep{DuvLloGroetal13} has a constant component that can be removed to improve interpretability, and the RQ kernel used by Duvenaud can be expressed as a sum of SE kernels.
-\fTBD{JL: Have I added $\kWN$ in appropriate places?}
+\fTBD{JL: Appropriate to add $\kWN$ everywhere?}
 \begin{table}[ht]
 \centering
 \begin{tabular}{l|l}
-Model & Example kernel \\
+Regression model & Kernel \\
 \midrule
 \gp{} smoothing & $\kSE + \kWN$ \\
 Linear regression & $\kC + \kLin + \kWN$ \\
-Multiple kernel learning & $\sum \kSE$ \\
+Multiple kernel learning & $\sum \kSE$ + \kWN\\
 Trend, cyclical, irregular & $\sum \kSE + \sum \kPer$ + \kWN\\
-Fourier decomposition & $\kC + \sum \cos$ \\
+Fourier decomposition & $\kC + \sum \cos$ + \kWN\\
 Sparse spectrum \gp{}s & $\sum \cos$ + \kWN\\
 Spectral kernels & $\sum \SE \times \cos$ + \kWN\\
 Changepoints & \eg $\kCP(\kSE, \kSE) + \kWN$ \\

@@ -1,0 +1,967 @@
+\input{texhead}
+
+\graphicspath{{/Users/zoubin/gatsby/papers/nips00/}{/Users/zoubin/gatsby/talks/PSFILES/}{/Users/zoubin/gatsby/talks/cmu02inf/forzoubin/}{/Users/zoubin/gatsby/talks/aistats03/}{/Users/zoubin/gatsby/course03/COURSEFIGS/}{/Users/zoubin/gatsby/talks/icml04tutorial/}{/Users/zoubin/gatsby/talks/gatsby04/}{/Users/zoubin/gatsby/talks/tubingen05/}{/Users/zoubin/gatsby/talks/cmu06mld-lunch/}{/Users/zoubin/gatsby/talks/valencia06/}{/Users/zoubin/gatsby/talks/cavendish07/}{/Users/zoubin/gatsby/talks/nips05ed/}{/Users/zoubin/gatsby/talks/uai05tutorial/}{/Users/zoubin/gatsby/talks/mlsp10/}{/Users/zoubin/gatsby/talks/oxford13/}}
+
+% \usepackage{soul}
+\usepackage[display,verbose]{/Users/zoubin/gatsby/tex/inputs/texpower}
+\usepackage{/Users/zoubin/gatsby/tex/inputs/msover}
+
+\usepackage{algorithmic}
+\usepackage[tight]{subfigure}
+% \usepackage{bbm}
+
+\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\B}{\mathcal{B}}
+\newcommand{\R}{\Re}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\deff}{\stackrel{\mathrm{def}}{=}}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\qi}{q_{{\scriptscriptstyle\backslash} \!i}(\btheta)}
+% \newcommand{\balpha}{\boldsymbol{\alpha}}
+\newcommand{\bt}{\mathbf{t}}
+\newcommand{\bff}{\mathbf{f}}
+%\newcommand{\ff}{\mathbf{f}}
+\newcommand{\bfb}{\bar{\bff}}
+\newcommand{\bK}{\mathbf{K}}
+\newcommand{\rd}{\mathrm{d}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\bzero}{\mathbf{0}}
+\newcommand{\bKC}[1]{\mathbf{K}_{\scriptscriptstyle #1}}
+\newcommand{\bKi}[2]{\mathbf{K}_{\scriptscriptstyle #1}^{\scriptscriptstyle #2}}
+\newcommand{\bLa}{\mathbf{\Lambda}}
+\newcommand{\cO}{\mathcal{O}}
+\newcommand{\bXb}{\bar{\bX}}
+\newcommand{\figwid}{2.8in}
+\newcommand{\negs}{-3ex}
+
+
+\newlength{\oin}
+\setlength{\oin}{0.9in} % 0.45 for slides
+
+
+\begin{document}
+\titleslide{The Automatic Statistician}{\PineGreen{James Lloyd, David
+  Duvenaud (Cambridge) \\ and Roger Grosse, Josh Tenenbaum
+  (MIT)}}{Imperial College Lectures, 2014}  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Motivation}
+
+\begin{itemize}
+\item We live in an era of {\bf abundant data}
+\item Scientific, commercial and societal uses of this data drive the
+  need for exploratory data analysis and
+  prediction methods, but there are {\bf too few experts statisticians and
+  data scientists} to provide these services.
+\item Many aspects of statistical inference can be automated, and one
+  of the goals of machine learning and artificial intelligence is to
+  develop powerful tools for understanding data that require minimal
+  expert input. 
+\item By trying to build an ``Automatic Statistician'' we can
+\begin{itemize}
+\item provide a set of useful tools for understanding certain kinds of
+  data
+\item uncover challenging research problems in automated inference,
+  model construction and comparison, and data visualisation and
+  interpretation 
+\item advance the field of machine learning in general
+\end{itemize}
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Ingredients}
+
+\begin{itemize}
+\item Probabilistic modelling
+\item Model selection and marginal likelihoods
+\item Bayesian nonparametrics
+\item Gaussian processes
+\item Change-point kernels
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Probabilistic Modelling}
+
+\parbox{0.95\textwidth}{
+\large
+\begin{itemize}
+\item A model describes data that one could observe from a system
+\item If we use the mathematics of probability theory to express all
+  forms of uncertainty and noise associated with our model...
+\item ...then {\it inverse probability} (i.e.\ Bayes rule) allows us
+  to infer unknown quantities, adapt our models, make predictions and
+  learn from data.
+\end{itemize}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Bayesian Machine Learning} 
+% from ICML tutorial...
+
+\begin{center}
+\fbox{\parbox{5.5in}{
+{\it Everything follows from two simple rules:}\\[0.5ex]
+\Red{\bf Sum rule:} \hspace{7ex} $P(x) = \sum_y P(x,y)$ \\[0.2ex]
+\Red{\bf Product rule:} \hspace{1ex} $P(x,y) = P(x)P(y|x)$
+}} 
+\end{center}
+
+
+\vspace{2ex}
+
+\parbox{3.8in}{
+\[
+\PineGreen{P(\theta|\D,m)} = \frac{P(\D|\theta,m) \Brown{P(\theta|m)}}{\Orange{P(\D|m)}}
+\]
+} \hspace{2ex}
+\parbox{5in}{\small
+\begin{center}
+\begin{tabular}{ll}
+$P(\D|\theta,m)$ & likelihood of parameters $\theta$ in model $m$ \\
+\Brown{$P(\theta|m)$} & prior probability of $\theta$ \\
+\PineGreen{$P(\theta|\D,m)$} & posterior of $\theta$ given data $\D$
+\end{tabular}
+\end{center}
+}
+\vspace*{1ex}
+
+\Blue{\bf Prediction:}
+\vspace*{-2ex}
+\begin{eqnarray*}
+P(x|\D,m)  &= & \int P(x|\theta,\D,m) \PineGreen{P(\theta|\D,m)} d \theta\\
+% P(x|\D,m)  &= & \int P(x|\theta) P(\theta|\D,m) d \theta
+% \mbox{\hspace*{3ex} (for many models)}\\
+\end{eqnarray*}
+
+\Blue{\bf Model Comparison:}
+\vspace*{-1ex}
+\begin{eqnarray*}
+P(m|\D) & = & \frac{\Orange{P(\D|m)}P(m)}{P(\D)}\\
+\Orange{P(\D|m)} & = & \int P(\D|\theta,m) \Brown{P(\theta|m)}\, d \theta 
+\end{eqnarray*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Model Comparison}
+
+\centerline{\includegraphics[width=7\oin]{ofitnew}} 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Bayesian Occam's Razor and Model Comparison}
+\vspace*{-0.3in}
+Compare model classes, e.g.\ $m$ and $m'$, using posterior
+probabilities given $\D$: 
+\vspace*{-0.2in}
+\[
+p(m|\D) = \frac{\Red{p(\D|m)} \, p(m)}{p(\D)}, \hspace*{0.5in}
+\Red{p(\D|m)} = \int p(\D|\btheta, m) \;
+p(\btheta|m) \; d {\btheta}
+\]
+{\bf Interpretations of the \Red{Marginal Likelihood (``model
+    evidence'')}:} 
+{\small
+\begin{itemize}
+\item The probability that {\em randomly selected}\ parameters from the
+prior would generate $\D$. 
+\item Probability of the data under the model, {\em averaging} over all
+  possible parameter values. 
+\item $\log_2 \left( \frac{1}{\Red{p(\D|m)}} \right)$ is the number of
+  {\em bits of surprise} at observing data $\D$ under model $m$.
+\end{itemize}
+}
+
+\parbox{5.5in}{
+Model classes that are \PineGreen{too simple} are unlikely to
+generate the data set. \\[-0.5ex]
+
+Model classes that are \Cyan{too complex} can generate many possible
+data sets, so again, they are unlikely to generate that particular
+data set at random.} \hspace{2ex}
+\parbox{4.5in}{
+\centerline{\includegraphics[width=4.2in]{ockham2}}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Bayesian Model Comparison: \normalsize Occam's Razor at Work }
+
+\vspace{0.1\oin}
+\centerline{\includegraphics[width=5\oin,angle=90]{ofitsamps2} 
+\raisebox{36pt}[0pt][36pt]{
+\includegraphics[width=4\oin,angle=90]{ofitpost2}}}
+
+\vspace*{-2ex}
+For example, for quadratic polynomials ($m=2$): $ y = a_0 + a_1 x + a_2
+x^2 + \epsilon$, where $\epsilon \sim {\cal   N}(0,\sigma^2)$ and parameters $\btheta = (a_0 \; a_1
+\; a_2 \; \sigma)$ \\[1ex]
+{\tt demo: polybayes}\\
+% {\tt demo: run\_simple}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Parametric vs Nonparametric Models}
+
+\begin{itemize}
+\hrule
+
+\item \Red{\em Parametric models} assume some \Red{finite set of
+  parameters} $\theta$. Given the parameters, future predictions, $x$, are
+  independent of the observed data, $\D$:
+\[
+P(x|\theta,\D) = P(x|\theta)
+\]
+therefore $\theta$ capture everything there is
+to know about the data.  
+\item So the complexity of the model is bounded even
+if the amount of data is unbounded. This makes them not very
+flexible. \\[1ex] 
+
+\hrule
+
+\item \Blue{\em Non-parametric models} assume that the data distribution
+  cannot be defined in terms of such a finite set of parameters. But they
+  can often be defined by assuming an \Blue{\em infinite
+  dimensional} $\theta$. Usually we think of $\theta$ as a \Blue{\em function}.
+\item The amount of information that $\theta$ can capture about the data
+  $\D$ can grow as the amount of data grows. This makes them more flexible.
+\end{itemize}
+
+\hrule
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Bayesian nonparametrics}
+
+{\em A simple framework for modelling complex data.} \\
+
+{\em Nonparametric models can be viewed as having
+  infinitely many parameters} \\
+
+Examples of non-parametric models: \\
+
+\begin{tabular}{lll} \hline
+Parametric & Non-parametric & Application \\ \hline
+polynomial regression & Gaussian processes & function approx. \\
+logistic regression & Gaussian process classifiers & classification \\
+mixture models, k-means & Dirichlet process mixtures &
+clustering \\
+hidden Markov models & infinite HMMs & time series \\
+factor analysis / pPCA / PMF & infinite latent factor models &
+feature discovery \\
+... & & \\
+\hline
+\end{tabular}
+
+%%%%%%%%%
+\foilhead{Nonlinear regression and Gaussian processes}
+\vspace*{-2ex}
+Consider the problem of \Green{nonlinear regression}:
+
+You want to learn a \Blue{function $f$} with \Red{error bars} from
+\Magenta{data $\D = \{\bX,\by\}$} \\
+
+\begin{center}
+\includegraphics{prednotitle}
+\end{center}
+
+A \Green{Gaussian process} defines a distribution over functions
+$p(f)$ which can be used for Bayesian regression:
+\begin{equation*}
+  p(f|\D) = \frac{p(f) p(\D|f)}{p(\D)}
+\end{equation*}
+
+Let $\ff = (f(x_1), f(x_2), \ldots, f(x_n))$ be an $n$-dimensional
+vector of function values evaluated at $n$ points $x_i \in {\cal X}$.
+Note, $\ff$ is a random variable. \\
+
+{\bf Definition:} $p(f)$ is a \Red{Gaussian process} if for {\em any} 
+finite subset $\{x_1, \ldots, x_n \} \subset {\cal X}$, the marginal 
+distribution over that subset $p(\ff)$ is multivariate
+Gaussian. 
+
+%%%%%%%%%
+\foilhead{A picture}
+
+\centerline{\includegraphics[width=6.5in]{gpc-cube}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Gaussian process covariance functions (kernels)}
+
+$p(f)$ is a \Red{Gaussian process} if for {\em any} 
+finite subset $\{x_1, \ldots, x_n \} \subset {\cal X}$, the marginal 
+distribution over that finite subset $p(\ff)$ has a multivariate
+Gaussian distribution. \\
+
+Gaussian processes (GPs) are parameterized by a \Blue{mean function,
+$\mu(x)$}, and a \Green{covariance function, or kernel, $K(x,x')$}.
+\vspace*{-1ex} 
+\[
+p(f(x),f(x')) = \mbox{N}(\Blue{\bmu},\Green{\Sigma})
+\]
+where % \vspace*{-2ex}
+\[
+\Blue{\bmu= \left [ \begin{array}{c} \mu(x) \\ \mu(x') \end{array}
+\right ] }
+\hspace{2ex} 
+\Green{
+\Sigma = \left [ \begin{array}{cc} K(x,x) & K(x,x') \\
+K(x',x) & K(x',x') \end{array}  
+\right]}
+\] \\
+and similarly for $p(f(x_1), \ldots, f(x_n))$ where now $\bmu$ is an
+$n \times 1$ vector and $\Sigma$ is an $n \times n$ matrix.\\
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Gaussian process covariance functions}
+
+Gaussian processes (GPs) are parameterized by a \Blue{mean function,
+$\mu(x)$}, and a \Green{covariance function, $K(x,x')$}, where 
+$\mu(x) = \mbox{E}(f(x))$ and $K(x, x') =
+\mbox{Cov}(f(x),f(x'))$.\\
+
+An example covariance function: 
+\[
+\Green{K(x,x') = v_0 \exp \left\{ -
+\left(\frac{|x-x'|}{r}\right)^\alpha \right\} + v_1 + v_2 \,
+\delta_{ij}} 
+\]
+with parameters $(v_0, v_1, v_2, r, \alpha)$. 
+\\
+
+\parbox{0.6\textwidth}{These kernel parameters are \Red{interpretable}\\and can be learned
+from data:} 
+
+\vspace*{-8ex}
+\phantom{.} \hfill
+\begin{tabular}{|ll|} \hline
+\Green{$v_0$} & signal variance \\
+\Green{$v_1$} & variance of bias \\
+\Green{$v_2$} & noise variance \\
+\Green{$r$} & lengthscale \\
+\Green{$\alpha$} & roughness \\ \hline
+\end{tabular}
+
+\vspace*{2ex}
+Once the mean and covariance functions are defined, everything else
+about GPs follows from the basic rules of probability
+applied to mutivariate Gaussians.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Samples from GPs with different $K(x,x')$}
+
+% \newcommand{\figwid}{2.8in}
+% \newcommand{\negs}{-3ex}
+
+\includegraphics[width=\figwid]{figs/samp1a} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp1b} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp1c} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp1d}
+
+\vspace*{-1.5ex}
+\includegraphics[width=\figwid]{figs/samp4a} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp4b} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp4c} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp4d}
+
+\vspace*{-1.5ex}
+\includegraphics[width=\figwid]{figs/samp10a} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp10b} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp10c} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp10d}
+
+\vspace*{-1ex}
+{\tt gpdemogen}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Prediction using GPs with different $K(x,x')$}
+
+A sample from the prior for each covariance function:
+
+\includegraphics[width=\figwid]{figs/samp1a} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp1b} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp1c} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/samp1dd}
+
+\vspace{1ex}
+
+Corresponding predictions, mean with two standard deviations:
+
+\includegraphics[width=\figwid]{figs/preda} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/predb} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/predc} \hspace*{\negs}
+\includegraphics[width=\figwid]{figs/predd}
+
+\vspace*{-1ex}
+{\tt gpdemo}
+
+%%%%%%%%%%
+\foilhead{Change Point Kernels}
+
+Assume $\Redd{f_1(x)} \sim GP(0,k_1)$ and $\Blue{f_2(x)} \sim GP(0,k_2)$. Define:
+\[
+f(x) = (1-\sigma(x)) \Redd{f_1(x)} + \sigma(x) \Blue{f_2(x)}
+\]
+
+\parbox{0.6\textwidth}{where $\sigma$ is a sigmoid function between 0 and 1, such as the
+logistic function: $\sigma(x) = 1/(1+\exp(-x))$}
+\parbox{0.4\textwidth}{\centerline{\includegraphics[width=0.25\textwidth]{sigm}}}
+
+Then $f \sim GP(0,k)$, where
+\[
+k(x,x') = (1-\sigma(x)) \, \Redd{k_1(x,x')}  \, (1-\sigma(x')) + \sigma(x) \,
+\Blue{k_2(x,x')} \, \sigma(x') 
+\]
+
+We can parametrise the location $\tau$ and abruptness $a$ of the changepoint by replacing
+$\sigma(x)$  with $\sigma(a(x-\tau))$. \\
+
+{\it Intutively (in one-dimension), the function $f$ behaves like
+$\Redd{f_1}$ before $\tau$ and like $\Blue{f_2}$ after $\tau$. }
+
+\centerline{\PineGreen{\small (cf. Garnett, Osborne and Roberts, 2009)}}
+
+%%%%%%%%%%
+\foilhead{Change Windows}
+
+A {\bf change window} (or interval) is simply defined as a changepoint from $\Redd{f_1(x)}$ to
+$\Blue{f_2(x)}$ followed by a changepoint back to $\Redd{f_1(x)}$.\\
+
+We can represent this via a product of two sigmoids with different offsets:
+
+\[
+f(x)  = (1-(1-\sigma(a(x-\tau_2))) \sigma(a(x-\tau_1))) \Redd{f_1(x)}  + 
+(1-\sigma(a(x-\tau_2))) \sigma(a(x-\tau_1)) \Blue{f_2(x)} 
+\]
+
+This looks a bit messy but it just smoothly switches on $\Blue{f_2}$
+between $\tau_1$ and $\tau_2$.
+
+\centerline{\includegraphics[width=0.5\textwidth]{maunder-data}}
+
+\centerline{\parbox{0.65\textwidth}{\small Solar irradiance data form 1600s showing the Maunder minimum where
+sunspot activity was extremely rare.}}
+%%%%%%%%%%
+\foilhead{The Automatic Statistician}
+
+
+%%%%%%%%%%
+\foilhead{How do we learn the kernel?}
+
+\begin{itemize}
+
+\item {\bf Usual approach:}  parametrise the kernel with a few
+  hyperparameters and optimise or infer these. An example covariance function: 
+\[
+\Green{K(x,x') = v_0 \exp \left\{ -
+\left(\frac{|x-x'|}{r}\right)^\alpha \right\} + v_1 + v_2 \,
+\delta_{ij}} 
+\]
+with parameters $(v_0, v_1, v_2, r, \alpha)$. 
+
+\item {\bf Our approach:} Define a grammar over kernels and search over
+  this grammar to discover an appropriate and interpretable structure
+  of the kernel.
+
+% We call our method: Automatic Bayesian Covariance Discovery (ABCD)
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Kernel Composition}
+
+By taking a few simple {\bf base kernels} and two {\bf composition rules},
+{\em kernel addition and multiplication}, we can span a rich space of
+structured kernels.
+
+\begin{tabular}{cc}
+\includegraphics[width=0.5\textwidth]{gp-comp-basekernels-b} & 
+\includegraphics[width=0.4\textwidth]{gp-comp-composition-b}
+\end{tabular}
+
+\centerline{\PineGreen{\small (w/ Duvenaud, Lloyd, Grosse, and Tenenbaum, ICML 2013)}}
+\centerline{\PineGreen{\small see also (Wilson and Adams, ICML 2013)}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Kernel Composition}
+
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.3\textwidth]{autostat-base-kernels} & 
+\includegraphics[width=0.45\textwidth]{autostat-kernel-motifs}
+\end{tabular}
+\end{center}
+
+Different kernels express a variety of covariance
+structures, such as local smoothness or periodicity. New
+kernels can be constructed by taking the product of a set of
+base kernels to express richer structures, (e.g. locally periodic, or
+heteroscedastic) 
+
+\begin{itemize}
+\item Search starts with the {\bf base kernels} for the GP, and
+  applies different operations (addition, multiplication, CP, CW) to
+  explore kernels spanned by the grammar.
+
+\item For efficiency, kernel hyperparameters are optimised rather than
+integrated out
+
+\item Each resulting model is scored using the {\bf marginal
+likelihood} penalised by a BIC term for number of
+hyperparameters. 
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Kernel Composition: Mauna Loa CO$_2$ Keeling Curve}
+
+% \centerline{\includegraphics[width=\textwidth]{gp-comp-mauna-loa-extrap}}
+\centerline{\includegraphics[width=\textwidth]{mauna-search1c}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Kernel Composition: Mauna Loa CO$_2$ Keeling Curve}
+
+% \centerline{\includegraphics[width=\textwidth]{gp-comp-mauna-loa-extrap}}
+\centerline{\includegraphics[width=\textwidth]{mauna-search2c}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Kernel Composition: Mauna Loa CO$_2$ Keeling Curve}
+
+% \centerline{\includegraphics[width=\textwidth]{gp-comp-mauna-loa-extrap}}
+\centerline{\includegraphics[width=\textwidth]{mauna-search3c}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Kernel Composition: Mauna Loa CO$_2$ Keeling Curve}
+
+% \centerline{\includegraphics[width=\textwidth]{gp-comp-mauna-loa-extrap}}
+\centerline{\includegraphics[width=\textwidth]{mauna-search4c}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Example: An automatic analysis}
+
+\includegraphics[width=\textwidth]{airline-analysis-c} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \foilhead{Kernel Composition: Airline passenger prediction}
+
+% \vspace*{-2ex}
+% \centerline{\includegraphics[width=0.3\textwidth]{gp-comp-airline-decomp}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Kernel Composition: predictive results}
+
+\centerline{\includegraphics[width=\textwidth]{gp-comp-table}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Predictive Results}
+
+\centerline{\includegraphics[width=0.55\textwidth]{autostat-rmse-results}}
+
+Combined results over 13 time series data sets comparing 5 methods\\
+
+{\small
+\begin{tabular}{ll}
+GPSS: & Automatic Statistician using Gaussian process structure search\\
+TCI: & trend-cyclical-irregular models (e.g.\ Lind et al., 2006) \\
+SP: & spectral kernels (Wilson \& Adams, 2013) \\
+SE: & additive nonparametric regression (SE) (e.g. Buja et al.,
+1989)\\ 
+CP: & change point modelling (CP) / multi resolution GP
+(e.g. Garnett et al., 2009) \\
+EL: & equation learning  using Eureqa (Nutonian, 2011) \\
+\end{tabular}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Distributivity helps interpretability}
+\centerline{\includegraphics[width=\textwidth]{airline-full-analysis-c}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Generating text output from the Automatic Statistician}
+
+\centerline{\includegraphics[width=0.6\textwidth]{autostat-text1}}
+
+\centerline{\includegraphics[width=0.6\textwidth]{autostat-text2}}
+
+{\small ``Automatic Construction and Natural-language Description of Additive
+Nonparametric Models''} \\
+\PineGreen{\small (w/ James Lloyd, David Duvenaud,
+  Roger Grosse and Josh Tenenbaum, NIPS workshop, 2013 )}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Example reports}
+
+\begin{center}
+{\tt 01-airline.pdf \\
+02-solar.pdf \\
+07-call-centre.pdf \\
+09-gas-production.pdf\\
+}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Challenges}
+
+\begin{itemize}
+\item Trading off predictive performance and interpretability
+\item Expressing a large and flexible enough class of models so that
+  different kinds of data can be captured
+\item The computational complexity of searching a huge space of models
+\item Translating complex modelling constructs into the English language;
+  automatically generating relevant visualisations
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Current and Future Directions}
+
+\begin{itemize}
+\item Automatic Statistician for:
+\begin{itemize}
+\item multivariate nonlinear regression $y = f(\bx)$
+\item classification
+\item completing and interpreting tables and databases
+\end{itemize}
+\item Probabilistic Programming
+\begin{itemize}
+\item probabilistic models are expressed in a general (Turing complete)
+  programming language (e.g. Church/Venture/Anglican)
+\item a {\bf universal inference engine} can then be used to infer
+  unobserved variables given observed data
+\item this can be used to implement seach over the model space in an
+  automated statistician
+\end{itemize}
+
+\end{itemize}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Summary}
+
+\vspace*{-3ex}
+\begin{itemize}
+% {\large
+\item The Automatic Statistician project aims to automate certain
+  kinds of exploratory and predictive modelling
+\item Conceptually, we follow a Bayesian framework, relying in
+  particular on Bayesian nonparametric models for flexibility 
+\item The ultimate aim is to produce output that is interpretable by a
+  reasonably numerate non-statistician
+\item We have a system that can produce readable 10-15 page reports from one
+  dimensional time series, capturing non-stationarity, change-points
+  and change-windows, periodicity, trends, etc 
+\item Predictive performance seems very competitive 
+\end{itemize}
+
+% \begin{minipage}[t!]{0.7\textwidth}
+% \phantom{.}
+
+%\centerline{\tt http://learning.eng.cam.ac.uk/zoubin} 
+% \centerline{\tt zoubin@eng.cam.ac.uk}
+% \end{minipage}
+% \begin{minipage}[t!]{0.3\textwidth}
+% \hspace*{0.7\textwidth} \includegraphics[width=0.2\textwidth]{indian2}
+% \end{minipage}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Thanks}
+
+\vspace*{-2ex}
+{\small
+\centerline{
+\begin{tabular}{ccc}
+% \includegraphics[width=1.3in]{colorado-reed} & 
+% \includegraphics[width=1.4in]{miguel} &
+% \includegraphics[width=1.3in]{neil-houlsby} &
+\includegraphics[width=1.3in]{james-lloyd} &
+\includegraphics[width=1.3in]{david-duvenaud} &
+\includegraphics[width=1.5in]{roger-grosse} \\
+% \includegraphics[width=1.5in]{koa-heaukulani} &
+% \includegraphics[width=1.5in]{heller} &
+% \includegraphics[width=1.5in]{shakir-mohamed} & 
+% \PineGreen{Tom Griffiths} & 
+% \PineGreen{Colorado Reed} & 
+% \PineGreen{J.~Miguel Hernandez-Lobato} &
+% \PineGreen{Neil Houlsby} &
+\PineGreen{James Lloyd} &
+\PineGreen{David Duvenaud} &
+\PineGreen{Roger Grosse} \\
+% \includegraphics[width=1.3in]{ryan-adams} & 
+% \includegraphics[width=1.3in]{andrew-wilson} &
+% \\
+% \PineGreen{Ryan Adams} & 
+% \PineGreen{Andrew Wilson} &
+% \PineGreen{Creighton Heaukulani} &
+% \PineGreen{Katherine Heller} & 
+% \PineGreen{Shakir Mohamed} &
+\end{tabular}
+}
+}
+
+% \vspace*{2ex}
+
+% \centerline{\tt http://learning.eng.cam.ac.uk/zoubin} 
+
+% \vspace*{1ex}
+% \centerline{\tt zoubin@eng.cam.ac.uk}
+
+\vfill 
+
+% Two ads:
+% \begin{itemize}
+{\small
+\Blue{Duvenaud, D., Lloyd, J. R., Grosse, R., Tenenbaum, J. B. and
+Ghahramani, Z. (2013) \PineGreen{Structure Discovery in Nonparametric
+Regression through Compositional Kernel Search}. ICML 2013.} \\
+
+\Blue{Lloyd, J. R., Duvenaud, D., Grosse, R., Tenenbaum, J. B. and
+  Ghahramani, Z. (2013) 
+\PineGreen{Automatic Construction and Natural-language Description of Additive
+Nonparametric Models.}
+NIPS workshop on Constructive Machine Learning} \\
+
+\Blue{Ghahramani, Z. (2013) \PineGreen{Bayesian nonparametrics and
+the probabilistic approach to modelling.} {\em
+  Philosophical Trans. Royal Society A} 371: 20110553.}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Appendix}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Speeding up GP learning: Inducing point approximations}
+
+\vspace*{-4ex}
+\centerline{\PineGreen{\small (Snelson and Ghahramani, 2006)} }
+
+\vspace*{1.5ex}
+\Red{We can approximate GP through $M<N$ {\bf inducing points} $\bfb$} to
+obtain the Sparse Pseudo-input Gaussian process (SPGP) a.k.a.\ FITC: 
+%\begin{equation*}
+$p(\bff) = \int\rd\bfb\,\prod_n p(f_n|\bfb)\; p(\bfb)$ \\[1ex]
+%\end{equation*} 
+
+\begin{minipage}[t]{0.2\linewidth}
+\Green{GP prior}\\
+\centering
+$\cN(\bzero,\bKC{N})$
+%\vspace{2ex}
+%\includegraphics{priorcovnolabel}
+\end{minipage}
+%\hspace{0.06\linewidth}
+\begin{minipage}[t]{0.06\linewidth}
+\bigskip\medskip
+$\approx$
+\end{minipage}
+\begin{minipage}[t]{0.7\linewidth}
+\centering
+\Green{FITC prior}\\
+$p(\bff) \qquad\!\!=\; \cN(\bzero,\bKC{N\! M}\bKi{M}{-1}\bKC{M\! N} \;+ \quad\bLa)$
+%\vspace{2ex}
+%\includegraphics{SPGPpriorcov}
+\end{minipage}
+\includegraphics[width = 0.2\linewidth]{priorcovnolabel} 
+\raisebox{65pt}{$\approx$}
+\includegraphics[width = 0.2\linewidth]{SPGPpriorcov}
+\raisebox{65pt}{=}
+\includegraphics[height = 0.2\linewidth]{K}
+\raisebox{133pt}{\includegraphics{invQ}}
+\raisebox{134pt}{\includegraphics[width = 0.2\linewidth]{Kp}} 
+\raisebox{65pt}{+}
+\includegraphics[width = 0.2\linewidth]{factorizecovnolabel}
+
+\begin{itemize}
+\item FITC covariance inverted in $\cO(M^2N) \ll \cO(N^3) $
+  $\Rightarrow$ \Blue{much faster}
+
+\im FITC = GP with non-stationary covariance \Green{parameterized by
+  $\bXb$}
+
+\im Given data $\{\bX,\by\}$ with noise $\sigma^2$, predictive
+  \Blue{mean} and \Red{variance} can be computed in \Blue{$\cO(M)$}
+  and \Red{$\cO(M^2)$} per test case respectively
+
+%% \begin{equation*}
+%%   K_{\text{SPGP}}(\bx_n,\bx_{n'}) = \bK_{nM}\bK_M^{-1}\bK_{Mn'} 
+%%   +  \lambda_n \delta_{nn'}
+%% \end{equation*}
+\end{itemize}
+
+Builds on a large lit on sparse GPs \PineGreen{\small (see
+  Qui\~{n}onero Candela and Rasmussen, 2006).}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Speeding up GP learning: some developments since 2006}
+
+\begin{itemize}
+\item FITC (2006) 
+\imm Unifying review \PineGreen{\small (see
+  Qui\~{n}onero Candela and Rasmussen, 2006)}
+\imm Combining local and global approximations \PineGreen{\small (w/
+    Snelson, 2007)}
+\imm Generalised FITC (for classification) \PineGreen{\small
+    (Naish-Guzman and Holden, 2007)}
+\imm Variational learning of inducing variables in sparse GPs \PineGreen{\small (Titsias, 2009)}
+\imm Exploiting additive and Kronecker structure of kernels for very fast
+  inference \PineGreen{\small (Saatci, 2011; Gilboa, Saatci,
+    Cunningham 2013)} 
+\imm GPatt: Fast Multidimensional Pattern Extrapolation with GPs \PineGreen{\small (Wilson, Gilboa, Nehorai, Cunningham,
+  2013)} learns very flexible stationary kernels on 380k points using
+Kronecker structure
+\imm Gaussian Processes for Big Data \PineGreen{\small (Hensman,
+    Fusi, Lawrence, 2013)} uses SVI to handle million data points
+\end{itemize}
+
+\end{document}
+
+
+
+
+-----
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{Some References}
+
+\vspace*{-3ex}
+
+{\small
+\begin{itemize}
+
+% \item Adams, R.P., Wallach, H., Ghahramani, Z. (2010) Learning the
+% Structure of Deep Sparse Graphical Models.  AISTATS 2010.
+
+\item Beal, M. J., Ghahramani, Z. and Rasmussen, C. E. (2002) The
+ infinite hidden Markov model. NIPS {\bf 14}:577--585. 
+
+ \item Bratieres, S., van Gael, J., Vlachos, A., and Ghahramani,
+   Z. (2010) Scaling the iHMM: Parallelization versus
+  Hadoop. International Workshop on Scalable Machine Learning and
+  Applications (SMLA-10), 1235--1240.
+
+\item Duvenaud, D., Lloyd, J. R., Grosse, R., Tenenbaum, J. B. and
+Ghahramani, Z. (2013) Structure Discovery in Nonparametric
+Regression through Compositional Kernel Search. ICML 2013.
+
+
+\item Ghahramani, Z. (2013) Bayesian nonparametrics and
+the probabilistic approach to modelling. {\em
+  Phil. Trans. R. Soc. A} 371: 20110553.
+
+% \item Griffiths, T.L., and Ghahramani, Z. (2006) Infinite Latent
+% Feature Models and the Indian Buffet Process.
+% NIPS  {\bf 18}:475--482. 
+
+\item Griffiths, T.L., and Ghahramani, Z. (2011) The Indian buffet
+  process: An introduction and review. {\em Journal of Machine
+    Learning Research} {\bf 12}(Apr):1185--1224. 
+
+\item Hernandez-Lobato, J.M, Houlsby, N. and Ghahramani, Z. (2013)
+Stochastic Inference for Scalable Probabilistic Modeling of Binary
+Matrices. NIPS 2013 Workshop on Randomized Methods for Machine
+Learning. 
+https://sites.google.com/site/randomizedmethods/rmml2013-schedule
+
+\item Lloyd, J.R., Duvenaud, D., Grosse, R., Tenenbaum, J.B. and
+Ghahramani, Z. (2013) Automatic Construction and Natural-language
+Description of Additive Nonparametric Models. NIPS 2013 Workshop on
+Constructive Machine Learning. 
+http://www-kd.iai.uni-bonn.de/cml/program.html
+
+%\item Knowles, D.A. and Ghahramani, Z. (2011) Nonparametric
+%Bayesian Sparse Factor Models with application to Gene 
+%Expression modelling. {\em Annals of Applied Statistics} {\bf
+%  5}(2B):1534-1552. 
+%
+%\item Knowles, D.A. and Ghahramani, Z. (2011) Pitman-Yor Diffusion
+%  Trees. In {\em Uncertainty in Artificial Intelligence (UAI
+%   2011)}. % Oral
+
+% \item Meeds, E., Ghahramani, Z., Neal, R. and  Roweis, S.T. (2007)
+% Modeling Dyadic Data with Binary Latent Factors.  NIPS {\bf 19}:978--983. 
+
+% \item Palla, K., Knowles, D.A., and Ghahramani, Z. (2012) An infinite
+%  latent attribute model for network data. In ICML 2012.
+
+\item Reed, C. and Ghahramani, Z. (2013) Scaling the Indian Buffet Process
+via Submodular Maximization. ICML 2013.
+
+\item Snelson, E., and Ghahramani, Z. (2007) Local and global sparse
+  Gaussian process approximations. In {\em
+    Eleventh International Conference on Artificial Intelligence and
+    Statistics (AISTATS 2007)}. San Juan, Puerto Rico.
+
+\item Snelson, E. and Ghahramani, Z. (2006) Sparse 
+Gaussian Processes using Pseudo-Inputs.
+In {\em Advances in Neural Information Processing Systems}
+{\bf 18}:1257--1264. Cambridge, MA: MIT Press.
+
+
+% \item Stepleton, T., Ghahramani, Z., Gordon, G., Lee, T.-S. (2009)
+%  The Block Diagonal Infinite Hidden Markov Model. AISTATS 2009,
+%  552--559.
+
+%\item Wilson, A.G., and Ghahramani, Z. (2010, 2011) Generalised Wishart
+%  Processes. arXiv:1101.0240v1. and UAI 2011
+
+%\item Wilson, A.G., Knowles, D.A., and Ghahramani, Z. (2011) Gaussian
+%  Process Regression Networks. arXiv.
+
+\item Wilson, A.G, Gilboa, E., Nehorai, A., and Cunningham,
+  J.P. (2013) GPatt: Fast Multidimensional Pattern Extrapolation with
+  Gaussian Processes. arXiv:1310.5288
+
+\item Wilson, A.G. and Adams, R.P. (2013)  Gaussian process covariance
+  kernels for pattern discovery and extrapolation. International
+  Conference on Machine Learning (ICML). 
+
+
+%  \item van Gael, J., Saatci, Y., Teh, Y.-W., and Ghahramani, Z. (2008)
+%  Beam sampling for the infinite Hidden Markov Model. ICML 2008, 1088-1095.
+
+% \item van Gael, J and Ghahramani, Z. (2010) Nonparametric Hidden
+%  Markov Models. In Barber, D., Cemgil, A.T. and Chiappa, S. {\em
+%   Inference and Learning in Dynamic Models}. CUP. 
+
+\end{itemize}
+}
+
+%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\uptext}[1]{\raisebox{2cm}{#1}}
+
+
+\begin{tabular}{@{}c@{}}
+\begin{tabular}{@{}cc@{}}
+
+
+\includegraphics[trim=7.8cm 14.5cm 0cm 2cm, clip, width=0.5\columnwidth]{pg_0002-crop} 
+
+ & \uptext{$=$} \\
+\end{tabular}
+
+\\
+\begin{tabular}{p{7cm}p{0.1cm}p{7cm}p{0.1cm}p{7cm}}
+\\%[1cm]
+\includegraphics[trim=0.4cm 6cm 8.4cm 2.75cm, clip, width=0.3\columnwidth]{pg_0003-crop} & 
+ \uptext{$+$}  &  
+\includegraphics[trim=0.4cm 6cm 8.4cm 2.88cm, clip, width=0.3\columnwidth]{pg_0004-crop} & 
+\uptext{$+$} &  
+\includegraphics[trim=0.4cm 6cm 8.4cm 2.75cm, clip, width=0.3\columnwidth]{pg_0005-crop} \\
+{\scriptsize A very smooth, monotonically increasing function }
+& & 
+{\scriptsize An approximately periodic function with a period of 1.0 years and with
+approximately linearly increasing amplitude}
+& & 
+{\scriptsize An exactly periodic function with a period of 4.3 years but with linearly
+increasing amplitude }
+\end{tabular}
+\end{tabular}
+

@@ -106,6 +106,33 @@ Joshua Tenenbaum, Zoubin Ghahramani
   \end{itemize}
 \end{frame}
 
+\begin{frame}{An automatic analysis}
+
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{figures/01-airline}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_raw_data} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_all}
+\end{tabular}
+\vspace{0.5\baselineskip}
+
+{\footnotesize
+Four additive components have been identified in the data
+\begin{itemize}
+
+  \item \input{\mdrd/01-airline_1_short_description.tex} 
+
+  \item \input{\mdrd/01-airline_2_short_description.tex} 
+
+  \item \input{\mdrd/01-airline_3_short_description.tex} 
+
+  \item \input{\mdrd/01-airline_4_short_description.tex} 
+
+\end{itemize}
+}
+\end{frame}
+
 \begin{frame}{Defining a language of regression models}
   \begin{itemize}
     \item Regression consists of learning a function $f: \mathcal{X} \to \mathcal{Y}$ from inputs to outputs from example input / output pairs
@@ -344,87 +371,116 @@ where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal like
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Example: Airline passenger data}
-
-\newcommand{\wmgd}{0.5\columnwidth}
-\newcommand{\hmgd}{3.0cm}
-\newcommand{\mdrd}{figures/01-airline}
-\newcommand{\mbm}{\hspace{-0.3cm}}
-\begin{tabular}{cc}
-\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_raw_data} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_all}
-\end{tabular}
-\vspace{0.5\baselineskip}
-
-{\scriptsize
-Four additive components have been identified in the data
-\begin{itemize}
-
-  \item \input{\mdrd/01-airline_1_short_description.tex} 
-
-  \item \input{\mdrd/01-airline_2_short_description.tex} 
-
-  \item \input{\mdrd/01-airline_3_short_description.tex} 
-
-  \item \input{\mdrd/01-airline_4_short_description.tex} 
-
-\end{itemize}
-}
+\begin{frame}{Automatic description of models}
+  \begin{itemize}
+    \item Search can produce arbitrarily complicated models from open-ended language but two main properties allow description to be automated
+    \vspace{\baselineskip}
+    \item Models can be decomposed into a sum products
+    \begin{itemize}
+      \item A sum of kernels corresponds to a sum of functions
+      \item Therefore, we can describe each product of kernels separately
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Each kernel in a product modifies a model in a consistent way
+    \begin{itemize}
+      \item We choose one kernel to be described as a noun
+      \item All other kernels modify this noun using adjectives
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{How can we describe a model}
-  \begin{center}
+\begin{frame}{Sum of products normal form}
+  %\begin{center}
   Suppose the search finds the following kernel
   \begin{align*}
     \kSE \times (\kWN \times \kLin + \kCP(\kC, \kPer))
   \end{align*}
-  Give some motivation!
-  \end{center}
-\end{frame}
-
-\begin{frame}{How can we describe a model}
-  \begin{center}
-  Suppose the search finds the following kernel
-  \begin{align*}
-    \kSE \times (\kWN \times \kLin + \kCP(\kC, \kPer))
-  \end{align*}
-  \end{center}
-\end{frame}
-
-\begin{frame}{How can we describe a model}
-  \begin{center}
+  \pause
   The changepoint can be converted into a sum of products
   \begin{align*}
     \kSE \times (\kWN \times \kLin + \kC \times \boldsymbol{\sigma} + \kPer \times \boldsymbol{\bar\sigma})
   \end{align*}
-  \end{center}
-\end{frame}
-
-\begin{frame}{How can we describe a model}
-  \begin{center}
+  \pause
   Multiplication can be distributed over addition
   \begin{align*}
     \kSE \times \kWN \times \kLin + \kSE \times \kC \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}
   \end{align*}
-  \end{center}
-\end{frame}
-
-\begin{frame}{How can we describe a model}
-  \begin{center}
+  \pause
   Simplification rules are applied
   \begin{align*}
     \kWN \times \kLin + \kSE \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}
   \end{align*}
-  \end{center}
+  %\end{center}
 \end{frame}
 
-\begin{frame}{How can we describe a model}
-  Sums of kernels are sums of products - maths and picture
+\begin{frame}{Sums of kernels are sums of functions}
+  If $\textcolor{red}{f_1}(x) \,\sim\, \gp{}(0, \textcolor{red}{\kernel_1})$ and independently $\textcolor{blue}{f_2}(x) \,\sim\, \gp{}(0, \textcolor{blue}{\kernel_2})$ then
+  \begin{align*}
+  \textcolor{red}{f_1}(x) + \textcolor{blue}{f_2}(x) \,\sim\, \gp{}(0, \textcolor{red}{\kernel_1} + \textcolor{blue}{\kernel_2})
+  \end{align*}
+  \emph{Add a picture}
 \end{frame}
 
-\begin{frame}{How can we describe a model}
-  Show the build up of an $\kSE \times \kPer \times \kLin \times \boldsymbol\sigma$ kernel starting with the noun and adding modifiers
-  
-  Then show the underset kernel description
+\begin{frame}{Products of kernels}
+  \begin{align*}
+    \phantom{\underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times }
+    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
+  \end{align*}
+  \begin{block}{}
+    On their own, each kernel is described by a standard noun phrase
+  \end{block}
+  \begin{block}{}
+    Pictures of random draws
+  \end{block}
+\end{frame}
+
+\begin{frame}{Products of kernels - $\kSE$}
+  \begin{align*}
+    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
+    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
+  \end{align*}
+  \begin{block}{}
+    {\bf Multiplication by $\kSE$} removes long range correlations from a model since $\kSE(x,x')$ decreases monotonically to 0 as $|x - x'|$ increases.
+  \end{block}
+  \begin{block}{}
+    Pictures of random draws
+  \end{block}
+\end{frame}
+
+\begin{frame}{Products of kernels - $\kLin$}
+  \begin{align*}
+    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
+    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \phantom{\times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
+  \end{align*}
+  \begin{block}{}
+    {\bf Multiplication by $\kLin$} is equivalent to multiplying the function being modeled by a linear function.
+If $f(x) \,\sim\, \gp{}(0, \kernel)$, then $xf(x) \,\sim\, \gp{}\left(0, k \times \kLin \right)$.
+This causes the standard deviation of the model to vary linearly without affecting the correlation.
+  \end{block}
+  \begin{block}{}
+    Pictures of random draws
+  \end{block}
+\end{frame}
+
+\begin{frame}{Products of kernels - changepoints}
+  \begin{align*}
+    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
+    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}
+  \end{align*}
+  \begin{block}{}
+    {\bf Multiplication by $\boldsymbol\sigma$} is equivalent to multiplying the function being modeled by a sigmoid.
+  \end{block}
+  \begin{block}{}
+    Pictures of random draws
+  \end{block}
 \end{frame}
 
 \begin{frame}{Example: Airline}
@@ -440,19 +496,65 @@ Four additive components have been identified in the data
 \end{frame}
 
 \begin{frame}{Good predictive performance as well}
-  Interpretability / accuracy trade-off rears its annoying head - but both are pretty good :)
+  \includegraphics[width=0.99\textwidth]{figures/box_extrap_wide}\\
+  \begin{itemize}
+    \item Tweaks can be made to the algorithm to improve accuracy or interpretability of models produced\ldots
+    \vspace{\baselineskip}
+    \item \ldots but both methods are highly competitive at extrapolation (shown above) and interpolation
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Challenges}
-  
+  \begin{itemize}
+    \item Interpretability / accuracy
+    \vspace{\baselineskip}
+    \item Increasing the expressivity of language
+    \begin{itemize}
+      \item \eg Monotonocity, positive functions, symmetries
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Computational complexity of searching through a huge space of models
+    \vspace{\baselineskip}
+    \item Extending the automatic reports to multidimensional datasets
+    \begin{itemize}
+      \item Search and descriptions naturally extend to multiple dimensions, but automatically generating relevant visual summaries harder 
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Current and future directions}
-  
+  \begin{itemize}
+    \item Automatic statistician for:
+    \begin{itemize}
+      \item Multivariate nonlinear regression
+      \item Classification
+      \item Completing and interpreting tables and databases
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Probabilistic programming
+    \begin{itemize}
+      \item Probabilistic models are expressed in a general (Turing complete) programminglanguage (e.g. Church/Venture/Anglican)
+      \item A universal inference engine can then be used to infer unobserved variablesgiven observed data
+      \item This can be used to implement seach over the model space in an automatedstatistician
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Summary}
-  
+  \begin{itemize}
+    \item We have presented the beginnings of an automatic statistician for regression
+    \vspace{\baselineskip}
+    \item Our system
+    \begin{itemize}
+      \item Defines an open-ended language of models
+      \item Searches greedily through this space
+      \item Produces detailed reports describing patterns in data
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Extrapolation and interpolation performance highly competitive
+    \vspace{\baselineskip}
+    \item We believe this line of research has the potential to make powerful statistical model-building techniques accessible to non-experts
+  \end{itemize}
 \end{frame}
 
 \end{document}

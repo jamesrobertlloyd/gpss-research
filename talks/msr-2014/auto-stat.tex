@@ -63,7 +63,7 @@ Joshua Tenenbaum, Zoubin Ghahramani
 \titlepage
 }
 
-\begin{frame}{There is a growing need for data scientists}
+\begin{frame}{There is a growing need for data analysis}
   \begin{itemize}
     \item We live in an era of abundant data
     \vspace{\baselineskip}
@@ -72,11 +72,27 @@ Joshua Tenenbaum, Zoubin Ghahramani
       \item \emph{``The United States alone faces a shortage of 140,000 to 190,000 people with analytical expertise and 1.5 million managers and analysts with the skills to understand and make decisions based on the analysis of big data.''}
     \end{itemize}
     \vspace{\baselineskip}
-    \item Automating statistical modeling would mitigate this requirement and potentially have a large impact on fields relying on expert statisticians, machine learning researchers and data scientist
+    \item Diverse fields increasingly relying on expert statisticians, machine learning researchers and data scientists
     \begin{itemize}
        \item \eg Computational biology
        \item \emph{Another canonical example} \ldots
      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Goals of the automatic statistician project}
+  \begin{itemize}
+    \item Provide a set of tools for understanding data that require minimal expert input
+    \vspace{\baselineskip}
+    \item Uncover challenging research problems in \eg
+    \begin{itemize}
+      \item Automated inference
+      \item Model construction and comparison
+      \item Data visualisation and interpretation
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Advance the field of machine learning in general
+    \vspace{\baselineskip}
   \end{itemize}
 \end{frame}
 
@@ -106,7 +122,7 @@ Joshua Tenenbaum, Zoubin Ghahramani
   \end{itemize}
 \end{frame}
 
-\begin{frame}{An automatic analysis}
+\begin{frame}{Preview: An entirely automatic analysis}
 
 \newcommand{\wmgd}{0.5\columnwidth}
 \newcommand{\hmgd}{3.0cm}
@@ -209,6 +225,7 @@ f(x_N))$, have a joint Gaussian distribution
     \begin{itemize}
       \item Mean function, $\mu(x)=\mathbb{E}(f(x))$
       \item Covariance / kernel function, $\kernel(x,x') = \Cov(f(x),f(x'))$
+      \item Denoted $f(x) \,\sim\, \gp{}(\mu(x),\kernel(x,x'))$
     \end{itemize}
   \end{itemize}
   \vspace{\baselineskip}

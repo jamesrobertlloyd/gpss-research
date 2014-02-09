@@ -1,0 +1,27 @@
+\newcommand{\fhbig}{1.6cm}
+\newcommand{\fwbig}{1.8cm}
+\newcommand{\kernpic}[1]{\includegraphics[height=\fhbig,width=\fwbig]{figures/structure_examples/#1}}
+\newcommand{\largeplus}{\tabbox{{\Large+}}}
+\newcommand{\largeeq}{\tabbox{{\Large=}}}
+\newcommand{\largetimes}{\tabbox{{\Large$\times$}}}
+\begin{figure}[ht]
+\centering
+\renewcommand{\tabularxcolumn}[1]{>{\arraybackslash}m{#1}}
+%\begin{tabular}{m{\fwbig}m{0.01\textwidth}m{\fwbig}m{0.01\textwidth}m{\fwbig}m{\fwbig}m{\fwbig}}
+%\begin{tabular}{C{\fwbig}C{\fwbig}C{\fwbig}C{\fwbig}}%{m{\fwbig}m{\fwbig}m{\fwbig}}
+\begin{tabularx}{\columnwidth}{XXcXX}
+%Composite & Draws from \gp{} & \gp{} posterior \\ \toprule
+  \kernpic{se_kernel} & \kernpic{se_kernel_draws} & \phantom{mm}
+& \kernpic{per_kernel} & \kernpic{per_kernel_draws_s2}
+\\
+  {\small Squared-exp (\kSE)} & {\small local \newline variation} & \phantom{mm}
+& {\small Periodic (\kPer)} & {\small repeating structure}
+\\ \\ \\
+  \kernpic{lin_kernel} & \kernpic{lin_kernel_draws} & \phantom{mm}
+& White noise? & White noise?
+\\
+  {\small Linear (\kLin)} & {\small linear \newline functions}  & \phantom{mm}
+& White noise? & White noise?
+\end{tabularx}
+\end{figure}
+

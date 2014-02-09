@@ -4,6 +4,7 @@
 \usepackage{tabularx}
 \usepackage{include/picins}
 \usepackage{include/preamble}
+\usepackage{xcolor}
 \usepackage{tikz}
 
 \usetikzlibrary{shapes.geometric,arrows,chains,matrix,positioning,scopes,calc}
@@ -19,6 +20,7 @@
 \setlength{\parindent}{0.0cm}
 
 \tikzstyle{mybox} = [draw=white, rectangle]
+\tikzset{hide on/.code={\only<#1>{\color{white}}}}
 
 \definecolor{camlightblue}{rgb}{0.601 , 0.8, 1}
 \definecolor{camdarkblue}{rgb}{0, 0.203, 0.402}
@@ -182,7 +184,13 @@ f(x_N))$, have a joint Gaussian distribution
       \item Covariance / kernel function, $\kernel(x,x') = \Cov(f(x),f(x'))$
     \end{itemize}
   \end{itemize}
-  Draw a picture?
+  \vspace{\baselineskip}
+  \begin{tabular}{cccc}
+    \includegraphics<1>[width=0.2\textwidth]{figures/gp_demo/1d_posterior_and_0_data} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/gp_demo/1d_posterior_and_1_data} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/gp_demo/1d_posterior_and_2_data} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/gp_demo/1d_posterior_and_3_data}
+  \end{tabular}
 \end{frame}
 
 \begin{frame}{A language of Gaussian process kernels}
@@ -190,7 +198,7 @@ f(x_N))$, have a joint Gaussian distribution
     \item Marginalizing over an unknown mean function can be equivalently
 expressed as a zero-mean \gp{} with a new kernel
   \begin{itemize}
-    \item Suppose, ${f(x) \,|\, a \,\sim\, \gp{}(a \times \mu(x), \kernel(x,x'))}$ and $a \,\sim\, \mathcal{N}(0,1)$
+    \item Suppose, ${f(x) \,|\, a \,\sim\, \gp{}(a \times \mu(x), \kernel(x,x'))}$ where $a \,\sim\, \mathcal{N}(0,1)$
     \item Then equivalently, $f(x) \,\sim\, \gp{}(0, \mu(x)\mu(x') + \kernel(x,x'))$
   \end{itemize}
   \vspace{\baselineskip}
@@ -200,57 +208,213 @@ specifying a {\bf language of kernels}
 \end{frame}
 
 \begin{frame}{The atoms of our language}
-  Show pictures of different function types from base kernels
+  \input{figures/simple_kernels_table}
 \end{frame}
 
 \begin{frame}{The composition rules of our language}
-  Addition and multiplication with pictures
+\begin{itemize} 
+	\item Two main operations: addition, multiplication
+\end{itemize}
+\input{figures/comp}
 \end{frame}
 
 \begin{frame}{Modeling changepoints}
-  Addition and multiplication with pictures
+  Assume $\textcolor{red}{f_1(x)} \sim GP(0,k_1)$ and $\textcolor{blue}{f_2(x)} \sim GP(0,k_2)$. Define:
+\[
+f(x) = (1-\sigma(x)) \textcolor{red}{f_1(x)} + \sigma(x) \textcolor{blue}{f_2(x)}
+\]
+
+where $\sigma$ is a sigmoid function between 0 and 1.
+
+\vspace{\baselineskip}
+
+Then $f \sim GP(0,k)$, where
+\[
+k(x,x') = (1-\sigma(x)) \, \textcolor{red}{k_1(x,x')}  \, (1-\sigma(x')) + \sigma(x) \,
+\textcolor{blue}{k_2(x,x')} \, \sigma(x') 
+\]
+
+We can parametrise the location $\tau$ and abruptness $a$ of the changepoint by replacing
+$\sigma(x)$  with $\sigma(a(x-\tau))$. \\
+
+\vspace{\baselineskip}
+
+{\it Intutively (in one-dimension), the function $f$ behaves like
+$\textcolor{red}{f_1}$ before $\tau$ and like $\textcolor{blue}{f_2}$ after $\tau$. }
 \end{frame}
 
 \begin{frame}{An expressive language of models}
-  Table
+\begin{center}
+\begin{tabular}{l|l}
+Regression model & Kernel \\
+\midrule
+\gp{} smoothing & $\kSE + \kWN$ \\
+Linear regression & $\kC + \kLin + \kWN$ \\
+Multiple kernel learning & $\sum \kSE$ + \kWN\\
+Trend, cyclical, irregular & $\sum \kSE + \sum \kPer$ + \kWN\\
+Fourier decomposition & $\kC + \sum \cos$ + \kWN\\
+Sparse spectrum \gp{}s & $\sum \cos$ + \kWN\\
+Spectral mixture & $\sum \SE \times \cos$ + \kWN\\
+Changepoints & \eg $\kCP(\kSE, \kSE) + \kWN$ \\
+Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$
+\end{tabular}
+\end{center}
+Note: $\cos$ is a special case of our version of $\kPer$
 \end{frame}
 
 \begin{frame}{Exploring the language}
   \begin{itemize}
-    \item Large and open ended
+    \item The space spanned by the language is large and open-ended requiring a judicious search procedure
     \vspace{\baselineskip}
-    \item Need to be efficient
-    \vspace{\baselineskip}
-    \item Try to mimick human behaviour
+    \item We propose a greedy search for its simplicity and similarity to human model building
+    \begin{itemize}
+      \item Adding a new kernel corresponds to adding a new component to an additive model, similar to forward selection strategies
+      \item Multiplying by a new kernel modifies an existing component of a model
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{A greedy search}
-  Make a new example of kernel learning
+\begin{frame}{Example: Mauna Loa Keeling Curve}
+\hspace{-1.2cm}
+\only<1>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_0/03-mauna2003-s_all_small.pdf}}
+\only<2>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_1/03-mauna2003-s_all_small.pdf}}
+\only<3>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_2/03-mauna2003-s_all_small.pdf}}
+\only<4>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_3/03-mauna2003-s_all_small.pdf}}
+
+\vspace{-3.5cm}
+\begin{minipage}[t][14cm][t]{1.14\linewidth}
+\begin{flushleft}
+\hspace{5.5cm}
+\vspace{-8cm}
+\makebox[\textwidth][c]{
+\raisebox{10cm}{
+\vspace{-8cm}
+\begin{tikzpicture}
+[sibling distance=0.18\columnwidth,-,thick, level distance=0.13\columnwidth]
+%\footnotesize
+\node[shape=rectangle,draw,thick] {Start}
+%\pause
+  child {node {$\SE$}}
+%  fill=camlightblue!30
+  child {node[shape=rectangle,draw,thick] {$\RQ$}
+    [sibling distance=0.16\columnwidth]
+%    {\visible<2->{ child {node {\ldots}}}}
+    child [hide on=-1] {node {$\SE$ + \RQ}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node[shape=rectangle,draw,thick] {$\Per + \RQ$}
+      [sibling distance=0.23\columnwidth]
+      child [hide on=-2] {node {$\SE + \Per + \RQ$}}
+      child [hide on=-2] {node {\ldots}}
+      child [hide on=-2] {node[shape=rectangle,draw,thick] {$\SE \times (\Per + \RQ)$}
+        [sibling distance=0.14\columnwidth]
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+      }
+      child [hide on=-2] {node {\ldots}}
+    }
+    %child {node {$\RQ \times \SE$}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node {$\Per \times \RQ$}}
+  }
+  child {node {$\Lin$}}
+  child {node {$\Per$}}
+  ;
+\end{tikzpicture}}
+}\end{flushleft}
+\end{minipage}
+\only<4>{}
+\end{frame}
+
+\begin{frame}{Bayesian Occam's razor}
+  Placeholder for TMS
+  
+  The classic model comparison slide for polynomials
 \end{frame}
 
 \begin{frame}{Model evaluation}
-  Need to trade off complexity and model fit
-  
-  Bayesian Occam's razor
-  
-  Multiple slides on this
+  \begin{itemize}
+    \item After proposing a new model its kernel parameters are optimised by conjugate gradients
+    \item We evaluate each optimized model, $M$, using the Bayesian Information Criterion (BIC):
+\[
+\textrm{BIC}(M) = -2 \log p(D\,|\, M) + p \log n
+\]
+where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal likelihood of the data, $D$, and $n$ is the number of data points.
+  \item BIC trades off model fit and complexity and implements what is known as ``Bayesian Occam's Razor'' 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Example: Airline passenger data}
+
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{figures/01-airline}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_raw_data} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_all}
+\end{tabular}
+\vspace{0.5\baselineskip}
+
+{\scriptsize
+Four additive components have been identified in the data
+\begin{itemize}
+
+  \item \input{\mdrd/01-airline_1_short_description.tex} 
+
+  \item \input{\mdrd/01-airline_2_short_description.tex} 
+
+  \item \input{\mdrd/01-airline_3_short_description.tex} 
+
+  \item \input{\mdrd/01-airline_4_short_description.tex} 
+
+\end{itemize}
+}
 \end{frame}
 
 \begin{frame}{How can we describe a model}
-  Motivating example of $\kSE \times \kPer \times \kLin$.
+  \begin{center}
+  Suppose the search finds the following kernel
+  \begin{align*}
+    \kSE \times (\kWN \times \kLin + \kCP(\kC, \kPer))
+  \end{align*}
+  Give some motivation!
+  \end{center}
 \end{frame}
 
 \begin{frame}{How can we describe a model}
-  Show a big expression
+  \begin{center}
+  Suppose the search finds the following kernel
+  \begin{align*}
+    \kSE \times (\kWN \times \kLin + \kCP(\kC, \kPer))
+  \end{align*}
+  \end{center}
 \end{frame}
 
 \begin{frame}{How can we describe a model}
-  Convert changepoint operator
+  \begin{center}
+  The changepoint can be converted into a sum of products
+  \begin{align*}
+    \kSE \times (\kWN \times \kLin + \kC \times \boldsymbol{\sigma} + \kPer \times \boldsymbol{\bar\sigma})
+  \end{align*}
+  \end{center}
 \end{frame}
 
 \begin{frame}{How can we describe a model}
-  Distributes sums over products
+  \begin{center}
+  Multiplication can be distributed over addition
+  \begin{align*}
+    \kSE \times \kWN \times \kLin + \kSE \times \kC \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}
+  \end{align*}
+  \end{center}
+\end{frame}
+
+\begin{frame}{How can we describe a model}
+  \begin{center}
+  Simplification rules are applied
+  \begin{align*}
+    \kWN \times \kLin + \kSE \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}
+  \end{align*}
+  \end{center}
 \end{frame}
 
 \begin{frame}{How can we describe a model}

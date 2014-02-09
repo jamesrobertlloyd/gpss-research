@@ -63,66 +63,143 @@ Joshua Tenenbaum, Zoubin Ghahramani
 
 \begin{frame}{There is a growing need for data scientists}
   \begin{itemize}
-    \item Abundant data
+    \item We live in an era of abundant data
     \vspace{\baselineskip}
-    \item McKinsey Global Institute quotation
-    \vspace{\baselineskip}
-    \item Automating this process would have a tremendous impact on various fields
+    \item The McKinsey Global Institute claim
     \begin{itemize}
-       \item Computational biology
-       \item Stuff
+      \item \emph{``The United States alone faces a shortage of 140,000 to 190,000 people with analytical expertise and 1.5 million managers and analysts with the skills to understand and make decisions based on the analysis of big data.''}
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Automating statistical modeling would mitigate this requirement and potentially have a large impact on fields relying on expert statisticians, machine learning researchers and data scientist
+    \begin{itemize}
+       \item \eg Computational biology
+       \item \emph{Another canonical example} \ldots
      \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Prerequisites for an automatic statistician}
+\begin{frame}{Ingredients of an automatic statistician}
   \begin{itemize}
-    \item An open-ended language of models
+    \item {\bf An open-ended language of models}
     \begin{itemize}
-       \item Content
-       \item Content
+       \item Expressive enough to capture real-world phenomena\ldots
+       \item \ldots and the techniques used by human statisticians
      \end{itemize}
     \vspace{\baselineskip}
-    \item A search procedure
+    \item {\bf A search procedure}
+    \begin{itemize}
+       \item To efficiently explore the language of models
+     \end{itemize}
     \vspace{\baselineskip}
-    \item A principled method of evaluating models
+    \item {\bf A principled method of evaluating models}
+    \begin{itemize}
+       \item Trading off complexity and fit to data
+     \end{itemize}
     \vspace{\baselineskip}
-    \item A procedure to automatically explain the models
+    \item {\bf A procedure to automatically explain the models}
+    \begin{itemize}
+       \item Making the assumptions of the models explicit\ldots
+       \item \ldots in a way that is intelligible to non-experts
+     \end{itemize}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Defining a language of regression models}
   \begin{itemize}
-    \item $f: \mathcal{X} \to \mathcal{Y}$
+    \item Regression consists of learning a function $f: \mathcal{X} \to \mathcal{Y}$ from inputs to outputs from example input / output pairs
     \vspace{\baselineskip}
-    \item Want to represent simple parametric forms
+    \item Language should include simple parametric forms\ldots
     \begin{itemize}
-       \item Linear functions
-       \item Polynomials
-       \item Exponential functions \ldots
+       \item \eg Linear functions, Polynomials, Exponential functions
      \end{itemize}
     \vspace{\baselineskip}
-    \item Also want to represent complex nonparametric functions specified in terms of high level proper ties
+    \item \ldots as well as functions specified by high level properties
     \begin{itemize}
-       \item Smoothness
-       \item Periodicity \ldots
+       \item \eg Smoothness, Periodicity
      \end{itemize}
+    \vspace{\baselineskip}
+    \item Inference should be tractable for all models in language
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Bayesian modeling}
+  Placeholder for TMS
+  
+  Intro to Bayes rule and use in statistics
+\end{frame}
+
+\begin{frame}{Bayesian linear regression}
+  Placeholder for TMS
+  
+  Show example of Bayesian linear regression through origin
+  
+  Prior, Bayes rule, Posterior, Picture one data point at a time
+\end{frame}
+
+\begin{frame}{Bayesian linear regression}
+  Placeholder for TMS
+  
+  Show how to rewrite this as a Gaussian distribution
+  
+  Talk about finite number of sampling points, and that this has a limit
+\end{frame}
+
+\begin{frame}{Gaussian process regression}
+  Placeholder for TMS
+  
+  Change the covariance, shows samples of SE, and then show posterior
+\end{frame}
+
+\frame[plain]{
+\frametitle{Conditional Posterior}
+Placeholder for TMS
+
+With SE kernel:
+    \begin{figure}
+        \includegraphics<1>[width=6cm]{figures/gp_demo/1d_posterior_and_0_data}
+        \includegraphics<2>[width=6cm]{figures/gp_demo/1d_posterior_and_1_data}
+        \includegraphics<3>[width=6cm]{figures/gp_demo/1d_posterior_and_2_data}
+        \includegraphics<4>[width=6cm]{figures/gp_demo/1d_posterior_and_3_data}
+        \includegraphics<5>[width=6cm]{figures/gp_demo/1d_posterior_and_4_data}
+    \end{figure}
+}
+
+\begin{frame}{Gaussian process regression}
+  Placeholder for TMS
+  
+  Therefore let's see how far we can go with kernel functions
 \end{frame}
 
 \begin{frame}{We can do this with Gaussian processes}
   \begin{itemize}
-    \item Definition
+    \item \gp{}s are distributions over functions such that any
+finite subset of function evaluations, $(f(x_1), f(x_2), \ldots
+f(x_N))$, have a joint Gaussian distribution
     \vspace{\baselineskip}
-    \item Completely specified by mean and covariance
-    \vspace{\baselineskip}
-    \item We can integrate out the mean in many situations
-    \vspace{\baselineskip}
-    \item So let's focus on the covariance / kernel
+    \item A \gp{} is completely specified by
+    \begin{itemize}
+      \item Mean function, $\mu(x)=\mathbb{E}(f(x))$
+      \item Covariance / kernel function, $\kernel(x,x') = \Cov(f(x),f(x'))$
+    \end{itemize}
+  \end{itemize}
+  Draw a picture?
+\end{frame}
+
+\begin{frame}{A language of Gaussian process kernels}
+  \begin{itemize}
+    \item Marginalizing over an unknown mean function can be equivalently
+expressed as a zero-mean \gp{} with a new kernel
+  \begin{itemize}
+    \item Suppose, ${f(x) \,|\, a \,\sim\, \gp{}(a \times \mu(x), \kernel(x,x'))}$ and $a \,\sim\, \mathcal{N}(0,1)$
+    \item Then equivalently, $f(x) \,\sim\, \gp{}(0, \mu(x)\mu(x') + \kernel(x,x'))$
+  \end{itemize}
+  \vspace{\baselineskip}
+  \item We therefore define a language of \gp{} regression models by
+specifying a {\bf language of kernels}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{The atoms of the language}
+\begin{frame}{The atoms of our language}
   Show pictures of different function types from base kernels
 \end{frame}
 
@@ -130,7 +207,7 @@ Joshua Tenenbaum, Zoubin Ghahramani
   Addition and multiplication with pictures
 \end{frame}
 
-\begin{frame}{Modelling changepoints}
+\begin{frame}{Modeling changepoints}
   Addition and multiplication with pictures
 \end{frame}
 

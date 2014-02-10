@@ -294,13 +294,14 @@
 %\vspace{0.8\baselineskip}
 
 \fbox{\includegraphics[trim=0cm 6cm 0cm 0.0cm, clip, width=0.98\columnwidth]{../figures/airline-pages/pg_0005-crop.pdf}}
+%\fbox{\includegraphics[trim=0cm 1cm 0cm 0.0cm, clip, width=0.98\columnwidth]{../figures/airline-pages/pg_0006-crop.pdf}}
 %\fbox{\includegraphics[trim=0cm 1cm 0cm 0.0cm, clip, width=0.98\columnwidth]{../figures/radio-pages/pg_0006-crop.pdf}}
 
 \end{center}
 
 \newpage 
 
-\mysection{Gaussian processes model structure \\ through kernels}
+\mysection{Modelling structure through\\Gaussian process kernels}
 
 \vspace{0.5\baselineskip}
 
@@ -308,7 +309,7 @@
   %\item The kernel determines which structures are likely under the \gp{} prior  
   %\item This prior determines the generalization properties of the model.
   %\item The kernel determines the pattern of generalization beyond the observed data
-  \item The kernel specifies which structures are likely under the GP prior \\ - which determines the generalization properties of the model.
+  \item The kernel specifies which structures are likely under the GP prior \\ - which determines the generalisation properties of the model.
   %For Gaussian process models, the prior --- and hence, the pattern of generalisation --- is determined by a kernel function. Common examples include:
   %\item Only a few simple kernels are commonly used \eg%the following standard kernels is used%\gp{} priors are used:
 \end{itemize}
@@ -334,7 +335,7 @@
 
 
 
-\mysection{We can build models by  greedy search}
+\mysection{We can build models by a greedy search}
 
 \vspace{1\baselineskip}
 
@@ -348,12 +349,13 @@
 \mysection{Automatically describing model properties}
 
 \subsection*{How to automatically describe arbitrarily complex kernels:}
-\begin{enumerate}
-\item Break each kernel into a sum of products.
-\item For each product, look up the properties of each kernel in that product.
-\item Combine the properties into one sentence.
-\item Plot contribution of this compoenent to the model.
-\end{enumerate}
+\begin{itemize}
+\item The kernel is distributed into a sum of products
+\item Sums of kernels are sums of functions so each product is described separately
+\item Each kernel in a product modifies the model in a consistent way\ldots
+\item \ldots so one kernel is described by a noun phrase, and the others modify it
+\item Text descriptions are complemented by plots of the posterior
+\end{itemize}
 %It is hard to write a lookup table to handle every kernel that the open-ended search might produce.  How to automate this?
 
 %For a given dataset, the GPSS method produces a compound kernel composed of sums and products of the 6 base kernels.
@@ -372,7 +374,7 @@
 \kSE \times \big( \kLin + \kPer + \kSE \big)
 \end{equation*}
 \begin{centering}
-becomes
+becomes (after simplification)
 \end{centering}
 \begin{equation*}
 %(\kSE \times \kLin) + (\kSE \times \kLin \times \kPer) + (\kSE \times \kLin).
@@ -433,7 +435,6 @@ Therefore, a sum of kernels can be described as a sum of independent functions.
 
 \subsection*{Each kernel in a product roughly corresponds to an adjective}
 
-
 \vspace{1\baselineskip}
 
 \centering
@@ -442,28 +443,35 @@ Kernel & How it modifies the prior \\
 \midrule
 $\SE$ & functions change smoothly \\
 $\kPer$ & functions repeat \\
-$\kLin$ & amplitude increases linearly
+$\kLin$ & standard deviation varies linearly
 \end{tabular}
 
 \vspace{1\baselineskip}
 
-On its own, each kernel simply modifyies the constant function $f(x) = c$.
+\raggedright
+\subsection*{Example description}
 
+{\large
+\begin{align*}
+  \underbrace{\kSE}_{\textnormal{\large approximately}} \times
+  \underbrace{\kPer}_{\textnormal{\large periodic function}} \times 
+  \underbrace{\kLin}_{\textnormal{\large with linearly growing amplitude}}
+\end{align*}
+}
 
+$\kPer$ has been chosen to act as the noun while $\kSE$ and $\kLin$ modify the description
 
-\subsection*{Example short descriptions}
-
-\centering
-\begin{tabular}{l|l}
-Product of Kernels & Description \\
-\midrule
-$\kPer$ & An exactly periodic function \\
-$\kPer \times \kSE$ & An approximately periodic function \\
-$\kPer \times \kSE \times \kLin$ & An approximately periodic function with linearly varying amplitude \\
-$\kLin$ & A linear function \\
-$\kLin \times \kLin$ & A quadratic function \\
-$\kPer \times \kLin \times \kLin$ & An exactly periodic function with quadratically varying amplitude\\
-\end{tabular}
+%\centering
+%\begin{tabular}{l|l}
+%Product of Kernels & Description \\
+%\midrule
+%$\kPer$ & An exactly periodic function \\
+%$\kPer \times \kSE$ & An approximately periodic function \\
+%$\kPer \times \kSE \times \kLin$ & An approximately periodic function with linearly varying amplitude \\
+%$\kLin$ & A linear function \\
+%$\kLin \times \kLin$ & A quadratic function \\
+%$\kPer \times \kLin \times \kLin$ & An exactly periodic function with quadratically varying amplitude\\
+%\end{tabular}
 
 \vspace{1\baselineskip}
 

@@ -75,7 +75,9 @@ Joshua Tenenbaum, Zoubin Ghahramani
     \item Diverse fields increasingly relying on expert statisticians, machine learning researchers and data scientists
     \begin{itemize}
        \item \eg Computational biology
-       \item \emph{Another canonical example} \ldots
+       \item Quantitative finance
+       \item Internet marketing
+       \item High
      \end{itemize}
   \end{itemize}
 \end{frame}
@@ -151,19 +153,19 @@ Four additive components have been identified in the data
 
 \begin{frame}{Defining a language of regression models}
   \begin{itemize}
-    \item Regression consists of learning a function $f: \mathcal{X} \to \mathcal{Y}$ from inputs to outputs from example input / output pairs
+    \item Regression consists of {\bf learning a function} $f: \mathcal{X} \to \mathcal{Y}$ from inputs to outputs from example input / output pairs
     \vspace{\baselineskip}
-    \item Language should include simple parametric forms\ldots
+    \item Language should include {\bf simple parametric forms}\ldots
     \begin{itemize}
        \item \eg Linear functions, Polynomials, Exponential functions
      \end{itemize}
     \vspace{\baselineskip}
-    \item \ldots as well as functions specified by high level properties
+    \item \ldots as well as functions specified by {\bf high level properties}
     \begin{itemize}
        \item \eg Smoothness, Periodicity
      \end{itemize}
     \vspace{\baselineskip}
-    \item Inference should be tractable for all models in language
+    \item Inference should be {\bf tractable for all models} in language
   \end{itemize}
 \end{frame}
 
@@ -230,13 +232,21 @@ k(x,x') = (1-\sigma(x)) \, \textcolor{red}{k_1(x,x')}  \, (1-\sigma(x')) + \sigm
 \textcolor{blue}{k_2(x,x')} \, \sigma(x') 
 \]
 
-We can parametrise the location $\tau$ and abruptness $a$ of the changepoint by replacing
-$\sigma(x)$  with $\sigma(a(x-\tau))$. \\
+%We can parametrise the location $\tau$ and abruptness $a$ of the changepoint by replacing
+%$\sigma(x)$  with $\sigma(a(x-\tau))$. \\
 
 \vspace{\baselineskip}
 
-{\it Intutively (in one-dimension), the function $f$ behaves like
-$\textcolor{red}{f_1}$ before $\tau$ and like $\textcolor{blue}{f_2}$ after $\tau$. }
+%{\it Intutively (in one-dimension), the function $f$ behaves like
+%$\textcolor{red}{f_1}$ before $\tau$ and like $\textcolor{blue}{f_2}$ after $\tau$. }
+
+  \begin{tabular}{cccc}
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_1} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_2} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_3} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_4}
+  \end{tabular}
+
 \end{frame}
 
 \begin{frame}{An expressive language of models}
@@ -325,29 +335,31 @@ Note: $\cos$ is a special case of our version of $\kPer$
 \begin{frame}{Model evaluation}
   \begin{itemize}
     \item After proposing a new model its kernel parameters are optimised by conjugate gradients
+    \vspace{\baselineskip}
     \item We evaluate each optimized model, $M$, using the Bayesian Information Criterion (BIC):
 \[
 \textrm{BIC}(M) = -2 \log p(D\,|\, M) + p \log n
 \]
 where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal likelihood of the data, $D$, and $n$ is the number of data points.
+    \vspace{\baselineskip}
   \item BIC trades off model fit and complexity and implements what is known as ``Bayesian Occam's Razor'' 
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Automatic description of models}
   \begin{itemize}
-    \item Search can produce arbitrarily complicated models from open-ended language but two main properties allow description to be automated
+    \item Search can produce {\bf arbitrarily complicated models} from open-ended language but two main properties allow description to be automated
     \vspace{\baselineskip}
-    \item Models can be decomposed into a sum products
+    \item Models can be {\bf decomposed} into a sum products
     \begin{itemize}
       \item A sum of kernels corresponds to a sum of functions
       \item Therefore, we can describe each product of kernels separately
     \end{itemize}
     \vspace{\baselineskip}
-    \item Each kernel in a product modifies a model in a consistent way
+    \item Each kernel in a product modifies a model in a {\bf consistent} way
     \begin{itemize}
-      \item We choose one kernel to be described as a noun
-      \item All other kernels modify this noun using adjectives
+      \item We choose one kernel to be described as a noun phrase
+      \item All other kernels modify this noun phrase
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -381,7 +393,55 @@ where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal like
   \begin{align*}
   \textcolor{red}{f_1}(x) + \textcolor{blue}{f_2}(x) \,\sim\, \gp{}(0, \textcolor{red}{\kernel_1} + \textcolor{blue}{\kernel_2})
   \end{align*}
-  \emph{Add a picture}
+  
+  
+%\definecolor{verylightblue}{rgb}{0.97,0.97,1}
+%\setlength{\fboxsep}{0pt}
+%
+%\begin{tabular}{cc}
+%\hspace{-3.5mm}
+%\fcolorbox{blue}{white}{
+%\hspace{-3.5mm}
+%\begin{tabular}{c}
+%\includegraphics[trim=30 0 62 25, clip, width=0.18\textwidth]{figures/03-mauna2003_all} \hspace{-3mm} \\
+% entire signal
+%\end{tabular}
+%}
+%\begin{tabular}{cccccc}
+%\\
+% & \includegraphics[trim=30 0 62 25, clip, width=0.18\textwidth]{figures/03-mauna2003_1} & \raisebox{0.5cm}{$+$} & \includegraphics[trim=30 0 62 25, %clip, width=0.18\textwidth]{figures/03-mauna2003_2} & \raisebox{0.5cm}{$+$} \\
+%& $\kSE \times \kLin$ & & $\kSE \times \kPer$ \\
+%\raisebox{-0cm}{$=$} & smooth trend & + & periodicity & +\\ \\
+%& \includegraphics[trim=30 0 62 25, clip, width=0.18\textwidth]{figures/03-mauna2003_3} \\
+%& $\kSE$ \\
+%& short-term deviation
+%\end{tabular}
+%\end{tabular}
+
+\vspace{\baselineskip}
+
+\begin{tabular}{ccccccc}
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/03-mauna2003_all} &
+\raisebox{0.4cm}{$=$} &
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/03-mauna2003_1} &
+\raisebox{0.4cm}{$+$} &
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/03-mauna2003_2} &
+\raisebox{0.4cm}{$+$} &
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/03-mauna2003_3}
+\end{tabular}
+
+\vspace{2\baselineskip}
+
+\begin{tabular}{ccccccc}
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/01-airline_all} &
+\raisebox{0.4cm}{$=$} &
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/01-airline_1} &
+\raisebox{0.4cm}{$+$} &
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/01-airline_2} &
+\raisebox{0.4cm}{$+$} &
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/01-airline_3}
+\end{tabular}
+
 \end{frame}
 
 \begin{frame}{Products of kernels}

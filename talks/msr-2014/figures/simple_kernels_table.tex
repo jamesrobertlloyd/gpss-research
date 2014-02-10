@@ -1,5 +1,7 @@
-\newcommand{\fhbig}{1.6cm}
-\newcommand{\fwbig}{1.8cm}
+%\newcommand{\fhbig}{1.6cm}
+%\newcommand{\fwbig}{1.8cm}
+\newcommand{\fhbig}{1.0cm}
+\newcommand{\fwbig}{1.2cm}
 \newcommand{\kernpic}[1]{\includegraphics[height=\fhbig,width=\fwbig]{figures/structure_examples/#1}}
 \newcommand{\largeplus}{\tabbox{{\Large+}}}
 \newcommand{\largeeq}{\tabbox{{\Large=}}}
@@ -11,17 +13,24 @@
 %\begin{tabular}{C{\fwbig}C{\fwbig}C{\fwbig}C{\fwbig}}%{m{\fwbig}m{\fwbig}m{\fwbig}}
 \begin{tabularx}{\columnwidth}{XXcXX}
 %Composite & Draws from \gp{} & \gp{} posterior \\ \toprule
-  \kernpic{se_kernel} & \kernpic{se_kernel_draws} & \phantom{mm}
+  \kernpic{wn_kernel} & \kernpic{wn_kernel_draws} & \phantom{mm}
+& \kernpic{c_kernel} & \kernpic{c_kernel_draws}
+\\
+  {\footnotesize White \newline noise (\kWN)} & {\footnotesize Uncorrelated noise} & \phantom{mm}
+& {\footnotesize Constant (\kC)} & {\footnotesize Constant \newline functions}
+\end{tabularx}
+
+\vspace{2\baselineskip}
+
+\begin{tabularx}{\columnwidth}{XXcXXcXX}
+%Composite & Draws from \gp{} & \gp{} posterior \\ \toprule
+  \kernpic{lin_kernel} & \kernpic{lin_kernel_draws} & \phantom{mm}
+&  \kernpic{se_kernel} & \kernpic{se_kernel_draws} & \phantom{mm}
 & \kernpic{per_kernel} & \kernpic{per_kernel_draws_s2}
 \\
-  {\small Squared-exp (\kSE)} & {\small local \newline variation} & \phantom{mm}
-& {\small Periodic (\kPer)} & {\small repeating structure}
-\\ \\ \\
-  \kernpic{lin_kernel} & \kernpic{lin_kernel_draws} & \phantom{mm}
-& White noise? & White noise?
-\\
-  {\small Linear (\kLin)} & {\small linear \newline functions}  & \phantom{mm}
-& Constant? & Constant?
+  {\footnotesize Linear (\kLin)} & {\footnotesize Linear \newline functions} & \phantom{mm}
+&  {\footnotesize Squared \newline exp. (\kSE)} & {\footnotesize Smooth \newline functions} & \phantom{mm}
+& {\footnotesize Periodic (\kPer)} & {\footnotesize Periodic functions}
 \end{tabularx}
 \end{figure}
 

@@ -13,7 +13,7 @@ randn('state',seed);
 rand('state',seed);
 
 savefigs = true;
-figpath = '../../figures/structure_examples/';
+figpath = 'structure_examples/';
 
 % Make up some data
 %X = [ -2 -1 0 1 2 ]' .* 2;
@@ -25,7 +25,7 @@ N = length(X);
 
 n_samples = 2;
 
-n_xstar = 200;
+n_xstar = 201;
 xrange = linspace(-10, 10, n_xstar)';
 post_xrange = linspace(-3, 10, n_xstar)';
 x0 = 0;
@@ -53,6 +53,7 @@ rq_outout_var = 2;
 rq_alpha = 1.1;
 rq_kernel = @(x,y) rq_outout_var*( 1 + ( x - y ) .^ 2 ./ (2*rq_alpha*rq_length_scale^2 )).^-rq_alpha;
 
+c_kernel = @(x, y) ones(size(x*y));
 
 se_plus_lin = @(x,y) se_kernel(x, y) + lin_kernel(x, y);
 se_plus_per = @(x,y) se_kernel(x, y) + per_kernel(x, y);
@@ -65,11 +66,12 @@ longse_times_per = @(x,y) longse_kernel(x, y) .* per_kernel(x, y);
 longse_plus_per = @(x,y) longse_kernel(x, y) + per_kernel(x, y);
 longse_times_lin = @(x,y) longse_kernel(x, y) .* lin_kernel(x, y);
 
-kernel_names = {'se_kernel', 'lin_kernel', 'per_kernel', 'longse_kernel', ...
-           'se_plus_lin', 'se_plus_per', 'se_times_lin', 'se_times_per', ...
-           'lin_times_per', 'lin_plus_per', 'lin_times_lin', ...
-           'longse_times_per', 'longse_plus_per', 'longse_times_lin', ...
-           'rq_kernel',};
+% kernel_names = {'se_kernel', 'lin_kernel', 'per_kernel', 'longse_kernel', ...
+%            'se_plus_lin', 'se_plus_per', 'se_times_lin', 'se_times_per', ...
+%            'lin_times_per', 'lin_plus_per', 'lin_times_lin', ...
+%            'longse_times_per', 'longse_plus_per', 'longse_times_lin', ...
+%            'rq_kernel','c_kernel'};
+kernel_names = {'c_kernel'};
 
 % Automatically build kernel names from function names.
 for i = 1:numel(kernel_names)
@@ -79,7 +81,7 @@ end
 %color_ixs = [ 1, 2, 3, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 4 ]; 
 color_ixs = repmat(10, 1, numel(kernels));
 
-if 0
+if 1
 % plot the kernels.
 for k = 1:numel(kernels)
     figure(k); clf;
@@ -141,7 +143,7 @@ function kernel_plot( xrange, vals, color_ix )
     if all( vals >= 0 ); lowlim = 0; else lowlim = min(vals) * 1.05; end
     % Make plot prettier.  
     xlim([min(xrange), max(xrange)]);
-    ylim([lowlim, max(vals) * 1.05]);
+    ylim([min(lowlim,0), max(vals) * 1.05]);
     set( gca, 'XTick', [ 0 ] );
     set( gca, 'yTick', [ 0 ] );
     set( gca, 'XTickLabel', '' );

@@ -96,10 +96,12 @@
 % latexdir = '../../analyses/2013-12-10-extrap-GPSS/figures';
 % topdir = '../../analyses/2014-01-08-collated';
 % latexdir = '../../analyses/2014-01-08-collated';
-topdir = '../../analyses/2014-01-26-add';
-latexdir = '../../analyses/2014-01-26-add';
+% topdir = '../../analyses/2014-01-26-add';
+% latexdir = '../../analyses/2014-01-26-add';
 % topdir = '../../analyses/2014-01-26-full';
 % latexdir = '../../analyses/2014-01-26-full';
+topdir = '../../analyses/2014-02-10-hadcrut4-median-add';
+latexdir = '../../analyses/2014-02-10-hadcrut4-median-add';
 dirnames = dir(topdir);
 isub = [dirnames(:).isdir]; %# returns logical vector
 dirnames = {dirnames(isub).name}';
@@ -115,8 +117,8 @@ dirnames(ismember(dirnames,{'.','..'})) = [];
 %dirnames{end+1} = '11-Feb-v4-03-mauna2003-s_max_level_2';
 %dirnames{end+1} = '11-Feb-v4-03-mauna2003-s_max_level_3';
 
-%for i = 1:length(dirnames)
-for i = 12:length(dirnames)
+for i = 1:length(dirnames)
+%for i = 12:length(dirnames)
 %for i = 1
     dirname = dirnames{i};
     files = dir([topdir, '/', dirname, '/*.fig']);

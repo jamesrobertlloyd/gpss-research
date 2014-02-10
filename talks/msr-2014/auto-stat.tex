@@ -293,7 +293,7 @@ Note: $\cos$ is a special case of our version of $\kPer$
   \begin{itemize}
     \item Language defined as the arbitrary composition of five base kernels ($\kWN, \kC, \kLin, \kSE, \kPer$) via three operators ($+, \times, \kCP$). 
     \vspace{\baselineskip}
-    \item The space spanned by this language is large and open-ended requiring a judicious search procedure
+    \item The space spanned by this language is open-ended and can have a high branching factor requiring a judicious search
     \vspace{\baselineskip}
     \item We propose a greedy search for its simplicity and similarity to human model-building
   \end{itemize}
@@ -377,7 +377,7 @@ where $p$ is the number of kernel parameters, $D$ represents the data, and $n$ i
   \begin{itemize}
     \item Search can produce {\bf arbitrarily complicated models} from open-ended language but two main properties allow description to be automated
     \vspace{\baselineskip}
-    \item Models can be {\bf decomposed} into a sum products
+    \item Kernels can be {\bf decomposed} into a {\bf sum of products}
     \begin{itemize}
       \item A sum of kernels corresponds to a sum of functions
       \item Therefore, we can describe each product of kernels separately
@@ -712,10 +712,6 @@ Four additive components have been identified in the data
   See pdf
 \end{frame}
 
-\begin{frame}{Example: Sulphuric acid production}
-  See pdf
-\end{frame}
-
 \begin{frame}{Good predictive performance as well}
   \begin{block}{Standardised RMSE over 13 data sets}
   \includegraphics[width=0.99\textwidth]{figures/box_extrap_wide}\\
@@ -756,9 +752,12 @@ Four additive components have been identified in the data
     \vspace{\baselineskip}
     \item Probabilistic programming
     \begin{itemize}
-      \item Probabilistic models are expressed in a general (Turing complete) programminglanguage (e.g. Church/Venture/Anglican)
-      \item A universal inference engine can then be used to infer unobserved variablesgiven observed data
-      \item This can be used to implement seach over the model space in an automatedstatistician
+      \item Probabilistic models are expressed in a general (Turing complete) programming
+language (e.g. Church/Venture/Anglican)
+      \item A universal inference engine can then be used to infer unobserved variables
+given observed data
+      \item This can be used to implement seach over the model space in an automated
+statistician
     \end{itemize}
   \end{itemize}
 \end{frame}

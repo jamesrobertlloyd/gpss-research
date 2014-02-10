@@ -50,11 +50,15 @@
 \qquad
 \includegraphics[height=0.2\textwidth]{figures/roger-photo}
 \\
-James Robert Lloyd, David Duvenaud, Roger Grosse,\\
+James Robert Lloyd\textsuperscript{1}, David Duvenaud\textsuperscript{1}, Roger Grosse\textsuperscript{2},\\
 \includegraphics[height=0.2\textwidth, trim=0mm 7mm 0mm 0mm, clip]{figures/josh2}
 \qquad
 \includegraphics[height=0.2\textwidth]{figures/zg2}\\
-Joshua Tenenbaum, Zoubin Ghahramani
+Joshua Tenenbaum\textsuperscript{2}, Zoubin Ghahramani\textsuperscript{1}
+}
+
+\institute{
+1: Department of Engineering, University of Cambridge, UK\\2: Massachusetts Institute of Technology, USA
 }
 
 \begin{document}
@@ -72,17 +76,22 @@ Joshua Tenenbaum, Zoubin Ghahramani
       \item \emph{``The United States alone faces a shortage of 140,000 to 190,000 people with analytical expertise and 1.5 million managers and analysts with the skills to understand and make decisions based on the analysis of big data.''}
     \end{itemize}
     \vspace{\baselineskip}
-    \item Diverse fields increasingly relying on expert statisticians, machine learning researchers and data scientists
+    \item Diverse fields increasingly relying on expert statisticians, machine learning researchers and data scientists \eg
     \begin{itemize}
-       \item \eg Computational biology
+       \item Computational sciences (\eg biology, astronomy, \ldots)
+       \item Online advertising
        \item Quantitative finance
-       \item Internet marketing
-       \item High
+       \item \ldots
      \end{itemize}
   \end{itemize}
 \end{frame}
 
+\begin{frame}{What would an automatic statistician do?}
+Flow chart
+\end{frame}
+
 \begin{frame}{Goals of the automatic statistician project}
+  TODO - add little flow chart
   \begin{itemize}
     \item Provide a set of tools for understanding data that require minimal expert input
     \vspace{\baselineskip}
@@ -99,6 +108,7 @@ Joshua Tenenbaum, Zoubin Ghahramani
 \end{frame}
 
 \begin{frame}{Ingredients of an automatic statistician}
+  TODO - add little flow chart
   \begin{itemize}
     \item {\bf An open-ended language of models}
     \begin{itemize}
@@ -151,6 +161,10 @@ Four additive components have been identified in the data
 }
 \end{frame}
 
+\begin{frame}{Defining a language of models}
+Flow chart
+\end{frame}
+
 \begin{frame}{Defining a language of regression models}
   \begin{itemize}
     \item Regression consists of {\bf learning a function} $f: \mathcal{X} \to \mathcal{Y}$ from inputs to outputs from example input / output pairs
@@ -169,7 +183,7 @@ Four additive components have been identified in the data
   \end{itemize}
 \end{frame}
 
-\begin{frame}{We can do this with Gaussian processes}
+\begin{frame}{We can build regression models with Gaussian processes}
   \begin{itemize}
     \item \gp{}s are distributions over functions such that any
 finite subset of function evaluations, $(f(x_1), f(x_2), \ldots
@@ -179,7 +193,7 @@ f(x_N))$, have a joint Gaussian distribution
     \begin{itemize}
       \item Mean function, $\mu(x)=\mathbb{E}(f(x))$
       \item Covariance / kernel function, $\kernel(x,x') = \Cov(f(x),f(x'))$
-      \item Denoted $f(x) \,\sim\, \gp{}(\mu(x),\kernel(x,x'))$
+      \item Denoted $f \,\sim\, \gp{}(\mu,\kernel)$
     \end{itemize}
   \end{itemize}
   \vspace{\baselineskip}
@@ -193,8 +207,7 @@ f(x_N))$, have a joint Gaussian distribution
 
 \begin{frame}{A language of Gaussian process kernels}
   \begin{itemize}
-    \item Marginalizing over an unknown mean function can be equivalently
-expressed as a zero-mean \gp{} with a new kernel
+    \item It is common practice to use a zero mean function since the mean can be marginalised out
   \begin{itemize}
     \item Suppose, ${f(x) \,|\, a \,\sim\, \gp{}(a \times \mu(x), \kernel(x,x'))}$ where $a \,\sim\, \mathcal{N}(0,1)$
     \item Then equivalently, $f(x) \,\sim\, \gp{}(0, \mu(x)\mu(x') + \kernel(x,x'))$
@@ -206,6 +219,7 @@ specifying a {\bf language of kernels}
 \end{frame}
 
 \begin{frame}{The atoms of our language}
+  TODO: Make me pretty
   \input{figures/simple_kernels_table}
 \end{frame}
 
@@ -231,6 +245,8 @@ Then $f \sim GP(0,k)$, where
 k(x,x') = (1-\sigma(x)) \, \textcolor{red}{k_1(x,x')}  \, (1-\sigma(x')) + \sigma(x) \,
 \textcolor{blue}{k_2(x,x')} \, \sigma(x') 
 \]
+
+We define the changepoint operator $\kernel = \kCP(\kernel_1, \kernel_2)$.
 
 %We can parametrise the location $\tau$ and abruptness $a$ of the changepoint by replacing
 %$\sigma(x)$  with $\sigma(a(x-\tau))$. \\
@@ -268,19 +284,22 @@ Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$
 Note: $\cos$ is a special case of our version of $\kPer$
 \end{frame}
 
-\begin{frame}{Exploring the language}
+\begin{frame}{Discovering a good model via search}
+Flow chart
+\end{frame}
+
+\begin{frame}{Discovering a good model via search}
   \begin{itemize}
-    \item The space spanned by the language is large and open-ended requiring a judicious search procedure
+    \item Language defined as the arbitrary composition of five base kernels ($\kWN, \kC, \kLin, \kSE, \kPer$) via three operators ($+, \times, \kCP$). 
     \vspace{\baselineskip}
-    \item We propose a greedy search for its simplicity and similarity to human model building
-    \begin{itemize}
-      \item Adding a new kernel corresponds to adding a new component to an additive model, similar to forward selection strategies
-      \item Multiplying by a new kernel modifies an existing component of a model
-    \end{itemize}
+    \item The space spanned by this language is large and open-ended requiring a judicious search procedure
+    \vspace{\baselineskip}
+    \item We propose a greedy search for its simplicity and similarity to human model-building
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Example: Mauna Loa Keeling Curve}
+TODO: Update
 \hspace{-1.2cm}
 \only<1>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_0/03-mauna2003-s_all_small.pdf}}
 \only<2>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_1/03-mauna2003-s_all_small.pdf}}
@@ -336,17 +355,21 @@ Note: $\cos$ is a special case of our version of $\kPer$
   \begin{itemize}
     \item After proposing a new model its kernel parameters are optimised by conjugate gradients
     \vspace{\baselineskip}
-    \item We evaluate each optimized model, $M$, using the Bayesian Information Criterion (BIC):
-\[
-\textrm{BIC}(M) = -2 \log p(D\,|\, M) + p \log n
-\]
-where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal likelihood of the data, $D$, and $n$ is the number of data points.
+    \item We evaluate each optimised model, $M$, using the \textcolor{red}{marginal likelihood} which can be computed analytically for \gp{}s
     \vspace{\baselineskip}
-  \item BIC trades off model fit and complexity and implements what is known as ``Bayesian Occam's Razor'' 
+    \item We \textcolor{blue}{penalise} the marginal likelihood for the \textcolor{blue}{optimised kernel parameters} using the Bayesian Information Criterion (BIC):
+\[
+-0.5 \times \textrm{BIC}(M) = \textcolor{red}{\log p(D\,|\, M)} - \textcolor{blue}{\frac{p}{2} \log n}
+\]
+where $p$ is the number of kernel parameters, $D$ represents the data, and $n$ is the number of data points.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Automatic description of models}
+\begin{frame}{Automatic translation of models}
+Flow chart
+\end{frame}
+
+\begin{frame}{Automatic translation of models}
   \begin{itemize}
     \item Search can produce {\bf arbitrarily complicated models} from open-ended language but two main properties allow description to be automated
     \vspace{\baselineskip}
@@ -389,34 +412,12 @@ where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal like
 \end{frame}
 
 \begin{frame}{Sums of kernels are sums of functions}
-  If $\textcolor{red}{f_1}(x) \,\sim\, \gp{}(0, \textcolor{red}{\kernel_1})$ and independently $\textcolor{blue}{f_2}(x) \,\sim\, \gp{}(0, \textcolor{blue}{\kernel_2})$ then
+  If ${\textcolor{red}{f_1} \,\sim\, \gp{}(0, \textcolor{red}{\kernel_1})}$ and independently ${\textcolor{blue}{f_2} \,\sim\, \gp{}(0, \textcolor{blue}{\kernel_2})}$ then
   \begin{align*}
-  \textcolor{red}{f_1}(x) + \textcolor{blue}{f_2}(x) \,\sim\, \gp{}(0, \textcolor{red}{\kernel_1} + \textcolor{blue}{\kernel_2})
+  \textcolor{red}{f_1} + \textcolor{blue}{f_2} \,\sim\, \gp{}(0, \textcolor{red}{\kernel_1} + \textcolor{blue}{\kernel_2})
   \end{align*}
   
-  
-%\definecolor{verylightblue}{rgb}{0.97,0.97,1}
-%\setlength{\fboxsep}{0pt}
-%
-%\begin{tabular}{cc}
-%\hspace{-3.5mm}
-%\fcolorbox{blue}{white}{
-%\hspace{-3.5mm}
-%\begin{tabular}{c}
-%\includegraphics[trim=30 0 62 25, clip, width=0.18\textwidth]{figures/03-mauna2003_all} \hspace{-3mm} \\
-% entire signal
-%\end{tabular}
-%}
-%\begin{tabular}{cccccc}
-%\\
-% & \includegraphics[trim=30 0 62 25, clip, width=0.18\textwidth]{figures/03-mauna2003_1} & \raisebox{0.5cm}{$+$} & \includegraphics[trim=30 0 62 25, %clip, width=0.18\textwidth]{figures/03-mauna2003_2} & \raisebox{0.5cm}{$+$} \\
-%& $\kSE \times \kLin$ & & $\kSE \times \kPer$ \\
-%\raisebox{-0cm}{$=$} & smooth trend & + & periodicity & +\\ \\
-%& \includegraphics[trim=30 0 62 25, clip, width=0.18\textwidth]{figures/03-mauna2003_3} \\
-%& $\kSE$ \\
-%& short-term deviation
-%\end{tabular}
-%\end{tabular}
+\eg
 
 \vspace{\baselineskip}
 
@@ -430,7 +431,7 @@ where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal like
 \includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/03-mauna2003_3}
 \end{tabular}
 
-\vspace{2\baselineskip}
+\vspace{\baselineskip}
 
 \begin{tabular}{ccccccc}
 \includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/01-airline_all} &
@@ -441,6 +442,10 @@ where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal like
 \raisebox{0.4cm}{$+$} &
 \includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{figures/01-airline_3}
 \end{tabular}
+
+\vspace{\baselineskip}
+
+We can therefore describe each component in turn
 
 \end{frame}
 
@@ -483,7 +488,7 @@ where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal like
   \end{align*}
   \begin{block}{}
     {\bf Multiplication by $\kLin$} is equivalent to multiplying the function being modeled by a linear function.
-If $f(x) \,\sim\, \gp{}(0, \kernel)$, then $xf(x) \,\sim\, \gp{}\left(0, k \times \kLin \right)$.
+If $f(x) \,\sim\, \gp{}(0, \kernel)$, then $x\,f(x) \,\sim\, \gp{}\left(0, k \times \kLin \right)$.
 This causes the standard deviation of the model to vary linearly without affecting the correlation.
   \end{block}
   \begin{block}{}
@@ -668,12 +673,14 @@ Four additive components have been identified in the data
 \end{frame}
 
 \begin{frame}{Good predictive performance as well}
+  \begin{block}{Standardised RMSE over 13 data sets}
   \includegraphics[width=0.99\textwidth]{figures/box_extrap_wide}\\
   \begin{itemize}
     \item Tweaks can be made to the algorithm to improve accuracy or interpretability of models produced\ldots
     \vspace{\baselineskip}
     \item \ldots but both methods are highly competitive at extrapolation (shown above) and interpolation
   \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{Challenges}

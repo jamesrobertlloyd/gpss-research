@@ -11,14 +11,17 @@
 \renewcommand{\tabularxcolumn}[1]{>{\arraybackslash}m{#1}}
 %\begin{tabular}{m{\fwbig}m{0.01\textwidth}m{\fwbig}m{0.01\textwidth}m{\fwbig}m{\fwbig}m{\fwbig}}
 %\begin{tabular}{C{\fwbig}C{\fwbig}C{\fwbig}C{\fwbig}}%{m{\fwbig}m{\fwbig}m{\fwbig}}
-\begin{tabularx}{\columnwidth}{XXcXX}
-%Composite & Draws from \gp{} & \gp{} posterior \\ \toprule
-  \kernpic{wn_kernel} & \kernpic{wn_kernel_draws} & \phantom{mm}
-& \kernpic{c_kernel} & \kernpic{c_kernel_draws}
-\\
-  {\footnotesize White \newline noise (\kWN)} & {\footnotesize Uncorrelated noise} & \phantom{mm}
-& {\footnotesize Constant (\kC)} & {\footnotesize Constant \newline functions}
-\end{tabularx}
+\begin{tabular}{ccc}
+  \begin{tabularx}{0.33\columnwidth}{cc}
+    \kernpic{wn_kernel} & \kernpic{wn_kernel_draws} \\
+    {\footnotesize White \newline noise (\kWN)} & {\footnotesize Uncorrelated \newline noise} 
+  \end{tabularx} &
+  \phantom{mm} &
+  \begin{tabularx}{0.33\columnwidth}{cc}
+    \kernpic{c_kernel} & \kernpic{c_kernel_draws} \\
+    {\footnotesize Constant (\kC)} & {\footnotesize Constant \newline functions}
+  \end{tabularx}
+\end{tabular}
 
 \vspace{2\baselineskip}
 

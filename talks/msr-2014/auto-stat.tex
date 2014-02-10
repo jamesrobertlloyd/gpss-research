@@ -87,11 +87,10 @@ Joshua Tenenbaum\textsuperscript{2}, Zoubin Ghahramani\textsuperscript{1}
 \end{frame}
 
 \begin{frame}{What would an automatic statistician do?}
-Flow chart
+  \input{figures/flow_chart}
 \end{frame}
 
 \begin{frame}{Goals of the automatic statistician project}
-  TODO - add little flow chart
   \begin{itemize}
     \item Provide a set of tools for understanding data that require minimal expert input
     \vspace{\baselineskip}
@@ -108,24 +107,27 @@ Flow chart
 \end{frame}
 
 \begin{frame}{Ingredients of an automatic statistician}
-  TODO - add little flow chart
+  \begin{center}
+    \scalebox{0.5}{\input{figures/flow_chart}}
+  \end{center}
   \begin{itemize}
+    \footnotesize
     \item {\bf An open-ended language of models}
     \begin{itemize}
        \item Expressive enough to capture real-world phenomena\ldots
        \item \ldots and the techniques used by human statisticians
      \end{itemize}
-    \vspace{\baselineskip}
+    %\vspace{\baselineskip}
     \item {\bf A search procedure}
     \begin{itemize}
        \item To efficiently explore the language of models
      \end{itemize}
-    \vspace{\baselineskip}
+    %\vspace{\baselineskip}
     \item {\bf A principled method of evaluating models}
     \begin{itemize}
        \item Trading off complexity and fit to data
      \end{itemize}
-    \vspace{\baselineskip}
+    %\vspace{\baselineskip}
     \item {\bf A procedure to automatically explain the models}
     \begin{itemize}
        \item Making the assumptions of the models explicit\ldots
@@ -162,7 +164,7 @@ Four additive components have been identified in the data
 \end{frame}
 
 \begin{frame}{Defining a language of models}
-Flow chart
+  \input{figures/flow_chart_language}
 \end{frame}
 
 \begin{frame}{Defining a language of regression models}
@@ -285,7 +287,7 @@ Note: $\cos$ is a special case of our version of $\kPer$
 \end{frame}
 
 \begin{frame}{Discovering a good model via search}
-Flow chart
+  \input{figures/flow_chart_search}
 \end{frame}
 
 \begin{frame}{Discovering a good model via search}
@@ -352,6 +354,10 @@ TODO: Update
 \end{frame}
 
 \begin{frame}{Model evaluation}
+  \input{figures/flow_chart_eval}
+\end{frame}
+
+\begin{frame}{Model evaluation}
   \begin{itemize}
     \item After proposing a new model its kernel parameters are optimised by conjugate gradients
     \vspace{\baselineskip}
@@ -366,7 +372,7 @@ where $p$ is the number of kernel parameters, $D$ represents the data, and $n$ i
 \end{frame}
 
 \begin{frame}{Automatic translation of models}
-Flow chart
+  \input{figures/flow_chart_trans}
 \end{frame}
 
 \begin{frame}{Automatic translation of models}
@@ -509,6 +515,10 @@ This causes the standard deviation of the model to vary linearly without affecti
   \begin{block}{}
     Pictures of random draws
   \end{block}
+\end{frame}
+
+\begin{frame}{Automatically generated reports}
+  \input{figures/flow_chart_report}
 \end{frame}
 
 \begin{frame}{Example: Airline passenger volume}

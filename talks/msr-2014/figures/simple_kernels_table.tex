@@ -1,39 +1,26 @@
-%\newcommand{\fhbig}{1.6cm}
-%\newcommand{\fwbig}{1.8cm}
 \newcommand{\fhbig}{1.0cm}
 \newcommand{\fwbig}{1.2cm}
 \newcommand{\kernpic}[1]{\includegraphics[height=\fhbig,width=\fwbig]{figures/structure_examples/#1}}
-\newcommand{\largeplus}{\tabbox{{\Large+}}}
-\newcommand{\largeeq}{\tabbox{{\Large=}}}
-\newcommand{\largetimes}{\tabbox{{\Large$\times$}}}
-\begin{figure}[ht]
-\centering
-\renewcommand{\tabularxcolumn}[1]{>{\arraybackslash}m{#1}}
-%\begin{tabular}{m{\fwbig}m{0.01\textwidth}m{\fwbig}m{0.01\textwidth}m{\fwbig}m{\fwbig}m{\fwbig}}
-%\begin{tabular}{C{\fwbig}C{\fwbig}C{\fwbig}C{\fwbig}}%{m{\fwbig}m{\fwbig}m{\fwbig}}
-\begin{tabular}{ccc}
-  \begin{tabularx}{0.33\columnwidth}{cc}
-    \kernpic{wn_kernel} & \kernpic{wn_kernel_draws} \\
-    {\footnotesize White \newline noise (\kWN)} & {\footnotesize Uncorrelated \newline noise} 
-  \end{tabularx} &
-  \phantom{mm} &
-  \begin{tabularx}{0.33\columnwidth}{cc}
-    \kernpic{c_kernel} & \kernpic{c_kernel_draws} \\
-    {\footnotesize Constant (\kC)} & {\footnotesize Constant \newline functions}
-  \end{tabularx}
-\end{tabular}
+\newcommand{\colsize}{1.7cm}
+\newcommand{\sepsize}{0.0cm}
 
-\vspace{2\baselineskip}
+Five base kernels
 
-\begin{tabularx}{\columnwidth}{XXcXXcXX}
-%Composite & Draws from \gp{} & \gp{} posterior \\ \toprule
-  \kernpic{lin_kernel} & \kernpic{lin_kernel_draws} & \phantom{mm}
-&  \kernpic{se_kernel} & \kernpic{se_kernel_draws} & \phantom{mm}
-& \kernpic{per_kernel} & \kernpic{per_kernel_draws_s2}
-\\
-  {\footnotesize Linear (\kLin)} & {\footnotesize Linear \newline functions} & \phantom{mm}
-&  {\footnotesize Squared \newline exp. (\kSE)} & {\footnotesize Smooth \newline functions} & \phantom{mm}
-& {\footnotesize Periodic (\kPer)} & {\footnotesize Periodic functions}
+\vspace{\baselineskip}
+
+\begin{tabularx}{\columnwidth}{x{\colsize}x{\colsize}x{\colsize}x{\colsize}x{\colsize}}
+  \kernpic{se_kernel} & \kernpic{per_kernel} & \kernpic{lin_kernel} & \kernpic{c_kernel} & \kernpic{wn_kernel} \\
+  {\footnotesize Squared \newline exp. (\kSE)} & {\footnotesize Periodic (\kPer)} & {\footnotesize Linear (\kLin)} & {\footnotesize Constant (\kC)} & {\footnotesize White \newline noise (\kWN)}
 \end{tabularx}
-\end{figure}
+
+\vspace{\baselineskip}
+
+Encoding for the following types of functions
+
+\vspace{\baselineskip}
+
+\begin{tabularx}{\columnwidth}{x{\colsize}x{\colsize}x{\colsize}x{\colsize}x{\colsize}}
+  \kernpic{se_kernel_draws} & \kernpic{per_kernel_draws_s2} & \kernpic{lin_kernel_draws} & \kernpic{c_kernel_draws} & \kernpic{wn_kernel_draws} \\
+  {\footnotesize Smooth \newline functions} & {\footnotesize Periodic functions} & {\footnotesize Linear \newline functions} & {\footnotesize Constant \newline functions} & {\footnotesize Gaussian \newline noise} 
+\end{tabularx}
 

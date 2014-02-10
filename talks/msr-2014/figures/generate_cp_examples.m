@@ -13,7 +13,7 @@ xrange = linspace(0, 1, 500)';
 kernels = cell(1,1);
 hyps = cell(1,1);
 
-kernels{1} = {@covChangePointMultiD, {1, @covSEiso, @covSEiso}};
+kernels{1} = {@covChangePointMultiD, {1, {@covSEiso}, {@covSEiso}}};
 hyps{1} = [0.5, 2, -1, 0, -3, 0];
 
 kernels{2} = {@covChangePointMultiD, {1, @covSEiso, @covPeriodicNoDC}};

@@ -8,7 +8,7 @@ function plot_structure_examples()
 % David Duvenaud
 % Jan 2013
 
-seed=7;   % fixing the seed of the random generators
+seed=5;   % fixing the seed of the random generators
 randn('state',seed);
 rand('state',seed);
 

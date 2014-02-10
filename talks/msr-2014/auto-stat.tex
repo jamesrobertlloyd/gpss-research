@@ -220,8 +220,7 @@ specifying a {\bf language of kernels}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{The atoms of our language}
-  TODO: Make me pretty
+\begin{frame}{The atoms of our language}  
   \input{figures/simple_kernels_table}
 \end{frame}
 
@@ -301,7 +300,6 @@ Note: $\cos$ is a special case of our version of $\kPer$
 \end{frame}
 
 \begin{frame}{Example: Mauna Loa Keeling Curve}
-TODO: Update
 \hspace{-1.2cm}
 \only<1>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_0/03-mauna2003-s_all_small.pdf}}
 \only<2>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_1/03-mauna2003-s_all_small.pdf}}
@@ -451,7 +449,7 @@ where $p$ is the number of kernel parameters, $D$ represents the data, and $n$ i
 
 \vspace{\baselineskip}
 
-We can therefore describe each component in turn
+We can therefore describe each component separately
 
 \end{frame}
 
@@ -462,11 +460,20 @@ We can therefore describe each component in turn
     \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
     \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
   \end{align*}
+  
+  \vspace{\baselineskip}
+  
+  On their own, each kernel is described by a standard noun phrase
+  
+  \vspace{\baselineskip}
+  
   \begin{block}{}
-    On their own, each kernel is described by a standard noun phrase
-  \end{block}
-  \begin{block}{}
-    Pictures of random draws
+    \begin{tabular}{cccc}
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_11} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_12} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_13} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_14}
+    \end{tabular}
   \end{block}
 \end{frame}
 
@@ -477,11 +484,20 @@ We can therefore describe each component in turn
     \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
     \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
   \end{align*}
+  
+  \vspace{\baselineskip}
+  
+  {\bf Multiplication by $\kSE$} removes long range correlations from a model since $\kSE(x,x')$ decreases monotonically to 0 as $|x - x'|$ increases.
+  
+  \vspace{\baselineskip}
+  
   \begin{block}{}
-    {\bf Multiplication by $\kSE$} removes long range correlations from a model since $\kSE(x,x')$ decreases monotonically to 0 as $|x - x'|$ increases.
-  \end{block}
-  \begin{block}{}
-    Pictures of random draws
+    \begin{tabular}{cccc}
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_21} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_22} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_23} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_24}
+    \end{tabular}
   \end{block}
 \end{frame}
 
@@ -492,13 +508,22 @@ We can therefore describe each component in turn
     \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \phantom{\times 
     \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
   \end{align*}
-  \begin{block}{}
-    {\bf Multiplication by $\kLin$} is equivalent to multiplying the function being modeled by a linear function.
+  
+  \vspace{\baselineskip}
+  
+  {\bf Multiplication by $\kLin$} is equivalent to multiplying the function being modeled by a linear function.
 If $f(x) \,\sim\, \gp{}(0, \kernel)$, then $x\,f(x) \,\sim\, \gp{}\left(0, k \times \kLin \right)$.
 This causes the standard deviation of the model to vary linearly without affecting the correlation.
-  \end{block}
+  
+  \vspace{\baselineskip}
+  
   \begin{block}{}
-    Pictures of random draws
+    \begin{tabular}{cccc}
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_31} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_32} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_33} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_34}
+    \end{tabular}
   \end{block}
 \end{frame}
 
@@ -509,11 +534,20 @@ This causes the standard deviation of the model to vary linearly without affecti
     \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
     \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}
   \end{align*}
+  
+  \vspace{\baselineskip}
+  
+  {\bf Multiplication by $\boldsymbol\sigma$} is equivalent to multiplying the function being modeled by a sigmoid.
+  
+  \vspace{\baselineskip}
+  
   \begin{block}{}
-    {\bf Multiplication by $\boldsymbol\sigma$} is equivalent to multiplying the function being modeled by a sigmoid.
-  \end{block}
-  \begin{block}{}
-    Pictures of random draws
+    \begin{tabular}{cccc}
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_41} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_42} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_43} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_44}
+    \end{tabular}
   \end{block}
 \end{frame}
 

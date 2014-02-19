@@ -74,7 +74,7 @@ def gen_all_results(folder):
             yield files.split('.')[-2], best_tuple
                 
 #### TODO - the function this calls is messy
-def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix='', rescale=False, data_folder=None, skip_kernel_evaluation=False, unit='year'):
+def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix='', rescale=False, data_folder=None, skip_kernel_evaluation=False, unit='year', all_depths=False):
     """Crawls the results directory, and makes decomposition plots for each file.
     
     prefix is an optional string prepended to the output directory
@@ -116,57 +116,65 @@ def make_all_1d_figures(folders, save_folder='../figures/decomposition/', prefix
             else:
                 (X_mean, X_scale, y_mean, y_scale) = (0,1,0,1)
                                 
-            model = exp.parse_results(results_files)
-            model = model.simplified().canonical()
-            kernel_components = model.kernel.break_into_summands()
-            kernel_components = ff.SumKernel(kernel_components).simplified().canonical().operands
-            print model.pretty_print()
-            fig_folder = os.path.join(save_folder, (prefix + file))
-            if not os.path.exists(fig_folder):
-                os.makedirs(fig_folder)
-            # First ask GPML to order the components
-            print 'Determining order of components'
-            (component_order, mae_data) = gpml.order_by_mae(model, kernel_components, X, y, D, os.path.join(fig_folder, file), skip_kernel_evaluation=skip_kernel_evaluation)
-            print 'Plotting decomposition and computing basic stats'
-            component_data = gpml.component_stats(model, kernel_components, X, y, D, os.path.join(fig_folder, file), component_order, skip_kernel_evaluation=skip_kernel_evaluation)
-            print 'Computing model checking stats'
-            checking_stats = gpml.checking_stats(model, kernel_components, X, y, D, os.path.join(fig_folder, file), component_order, make_plots=True, skip_kernel_evaluation=skip_kernel_evaluation)
-            # Now the kernels have been evaluated we can translate the revelant ones
-            evaluation_data = mae_data
-            evaluation_data.update(component_data)
-            evaluation_data.update(checking_stats)
-            evaluation_data['vars'] = evaluation_data['vars'].ravel()
-            evaluation_data['cum_vars'] = evaluation_data['cum_vars'].ravel()
-            evaluation_data['cum_resid_vars'] = evaluation_data['cum_resid_vars'].ravel()
-            evaluation_data['MAEs'] = evaluation_data['MAEs'].ravel()
-            evaluation_data['MAE_reductions'] = evaluation_data['MAE_reductions'].ravel()
-            evaluation_data['monotonic'] = evaluation_data['monotonic'].ravel()
-            evaluation_data['acf_min_p'] = evaluation_data['acf_min_p'].ravel()
-            evaluation_data['acf_min_loc_p'] = evaluation_data['acf_min_loc_p'].ravel()
-            evaluation_data['pxx_max_p'] = evaluation_data['pxx_max_p'].ravel()
-            evaluation_data['pxx_max_loc_p'] = evaluation_data['pxx_max_loc_p'].ravel()
-            evaluation_data['qq_d_max_p'] = evaluation_data['qq_d_max_p'].ravel()
-            evaluation_data['qq_d_min_p'] = evaluation_data['qq_d_min_p'].ravel()
-            i = 1
-            short_descriptions = []
-            while os.path.isfile(os.path.join(fig_folder, '%s_%d.fig' % (file, i))):
-                # Describe this component
-                (summary, sentences, extrap_sentences) = translation.translate_additive_component(kernel_components[component_order[i-1]], X, evaluation_data['monotonic'][i-1], evaluation_data['gradients'][i-1], unit)
-                short_descriptions.append(summary)
-                paragraph = '.\n'.join(sentences) + '.'
-                extrap_paragraph = '.\n'.join(extrap_sentences) + '.'
-                with open(os.path.join(fig_folder, '%s_%d_description.tex' % (file, i)), 'w') as description_file:
-                    description_file.write(paragraph)
-                with open(os.path.join(fig_folder, '%s_%d_extrap_description.tex' % (file, i)), 'w') as description_file:
-                    description_file.write(extrap_paragraph)
-                with open(os.path.join(fig_folder, '%s_%d_short_description.tex' % (file, i)), 'w') as description_file:
-                    description_file.write(summary + '.')
-                i += 1
-            # Produce the summary LaTeX document
-            print 'Producing LaTeX document'
-            latex_summary = translation.produce_summary_document(file, i-1, evaluation_data, short_descriptions)
-            with open(os.path.join(save_folder, '%s.tex' % file), 'w') as latex_file:
-                latex_file.write(latex_summary)
-            print 'Saving to ' + (os.path.join(save_folder, '%s.tex' % file))
+            if all_depths:
+                # A quick version for now TODO - write correct code
+                models = [exp.parse_results(results_files, max_level=depth) for depth in range(10)]
+                suffices = ['-depth-%d' % (depth+1) for depth in range(len(models))]
+            else:
+                models = [exp.parse_results(results_files)]
+                suffices = ['']
+
+            for (model, suffix) in zip(models, suffices):
+                model = model.simplified().canonical()
+                kernel_components = model.kernel.break_into_summands()
+                kernel_components = ff.SumKernel(kernel_components).simplified().canonical().operands
+                print model.pretty_print()
+                fig_folder = os.path.join(save_folder, (prefix + file + suffix))
+                if not os.path.exists(fig_folder):
+                    os.makedirs(fig_folder)
+                # First ask GPML to order the components
+                print 'Determining order of components'
+                (component_order, mae_data) = gpml.order_by_mae(model, kernel_components, X, y, D, os.path.join(fig_folder, file + suffix), skip_kernel_evaluation=skip_kernel_evaluation)
+                print 'Plotting decomposition and computing basic stats'
+                component_data = gpml.component_stats(model, kernel_components, X, y, D, os.path.join(fig_folder, file + suffix), component_order, skip_kernel_evaluation=skip_kernel_evaluation)
+                print 'Computing model checking stats'
+                checking_stats = gpml.checking_stats(model, kernel_components, X, y, D, os.path.join(fig_folder, file + suffix), component_order, make_plots=True, skip_kernel_evaluation=skip_kernel_evaluation)
+                # Now the kernels have been evaluated we can translate the revelant ones
+                evaluation_data = mae_data
+                evaluation_data.update(component_data)
+                evaluation_data.update(checking_stats)
+                evaluation_data['vars'] = evaluation_data['vars'].ravel()
+                evaluation_data['cum_vars'] = evaluation_data['cum_vars'].ravel()
+                evaluation_data['cum_resid_vars'] = evaluation_data['cum_resid_vars'].ravel()
+                evaluation_data['MAEs'] = evaluation_data['MAEs'].ravel()
+                evaluation_data['MAE_reductions'] = evaluation_data['MAE_reductions'].ravel()
+                evaluation_data['monotonic'] = evaluation_data['monotonic'].ravel()
+                evaluation_data['acf_min_p'] = evaluation_data['acf_min_p'].ravel()
+                evaluation_data['acf_min_loc_p'] = evaluation_data['acf_min_loc_p'].ravel()
+                evaluation_data['pxx_max_p'] = evaluation_data['pxx_max_p'].ravel()
+                evaluation_data['pxx_max_loc_p'] = evaluation_data['pxx_max_loc_p'].ravel()
+                evaluation_data['qq_d_max_p'] = evaluation_data['qq_d_max_p'].ravel()
+                evaluation_data['qq_d_min_p'] = evaluation_data['qq_d_min_p'].ravel()
+                i = 1
+                short_descriptions = []
+                while os.path.isfile(os.path.join(fig_folder, '%s_%d.fig' % (file + suffix, i))):
+                    # Describe this component
+                    (summary, sentences, extrap_sentences) = translation.translate_additive_component(kernel_components[component_order[i-1]], X, evaluation_data['monotonic'][i-1], evaluation_data['gradients'][i-1], unit)
+                    short_descriptions.append(summary)
+                    paragraph = '.\n'.join(sentences) + '.'
+                    extrap_paragraph = '.\n'.join(extrap_sentences) + '.'
+                    with open(os.path.join(fig_folder, '%s_%d_description.tex' % (file + suffix, i)), 'w') as description_file:
+                        description_file.write(paragraph)
+                    with open(os.path.join(fig_folder, '%s_%d_extrap_description.tex' % (file + suffix, i)), 'w') as description_file:
+                        description_file.write(extrap_paragraph)
+                    with open(os.path.join(fig_folder, '%s_%d_short_description.tex' % (file + suffix, i)), 'w') as description_file:
+                        description_file.write(summary + '.')
+                    i += 1
+                # Produce the summary LaTeX document
+                print 'Producing LaTeX document'
+                latex_summary = translation.produce_summary_document(file + suffix, i-1, evaluation_data, short_descriptions)
+                with open(os.path.join(save_folder, '%s.tex' % (file + suffix)), 'w') as latex_file:
+                    latex_file.write(latex_summary)
+                print 'Saving to ' + (os.path.join(save_folder, '%s.tex' % (file + suffix)))
         else:
             print "Cannnot find results for %s" % file

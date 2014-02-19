@@ -175,67 +175,298 @@ Four additive components have been identified in the data
   \end{itemize}
 \end{frame}
 
-\begin{frame}{How to do linear regression}
-  \begin{block}{Example of linear regression data}  
-  \end{block}
-  \begin{block}{}
-    \begin{itemize}
-      \item Statistical linear regression starts by assuming a model of the form $y_i = m x_i + c$ where $x$ and $y$ are inputs and outputs respectively
-      \vspace{\baselineskip}
-      \item Common approach: Estimate $m$ and $c$ by least squares (show picture)
-      \vspace{\baselineskip}
-      \item Bayesian approach: Specify prior beliefs (show picture) about $m$ and $c$ using probability distributions and then follow axioms of probability to update beliefs rationally after observing data (show picture)
-    \end{itemize}
+\begin{frame}{How to do linear regression} 
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/lin_reg/all_data}
+  \end{center}
+  \begin{itemize}
+    \item Statistical linear regression starts by assuming a model of the form $y_i = m x_i + c + \varepsilon_i$ where $x$ and $y$ are inputs and outputs respectively and $\varepsilon$ are errors or noise
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{How to do linear regression} 
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/lin_reg/least_squares}
+  \end{center}
+  \begin{itemize}
+    \item Common approach: Estimate $m$ and $c$ by least squares
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{How to do linear regression} 
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/lin_reg/prior}
+  \end{center}
+  \begin{itemize}
+    \item Bayesian approach: Specify prior beliefs about $m$ and $c$ using probability distributions
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{How to do linear regression} 
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{figures/lin_reg/bayes_5}
+    \includegraphics<2>[width=0.8\textwidth]{figures/lin_reg/bayes_10}
+    \includegraphics<3>[width=0.8\textwidth]{figures/lin_reg/bayes_15}
+  \end{center}
+  \begin{itemize}
+    \item Bayesian approach: Specify prior beliefs about $m$ and $c$ using probability distributions and then follow axioms of probability to update beliefs rationally after observing data
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Bayesian statistics}
+  \begin{block}{Sum and product rules of probability}
+    \begin{align*}
+      \textrm{Sum rule :} \quad & \quad \phantom{,Y=y}\mathbb{P}(X=x) = \sum_y \mathbb{P}(X=x, Y=y) \\
+      \textrm{Product rule :} \quad & \quad \mathbb{P}(X=x, Y=y) = \mathbb{P}(X=x)\,\mathbb{P}(Y=y\,|\,X=x)
+    \end{align*}
   \end{block}
 \end{frame}
 
 \begin{frame}{Bayesian statistics}
-  \begin{block}{Axioms of probability}
-    Sum and product rules
+  \begin{block}{Sum and product rules of probability}
+    \begin{align*}
+      \textrm{Sum rule :} \quad & \quad \phantom{,y}p(x) = \int p(x, y)\,\textrm{d}y \\
+      \textrm{Product rule :} \quad & \quad p(x, y) = p(x)\,p(y\,|\,x)
+    \end{align*}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Bayesian statistics}
+  \begin{block}{Sum and product rules of probability}
+    \vspace{-\baselineskip}
+    \begin{align*}
+      \textrm{Sum rule :} \quad & \quad \phantom{,y}p(x) = \int p(x, y)\,\textrm{d}y \\
+      \textrm{Product rule :} \quad & \quad p(x, y) = p(x)\,p(y\,|\,x)
+    \end{align*}
   \end{block}
   \begin{block}{Bayes rule}
-    Formula and words
+    \vspace{-\baselineskip}
+    \begin{align*}
+      p(\theta\,|\,D,M) = \frac{p(D\,|\,\theta,M)\,p(\theta\,|\,m)}{\int p(D,\theta\,|\,M)\,\textrm{d}\theta}
+    \end{align*}
+    where $D$ represents data and $\theta$ are parameters of a model $M$
+  \end{block}
+\end{frame}
+
+\begin{frame}{Bayesian statistics}
+  \begin{block}{Sum and product rules of probability}
+    \vspace{-\baselineskip}
+    \begin{align*}
+      \textrm{Sum rule :} \quad & \quad \phantom{,y}p(x) = \int p(x, y)\,\textrm{d}y \\
+      \textrm{Product rule :} \quad & \quad p(x, y) = p(x)\,p(y\,|\,x)
+    \end{align*}
+  \end{block}
+  \begin{block}{Bayes rule}
+    \vspace{-\baselineskip}
+    \begin{align*}
+      \textrm{Posterior beliefs} = \frac{\textrm{Likelihood} \times \textrm{Prior beliefs}}{\textrm{Marginal likelihood}}
+    \end{align*}
+    \ie a formula to convert prior beliefs into posterior beliefs
   \end{block}
 \end{frame}
 
 \begin{frame}{Bayesian linear regression}
-  Show example of Bayesian linear regression through origin
-  
-  Prior, Bayes rule, Posterior, Picture one data point at a time
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/lin_reg/all_data}
+  \end{center}
+  \begin{itemize}
+    \item Statistical linear regression starts by assuming a model of the form $y_i = m x_i + c + \varepsilon_i$ where $x$ and $y$ are inputs and outputs respectively and $\varepsilon$ are errors or noise
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Bayesian linear regression}
-  Placeholder for TMS
-  
-  Show how to rewrite this as a Gaussian distribution
-  
-  Talk about finite number of sampling points, and that this has a limit
+  \begin{itemize}
+    \item Statistical linear regression starts by assuming a model of the form $y_i = m x_i + c + \varepsilon_i$ where $x$ and $y$ are inputs and outputs respectively and $\varepsilon$ are errors or noise
+    \vspace{\baselineskip}
+    \item Represent prior beliefs about $m$ and $c$ using probability distributions
+    \begin{itemize}
+      \item \eg $m \sim \textrm{Normal}(\textrm{mean} = 0,\textrm{variance} = 1)$
+      \item We will asume $c = 0$ for simplicity
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Gaussian process regression}
-  Placeholder for TMS
-  
-  Change the covariance, shows samples of SE, and then show posterior
+\begin{frame}{Bayesian linear regression}
+  \begin{itemize}
+    \item Statistical linear regression starts by assuming a model of the form $y_i = m x_i + c + \varepsilon_i$ where $x$ and $y$ are inputs and outputs respectively and $\varepsilon$ are errors or noise
+    \vspace{\baselineskip}
+    \item Represent prior beliefs about $m$ and $c$ using probability distributions
+    \begin{itemize}
+      \item \eg $m \sim \mathcal{N}(0,1)$
+      \item We will asume $c = 0$ for simplicity
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Represent prior beliefs about $\varepsilon$ using a probability distribution
+    \begin{itemize}
+      \item \eg $\varepsilon_i \sim \mathcal{N}(0,\sigma_\varepsilon^2)$ independently for all $i$
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
-\frame[plain]{
-\frametitle{Conditional Posterior}
-Placeholder for TMS
+\begin{frame}{Bayesian linear regression}
+  \begin{itemize}
+    \item Statistical linear regression starts by assuming a model of the form $y_i = m x_i + c + \varepsilon_i$ where $x$ and $y$ are inputs and outputs respectively and $\varepsilon$ are errors or noise
+    \vspace{\baselineskip}
+    \item Represent prior beliefs about $m$ and $c$ using probability distributions
+    \begin{itemize}
+      \item \eg $m \sim \mathcal{N}(0,1)$
+      \item We will asume $c = 0$ for simplicity
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Represent prior beliefs about $\varepsilon$ using a probability distribution
+    \begin{itemize}
+      \item \eg $\varepsilon_i \sim \mathcal{N}(0,\sigma_\varepsilon^2)$ independently for all $i$
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Apply Bayes rule
+  \end{itemize}
+\end{frame}
 
-With SE kernel:
-    \begin{figure}
-        \includegraphics<1>[width=6cm]{figures/gp_demo/1d_posterior_and_0_data}
-        \includegraphics<2>[width=6cm]{figures/gp_demo/1d_posterior_and_1_data}
-        \includegraphics<3>[width=6cm]{figures/gp_demo/1d_posterior_and_2_data}
-        \includegraphics<4>[width=6cm]{figures/gp_demo/1d_posterior_and_3_data}
-        \includegraphics<5>[width=6cm]{figures/gp_demo/1d_posterior_and_4_data}
-    \end{figure}
-}
+\begin{frame}{Bayesian linear regression}
+  \begin{align*}
+    p(m\,|\,y,x) = \frac{p(y\,|\,m,x)\,p(m)}{\int p(y,m,|\,x)\,\textrm{d}m}
+  \end{align*}
+  \vspace{-\baselineskip}
+  \pause
+  \begin{align*}
+    p(m\,|\,y,x) = \frac{\big(\prod_i\frac{1}{2\pi\sigma_\varepsilon}e^{-(y_i-mx_i)^2/(2\sigma_\varepsilon^2)}\big)\frac{1}{2\pi}e^{-m^2/2}}{\int p(y,m,|\,x)\,\textrm{d}m}
+  \end{align*}
+  \vspace{-\baselineskip}
+  \pause
+  \begin{align*}
+    p(m\,|\,y,x) \propto e^{-\sum_i(y_i-mx_i)^2/(2\sigma_\varepsilon^2) - m^2/2}
+  \end{align*}
+  \vspace{-\baselineskip}
+  \pause
+  \begin{align*}
+    p(m\,|\,y,x) \propto e^{-\frac{\sum_i x_i^2 + \sigma_\varepsilon^2}{2\sigma_\varepsilon^2}(m - \frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2})^2}
+  \end{align*}
+  \vspace{-\baselineskip}
+  \pause
+  This is a normal distribution $m\,|\,y,x \sim \mathcal{N}(\frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2}, \frac{\sigma_\varepsilon^2}{\sum_i x_i^2 + \sigma_\varepsilon^2})$
+\end{frame}
 
-\begin{frame}{Gaussian process regression}
-  Placeholder for TMS
+\begin{frame}{Bayesian linear regression}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{figures/lin_reg/bayes_1}
+    \includegraphics<2>[width=0.8\textwidth]{figures/lin_reg/bayes_2}
+    \includegraphics<3>[width=0.8\textwidth]{figures/lin_reg/bayes_3}
+    \includegraphics<4>[width=0.8\textwidth]{figures/lin_reg/bayes_5}
+    \includegraphics<5>[width=0.8\textwidth]{figures/lin_reg/bayes_10}
+    \includegraphics<6>[width=0.8\textwidth]{figures/lin_reg/bayes_15}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Bayesian linear regression}
+  \begin{itemize}
+    \item We defined a Bayesian linear regression model by specifying priors on $m$ and $\varepsilon_i$.
+    \vspace{\baselineskip}
+    \pause
+    \item This implictly defined a prior on $\{y_i \,:\, i=1,\ldots,n\}$
+    \pause
+    \begin{itemize}
+      \item $y_i = mx_i + \varepsilon_i$
+      \pause
+      \item $y_i \sim \mathcal{N}(0, x_i^2 + \sigma_\varepsilon^2)$
+      \pause
+      \item $\textrm{cov}(y_i, y_j) = x_i x_j \quad \forall\,i\neq j$
+    \end{itemize}
+    \vspace{\baselineskip}
+    \pause
+    \item \ie $\{y_i \,:\, i=1,\ldots,n\}$ is jointly normally distributed
+    \begin{itemize}
+      \item $y \sim \mathcal{N}(\mathbf{0}, \mathbf{K})$
+      \item where $k_{ij} = x_i x_j + \delta_{ij} \sigma_\varepsilon^2$
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Gaussian processes}
+  $\{y_i \,:\, i=1,\ldots,n\}$ is jointly normally distributed
+  \begin{equation*}
+    y \sim \mathcal{N}(\mathbf{0}, \mathbf{K})
+  \end{equation*}
+  where $k_{ij} = x_i x_j + \delta_{ij} \sigma_\varepsilon^2$.
   
-  Therefore let's see how far we can go with kernel functions
+  \vspace{\baselineskip}
+  \pause
+  
+  We define the kernel function $k(x_i, x_j) = x_i x_j + \delta_{ij}\sigma_\varepsilon^2$
+  
+  \vspace{\baselineskip}
+  \pause
+  
+  The kernel function is consistent for any choice of $x_i$
+  
+  \vspace{\baselineskip}
+  \pause
+  
+  Do we define a valid probability distribution if $\{x_i\} = \mathbb{R}$?
+\end{frame}
+
+\begin{frame}{Definition: Gaussian processes}
+  \begin{itemize}
+    \item \gp{}s are distributions over functions such that any
+finite subset of function evaluations, $(f(x_1), f(x_2), \ldots
+f(x_N))$, have a joint Gaussian distribution
+    \vspace{\baselineskip}
+    \item A \gp{} is completely specified by
+    \begin{itemize}
+      \item Mean function, $\mu(x)=\mathbb{E}(f(x))$
+      \item Covariance / kernel function, $\kernel(x,x') = \Cov(f(x),f(x'))$
+      \item Denoted $f \,\sim\, \gp{}(\mu,\kernel)$
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Linear kernel = linear functions}
+  PLot some samples
+
+  $k(x, x') = xx'$
+\end{frame}
+
+\begin{frame}{What about other kernels}
+  PLot some samples
+
+  $k(x, x') = e^{-(x-x')^2/2}$
+\end{frame}
+
+\begin{frame}{Bayesian non-linear regression}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{figures/lin_reg/sq_exp_prior}
+    \includegraphics<2>[width=0.8\textwidth]{figures/lin_reg/sq_exp_1}
+    \includegraphics<3>[width=0.8\textwidth]{figures/lin_reg/sq_exp_2}
+    \includegraphics<4>[width=0.8\textwidth]{figures/lin_reg/sq_exp_3}
+    \includegraphics<5>[width=0.8\textwidth]{figures/lin_reg/sq_exp_5}
+    \includegraphics<6>[width=0.8\textwidth]{figures/lin_reg/sq_exp_10}
+    \includegraphics<7>[width=0.8\textwidth]{figures/lin_reg/sq_exp_15}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Bayesian linear regression gone wrong}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{figures/quad/bayes_1}
+    \includegraphics<2>[width=0.8\textwidth]{figures/quad/bayes_2}
+    \includegraphics<3>[width=0.8\textwidth]{figures/quad/bayes_3}
+    \includegraphics<4>[width=0.8\textwidth]{figures/quad/bayes_5}
+    \includegraphics<5>[width=0.8\textwidth]{figures/quad/bayes_10}
+    \includegraphics<6>[width=0.8\textwidth]{figures/quad/bayes_15}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Non-linearity to the rescue}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{figures/quad/sq_exp_1}
+    \includegraphics<2>[width=0.8\textwidth]{figures/quad/sq_exp_2}
+    \includegraphics<3>[width=0.8\textwidth]{figures/quad/sq_exp_3}
+    \includegraphics<4>[width=0.8\textwidth]{figures/quad/sq_exp_5}
+    \includegraphics<5>[width=0.8\textwidth]{figures/quad/sq_exp_10}
+    \includegraphics<6>[width=0.8\textwidth]{figures/quad/sq_exp_15}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Which kernel function?}
+  How far can we go with kernel functions?
 \end{frame}
 
 \begin{frame}{Defining a language of models}

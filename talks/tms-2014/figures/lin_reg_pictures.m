@@ -52,15 +52,16 @@ save2pdf([ 'lin_reg/' 'least_squares' '.pdf'], gcf, 600, true);
     
 cov_all = {@covSum, {@covLINscaleshift, @covNoise}};
 cov_fn = {@covLINscaleshift};
-hyp.cov = [0,0,log(0.01)];
+hyp.cov = [0,0,log(0.2)];
 
-K = feval(cov_all{:}, hyp.cov, xrange);
-prior_var = diag(K);
+K = feval(cov_fn{:}, hyp.cov, xrange);
+%prior_var = diag(K);
 
 figure(fig_count);
 fig_count = fig_count + 1;
 
-mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+%mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+samples_density_plot(x_data, y, xrange, zeros(size(xrange)), K, false, true);
 xlim([0,1]);
 ylim([-2,2]);
 
@@ -79,12 +80,13 @@ for i = 1:numel(x_data)
     K_starstar = feval(cov_fn{:}, hyp.cov, xrange);
     
     mu = K_star' / K * y_subset;
-    post_var = diag(K_starstar - K_star' / K * K_star);
+    %post_var = diag(K_starstar - K_star' / K * K_star);
+    post_K = K_starstar - K_star' / K * K_star;
     
     figure(fig_count);
     fig_count = fig_count + 1;
     
-    mean_var_plot(x_data_subset, y_subset, xrange, mu, 2*sqrt(post_var));
+    samples_density_plot(x_data_subset, y_subset, xrange, mu, post_K);
     xlim([0,1]);
     ylim([0,1]);
 
@@ -97,15 +99,16 @@ end
     
 cov_all = {@covSum, {@covSEiso, @covNoise}};
 cov_fn = {@covSEiso};
-hyp.cov = [0,0,log(0.1)];
+hyp.cov = [-1,0,log(0.1)];
 
-K = feval(cov_all{:}, hyp.cov, xrange);
-prior_var = diag(K);
+K = feval(cov_fn{:}, hyp.cov, xrange);
+%prior_var = diag(K);
 
 figure(fig_count);
 fig_count = fig_count + 1;
 
-mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+%mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+samples_density_plot(x_data, y, xrange, zeros(size(xrange)), K, false, true);
 xlim([0,1]);
 ylim([-2,2]);
 
@@ -124,12 +127,13 @@ for i = 1:numel(x_data)
     K_starstar = feval(cov_fn{:}, hyp.cov, xrange);
     
     mu = K_star' / K * y_subset;
-    post_var = diag(K_starstar - K_star' / K * K_star);
+    %post_var = diag(K_starstar - K_star' / K * K_star);
+    post_K = K_starstar - K_star' / K * K_star;
     
     figure(fig_count);
     fig_count = fig_count + 1;
     
-    mean_var_plot(x_data_subset, y_subset, xrange, mu, 2*sqrt(post_var));
+    samples_density_plot(x_data_subset, y_subset, xrange, mu, post_K);
     xlim([0,1]);
     ylim([0,1]);
 
@@ -157,15 +161,16 @@ save2pdf([ 'quad/' 'all_data' '.pdf'], gcf, 600, true);
     
 cov_all = {@covSum, {@covLINscaleshift, @covNoise}};
 cov_fn = {@covLINscaleshift};
-hyp.cov = [0,0,log(0.01)];
+hyp.cov = [-1,0,log(0.01)];
 
-K = feval(cov_all{:}, hyp.cov, xrange);
-prior_var = diag(K);
+K = feval(cov_fn{:}, hyp.cov, xrange);
+%prior_var = diag(K);
 
 figure(fig_count);
 fig_count = fig_count + 1;
 
-mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+%mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+samples_density_plot(x_data, y, xrange, zeros(size(xrange)), K, false, true);
 xlim([0,1]);
 ylim([-2,2]);
 
@@ -184,12 +189,13 @@ for i = 1:numel(x_data)
     K_starstar = feval(cov_fn{:}, hyp.cov, xrange);
     
     mu = K_star' / K * y_subset;
-    post_var = diag(K_starstar - K_star' / K * K_star);
+    %post_var = diag(K_starstar - K_star' / K * K_star);
+    post_K = K_starstar - K_star' / K * K_star;
     
     figure(fig_count);
     fig_count = fig_count + 1;
     
-    mean_var_plot(x_data_subset, y_subset, xrange, mu, 2*sqrt(post_var));
+    samples_density_plot(x_data_subset, y_subset, xrange, mu, post_K);
     xlim([0,1]);
     ylim([0,1]);
 
@@ -204,13 +210,14 @@ cov_all = {@covSum, {@covSEiso, @covNoise}};
 cov_fn = {@covSEiso};
 hyp.cov = [0,0,log(0.1)];
 
-K = feval(cov_all{:}, hyp.cov, xrange);
-prior_var = diag(K);
+K = feval(cov_fn{:}, hyp.cov, xrange);
+%prior_var = diag(K);
 
 figure(fig_count);
 fig_count = fig_count + 1;
 
-mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+%mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+samples_density_plot(x_data, y, xrange, zeros(size(xrange)), K, false, true);
 xlim([0,1]);
 ylim([-2,2]);
 
@@ -229,12 +236,13 @@ for i = 1:numel(x_data)
     K_starstar = feval(cov_fn{:}, hyp.cov, xrange);
     
     mu = K_star' / K * y_subset;
-    post_var = diag(K_starstar - K_star' / K * K_star);
+    %post_var = diag(K_starstar - K_star' / K * K_star);
+    post_K = K_starstar - K_star' / K * K_star;
     
     figure(fig_count);
     fig_count = fig_count + 1;
     
-    mean_var_plot(x_data_subset, y_subset, xrange, mu, 2*sqrt(post_var));
+    samples_density_plot(x_data_subset, y_subset, xrange, mu, post_K);
     xlim([0,1]);
     ylim([0,1]);
 

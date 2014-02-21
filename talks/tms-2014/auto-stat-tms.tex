@@ -254,41 +254,53 @@ Four additive components have been identified in the data
       \vspace{\baselineskip}
       \item We now derive $\textcolor{green}{p(\theta\,|\,D,M)}$ - the posterior
     }
-    \only<4>{
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Deriving Bayes rule}
+    \uncover<1->{
       \begin{equation*}
         p(\theta, D \,|\, M) = p(\theta, D \,|\, M)
       \end{equation*}
     }
-    \only<5>{
-      \vspace{\baselineskip}
+    \uncover<2->{
       \begin{equation*}
         p(\theta \,|\, D, M)p(D\,|\,M) = p(D \,|\, \theta, M)p(\theta \,|\, M) \quad \textrm{(product rule)} 
       \end{equation*}
     }
-    \only<6>{
-      \vspace{\baselineskip}
+    \uncover<3->{
       \begin{equation*}
         p(\theta \,|\, D, M) = \frac{p(D \,|\, \theta, M)p(\theta \,|\, M)}{p(D\,|\,M)}
       \end{equation*}
     }
-    \only<7>{
-      \vspace{\baselineskip}
+    \uncover<4->{
       \begin{equation*}
         p(\theta \,|\, D, M) = \frac{p(D \,|\, \theta, M)p(\theta \,|\, M)}{\int p(D,\theta\,|\,M)\textrm{d}\theta} \quad \textrm{(sum rule)} 
       \end{equation*}
     }
-    \only<8>{
-      \vspace{\baselineskip}
+    \uncover<5>{
       \begin{equation*}
         p(\theta \,|\, D, M) = \frac{p(D \,|\, \theta, M)p(\theta \,|\, M)}{\int p(D \,|\, \theta, M)p(\theta \,|\, M)\textrm{d}\theta} \quad \textrm{(product rule)} 
       \end{equation*}
     }
-    \only<9>{
+\end{frame}
+
+\begin{frame}{Bayes rule}
+  \begin{itemize}
+      \item Suppose we wish to fit a model $M$ with parameters $\theta$ to data $D$
+      \begin{itemize}
+        \item $M$ defined by $\textcolor{blue}{p(D\,|\,\theta,M)}$ - the likelihood
+      \end{itemize}
       \vspace{\baselineskip}
+      \item We represent our uncertainty about $\theta$ with a probability distribution
+      \begin{itemize}
+        \item $\textcolor{red}{p(\theta\,|\,M)}$ - the prior
+      \end{itemize}
+      \vspace{\baselineskip}
+      \item We now derive $\textcolor{green}{p(\theta\,|\,D,M)}$ - the posterior
       \begin{equation*}
        \underbrace{\textcolor{green}{p(\theta \,|\, D, M)}}_{\textnormal{posterior}} = \frac{\overbrace{\textcolor{blue}{p(D \,|\, \theta, M)}}^{\textnormal{likelihood}}\overbrace{\textcolor{red}{p(\theta \,|\, M)}}^{\textnormal{prior}}}{\underbrace{\textcolor{purple}{\int p(D \,|\, \theta, M)p(\theta \,|\, M)\textrm{d}\theta}}_{\textnormal{marginal likelihood}}}
       \end{equation*}
-    }
   \end{itemize}
 \end{frame}
 
@@ -456,7 +468,7 @@ Four additive components have been identified in the data
     \includegraphics[width=0.8\textwidth]{figures/lin_reg/sq_exp_prior}
   \end{center}
   \begin{equation*}
-    k(x, x') = e^{-(x-x')^2/2}
+    k(x, x') = e^{-(x-x')^2}
   \end{equation*}
 \end{frame}
 
@@ -980,16 +992,14 @@ statistician
 
 \begin{frame}{Summary}
   \begin{itemize}
-    \item We have presented the beginnings of an automatic statistician for regression
+    \item We have briefly introduced Bayesian statistics and Gaussian processes
     \vspace{\baselineskip}
-    \item Our system
+    \item Described the beginnings of an automatic statistician for regression
     \begin{itemize}
       \item Defines an open-ended language of models
       \item Searches greedily through this space
       \item Produces detailed reports describing patterns in data
     \end{itemize}
-    \vspace{\baselineskip}
-    \item Extrapolation and interpolation performance highly competitive
     \vspace{\baselineskip}
     \item We believe this line of research has the potential to make powerful statistical model-building techniques accessible to non-experts
   \end{itemize}

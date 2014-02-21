@@ -4,7 +4,7 @@ function samples_density_plot( xdata, ydata, xrange, forecast_mu, forecast_K, da
     if nargin < 7; no_data = false; end
 
     % Figure settings.
-    lw = 2;
+    lw = 1.3;
     %light_blue = [227 237 255]./255;
     
     quantiles = 0:0.01:0.5;

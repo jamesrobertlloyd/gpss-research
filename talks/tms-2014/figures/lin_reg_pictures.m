@@ -1,6 +1,6 @@
 %% PRNG
 
-seed=2;   % fixing the seed of the random generators
+seed=3;   % fixing the seed of the random generators
 randn('state',seed); %#ok<RAND>
 rand('state',seed); %#ok<RAND>
 
@@ -144,7 +144,7 @@ end
 
 %% Sample some quadratic data
 
-y = 4 * (x_data - 0.5) .^ 2 + 0.1 * randn(size(x_data));
+y = 0.15 + 4 * (x_data - 0.5) .^ 2 + 0.1 * randn(size(x_data));
 
 figure(fig_count);
 fig_count = fig_count + 1;

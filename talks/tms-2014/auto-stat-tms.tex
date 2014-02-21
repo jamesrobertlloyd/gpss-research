@@ -202,7 +202,7 @@ Four additive components have been identified in the data
   \begin{itemize}
     \item Bayesian approach:
     \begin{itemize}
-      \item Specify prior beliefs about $m$ using probability distributions
+      \item Specify beliefs about $m$ using probability distributions
     \end{itemize}
   \end{itemize}
   }
@@ -214,7 +214,7 @@ Four additive components have been identified in the data
     \item Bayesian approach:
     \begin{itemize}
       \item Specify prior beliefs about $m$ using probability distributions
-      \item Follow axioms of probability to update beliefs rationally after observing data
+      \item Follow rules of probability to update beliefs rationally after observing data
     \end{itemize}
   \end{itemize}
   }
@@ -320,7 +320,7 @@ Four additive components have been identified in the data
     }
     \uncover<5->{
     \vspace{\baselineskip}
-    \item Represent prior beliefs about $\varepsilon$ using a probability distribution
+    \item Define likelihood by representing prior beliefs about $\varepsilon$ using a probability distribution
     \begin{itemize}
       \item \eg $\varepsilon_i \sim \mathcal{N}(0,\sigma_\varepsilon^2)$ independently for all $i$
     \end{itemize}
@@ -337,6 +337,11 @@ Four additive components have been identified in the data
   \begin{align*}
     p(m\,|\,y,x) = \frac{p(y\,|\,m,x)\,p(m)}{\int p(y,m,|\,x)\,\textrm{d}m}
   \end{align*}
+  \pause
+  \vspace{-\baselineskip}
+  \begin{align*}
+    p(m\,|\,y,x) \propto p(y\,|\,m,x)\,p(m)
+  \end{align*}
   \vspace{-\baselineskip}
   \pause
   \begin{align*}
@@ -350,7 +355,7 @@ Four additive components have been identified in the data
   \vspace{-\baselineskip}
   \pause
   \begin{align*}
-    p(m\,|\,y,x) \propto e^{-\frac{\sum_i x_i^2 + \sigma_\varepsilon^2}{2\sigma_\varepsilon^2}(m - \frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2})^2}
+    p(m\,|\,y,x) \propto e^{-\frac{\sum_i x_i^2 + \sigma_\varepsilon^2}{2\sigma_\varepsilon^2}\big(m - \frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2}\big)^2}
   \end{align*}
   \vspace{-\baselineskip}
   \pause
@@ -366,21 +371,26 @@ Four additive components have been identified in the data
     \includegraphics<5>[width=0.8\textwidth]{figures/lin_reg/bayes_10}
     \includegraphics<6>[width=0.8\textwidth]{figures/lin_reg/bayes_15}
   \end{center}
+  \begin{align*}
+    m\,|\,y,x \sim \mathcal{N}\bigg(\frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2}, \frac{\sigma_\varepsilon^2}{\sum_i x_i^2 + \sigma_\varepsilon^2}\bigg)
+  \end{align*}
 \end{frame}
 
 \begin{frame}{Bayesian linear regression rewritten}
   \begin{itemize}
     \item We defined a Bayesian linear regression model by specifying priors on $m$ and $\varepsilon_i$.
-    \vspace{\baselineskip}
-    \pause
-    \item This implictly defined a joint prior on $\{y_i \,:\, i=1,\ldots,n\}$
     \pause
     \begin{itemize}
       \item $m \sim \mathcal{N}(0, 1)$, $\varepsilon_i \simiid \mathcal{N}(0, \sigma_\varepsilon^2)$
       \pause
       \item $y_i \,|\, m, \varepsilon_i = mx_i + \varepsilon_i$
-      \pause
-      \item Therefore, $y_i \sim \mathcal{N}(0, x_i^2 + \sigma_\varepsilon^2)$ (sum of two normals)
+    \end{itemize}
+    \vspace{\baselineskip}
+    \pause
+    \item This implictly defined a joint prior on $\{y_i \,:\, i=1,\ldots,n\}$
+    \pause
+    \begin{itemize}
+      \item $y_i \sim \mathcal{N}(0, x_i^2 + \sigma_\varepsilon^2)$ (sum of two normals)
       \pause
       \item Also, $\textrm{cov}(y_i, y_j) = x_i x_j \quad \forall\,i\neq j$
     \end{itemize}
@@ -417,9 +427,9 @@ Four additive components have been identified in the data
 
 \begin{frame}{Gaussian processes}
   \begin{itemize}
-    \item \gp{}s are distributions over functions such that any
-finite subset of function evaluations, $(f(x_1), f(x_2), \ldots
-f(x_N))$, have a joint Gaussian distribution
+    \item A Gaussian process is collection of random variables, any finite number of which have a joint Gaussian distribution
+    \vspace{\baselineskip}
+    \item We can write this collection of random variables as $\{f(x) : x \in \mathcal{X}\}$ \ie a function $f$ evaluated at inputs $x$
     \vspace{\baselineskip}
     \item A \gp{} is completely specified by
     \begin{itemize}
@@ -427,6 +437,8 @@ f(x_N))$, have a joint Gaussian distribution
       \item Covariance / kernel function, $\kernel(x,x') = \Cov(f(x),f(x'))$
       \item Denoted $f \,\sim\, \gp{}(\mu,\kernel)$
     \end{itemize}
+    \vspace{\baselineskip}
+    \item Can be thought of as a probability distribution on functions
   \end{itemize}
 \end{frame}
 
@@ -489,24 +501,6 @@ f(x_N))$, have a joint Gaussian distribution
   \input{figures/flow_chart_language}
 \end{frame}
 
-\begin{frame}{Defining a language of regression models}
-  \begin{itemize}
-    \item Regression consists of {\bf learning a function} $f: \mathcal{X} \to \mathcal{Y}$ from inputs to outputs from example input / output pairs
-    \vspace{\baselineskip}
-    \item Language should include {\bf simple parametric forms}\ldots
-    \begin{itemize}
-       \item \eg Linear functions, Polynomials, Exponential functions
-     \end{itemize}
-    \vspace{\baselineskip}
-    \item \ldots as well as functions specified by {\bf high level properties}
-    \begin{itemize}
-       \item \eg Smoothness, Periodicity
-     \end{itemize}
-    \vspace{\baselineskip}
-    \item Inference should be {\bf tractable for all models} in language
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{The atoms of our language}  
   \input{figures/simple_kernels_table}
 \end{frame}
@@ -516,35 +510,6 @@ f(x_N))$, have a joint Gaussian distribution
 	\item Two main operations: addition, multiplication
 \end{itemize}
 \input{figures/comp}
-\end{frame}
-
-\begin{frame}{Modeling changepoints}
-  Assume $\textcolor{red}{f_1(x)} \sim GP(0,k_1)$ and $\textcolor{blue}{f_2(x)} \sim GP(0,k_2)$. Define:
-\[
-f(x) = (1-\sigma(x)) \textcolor{red}{f_1(x)} + \sigma(x) \textcolor{blue}{f_2(x)}
-\]
-
-where $\sigma$ is a sigmoid function between 0 and 1.
-
-\vspace{\baselineskip}
-
-Then $f \sim GP(0,k)$, where
-\[
-k(x,x') = (1-\sigma(x)) \, \textcolor{red}{k_1(x,x')}  \, (1-\sigma(x')) + \sigma(x) \,
-\textcolor{blue}{k_2(x,x')} \, \sigma(x') 
-\]
-
-We define the changepoint operator $\kernel = \kCP(\kernel_1, \kernel_2)$.
-
-\vspace{\baselineskip}
-
-  \begin{tabular}{cccc}
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_1} &
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_2} &
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_3} &
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_4}
-  \end{tabular}
-
 \end{frame}
 
 \begin{frame}{An expressive language of models}
@@ -559,7 +524,6 @@ Trend, cyclical, irregular & $\sum \kSE + \sum \kPer$ + \kWN\\
 Fourier decomposition & $\kC + \sum \cos$ + \kWN\\
 Sparse spectrum \gp{}s & $\sum \cos$ + \kWN\\
 Spectral mixture & $\sum \SE \times \cos$ + \kWN\\
-Changepoints & \eg $\kCP(\kSE, \kSE) + \kWN$ \\
 Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$
 \end{tabular}
 \end{center}
@@ -572,7 +536,7 @@ Note: $\cos$ is a special case of our version of $\kPer$
 
 \begin{frame}{Discovering a good model via search}
   \begin{itemize}
-    \item Language defined as the arbitrary composition of five base kernels ($\kWN, \kC, \kLin, \kSE, \kPer$) via three operators ($+, \times, \kCP$). 
+    \item Language defined as the arbitrary composition of five base kernels ($\kWN, \kC, \kLin, \kSE, \kPer$) via two operators ($+, \times$). 
     \vspace{\baselineskip}
     \item The space spanned by this language is open-ended and can have a high branching factor requiring a judicious search
     \vspace{\baselineskip}
@@ -660,20 +624,6 @@ Note: $\cos$ is a special case of our version of $\kPer$
   }
 \end{frame}
 
-\begin{frame}{Model evaluation}
-  \begin{itemize}
-    \item After proposing a new model its kernel parameters are optimised by conjugate gradients
-    \vspace{\baselineskip}
-    \item We evaluate each optimised model, $M$, using the \textcolor{red}{marginal likelihood} which can be computed analytically for \gp{}s
-    \vspace{\baselineskip}
-    \item We \textcolor{blue}{penalise} the marginal likelihood for the \textcolor{blue}{optimised kernel parameters} using the Bayesian Information Criterion (BIC):
-\[
--0.5 \times \textrm{BIC}(M) = \textcolor{red}{\log p(D\,|\, M)} - \textcolor{blue}{\frac{p}{2} \log n}
-\]
-where $p$ is the number of kernel parameters, $D$ represents the data, and $n$ is the number of data points.
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{Automatic translation of models}
   \input{figures/flow_chart_trans}
 \end{frame}
@@ -696,27 +646,20 @@ where $p$ is the number of kernel parameters, $D$ represents the data, and $n$ i
 \end{frame}
 
 \begin{frame}{Sum of products normal form}
-  %\begin{center}
   Suppose the search finds the following kernel
   \begin{align*}
-    \kSE \times (\kWN \times \kLin + \kCP(\kC, \kPer))
-  \end{align*}
-  \pause
-  The changepoint can be converted into a sum of products
-  \begin{align*}
-    \kSE \times (\kWN \times \kLin + \kC \times \boldsymbol{\sigma} + \kPer \times \boldsymbol{\bar\sigma})
+    \kSE \times (\kWN \times \kLin + \kC + \kPer)
   \end{align*}
   \pause
   Multiplication can be distributed over addition
   \begin{align*}
-    \kSE \times \kWN \times \kLin + \kSE \times \kC \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}
+    \kSE \times \kWN \times \kLin + \kSE \times \kC + \kSE \times \kPer
   \end{align*}
   \pause
   Simplification rules are applied
   \begin{align*}
-    \kWN \times \kLin + \kSE \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}
+    \kWN \times \kLin + \kSE + \kSE \times \kPer
   \end{align*}
-  %\end{center}
 \end{frame}
 
 \begin{frame}{Sums of kernels are sums of functions}
@@ -761,8 +704,7 @@ We can therefore describe each component separately
   \begin{align*}
     \phantom{\underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times }
     \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
-    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
-    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}}}
   \end{align*}
   
   \vspace{\baselineskip}
@@ -785,8 +727,7 @@ We can therefore describe each component separately
   \begin{align*}
     \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
     \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
-    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
-    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}}}
   \end{align*}
   
   \vspace{\baselineskip}
@@ -809,8 +750,7 @@ We can therefore describe each component separately
   \begin{align*}
     \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
     \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
-    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \phantom{\times 
-    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}}
   \end{align*}
   
   \vspace{\baselineskip}
@@ -827,30 +767,6 @@ This causes the standard deviation of the model to vary linearly without affecti
       \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_32} &
       \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_33} &
       \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_34}
-    \end{tabular}
-  \end{block}
-\end{frame}
-
-\begin{frame}{Products of kernels - changepoints}
-  \begin{align*}
-    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
-    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
-    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
-    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}
-  \end{align*}
-  
-  \vspace{\baselineskip}
-  
-  {\bf Multiplication by $\boldsymbol\sigma$} is equivalent to multiplying the function being modeled by a sigmoid.
-  
-  \vspace{\baselineskip}
-  
-  \begin{block}{}
-    \begin{tabular}{cccc}
-      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_41} &
-      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_42} &
-      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_43} &
-      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_44}
     \end{tabular}
   \end{block}
 \end{frame}
@@ -1012,10 +928,6 @@ Four additive components have been identified in the data
 \end{tabular}
 \end{frame}
 
-\begin{frame}{Example: Call centre volume}
-  See pdf
-\end{frame}
-
 \begin{frame}{Good predictive performance as well}
   \begin{block}{Standardised RMSE over 13 data sets}
   \includegraphics[width=0.99\textwidth]{figures/box_extrap_wide}\\
@@ -1093,6 +1005,24 @@ statistician
 \begin{frame}{Appendix}
 \end{frame}
 
+\begin{frame}{Defining a language of regression models}
+  \begin{itemize}
+    \item Regression consists of {\bf learning a function} $f: \mathcal{X} \to \mathcal{Y}$ from inputs to outputs from example input / output pairs
+    \vspace{\baselineskip}
+    \item Language should include {\bf simple parametric forms}\ldots
+    \begin{itemize}
+       \item \eg Linear functions, Polynomials, Exponential functions
+     \end{itemize}
+    \vspace{\baselineskip}
+    \item \ldots as well as functions specified by {\bf high level properties}
+    \begin{itemize}
+       \item \eg Smoothness, Periodicity
+     \end{itemize}
+    \vspace{\baselineskip}
+    \item Inference should be {\bf tractable for all models} in language
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{A language of Gaussian process kernels}
   \begin{itemize}
     \item It is common practice to use a zero mean function since the mean can be marginalised out
@@ -1103,6 +1033,49 @@ statistician
   \vspace{\baselineskip}
   \item We therefore define a language of \gp{} regression models by
 specifying a {\bf language of kernels}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Modeling changepoints}
+  Assume $\textcolor{red}{f_1(x)} \sim GP(0,k_1)$ and $\textcolor{blue}{f_2(x)} \sim GP(0,k_2)$. Define:
+\[
+f(x) = (1-\sigma(x)) \textcolor{red}{f_1(x)} + \sigma(x) \textcolor{blue}{f_2(x)}
+\]
+
+where $\sigma$ is a sigmoid function between 0 and 1.
+
+\vspace{\baselineskip}
+
+Then $f \sim GP(0,k)$, where
+\[
+k(x,x') = (1-\sigma(x)) \, \textcolor{red}{k_1(x,x')}  \, (1-\sigma(x')) + \sigma(x) \,
+\textcolor{blue}{k_2(x,x')} \, \sigma(x') 
+\]
+
+We define the changepoint operator $\kernel = \kCP(\kernel_1, \kernel_2)$.
+
+\vspace{\baselineskip}
+
+  \begin{tabular}{cccc}
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_1} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_2} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_3} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_4}
+  \end{tabular}
+
+\end{frame}
+
+\begin{frame}{Model evaluation}
+  \begin{itemize}
+    \item After proposing a new model its kernel parameters are optimised by conjugate gradients
+    \vspace{\baselineskip}
+    \item We evaluate each optimised model, $M$, using the \textcolor{red}{marginal likelihood} which can be computed analytically for \gp{}s
+    \vspace{\baselineskip}
+    \item We \textcolor{blue}{penalise} the marginal likelihood for the \textcolor{blue}{optimised kernel parameters} using the Bayesian Information Criterion (BIC):
+\[
+-0.5 \times \textrm{BIC}(M) = \textcolor{red}{\log p(D\,|\, M)} - \textcolor{blue}{\frac{p}{2} \log n}
+\]
+where $p$ is the number of kernel parameters, $D$ represents the data, and $n$ is the number of data points.
   \end{itemize}
 \end{frame}
 

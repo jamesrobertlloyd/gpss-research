@@ -90,52 +90,6 @@ Joshua Tenenbaum\textsuperscript{2}, Zoubin Ghahramani\textsuperscript{1}
   \input{figures/flow_chart}
 \end{frame}
 
-%\begin{frame}{Goals of the automatic statistician project}
-%  \begin{itemize}
-%    \item Provide a set of tools for understanding data that require minimal expert input
-%    \vspace{\baselineskip}
-%    \item Uncover challenging research problems in \eg
-%    \begin{itemize}
-%      \item Automated inference
-%      \item Model construction and comparison
-%      \item Data visualisation and interpretation
-%    \end{itemize}
-%    \vspace{\baselineskip}
-%    \item Advance the field of machine learning in general
-%    \vspace{\baselineskip}
-%  \end{itemize}
-%\end{frame}
-
-%\begin{frame}{Ingredients of an automatic statistician}
-%  \begin{center}
-%    \scalebox{0.5}{\input{figures/flow_chart}}
-%  \end{center}
-%  \begin{itemize}
-%    \footnotesize
-%    \item {\bf An open-ended language of models}
-%    \begin{itemize}
-%       \item Expressive enough to capture real-world phenomena\ldots
-%       \item \ldots and the techniques used by human statisticians
-%     \end{itemize}
-%    %\vspace{\baselineskip}
-%    \item {\bf A search procedure}
-%    \begin{itemize}
-%       \item To efficiently explore the language of models
-%     \end{itemize}
-%    %\vspace{\baselineskip}
-%    \item {\bf A principled method of evaluating models}
-%    \begin{itemize}
-%       \item Trading off complexity and fit to data
-%     \end{itemize}
-%    %\vspace{\baselineskip}
-%    \item {\bf A procedure to automatically explain the models}
-%    \begin{itemize}
-%       \item Making the assumptions of the models explicit\ldots
-%       \item \ldots in a way that is intelligible to non-experts
-%     \end{itemize}
-%  \end{itemize}
-%\end{frame}
-
 \begin{frame}{Preview: An entirely automatic analysis}
 
 \newcommand{\wmgd}{0.5\columnwidth}
@@ -167,7 +121,7 @@ Four additive components have been identified in the data
   \begin{itemize}
     \item Introduction to Bayesian statistics
     \vspace{\baselineskip}
-    \item Derivation of Gaussian processes via linear regression
+    \item Introduction to Gaussian processes via linear regression
     \vspace{\baselineskip}
     \item Description of automatic statistician
     \vspace{\baselineskip}
@@ -220,21 +174,6 @@ Four additive components have been identified in the data
   }
 \end{frame}
 
-\begin{frame}{Sum and product rules of probability}
-  \only<1>{
-  \begin{align*}
-    \textrm{Sum rule :} \quad & \quad \phantom{,Y=y}\mathbb{P}(X=x) = \sum_y \mathbb{P}(X=x, Y=y) \\ \\
-    \textrm{Product rule :} \quad & \quad \mathbb{P}(X=x, Y=y) = \mathbb{P}(X=x)\,\mathbb{P}(Y=y\,|\,X=x)
-  \end{align*}
-  }
-  \only<2>{
-  \begin{align*}
-    \textrm{Sum rule :} \quad & \quad \phantom{,y}p(x) = \int p(x, y)\,\textrm{d}y \\ \\
-    \textrm{Product rule :} \quad & \quad p(x, y) = p(x)\,p(y\,|\,x)
-  \end{align*}
-  }
-\end{frame}
-
 \begin{frame}{Bayesian statistics}
   \begin{itemize}
     \uncover<1->{
@@ -257,34 +196,6 @@ Four additive components have been identified in the data
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Deriving Bayes rule}
-    \uncover<1->{
-      \begin{equation*}
-        p(\theta, D \,|\, M) = p(\theta, D \,|\, M)
-      \end{equation*}
-    }
-    \uncover<2->{
-      \begin{equation*}
-        p(\theta \,|\, D, M)p(D\,|\,M) = p(D \,|\, \theta, M)p(\theta \,|\, M) \quad \textrm{(product rule)} 
-      \end{equation*}
-    }
-    \uncover<3->{
-      \begin{equation*}
-        p(\theta \,|\, D, M) = \frac{p(D \,|\, \theta, M)p(\theta \,|\, M)}{p(D\,|\,M)}
-      \end{equation*}
-    }
-    \uncover<4->{
-      \begin{equation*}
-        p(\theta \,|\, D, M) = \frac{p(D \,|\, \theta, M)p(\theta \,|\, M)}{\int p(D,\theta\,|\,M)\textrm{d}\theta} \quad \textrm{(sum rule)} 
-      \end{equation*}
-    }
-    \uncover<5>{
-      \begin{equation*}
-        p(\theta \,|\, D, M) = \frac{p(D \,|\, \theta, M)p(\theta \,|\, M)}{\int p(D \,|\, \theta, M)p(\theta \,|\, M)\textrm{d}\theta} \quad \textrm{(product rule)} 
-      \end{equation*}
-    }
-\end{frame}
-
 \begin{frame}{Bayes rule}
   \begin{itemize}
       \item Suppose we wish to fit a model $M$ with parameters $\theta$ to data $D$
@@ -297,7 +208,7 @@ Four additive components have been identified in the data
         \item $\textcolor{red}{p(\theta\,|\,M)}$ - the prior
       \end{itemize}
       \vspace{\baselineskip}
-      \item We now derive $\textcolor{green}{p(\theta\,|\,D,M)}$ - the posterior
+      \item We then derive $\textcolor{green}{p(\theta\,|\,D,M)}$ - the posterior
       \begin{equation*}
        \underbrace{\textcolor{green}{p(\theta \,|\, D, M)}}_{\textnormal{posterior}} = \frac{\overbrace{\textcolor{blue}{p(D \,|\, \theta, M)}}^{\textnormal{likelihood}}\overbrace{\textcolor{red}{p(\theta \,|\, M)}}^{\textnormal{prior}}}{\underbrace{\textcolor{purple}{\int p(D \,|\, \theta, M)p(\theta \,|\, M)\textrm{d}\theta}}_{\textnormal{marginal likelihood}}}
       \end{equation*}
@@ -347,7 +258,7 @@ Four additive components have been identified in the data
 \begin{frame}{Bayes rule applied to linear regression}
   \vspace{-2\baselineskip}
   \begin{align*}
-    p(m\,|\,y,x) = \frac{p(y\,|\,m,x)\,p(m)}{\int p(y,m,|\,x)\,\textrm{d}m}
+    p(m\,|\,y,x) = \frac{p(y\,|\,m,x)\,p(m)}{\int p(y\,|\,m,x)p(m)\,\textrm{d}m}
   \end{align*}
   \pause
   \vspace{-\baselineskip}
@@ -390,7 +301,7 @@ Four additive components have been identified in the data
 
 \begin{frame}{Bayesian linear regression rewritten}
   \begin{itemize}
-    \item We defined a Bayesian linear regression model by specifying priors on $m$ and $\varepsilon_i$.
+    \item We defined a Bayesian linear regression model by specifying priors on $m$ and $\varepsilon_i$
     \pause
     \begin{itemize}
       \item $m \sim \mathcal{N}(0, 1)$, $\varepsilon_i \simiid \mathcal{N}(0, \sigma_\varepsilon^2)$
@@ -404,33 +315,50 @@ Four additive components have been identified in the data
     \begin{itemize}
       \item $y_i \sim \mathcal{N}(0, x_i^2 + \sigma_\varepsilon^2)$ (sum of two normals)
       \pause
-      \item Also, $\textrm{cov}(y_i, y_j) = x_i x_j \quad \forall\,i\neq j$
+      \item $\textrm{cov}(y_i, y_j) = x_i x_j \quad \forall\,i\neq j$
     \end{itemize}
-    \vspace{\baselineskip}
+  \end{itemize}
     \pause
-    \item \ie $\{y_i \,:\, i=1,\ldots,n\}$ is jointly normally distributed
+      \fboxsep=0pt
+	\noindent
+		\begin{minipage}[t]{0.48\linewidth}
+		  \vspace{-5.5\baselineskip}
+			$\{y_i \,:\, i=1,\ldots,n\}$ has a multivariate normal distribution
     \begin{itemize}
       \item $y \sim \mathcal{N}(\mathbf{0}, \mathbf{K})$
       \item where $k_{ij} = x_i x_j + \delta_{ij} \sigma_\varepsilon^2$
     \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Multivariate normal distribution}
-  Pictures of multivariate normal distribution
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.48\linewidth}
+		\begin{center}
+		  \includegraphics[width=0.9\linewidth]{figures/multi_norm}
+		\end{center}
+		\end{minipage}
 \end{frame}
 
 \begin{frame}{Bayesian linear regression rewritten}
-  $\{y_i \,:\, i=1,\ldots,n\}$ is jointly normally distributed
-  \begin{equation*}
-    y \sim \mathcal{N}(\mathbf{0}, \mathbf{K})
-  \end{equation*}
-  where $k_{ij} = x_i x_j + \delta_{ij} \sigma_\varepsilon^2$.
+      \fboxsep=0pt
+	\noindent
+		\begin{minipage}[t]{0.48\linewidth}
+		  \vspace{-5.5\baselineskip}
+			$\{y_i \,:\, i=1,\ldots,n\}$ has a multivariate normal distribution
+    \begin{itemize}
+      \item $y \sim \mathcal{N}(\mathbf{0}, \mathbf{K})$
+      \item where $k_{ij} = x_i x_j + \delta_{ij} \sigma_\varepsilon^2$
+    \end{itemize}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.48\linewidth}
+		\begin{center}
+		  \includegraphics[width=0.9\linewidth]{figures/multi_norm}
+		\end{center}
+		\end{minipage}
   
   \vspace{\baselineskip}
   \pause
   
-  This can be written as a (kernel) function of pairs of $x_i$
+  The covariance can be written as a function of pairs of $x_i$
   \begin{equation*}
     k_{ij} = k(x_i, x_j) = x_i x_j + \delta_{x_i = x_j}\sigma_\varepsilon^2
   \end{equation*}
@@ -444,8 +372,10 @@ Four additive components have been identified in the data
 \begin{frame}{Gaussian processes}
   \begin{itemize}
     \item A Gaussian process is collection of random variables, any finite number of which have a joint Gaussian distribution
+    \pause
     \vspace{\baselineskip}
     \item We can write this collection of random variables as $\{f(x) : x \in \mathcal{X}\}$ \ie a function $f$ evaluated at inputs $x$
+    \pause
     \vspace{\baselineskip}
     \item A \gp{} is completely specified by
     \begin{itemize}
@@ -454,6 +384,7 @@ Four additive components have been identified in the data
       \item Denoted $f \,\sim\, \gp{}(\mu,\kernel)$
     \end{itemize}
     \vspace{\baselineskip}
+    \pause
     \item Can be thought of as a probability distribution on functions
   \end{itemize}
 \end{frame}
@@ -528,6 +459,41 @@ Four additive components have been identified in the data
 \input{figures/comp}
 \end{frame}
 
+\begin{frame}{Modeling changepoints}
+  Assume $\textcolor{red}{f_1(x)} \sim \gp{}(0,k_1)$ and $\textcolor{blue}{f_2(x)} \sim \gp{}(0,k_2)$. Define:
+\[
+f(x) = (1-\sigma(x)) \textcolor{red}{f_1(x)} + \sigma(x) \textcolor{blue}{f_2(x)}
+\]
+
+where $\sigma$ is a sigmoid function between 0 and 1.
+
+\vspace{\baselineskip}
+
+Then $f \sim \gp{}(0,k)$, where
+\[
+k(x,x') = (1-\sigma(x)) \, \textcolor{red}{k_1(x,x')}  \, (1-\sigma(x')) + \sigma(x) \,
+\textcolor{blue}{k_2(x,x')} \, \sigma(x') 
+\]
+
+We define the changepoint operator $\kernel = \kCP(\kernel_1, \kernel_2)$.
+
+%We can parametrise the location $\tau$ and abruptness $a$ of the changepoint by replacing
+%$\sigma(x)$  with $\sigma(a(x-\tau))$. \\
+
+\vspace{\baselineskip}
+
+%{\it Intutively (in one-dimension), the function $f$ behaves like
+%$\textcolor{red}{f_1}$ before $\tau$ and like $\textcolor{blue}{f_2}$ after $\tau$. }
+
+  \begin{tabular}{cccc}
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_1} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_2} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_3} &
+    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_4}
+  \end{tabular}
+
+\end{frame}
+
 \begin{frame}{An expressive language of models}
 \begin{center}
 \begin{tabular}{l|l}
@@ -540,6 +506,7 @@ Trend, cyclical, irregular & $\sum \kSE + \sum \kPer$ + \kWN\\
 Fourier decomposition & $\kC + \sum \cos$ + \kWN\\
 Sparse spectrum \gp{}s & $\sum \cos$ + \kWN\\
 Spectral mixture & $\sum \SE \times \cos$ + \kWN\\
+Changepoints & \eg $\kCP(\kSE, \kSE) + \kWN$ \\
 Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$
 \end{tabular}
 \end{center}
@@ -552,7 +519,7 @@ Note: $\cos$ is a special case of our version of $\kPer$
 
 \begin{frame}{Discovering a good model via search}
   \begin{itemize}
-    \item Language defined as the arbitrary composition of five base kernels ($\kWN, \kC, \kLin, \kSE, \kPer$) via two operators ($+, \times$). 
+    \item Language defined as the arbitrary composition of five base kernels ($\kWN, \kC, \kLin, \kSE, \kPer$) via three operators ($+, \times, \kCP$). 
     \vspace{\baselineskip}
     \item The space spanned by this language is open-ended and can have a high branching factor requiring a judicious search
     \vspace{\baselineskip}
@@ -662,20 +629,27 @@ Note: $\cos$ is a special case of our version of $\kPer$
 \end{frame}
 
 \begin{frame}{Sum of products normal form}
+  %\begin{center}
   Suppose the search finds the following kernel
   \begin{align*}
-    \kSE \times (\kWN \times \kLin + \kC + \kPer)
+    \kSE \times (\kWN \times \kLin + \kCP(\kC, \kPer))
+  \end{align*}
+  \pause
+  The changepoint can be converted into a sum of products
+  \begin{align*}
+    \kSE \times (\kWN \times \kLin + \kC \times \boldsymbol{\sigma} + \kPer \times \boldsymbol{\bar\sigma})
   \end{align*}
   \pause
   Multiplication can be distributed over addition
   \begin{align*}
-    \kSE \times \kWN \times \kLin + \kSE \times \kC + \kSE \times \kPer
+    \kSE \times \kWN \times \kLin + \kSE \times \kC \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}
   \end{align*}
   \pause
   Simplification rules are applied
   \begin{align*}
-    \kWN \times \kLin + \kSE + \kSE \times \kPer
+    \kWN \times \kLin + \kSE \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}
   \end{align*}
+  %\end{center}
 \end{frame}
 
 \begin{frame}{Sums of kernels are sums of functions}
@@ -720,7 +694,8 @@ We can therefore describe each component separately
   \begin{align*}
     \phantom{\underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times }
     \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
-    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}}}
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
   \end{align*}
   
   \vspace{\baselineskip}
@@ -743,7 +718,8 @@ We can therefore describe each component separately
   \begin{align*}
     \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
     \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
-    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}}}
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
   \end{align*}
   
   \vspace{\baselineskip}
@@ -766,7 +742,8 @@ We can therefore describe each component separately
   \begin{align*}
     \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
     \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
-    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}}
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \phantom{\times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
   \end{align*}
   
   \vspace{\baselineskip}
@@ -783,6 +760,30 @@ This causes the standard deviation of the model to vary linearly without affecti
       \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_32} &
       \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_33} &
       \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_34}
+    \end{tabular}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Products of kernels - changepoints}
+  \begin{align*}
+    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
+    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}
+  \end{align*}
+  
+  \vspace{\baselineskip}
+  
+  {\bf Multiplication by $\boldsymbol\sigma$} is equivalent to multiplying the function being modeled by a sigmoid.
+  
+  \vspace{\baselineskip}
+  
+  \begin{block}{}
+    \begin{tabular}{cccc}
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_41} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_42} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_43} &
+      \includegraphics[width=0.2\textwidth]{figures/trans_samples/draw_44}
     \end{tabular}
   \end{block}
 \end{frame}
@@ -944,6 +945,119 @@ Four additive components have been identified in the data
 \end{tabular}
 \end{frame}
 
+\begin{frame}{Summary}
+  \begin{itemize}
+    \item We have briefly introduced Bayesian statistics and Gaussian processes
+    \vspace{\baselineskip}
+    \item Described the beginnings of an automatic statistician for regression
+    \begin{itemize}
+      \item Defines an open-ended language of models
+      \item Searches greedily through this space
+      \item Produces detailed reports describing patterns in data
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item We believe this line of research has the potential to make powerful statistical model-building techniques accessible to non-experts
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Thanks}
+  \begin{center}
+  \Huge
+  Thanks
+  \end{center}
+\end{frame}
+
+\begin{frame}{Appendix}
+\end{frame}
+
+\begin{frame}{Sum and product rules of probability}
+  \only<1>{
+  \begin{align*}
+    \textrm{Sum rule :} \quad & \quad \phantom{,Y=y}\mathbb{P}(X=x) = \sum_y \mathbb{P}(X=x, Y=y) \\ \\
+    \textrm{Product rule :} \quad & \quad \mathbb{P}(X=x, Y=y) = \mathbb{P}(X=x)\,\mathbb{P}(Y=y\,|\,X=x)
+  \end{align*}
+  }
+  \only<2>{
+  \begin{align*}
+    \textrm{Sum rule :} \quad & \quad \phantom{,y}p(x) = \int p(x, y)\,\textrm{d}y \\ \\
+    \textrm{Product rule :} \quad & \quad p(x, y) = p(x)\,p(y\,|\,x)
+  \end{align*}
+  }
+\end{frame}
+
+\begin{frame}{Deriving Bayes rule}
+    \uncover<1->{
+      \begin{equation*}
+        p(\theta, D \,|\, M) = p(\theta, D \,|\, M)
+      \end{equation*}
+    }
+    \uncover<2->{
+      \begin{equation*}
+        p(\theta \,|\, D, M)p(D\,|\,M) = p(D \,|\, \theta, M)p(\theta \,|\, M) \quad \textrm{(product rule)} 
+      \end{equation*}
+    }
+    \uncover<3->{
+      \begin{equation*}
+        p(\theta \,|\, D, M) = \frac{p(D \,|\, \theta, M)p(\theta \,|\, M)}{p(D\,|\,M)} \quad \textrm{(divide)} 
+      \end{equation*}
+    }
+    \uncover<4->{
+      \begin{equation*}
+        p(\theta \,|\, D, M) = \frac{p(D \,|\, \theta, M)p(\theta \,|\, M)}{\int p(D,\theta\,|\,M)\textrm{d}\theta} \quad \textrm{(sum rule)} 
+      \end{equation*}
+    }
+    \uncover<5>{
+      \begin{equation*}
+        p(\theta \,|\, D, M) = \frac{p(D \,|\, \theta, M)p(\theta \,|\, M)}{\int p(D \,|\, \theta, M)p(\theta \,|\, M)\textrm{d}\theta} \quad \textrm{(product rule)} 
+      \end{equation*}
+    }
+\end{frame}
+
+\begin{frame}{Defining a language of regression models}
+  \begin{itemize}
+    \item Regression consists of {\bf learning a function} $f: \mathcal{X} \to \mathcal{Y}$ from inputs to outputs from example input / output pairs
+    \vspace{\baselineskip}
+    \item Language should include {\bf simple parametric forms}\ldots
+    \begin{itemize}
+       \item \eg Linear functions, Polynomials, Exponential functions
+     \end{itemize}
+    \vspace{\baselineskip}
+    \item \ldots as well as functions specified by {\bf high level properties}
+    \begin{itemize}
+       \item \eg Smoothness, Periodicity
+     \end{itemize}
+    \vspace{\baselineskip}
+    \item Inference should be {\bf tractable for all models} in language
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{A language of Gaussian process kernels}
+  \begin{itemize}
+    \item It is common practice to use a zero mean function since the mean can be marginalised out
+  \begin{itemize}
+    \item Suppose, ${f(x) \,|\, a \,\sim\, \gp{}(a \times \mu(x), \kernel(x,x'))}$ where $a \,\sim\, \mathcal{N}(0,1)$
+    \item Then equivalently, $f(x) \,\sim\, \gp{}(0, \mu(x)\mu(x') + \kernel(x,x'))$
+  \end{itemize}
+  \vspace{\baselineskip}
+  \item We therefore define a language of \gp{} regression models by
+specifying a {\bf language of kernels}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Model evaluation}
+  \begin{itemize}
+    \item After proposing a new model its kernel parameters are optimised by conjugate gradients
+    \vspace{\baselineskip}
+    \item We evaluate each optimised model, $M$, using the \textcolor{red}{marginal likelihood} which can be computed analytically for \gp{}s
+    \vspace{\baselineskip}
+    \item We \textcolor{blue}{penalise} the marginal likelihood for the \textcolor{blue}{optimised kernel parameters} using the Bayesian Information Criterion (BIC):
+\[
+-0.5 \times \textrm{BIC}(M) = \textcolor{red}{\log p(D\,|\, M)} - \textcolor{blue}{\frac{p}{2} \log n}
+\]
+where $p$ is the number of kernel parameters, $D$ represents the data, and $n$ is the number of data points.
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Good predictive performance as well}
   \begin{block}{Standardised RMSE over 13 data sets}
   \includegraphics[width=0.99\textwidth]{figures/box_extrap_wide}\\
@@ -955,7 +1069,51 @@ Four additive components have been identified in the data
   \end{block}
 \end{frame}
 
-\begin{frame}{Challenges}
+\begin{frame}{Goals of the automatic statistician project}
+  \begin{itemize}
+    \item Provide a set of tools for understanding data that require minimal expert input
+    \vspace{\baselineskip}
+    \item Uncover challenging research problems in \eg
+    \begin{itemize}
+      \item Automated inference
+      \item Model construction and comparison
+      \item Data visualisation and interpretation
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Advance the field of machine learning in general
+    \vspace{\baselineskip}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Ingredients of an automatic statistician}
+  \begin{center}
+    \scalebox{0.5}{\input{figures/flow_chart}}
+  \end{center}
+  \begin{itemize}
+    \footnotesize
+    \item {\bf An open-ended language of models}
+    \begin{itemize}
+       \item Expressive enough to capture real-world phenomena\ldots
+       \item \ldots and the techniques used by human statisticians
+     \end{itemize}
+    %\vspace{\baselineskip}
+    \item {\bf A search procedure}
+    \begin{itemize}
+       \item To efficiently explore the language of models
+     \end{itemize}
+    %\vspace{\baselineskip}
+    \item {\bf A principled method of evaluating models}
+    \begin{itemize}
+       \item Trading off complexity and fit to data
+     \end{itemize}
+    %\vspace{\baselineskip}
+    \item {\bf A procedure to automatically explain the models}
+    \begin{itemize}
+       \item Making the assumptions of the models explicit\ldots
+       \item \ldots in a way that is intelligible to non-experts
+     \end{itemize}
+  \end{itemize}
+\end{frame}\begin{frame}{Challenges}
   \begin{itemize}
     \item Interpretability / accuracy
     \vspace{\baselineskip}
@@ -991,105 +1149,6 @@ given observed data
       \item This can be used to implement seach over the model space in an automated
 statistician
     \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Summary}
-  \begin{itemize}
-    \item We have briefly introduced Bayesian statistics and Gaussian processes
-    \vspace{\baselineskip}
-    \item Described the beginnings of an automatic statistician for regression
-    \begin{itemize}
-      \item Defines an open-ended language of models
-      \item Searches greedily through this space
-      \item Produces detailed reports describing patterns in data
-    \end{itemize}
-    \vspace{\baselineskip}
-    \item We believe this line of research has the potential to make powerful statistical model-building techniques accessible to non-experts
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Thanks}
-  \begin{center}
-  \Huge
-  Thanks
-  \end{center}
-\end{frame}
-
-\begin{frame}{Appendix}
-\end{frame}
-
-\begin{frame}{Defining a language of regression models}
-  \begin{itemize}
-    \item Regression consists of {\bf learning a function} $f: \mathcal{X} \to \mathcal{Y}$ from inputs to outputs from example input / output pairs
-    \vspace{\baselineskip}
-    \item Language should include {\bf simple parametric forms}\ldots
-    \begin{itemize}
-       \item \eg Linear functions, Polynomials, Exponential functions
-     \end{itemize}
-    \vspace{\baselineskip}
-    \item \ldots as well as functions specified by {\bf high level properties}
-    \begin{itemize}
-       \item \eg Smoothness, Periodicity
-     \end{itemize}
-    \vspace{\baselineskip}
-    \item Inference should be {\bf tractable for all models} in language
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{A language of Gaussian process kernels}
-  \begin{itemize}
-    \item It is common practice to use a zero mean function since the mean can be marginalised out
-  \begin{itemize}
-    \item Suppose, ${f(x) \,|\, a \,\sim\, \gp{}(a \times \mu(x), \kernel(x,x'))}$ where $a \,\sim\, \mathcal{N}(0,1)$
-    \item Then equivalently, $f(x) \,\sim\, \gp{}(0, \mu(x)\mu(x') + \kernel(x,x'))$
-  \end{itemize}
-  \vspace{\baselineskip}
-  \item We therefore define a language of \gp{} regression models by
-specifying a {\bf language of kernels}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Modeling changepoints}
-  Assume $\textcolor{red}{f_1(x)} \sim GP(0,k_1)$ and $\textcolor{blue}{f_2(x)} \sim GP(0,k_2)$. Define:
-\[
-f(x) = (1-\sigma(x)) \textcolor{red}{f_1(x)} + \sigma(x) \textcolor{blue}{f_2(x)}
-\]
-
-where $\sigma$ is a sigmoid function between 0 and 1.
-
-\vspace{\baselineskip}
-
-Then $f \sim GP(0,k)$, where
-\[
-k(x,x') = (1-\sigma(x)) \, \textcolor{red}{k_1(x,x')}  \, (1-\sigma(x')) + \sigma(x) \,
-\textcolor{blue}{k_2(x,x')} \, \sigma(x') 
-\]
-
-We define the changepoint operator $\kernel = \kCP(\kernel_1, \kernel_2)$.
-
-\vspace{\baselineskip}
-
-  \begin{tabular}{cccc}
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_1} &
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_2} &
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_3} &
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_4}
-  \end{tabular}
-
-\end{frame}
-
-\begin{frame}{Model evaluation}
-  \begin{itemize}
-    \item After proposing a new model its kernel parameters are optimised by conjugate gradients
-    \vspace{\baselineskip}
-    \item We evaluate each optimised model, $M$, using the \textcolor{red}{marginal likelihood} which can be computed analytically for \gp{}s
-    \vspace{\baselineskip}
-    \item We \textcolor{blue}{penalise} the marginal likelihood for the \textcolor{blue}{optimised kernel parameters} using the Bayesian Information Criterion (BIC):
-\[
--0.5 \times \textrm{BIC}(M) = \textcolor{red}{\log p(D\,|\, M)} - \textcolor{blue}{\frac{p}{2} \log n}
-\]
-where $p$ is the number of kernel parameters, $D$ represents the data, and $n$ is the number of data points.
   \end{itemize}
 \end{frame}
 

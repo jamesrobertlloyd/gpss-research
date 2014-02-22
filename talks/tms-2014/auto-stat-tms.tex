@@ -460,14 +460,35 @@ Four additive components have been identified in the data
 \end{frame}
 
 \begin{frame}{Modeling changepoints}
-  Assume $\textcolor{red}{f_1(x)} \sim \gp{}(0,k_1)$ and $\textcolor{blue}{f_2(x)} \sim \gp{}(0,k_2)$. Define:
+  
+  Time series data often exhibit changepoints:
+  
+  \begin{center}
+  \begin{tabular}{cc}
+    \includegraphics[width=0.4\textwidth]{figures/09-gas-production_7_cum} &
+    \includegraphics[width=0.4\textwidth]{figures/07-call-centre_6_cum} 
+  \end{tabular}
+  \end{center}
+  
+  \pause
+
+  We can model this by assuming $\textcolor{red}{f_1(x)} \sim \gp{}(0,k_1)$ and $\textcolor{blue}{f_2(x)} \sim \gp{}(0,k_2)$ and then defining
 \[
-f(x) = (1-\sigma(x)) \textcolor{red}{f_1(x)} + \sigma(x) \textcolor{blue}{f_2(x)}
+f(x) = (1-\sigma(x))\, \textcolor{red}{f_1(x)} + \sigma(x)\, \textcolor{blue}{f_2(x)}
+\]
+
+where $\sigma$ is a sigmoid function between 0 and 1.
+\end{frame}
+
+\begin{frame}{Modeling changepoints}
+  We can model this by assuming $\textcolor{red}{f_1(x)} \sim \gp{}(0,k_1)$ and $\textcolor{blue}{f_2(x)} \sim \gp{}(0,k_2)$ and then defining
+\[
+f(x) = (1-\sigma(x))\, \textcolor{red}{f_1(x)} + \sigma(x)\, \textcolor{blue}{f_2(x)}
 \]
 
 where $\sigma$ is a sigmoid function between 0 and 1.
 
-\vspace{\baselineskip}
+\vspace{2\baselineskip}
 
 Then $f \sim \gp{}(0,k)$, where
 \[
@@ -476,21 +497,6 @@ k(x,x') = (1-\sigma(x)) \, \textcolor{red}{k_1(x,x')}  \, (1-\sigma(x')) + \sigm
 \]
 
 We define the changepoint operator $\kernel = \kCP(\kernel_1, \kernel_2)$.
-
-%We can parametrise the location $\tau$ and abruptness $a$ of the changepoint by replacing
-%$\sigma(x)$  with $\sigma(a(x-\tau))$. \\
-
-\vspace{\baselineskip}
-
-%{\it Intutively (in one-dimension), the function $f$ behaves like
-%$\textcolor{red}{f_1}$ before $\tau$ and like $\textcolor{blue}{f_2}$ after $\tau$. }
-
-  \begin{tabular}{cccc}
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_1} &
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_2} &
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_3} &
-    \includegraphics<1>[width=0.2\textwidth]{figures/cp_examples/draw_4}
-  \end{tabular}
 
 \end{frame}
 
@@ -945,6 +951,10 @@ Four additive components have been identified in the data
 \end{tabular}
 \end{frame}
 
+\begin{frame}{Example: Full report}
+  See pdf
+\end{frame}
+
 \begin{frame}{Summary}
   \begin{itemize}
     \item We have briefly introduced Bayesian statistics and Gaussian processes
@@ -1166,4 +1176,4 @@ statistician
        \item Content
      \end{itemize}
   \end{itemize}
-\end{frame}  <onslide
+\end{frame}

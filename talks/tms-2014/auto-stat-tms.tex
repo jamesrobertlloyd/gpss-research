@@ -256,33 +256,20 @@ Four additive components have been identified in the data
 \end{frame}
 
 \begin{frame}{Bayes rule applied to linear regression}
-  \vspace{-2\baselineskip}
-  \begin{align*}
-    p(m\,|\,y,x) = \frac{p(y\,|\,m,x)\,p(m)}{\int p(y\,|\,m,x)p(m)\,\textrm{d}m}
-  \end{align*}
+  \begin{eqnarray*}
+    p(m\,|\,y,x) &=& \frac{p(y\,|\,m,x)\,p(m)}{\int p(y\,|\,m,x)p(m)\,\textrm{d}m} \\
+    \pause
+    &\propto& p(y\,|\,m,x)\,p(m) \\
+    \pause
+    &\propto& \bigg(\prod_i\frac{1}{2\pi\sigma_\varepsilon}e^{-(y_i-mx_i)^2/(2\sigma_\varepsilon^2)}\bigg)\frac{1}{2\pi}e^{-m^2/2}\\
+    \pause
+    &\propto& e^{-\sum_i(y_i-mx_i)^2/(2\sigma_\varepsilon^2) - m^2/2} \\
+    \pause
+    &\propto& e^{-\frac{\sum_i x_i^2 + \sigma_\varepsilon^2}{2\sigma_\varepsilon^2}\big(m - \frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2}\big)^2}
+  \end{eqnarray*}
   \pause
-  \vspace{-\baselineskip}
-  \begin{align*}
-    p(m\,|\,y,x) \propto p(y\,|\,m,x)\,p(m)
-  \end{align*}
-  \vspace{-\baselineskip}
-  \pause
-  \begin{align*}
-    p(m\,|\,y,x) \propto \bigg(\prod_i\frac{1}{2\pi\sigma_\varepsilon}e^{-(y_i-mx_i)^2/(2\sigma_\varepsilon^2)}\bigg)\frac{1}{2\pi}e^{-m^2/2}
-  \end{align*}
-  \vspace{-\baselineskip}
-  \pause
-  \begin{align*}
-    p(m\,|\,y,x) \propto e^{-\sum_i(y_i-mx_i)^2/(2\sigma_\varepsilon^2) - m^2/2}
-  \end{align*}
-  \vspace{-\baselineskip}
-  \pause
-  \begin{align*}
-    p(m\,|\,y,x) \propto e^{-\frac{\sum_i x_i^2 + \sigma_\varepsilon^2}{2\sigma_\varepsilon^2}\big(m - \frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2}\big)^2}
-  \end{align*}
-  \vspace{-\baselineskip}
-  \pause
-  This is a normal distribution $m\,|\,y,x \sim \mathcal{N}(\frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2}, \frac{\sigma_\varepsilon^2}{\sum_i x_i^2 + \sigma_\varepsilon^2})$
+  
+  This is a normal distribution: $m\,|\,y,x \sim \mathcal{N}\bigg(\frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2}, \frac{\sigma_\varepsilon^2}{\sum_i x_i^2 + \sigma_\varepsilon^2}\bigg)$
 \end{frame}
 
 \begin{frame}{Bayesian linear regression}

@@ -216,7 +216,7 @@ class fear(object):
         queue_list = ET.fromstring(''.join(self.command('. /usr/local/grid/divf2/common/settings.sh; qstat -u %s -xml' % USERNAME)))
         # Clear old status dictionary
         self.status = {}
-        # Iterate over jobs within multiple quese lists
+        # Iterate over jobs within multiple queue lists
         for queue in queue_list:
             for job in queue:
                 # Iterate over fields in job - extracting id and status
@@ -237,6 +237,10 @@ class fear(object):
         ## Now create a dictionary of job ids and statuses
         #self.status = {key: value for (key, value) in zip([line.split(' ')[0] for line in without_multi_space], \
         #                                                  [line.split(' ')[4] for line in without_multi_space])}
+
+    def qstat_xml(self):
+        '''Returns xml output of qstat'''
+        return ET.fromstring(''.join(self.command(". /usr/local/grid/divf2/common/settings.sh; qstat -u '*' -xml")))
     
     def job_terminated(self, job_id, update=False):
         '''Returns true if job not listed by qstat'''

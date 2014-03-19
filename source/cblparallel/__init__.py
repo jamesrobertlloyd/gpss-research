@@ -13,7 +13,7 @@ from pyfear import fear
 from util import mkstemp_safe, string_is_int
 import os
 import psutil, subprocess, sys, time
-from utils.counter import Progress
+from counter import Progress
 
 try:
     from config import *
@@ -371,7 +371,7 @@ quit()
                     for (job_number, job_id) in zip(job_number_buffer, new_ids):
                         if not string_is_int(job_id):
                             print 'Incorrect job id ''%s'' for script %s returned - resumbitting later' % (job_id, os.path.split(shell_files[job_number])[-1])
-                            fail_count[job_number] += 1                        
+                            fail_count[job_number] += 1 
                             fear.rm(os.path.join(REMOTE_TEMP_PATH, os.path.split(script_files[job_number])[-1]))
                             fear.rm(os.path.join(REMOTE_TEMP_PATH, os.path.split(shell_files[job_number])[-1]))
                         else:

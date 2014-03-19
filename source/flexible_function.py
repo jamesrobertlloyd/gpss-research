@@ -1054,6 +1054,70 @@ class SqExpKernel(Kernel):
         self.lengthscale = lengthscale  
         self.sf = sf  
 
+class RQKernel(Kernel):
+    def __init__(self, dimension=None, lengthscale=None, sf=None, alpha=None):
+        self.dimension = dimension
+        self.lengthscale = lengthscale
+        self.sf = sf
+        self.alpha = alpha
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@covRQiso}'
+    
+    @property
+    def id(self): return 'RQ'
+    
+    @property
+    def param_vector(self): return np.array([self.lengthscale, self.sf, self.alpha])
+        
+    @property
+    def latex(self): return '{\\sc RQ}' 
+    
+    @property
+    def syntax(self): return colored('RQ_%s' % self.dimension, self.depth)
+
+    # Methods
+
+    def copy(self): return RQKernel(dimension=self.dimension, lengthscale=self.lengthscale, sf=self.sf, alpha=self.alpha)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.lengthscale == None:
+            # Set lengthscale with input scale or neutrally
+            if np.random.rand() < 0.5:
+                self.lengthscale = np.random.normal(loc=data_shape['x_sd'][self.dimension], scale=sd)
+            else:
+                # Long lengthscale ~ infty = neutral
+                self.lengthscale = np.random.normal(loc=np.log(2*(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])), scale=sd)
+        if self.sf == None:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                self.sf = np.random.normal(loc=data_shape['y_sd'], scale=sd)
+            else:
+                self.sf = np.random.normal(loc=0, scale=sd)   
+        if self.alpha == None:
+            # Not sure of good heuristics for alpha value
+            self.alpha = np.random.normal(loc=0, scale=2*sd) # Twice sd since heuristic is very basic         
+    
+    def __repr__(self):
+        return 'RQKernel(dimension=%s, lengthscale=%s, sf=%s, alpha=%s)' % \
+               (self.dimension, self.lengthscale, self.sf, self.alpha)
+    
+    def pretty_print(self):
+        return colored('RQ(dim=%s, ell=%s, sf=%s, alpha=%s)' % \
+               (self.dimension, \
+                format_if_possible('%1.1f', self.lengthscale), \
+                format_if_possible('%1.1f', self.sf), \
+                format_if_possible('%1.1f', self.alpha)), \
+               self.depth)   
+
+    def load_param_vector(self, params):
+        lengthscale, sf, alpha = params # N.B. - expects list input
+        self.lengthscale = lengthscale  
+        self.sf = sf  
+        self.alpha = alpha  
+
 class PeriodicKernel(Kernel):
     def __init__(self, dimension=None, lengthscale=None, period=None, sf=None):
         self.dimension = dimension
@@ -1113,6 +1177,81 @@ class PeriodicKernel(Kernel):
     
     def pretty_print(self):
         return colored('Per(dim=%s, ell=%s, per=%s, sf=%s)' % \
+               (self.dimension, \
+                format_if_possible('%1.1f', self.lengthscale), \
+                format_if_possible('%1.1f', self.period), \
+                format_if_possible('%1.1f', self.sf)), \
+               self.depth)   
+
+    def load_param_vector(self, params):
+        lengthscale, period, sf = params # N.B. - expects list input
+        self.lengthscale = lengthscale  
+        self.period = period 
+        self.sf = sf  
+            
+    def out_of_bounds(self, constraints):
+        return (self.period < constraints['min_period'][self.dimension]) or \
+               (self.period > constraints['max_period'][self.dimension])
+
+class PeriodicKernelOLD(Kernel):
+    def __init__(self, dimension=None, lengthscale=None, period=None, sf=None):
+        self.dimension = dimension
+        self.lengthscale = lengthscale
+        self.period = period
+        self.sf = sf
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@covPeriodic}'
+    
+    @property
+    def id(self): return 'PerOLD'
+    
+    @property
+    def param_vector(self): return np.array([self.lengthscale, self.period, self.sf])
+        
+    @property
+    def latex(self): return '{\\sc PerOLD}' 
+    
+    @property
+    def syntax(self): return colored('PerOLD_%s' % self.dimension, self.depth)
+
+    # Methods
+
+    def copy(self): return PeriodicKernelOLD(dimension=self.dimension, lengthscale=self.lengthscale, period=self.period, sf=self.sf)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.lengthscale == None:
+            # Lengthscale is relative to period so this parameter does not need to scale
+            self.lengthscale = np.random.normal(loc=0, scale=sd)
+        if self.period == None:
+            #### Explanation : This is centered on about 25 periods
+            # Min period represents a minimum sensible scale
+            # Scale with data_scale or data range
+            if np.random.rand() < 0.5:
+                if data_shape['min_period'] is None:
+                    self.period = np.random.normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd)
+                else:
+                    self.period = utils.misc.sample_truncated_normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+            else:
+                if data_shape['min_period'] is None:
+                    self.period = np.random.normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd)
+                else:
+                    self.period = utils.misc.sample_truncated_normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+        if self.sf == None:
+            # Set scale factor with output scale or neutrally
+            if np.random.rand() < 0.5:
+                self.sf = np.random.normal(loc=data_shape['y_sd'], scale=sd)
+            else:
+                self.sf = np.random.normal(loc=0, scale=sd)         
+    
+    def __repr__(self):
+        return 'PeriodicKernelOLD(dimension=%s, lengthscale=%s, period=%s, sf=%s)' % \
+               (self.dimension, self.lengthscale, self.period, self.sf)
+    
+    def pretty_print(self):
+        return colored('PerOLD(dim=%s, ell=%s, per=%s, sf=%s)' % \
                (self.dimension, \
                 format_if_possible('%1.1f', self.lengthscale), \
                 format_if_possible('%1.1f', self.period), \
@@ -1189,6 +1328,73 @@ class LinearKernel(Kernel):
         sf, location = params # N.B. - expects list input
         self.location = location 
         self.sf = sf  
+
+class LinearKernelOLD(Kernel):
+    def __init__(self, dimension=None, location=None, invsf=None, offset=None):
+        self.dimension = dimension
+        self.location = location
+        self.invsf = invsf
+        self.offset = offset
+
+    # Properties
+        
+    @property
+    def gpml_function(self): return '{@covSum, {@covConst, @covLINscaleshift}}'
+    
+    @property
+    def id(self): return 'LinOLD'
+    
+    @property
+    def is_stationary(self): return False
+    
+    @property
+    def param_vector(self): return np.array([self.offset, self.invsf, self.location])
+        
+    @property
+    def latex(self): return '{\\sc LinOLD}' 
+    
+    @property
+    def syntax(self): return colored('LinOLD_%s' % self.dimension, self.depth)
+
+    # Methods
+
+    def copy(self): return LinearKernelOLD(dimension=self.dimension, location=self.location, invsf=self.invsf, offset=self.offset)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        if self.invsf == None:
+            # Inverse scale factor scales with inverse ratio of y std and x std (gradient = delta y / delta x)
+            # Or with gradient or a neutral value
+            rand = np.random.rand()
+            if rand < 1.0/3:
+                self.invsf = -np.random.normal(loc=(data_shape['y_sd'] - data_shape['x_sd'][self.dimension]), scale=sd)
+            elif rand < 2.0/3:
+                self.invsf = -np.random.normal(loc=np.log(np.abs((data_shape['y_max']-data_shape['y_min'])/(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension]))), scale=sd)
+            else:
+                self.invsf = np.random.normal(loc=0, scale=sd)
+        if self.location == None:
+            # Uniform over 3 x data range
+            self.location = np.random.uniform(low=2*data_shape['x_min'][self.dimension]-data_shape['x_max'][self.dimension], high=2*data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])   
+        if self.offset == None:
+            # Not sure of good heuristics for offset value
+            self.offset = np.random.normal(loc=0, scale=2*sd) # Twice sd since heuristic is very basic       
+    
+    def __repr__(self):
+        return 'LinearKernelOLD(dimension=%s, location=%s, invsf=%s, offset=%s)' % \
+               (self.dimension, self.location, self.invsf, self.offset)
+    
+    def pretty_print(self):
+        return colored('LinOLD(dim=%s, loc=%s, invsf=%s, off=%s)' % \
+               (self.dimension, \
+                format_if_possible('%1.1f', self.location), \
+                format_if_possible('%1.1f', self.invsf), \
+                format_if_possible('%1.1f', self.offset)), \
+               self.depth)   
+
+    def load_param_vector(self, params):
+        offset, invsf, location = params # N.B. - expects list input
+        self.location = location 
+        self.invsf = invsf
+        self.offset = offset  
 
 class SpectralKernel(Kernel):
     def __init__(self, dimension=None, lengthscale=None, period=None, sf=None):
@@ -1801,6 +2007,9 @@ def base_kernels_without_dimension(base_kernel_names):
                    PeriodicKernel(), \
                    #CosineKernelFamily(), \
                    SpectralKernel(), \
+                   RQKernel(), \
+                   PeriodicKernelOLD(), \
+                   LinearKernelOLD(), \
                    NoiseKernel()]:
         if kernel.id in base_kernel_names.split(','):
             yield kernel 
@@ -1816,6 +2025,15 @@ def add_random_restarts_single_k(kernel, n_rand, sd, data_shape):
         kernel_list.append(k)
     return kernel_list
 
+def add_random_restarts_single_l(lik, n_rand, sd, data_shape):
+    '''Returns a list of likelihoods with random restarts for default values'''
+    lik_list = []
+    for dummy in range(n_rand):
+        l = lik.copy()
+        l.initialise_params(sd=sd, data_shape=data_shape)
+        lik_list.append(l)
+    return lik_list
+
 def add_random_restarts_k(kernels, n_rand=1, sd=4, data_shape=None):    
     '''Augments the list to include random restarts of all default value parameters'''
     return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_k(kernel, n_rand, sd, data_shape)] 
@@ -1823,9 +2041,11 @@ def add_random_restarts_k(kernels, n_rand=1, sd=4, data_shape=None):
 def add_random_restarts(models, n_rand=1, sd=4, data_shape=None):
     new_models = []
     for a_model in models:
-        for kernel in add_random_restarts_single_k(a_model.kernel, n_rand=n_rand, sd=sd, data_shape=data_shape):
+        for (kernel, likelihood) in zip(add_random_restarts_single_k(a_model.kernel, n_rand=n_rand, sd=sd, data_shape=data_shape), \
+                                        add_random_restarts_single_l(a_model.likelihood, n_rand=n_rand, sd=sd, data_shape=data_shape)):
             new_model = a_model.copy()
             new_model.kernel = kernel
+            new_model.likelihood = likelihood
             new_models.append(new_model)
     return new_models 
 

@@ -1,0 +1,78 @@
+Experiment all_results for
+ datafile = ../data/tsdlr_5050/beveridge-wheat-price-index-1500.mat
+
+ Running experiment:
+description = GPSS interpolation experiment,
+data_dir = ../data/tsdlr_5050/,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 400,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2014-03-21-GPSS-orig/,
+iters = 250,
+base_kernels = SE,LinOLD,PerOLD,RQ,
+additive_form = False,
+mean = ff.MeanZero(),
+kernel = ff.NoneKernel(),
+lik = ff.LikGauss(),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 3,
+max_period_heuristic = 5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'})],
+score = bic,
+period_heuristic_type = min,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=RQKernel(dimension=0, lengthscale=1.53850946657, sf=4.87312062765, alpha=-4.02032555437), likelihood=LikGauss(sf=-4.73286403324), nll=876.388881168, ndata=185)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ProductKernel(operands=[RQKernel(dimension=0, lengthscale=1.11677247075, sf=-1.74778623863, alpha=-4.52344347541), LinearKernelOLD(dimension=0, location=1473.66695469, invsf=-1.1051461594, offset=-12.5627077547)]), likelihood=LikGauss(sf=-4.76186305786), nll=819.511708993, ndata=185)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ProductKernel(operands=[RQKernel(dimension=0, lengthscale=0.986486684208, sf=-0.878715736909, alpha=-4.23934288085), LinearKernelOLD(dimension=0, location=1471.65806111, invsf=-0.087436346296, offset=-12.6391958292)]), likelihood=LikGauss(sf=-4.75917659696), nll=819.435787767, ndata=185)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ProductKernel(operands=[RQKernel(dimension=0, lengthscale=0.986486684208, sf=-0.878715736909, alpha=-4.23934288085), LinearKernelOLD(dimension=0, location=1471.65806111, invsf=-0.087436346296, offset=-12.6391958292)]), likelihood=LikGauss(sf=-4.75917659696), nll=819.435787767, ndata=185)
+
+%%%%% Level 4 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ProductKernel(operands=[RQKernel(dimension=0, lengthscale=0.986486684208, sf=-0.878715736909, alpha=-4.23934288085), LinearKernelOLD(dimension=0, location=1471.65806111, invsf=-0.087436346296, offset=-12.6391958292)]), likelihood=LikGauss(sf=-4.75917659696), nll=819.435787767, ndata=185)
+
+%%%%% Level 5 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ProductKernel(operands=[RQKernel(dimension=0, lengthscale=0.986486684208, sf=-0.878715736909, alpha=-4.23934288085), LinearKernelOLD(dimension=0, location=1471.65806111, invsf=-0.087436346296, offset=-12.6391958292)]), likelihood=LikGauss(sf=-4.75917659696), nll=819.435787767, ndata=185)
+
+%%%%% Level 6 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ProductKernel(operands=[RQKernel(dimension=0, lengthscale=1.12637918912, sf=0.247270457388, alpha=-4.41043999919), LinearKernelOLD(dimension=0, location=1471.73754927, invsf=0.953348853627, offset=-8.22530058379)]), likelihood=LikGauss(sf=0.620966509485), nll=819.292874913, ndata=185)
+
+%%%%% Level 7 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ProductKernel(operands=[RQKernel(dimension=0, lengthscale=1.07532217768, sf=2.7523281795, alpha=-4.1859300167), LinearKernelOLD(dimension=0, location=1477.69576731, invsf=3.52691101707, offset=-8.27764687179)]), likelihood=LikGauss(sf=1.01425282375), nll=819.029613227, ndata=185)
+
+%%%%% Level 8 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ProductKernel(operands=[RQKernel(dimension=0, lengthscale=1.11833418735, sf=2.82891407403, alpha=-4.23275781642), LinearKernelOLD(dimension=0, location=1479.01859328, invsf=3.57072663895, offset=-8.1599316866)]), likelihood=LikGauss(sf=1.09343415984), nll=819.016441911, ndata=185)
+
+%%%%% Level 9 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ProductKernel(operands=[RQKernel(dimension=0, lengthscale=1.11988724236, sf=2.92492172571, alpha=-4.23497366672), LinearKernelOLD(dimension=0, location=1479.05622656, invsf=3.66540508491, offset=-8.17986341059)]), likelihood=LikGauss(sf=1.09546844036), nll=819.016430334, ndata=185)

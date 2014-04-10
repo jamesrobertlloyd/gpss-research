@@ -546,6 +546,20 @@ The learned function for the airline passenger data is
 which captures the approximately linear trend, and the periodic component with approximately linearly (logistic) increasing amplitude.
 However, the annual cycle is heavily approximated by a sinusoid and the model does not capture heteroscedasticity.
 
+\section{Designing kernels for interpretability}
+
+The kernel composition and search framework described in this paper is based on that of \citet{DuvLloGroetal13}.
+In related work \citet{kronberger2013evolution} consider a similar space of kernels but use a different search mechanism.
+Both of these methods could have been used to construct similar models
+
+\TBD{REBUTTAL TEXT FOLLOWS}
+
+  1) Removal of rational quadratic (RQ) kernel : The RQ kernel can be expressed as a mixture of squared exponential (SE) kernels. This can have the unattractive property of capturing both long term trends and short term variation in one component (e.g. the third component of the fit to the airline data in Duvenaud et al (DEA) and in our supplementary material). This is both visually unappealing and difficult to describe simply.
+
+  2) Removal of constants (C) : We subtracted unnecessary constants from the periodic (PER) and linear (LIN) kernels used by DEA and Kronberger and Kommenda (K\&K). These constants were causing two main problems. First, descriptions of products become convoluted e.g. (PER + C) x (LIN + C) = C + PER + LIN + PER x LIN is a sum of four qualitatively different functions. Second, the constant functions can result in anti-correlation between components in the posterior, resulting in inflated credible intervals for each component (e.g. airline data again).
+
+  3) Including changepoints and noise kernel : The examples of common regression models in our language in table 1 contains 9 entries. DEA can represent 4 entries, K\&K 5, Bing et al (BEA) only 1.
+
 \section{Related work}
 \label{sec:related-work}
 

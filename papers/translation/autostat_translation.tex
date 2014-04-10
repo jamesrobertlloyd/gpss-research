@@ -1,5 +1,5 @@
 \documentclass[letterpaper]{article}
-\usepackage{format/aaai-no-copy}
+\usepackage{format/aaai}
 \usepackage{times}
 \usepackage{helvet}
 \usepackage{courier}
@@ -295,7 +295,7 @@ There are two main features of our language of \gp{} models that allow descripti
 First, the sometimes complicated kernel expressions found can be simplified into a sum of products.
 A sum of kernels corresponds to a sum of functions so each product can be described separately.
 Second, each kernel in a product modifies the resulting model in a consistent way.
-Therefore, we can choose one kernel to be described as a noun, with all others described using adjectives.
+Therefore, we can choose one kernel to be described as a noun, with all others described using adjectives / modifiers.
 
 \paragraph{Sum of products normal form} 
 
@@ -305,10 +305,10 @@ Next, we apply several simplifications to the kernel expression:
 The product of two $\kSE$ kernels is another $\kSE$ with different parameters. Multiplying $\kWN$ by any stationary kernel ($\kC$, $\kWN$, $\kSE$, or $\kPer$) gives another $\kWN$ kernel. Multiplying any kernel by $\kC$ only changes the parameters of the original kernel.
 
 After applying these rules, the kernel can as be written as a sum of terms of the form:
-\begin{align}
+\begin{align*}
 K \prod_m \kLin^{(m)} \prod_n \boldsymbol\sigma^{(n)},
 \label{eq:sop}
-\end{align}
+\end{align*}
 where $K$ is one of \kWN, \kC, \kSE, $\prod_k \kPer^{(k)}$ or $\kSE \prod_k \kPer^{(k)}$
 and $\prod_i\kernel^{(i)}$ denotes a product of kernels, each with different parameters.
 
@@ -317,50 +317,94 @@ and $\prod_i\kernel^{(i)}$ denotes a product of kernels, each with different par
 Formally, if $f_1(x) \dist \gp{}(0, \kernel_1)$ and independently $f_2(x) \dist \gp{}(0, \kernel_2)$ then ${f_1(x) + f_2(x) \dist \gp{}(0, \kernel_1 + \kernel_2)}$.
 This lets us describe each product of kernels separately.
 
-
 \paragraph{Each kernel in a product modifies a model in a consistent way}
-This allows us to describe the contribution of each kernel in a product as an adjective, or more generally as a modifier of a noun.
-We now describe how each kernel modifies a model and how this can be described in natural language:
+This allows us to describe the contribution of each kernel as a modifier of a noun phrase.
+These descriptions are summarised in table~\ref{table:modifiers} and justified below:
 
 \begin{itemize}
 \item {\bf Multiplication by $\kSE$} removes long range correlations from a model since $\kSE(x,x')$ decreases monotonically to 0 as $|x - x'|$ increases.
-This can be described as making an existing model's correlation structure `local' or `approximate'.
+This will convert any global correlation structure into local correlation only.
 \item {\bf Multiplication by $\kLin$} is equivalent to multiplying the function being modeled by a linear function.
 If $f(x) \dist \gp{}(0, \kernel)$, then $xf(x) \dist \gp{}\left(0, k \times \kLin \right)$.
-This causes the standard deviation of the model to vary linearly without affecting the correlation and can be described as \eg `with linearly increasing standard deviation'.
+This causes the standard deviation of the model to vary linearly without affecting the correlation.
 \item {\bf Multiplication by $\boldsymbol\sigma$} is equivalent to multiplying the function being modeled by a sigmoid which means that the function goes to zero before or after some point.
-This can be described as \eg `from [time]' or `until [time]'.
 \item {\bf Multiplication by $\kPer$}
 modifies the correlation structure in the same way as multiplying the function by an independent periodic function.
 Formally, if ${f_1(x) \dist \gp{}(0, \kernel_1)}$ and ${f_2(x) \dist \gp{}(0, \kernel_2)}$ then
 \begin{align}
 {\textrm{Cov} \left[f_1(x)f_2(x), f_1(x')f_2(x') \right] = k_1(x,x')k_2(x,x')}.\nonumber
 \end{align}
-This can be loosely described as \eg `modulated by a periodic function with a period of [period] [units]'.
 \end{itemize}
 
+\begin{table}[ht]
+\centering
+\begin{tabular}{l|l}
+Kernel & Postmodifier phrase \\
+\midrule
+$\kSE$  & whose shape changes smoothly \\
+$\kPer$ & modulated by a periodic function \\
+$\kLin$ & with linearly varying amplitude \\
+$\prod_k \kLin^{(k)}$ & with polynomially varying amplitude \\
+$\prod_k \boldsymbol{\sigma}^{(k)}$ & which applies until / from [changepoint] \\
+\end{tabular}
+\caption{
+Postmodifier descriptions of each kernel
+}
+\label{table:modifiers}
+\end{table}
+
 \paragraph{Constructing a complete description of a product of kernels}
-We choose one kernel to act as a noun which is then described by the functions it encodes for when unmodified \eg `smooth function' for $\kSE$.
+We choose one kernel to act as a noun which is then described by the functions it encodes for when unmodified (see table~\ref{table:nouns}).
 Modifiers corresponding to the other kernels in the product are then appended to this description, forming a noun phrase of the form:
 \begin{align*}
 \textnormal{Determiner}	+	\textnormal{Premodifiers} +	\textnormal{Noun}	+	\textnormal{Postmodifiers}
 \end{align*}
 
-As an example, a kernel of the form $\kSE \times \kPer \times  \kLin \times \boldsymbol{\sigma}$ could be described as an
+As an example, a kernel of the form $\kPer \times  \kLin \times \boldsymbol{\sigma}$ could be described as a
 \begin{align*}
-\underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times 
 \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
-\underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
-\underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700.}}
+\underbrace{\kLin}_{\textnormal{\scriptsize with linearly varying amplitude}} \times 
+\underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize which applies until 1700.}}
 \end{align*}
 where $\kPer$ has been selected as the head noun.
 
-In principle, any assignment of kernels in a product to these different phrasal roles is possible, but in practice we found certain assignments to produce more interpretable phrases than others.
-The head noun is chosen according to the following ordering:
+\begin{table}[ht]
+\centering
+\begin{tabular}{l|l}
+Kernel & Noun phrase \\
+\midrule
+$\kWN$  & uncorrelated noise \\
+$\kC$   & constant \\
+$\kSE$  & smooth function \\
+$\kPer$ & periodic function \\
+$\kLin$ & linear function \\
+$\prod_k \kLin^{(k)}$ & polynomial \\
+\end{tabular}
+\caption{
+Noun phrase descriptions of each kernel
+}
+\label{table:nouns}
+\end{table}
+
+\paragraph{Refinements to the descriptions}
+
+There are a number of ways in which the descriptions of the kernels can be made more interpretable and informative.
+\begin{itemize}
+  \item Which kernel is chosen as the head noun can change the interpretability of a description
+  \item Descriptions can change qualitatively according to kernel parameters \eg `a rapidly varying smooth function'.
+  \item Descriptions can include kernel parameters \eg `modulated by a periodic function with a period of [period]'.
+  \item Descriptions can include extra information calculated from data \eg `a linearly increasing function'.
+  \item Some kernels can be described as premodifiers \eg `an approximately periodic function'.
+\end{itemize}
+
+The reports in the supplementary material and in section~\ref{sec:examples} include some of these refinements.
+For example, the head noun is chosen according to the following ordering:
 \begin{align*}
 \kPer > \kWN, \kSE, \kC > \prod_m \kLin^{(m)} > \prod_n \boldsymbol\sigma^{(n)}
 \end{align*}
 \ie $\kPer$ is always chosen as the head noun when present.
+The various parameters and design choices of these refinements have been chosen to increase the interpretability of the resulting phrases.
+Learning these parameters objectively from expert statisticians would be a profitable area of future study.
 
 \paragraph{Ordering additive components}
 
@@ -382,7 +426,7 @@ which is simplified to
 \kWN \times \kLin + \kSE \times \boldsymbol{\sigma} + \kSE \times \kPer \times \boldsymbol{\bar\sigma}.
 \end{align*}
 
-To describe the first component, the head noun description for $\kWN$, `uncorrelated noise', is concatenated with a modifier for $\kLin$, `with linearly increasing standard deviation'.
+To describe the first component, the head noun description for $\kWN$, `uncorrelated noise', is concatenated with a modifier for $\kLin$, `with linearly increasing amplitude'.
 %
 The second component is described as `A smooth function with a lengthscale of [lengthscale] [units]', corresponding to the $\kSE$, `which applies until [changepoint]', which corresponds to the $\boldsymbol{\sigma}$.
 %

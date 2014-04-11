@@ -252,7 +252,7 @@ Changepoints can be defined through addition and multiplication with sigmoidal f
 where $\boldsymbol\sigma = \sigma(x)\sigma(x')$ and $\boldsymbol{\bar\sigma} = (1-\sigma(x))(1-\sigma(x'))$.
 Changewindows $\kCW(\cdot,\cdot)$ can be defined similarly by replacing $\sigma(x)$ with a product of two sigmoids.
 
-We also expanded and reparametrised the set of base kernels so that they were more amenable to automatic description and to extend the number of common regression models included in the language.
+We also expanded and reparametrised the set of base kernels so that they were more amenable to automatic description (see section~\ref{sec:design} for details) and to extend the number of common regression models included in the language.
 Table~\ref{table:motifs} lists common regression models that can be expressed by our language.
 \begin{table}[ht]
 \centering
@@ -263,15 +263,16 @@ Regression model & Kernel \\
 Linear regression & $\kC + \kLin + \kWN$ \\
 Multiple kernel learning & $\sum \kSE$ + \kWN\\
 Trend, cyclical, irregular & $\sum \kSE + \sum \kPer$ + \kWN\\
-Fourier decomposition & $\kC + \sum \cos$ + \kWN\\
-Sparse spectrum \gp{}s & $\sum \cos$ + \kWN\\
-Spectral mixture & $\sum \SE \times \cos$ + \kWN\\
-Changepoints & \eg $\kCP(\kSE, \kSE) + \kWN$ \\
-Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$
+Fourier decomposition* & $\kC + \sum \cos$ + \kWN\\
+Sparse spectrum \gp{}s* & $\sum \cos$ + \kWN\\
+Spectral mixture* & $\sum \SE \times \cos$ + \kWN\\
+Changepoints* & \eg $\kCP(\kSE, \kSE) + \kWN$ \\
+Heteroscedasticity* & \eg $\kSE + \kLin \times \kWN$
 \end{tabular}
 \caption{
 Common regression models expressible in our language.
 $\cos$ is a special case of our reparametrised $\kPer$.
+* indicates a model that could not be expressed by the language used in \citet{DuvLloGroetal13}.
 }
 \label{table:motifs}
 \end{table}
@@ -284,9 +285,9 @@ We use the same search operators, but also include additional operators to incor
 After each model is proposed its kernel parameters are optimised by conjugate gradient descent.
 We evaluate each optimized model, $M$, using the Bayesian Information Criterion (BIC) \citep{schwarz1978estimating}:
 \begin{equation}
-\textrm{BIC}(M) = -2 \log p(D\given M) + p \log n
+\textrm{BIC}(M) = -2 \log p(D\given M) + |M| \log n
 \end{equation}
-where $p$ is the number of kernel parameters, $\log p(D|M)$ is the marginal likelihood of the data, $D$, and $n$ is the number of data points.
+where $|M|$ is the number of kernel parameters, $p(D|M)$ is the marginal likelihood of the data, $D$, and $n$ is the number of data points.
 BIC trades off model fit and complexity and implements what is known as ``Bayesian Occam's Razor'' \citep[e.g.][]{rasmussen2001occam,mackay2003information}.
 
 
@@ -409,7 +410,7 @@ For example, the head noun is chosen according to the following ordering:
 \kPer > \kWN, \kSE, \kC > \prod_m \kLin^{(m)} > \prod_n \boldsymbol\sigma^{(n)}
 \end{align*}
 \ie $\kPer$ is always chosen as the head noun when present.
-The parameters and design choices of these refinements have been chosen by our best judgement, but learning these parameters objectively from expert statisticians would be a profitable area of future study.
+The parameters and design choices of these refinements have been chosen by our best judgement, but learning these parameters objectively from expert statisticians would be an interesting area for future study.
 
 \paragraph{Ordering additive components}
 
@@ -553,12 +554,14 @@ However, the annual cycle is heavily approximated by a sinusoid and the model do
 
 \section{Designing kernels for interpretability}
 
+\label{sec:design}
+
 The base kernels used by \procedurename{} differ from those used by \citet{DuvLloGroetal13} and \citet{kronberger2013evolution}.
-We now discuss how these differences improve the interpretability of the models produced by \procedurename{}.
+These changes do not alter the span of the language of kernels but significantly improve the interpretability of the models produced by \procedurename{} which we now discuss.
 
 \paragraph{Removal of rational quadratic kernel}
 
-The rational quadratic kernel \citep[e.g.][]{rasmussen38gaussian} can be expressed as a mixture of $\kSE$ kernels.
+The rational quadratic kernel \citep[e.g.][]{rasmussen38gaussian} can be expressed as a mixture of infinitely many $\kSE$ kernels.
 This can have the unattractive property of capturing both long term trends and short term variation in one component.
 
 The left of figure~\ref{fig:rq} shows the posterior of a component involving a rational quadratic kernel produced by the procedure of \citet{DuvLloGroetal13} on the Mauna Loa data set (see supplementary material).
@@ -609,7 +612,7 @@ Similarly, the linear kernel used by \citet{DuvLloGroetal13} contained a constan
 
 If we had not subtracted these constant, we would have observed two main problems.
 First, descriptions of products would become convoluted \eg $(\kPer + \kC) \times (\kLin + \kC) = \kC + \kPer + \kLin + \kPer \times \kLin$ is a sum of four qualitatively different functions.
-Second, the constant functions can result in anti-correlation between components in the posterior, resulting in inflated credible intervals for each component (see figure~\ref{fig:constant}).
+Second, the constant functions can result in anti-correlation between components in the posterior, resulting in inflated credible intervals for each component which is shown in figure~\ref{fig:constant}.
 
 \begin{figure}[ht]
 \centering

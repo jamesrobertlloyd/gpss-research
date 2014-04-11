@@ -47,6 +47,12 @@
 \usepackage{float}
 \usepackage{datetime}
 
+\usepackage{include/picins}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows,chains,matrix,positioning,scopes,calc}
+\tikzstyle{mybox} = [draw=white, rectangle]
+
 %\renewcommand{\baselinestretch}{0.99}
 
 \def\ie{i.e.\ }
@@ -390,7 +396,7 @@ Noun phrase descriptions of each kernel
 
 There are a number of ways in which the descriptions of the kernels can be made more interpretable and informative.
 \begin{itemize}
-  \item Which kernel is chosen as the head noun can change the interpretability of a description
+  \item Which kernel is chosen as the head noun can change the interpretability of a description.
   \item Descriptions can change qualitatively according to kernel parameters \eg `a rapidly varying smooth function'.
   \item Descriptions can include kernel parameters \eg `modulated by a periodic function with a period of [period]'.
   \item Descriptions can include extra information calculated from data \eg `a linearly increasing function'.
@@ -403,8 +409,7 @@ For example, the head noun is chosen according to the following ordering:
 \kPer > \kWN, \kSE, \kC > \prod_m \kLin^{(m)} > \prod_n \boldsymbol\sigma^{(n)}
 \end{align*}
 \ie $\kPer$ is always chosen as the head noun when present.
-The various parameters and design choices of these refinements have been chosen to increase the interpretability of the resulting phrases.
-Learning these parameters objectively from expert statisticians would be a profitable area of future study.
+The parameters and design choices of these refinements have been chosen by our best judgement, but learning these parameters objectively from expert statisticians would be a profitable area of future study.
 
 \paragraph{Ordering additive components}
 
@@ -548,17 +553,104 @@ However, the annual cycle is heavily approximated by a sinusoid and the model do
 
 \section{Designing kernels for interpretability}
 
-The kernel composition and search framework described in this paper is based on that of \citet{DuvLloGroetal13}.
-In related work \citet{kronberger2013evolution} consider a similar space of kernels but use a different search mechanism.
-Both of these methods could have been used to construct similar models
+The base kernels used by \procedurename{} differ from those used by \citet{DuvLloGroetal13} and \citet{kronberger2013evolution}.
+We now discuss how these differences improve the interpretability of the models produced by \procedurename{}.
 
-\TBD{REBUTTAL TEXT FOLLOWS}
+\paragraph{Removal of rational quadratic kernel}
 
-  1) Removal of rational quadratic (RQ) kernel : The RQ kernel can be expressed as a mixture of squared exponential (SE) kernels. This can have the unattractive property of capturing both long term trends and short term variation in one component (e.g. the third component of the fit to the airline data in Duvenaud et al (DEA) and in our supplementary material). This is both visually unappealing and difficult to describe simply.
+The rational quadratic kernel \citep[e.g.][]{rasmussen38gaussian} can be expressed as a mixture of $\kSE$ kernels.
+This can have the unattractive property of capturing both long term trends and short term variation in one component.
 
-  2) Removal of constants (C) : We subtracted unnecessary constants from the periodic (PER) and linear (LIN) kernels used by DEA and Kronberger and Kommenda (K\&K). These constants were causing two main problems. First, descriptions of products become convoluted e.g. (PER + C) x (LIN + C) = C + PER + LIN + PER x LIN is a sum of four qualitatively different functions. Second, the constant functions can result in anti-correlation between components in the posterior, resulting in inflated credible intervals for each component (e.g. airline data again).
+The left of figure~\ref{fig:rq} shows the posterior of a component involving a rational quadratic kernel produced by the procedure of \citet{DuvLloGroetal13} on the Mauna Loa data set (see supplementary material).
+This component has captured both a medium term trend and short term variation.
+This is both visually unappealing and difficult to describe simply.
+In contrast, the right of figure~\ref{fig:rq} shows two of the components produced by \procedurename{} on the same data set which clearly separate the medium term trend and short term deviations.
 
-  3) Including changepoints and noise kernel : The examples of common regression models in our language in table 1 contains 9 entries. DEA can represent 4 entries, K\&K 5, Bing et al (BEA) only 1.
+We do not include the Mat\'ern kernel \citep[e.g.][]{rasmussen38gaussian} used by \citet{kronberger2013evolution} for similar reasons.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[]
+  \begin{scope}[xshift=0.0\textwidth]
+    \node [mybox] (box){
+      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/old-gpss/03-mauna2003-s_3.pdf}}
+    };
+  \end{scope}  
+  \begin{scope}[xshift=0.25\columnwidth]
+  \draw[->,thick] (-0.04\columnwidth,0.05\columnwidth) -- (0.04\columnwidth,0.11\columnwidth); 
+  \draw[->,thick] (-0.04\columnwidth,-0.05\columnwidth) -- (0.04\columnwidth,-0.11\columnwidth); 
+  \end{scope}
+  \begin{scope}[xshift=0.5\columnwidth]
+    \begin{scope}[yshift=+0.15\columnwidth]
+    \node [mybox] (box){
+      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/03-mauna/03-mauna_3}}
+    };
+    \end{scope}
+    \node[font=\LARGE] at (0,0) {$+$};
+    \begin{scope}[yshift=-0.15\columnwidth]
+    \node [mybox] (box){
+      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/03-mauna/03-mauna_5}}
+    };
+    \end{scope}
+  \end{scope}
+\end{tikzpicture}
+\caption{
+Left: Posterior of rational quadratic component of model for Mauna Loa data from \citet{DuvLloGroetal13}.
+Right: Posterior of two components found by \procedurename{} - the different lenthscales have been separated.
+}
+\label{fig:rq}
+\end{figure}
+
+\paragraph{Subtraction of unnecessary constants}
+
+The typical definition of the periodic kernel \citep[e.g.][]{rasmussen38gaussian} used by \citet{DuvLloGroetal13} and \citet{kronberger2013evolution} is always greater than zero.
+This is not necessary for the kernel to be positive semidefinite; we can subtract a constant from this kernel.
+Similarly, the linear kernel used by \citet{DuvLloGroetal13} contained a constant term that can be subtracted.
+
+If we had not subtracted these constant, we would have observed two main problems.
+First, descriptions of products would become convoluted \eg $(\kPer + \kC) \times (\kLin + \kC) = \kC + \kPer + \kLin + \kPer \times \kLin$ is a sum of four qualitatively different functions.
+Second, the constant functions can result in anti-correlation between components in the posterior, resulting in inflated credible intervals for each component (see figure~\ref{fig:constant}).
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[]
+  \begin{scope}[xshift=0.0\textwidth]
+    \begin{scope}[yshift=+0.15\columnwidth]
+    \node [mybox] (box){
+      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/old-gpss/01-airline-months_1.pdf}}
+    };
+    \end{scope}
+    \node[font=\LARGE] at (0,0) {$+$};
+    \begin{scope}[yshift=-0.15\columnwidth]
+    \node [mybox] (box){
+      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/old-gpss/01-airline-months_2.pdf}}
+    };
+    \end{scope}
+  \end{scope}  
+  \begin{scope}[xshift=0.25\columnwidth]
+  \draw[->,thick] (-0.04\columnwidth,0.15\columnwidth) -- (0.04\columnwidth,0.15\columnwidth); 
+  \draw[->,thick] (-0.04\columnwidth,-0.15\columnwidth) -- (0.04\columnwidth,-0.15\columnwidth); 
+  \end{scope}
+  \begin{scope}[xshift=0.5\columnwidth]
+    \begin{scope}[yshift=+0.15\columnwidth]
+    \node [mybox] (box){
+      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/01-airline/01-airline_1}}
+    };
+    \end{scope}
+    \node[font=\LARGE] at (0,0) {$+$};
+    \begin{scope}[yshift=-0.15\columnwidth]
+    \node [mybox] (box){
+      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/01-airline/01-airline_2}}
+    };
+    \end{scope}
+  \end{scope}
+\end{tikzpicture}
+\caption{
+Left: Posterior of first two components for the airline passenger data from \citet{DuvLloGroetal13}.
+Right: Posterior of first two components found by \procedurename{} - removing the constants from $\kLin$ and $\kPer$ has removed the inflated credible intervals due to anti-correlation in the posterior.
+}
+\label{fig:constant}
+\end{figure}
 
 \section{Related work}
 \label{sec:related-work}

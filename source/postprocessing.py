@@ -63,6 +63,33 @@ def compare_mse(folders, data_folder):
     print medians
     return RMSEs
 
+def classification_accuracy(folders, data_folder):
+    if not isinstance(folders, list):
+        folders = [folders] # Backward compatibility with specifying one folder
+    data_sets = list(exp.gen_all_datasets(data_folder))
+    np.set_printoptions(precision=4)
+    for (i, folder) in enumerate(folders):
+        print ''
+        print folder
+        print ''
+        # Load predictions file
+        count = 0
+        sum_error = 0
+        for (j, (r, data_file)) in enumerate(data_sets):
+            print '%s : ' % data_file,
+            results_file = os.path.join(folder, data_file + "_predictions.mat")
+            if os.path.isfile(results_file):
+                data = scipy.io.loadmat(results_file)
+                error = (1 - np.sum((data['predictions'].ravel() > 0) == (data['actuals'].ravel() > 0)) * 1.0 / data['actuals'].ravel().shape[0]) * 100
+                count += 1
+                sum_error += error
+                print '%f' % error
+            else:
+                print ''
+        if count > 0:
+            print ''
+            print 'Average error: %f' % (sum_error / count)
+
 def gen_all_results(folder):
     """Look through all the files in the results directory"""
     file_list = sorted([f for (r,d,f) in os.walk(folder)][0])

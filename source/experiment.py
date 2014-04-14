@@ -43,9 +43,9 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
 
     data_shape = {}
     data_shape['x_mean'] = [np.mean(X[:,dim]) for dim in range(X.shape[1])]
-    data_shape['y_mean'] = np.mean(y)
+    data_shape['y_mean'] = np.mean(y) #### TODO - should this be modified for non real valued data
     data_shape['x_sd'] = np.log([np.std(X[:,dim]) for dim in range(X.shape[1])])
-    data_shape['y_sd'] = np.log(np.std(y)) 
+    data_shape['y_sd'] = np.log(np.std(y)) #### TODO - should this be modified for non real valued data
     data_shape['y_min'] = np.min(y)
     data_shape['y_max'] = np.max(y)
     data_shape['x_min'] = [np.min(X[:,dim]) for dim in range(X.shape[1])]
@@ -95,6 +95,10 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     nan_sequence = [] # List of list of nan scored results
     oob_sequence = [] # List of list of out of bounds results
     best_models = None
+
+    # Other setup
+
+    best_score = np.Inf
     
     # Perform search
     for depth in range(exp.max_depth):
@@ -238,6 +242,16 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
                 outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
                 for result in nan_results:
                     print >> outfile, result  
+
+        # Have we hit a stopping criterion?
+        if 'no_improvement' in exp.stopping_criteria:
+            new_best_score = min(GPModel.score(a_model, exp.score) for a_model in new_results)
+            if new_best_score < best_score - exp.improvement_tolerance:
+                best_score = new_best_score
+            else:
+                # Insufficient improvement
+                print 'Insufficient improvement to score - stopping search'
+                break
     
     # Rename temporary results file to actual results file                
     os.rename(results_filename + '.unfinished', results_filename)
@@ -293,7 +307,7 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                              'iters, base_kernels, additive_form, mean, kernel, lik, verbose_results, ' + \
                              'random_seed, period_heuristic, max_period_heuristic, ' + \
                              'subset, subset_size, full_iters, bundle_size, ' + \
-                             'search_operators, score, period_heuristic_type')):
+                             'search_operators, score, period_heuristic_type, stopping_criteria, improvement_tolerance')):
     def __new__(cls, 
                 data_dir,                     # Where to find the datasets.
                 results_dir,                  # Where to write the results.
@@ -326,13 +340,15 @@ class Experiment(namedtuple("Experiment", 'description, data_dir, max_depth, ran
                 bundle_size=1,                # Number of kernel evaluations per job sent to cluster 
                 search_operators=None,        # Search operators used in grammar.py
                 score='BIC',                  # Search criterion
-                period_heuristic_type='both'):               
+                period_heuristic_type='both',
+                stopping_criteria=[],
+                improvement_tolerance=0.1):               
         return super(Experiment, cls).__new__(cls, description, data_dir, max_depth, random_order, k, debug, local_computation, \
                                               n_rand, sd, jitter_sd, max_jobs, verbose, make_predictions, skip_complete, results_dir, \
                                               iters, base_kernels, additive_form, mean, kernel, lik, verbose_results, \
                                               random_seed, period_heuristic, max_period_heuristic, \
                                               subset, subset_size, full_iters, bundle_size, \
-                                              search_operators, score, period_heuristic_type)
+                                              search_operators, score, period_heuristic_type, stopping_criteria, improvement_tolerance)
 
 def experiment_fields_to_str(exp):
     str = "Running experiment:\n"

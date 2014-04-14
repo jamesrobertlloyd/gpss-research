@@ -821,9 +821,9 @@ class MeanConst(MeanFunction):
         if self.c == None:
             # Set offset with data
             if np.random.rand() < 0.5:
-                self.c = np.random.normal(loc=data_shape['y_mean'], scale=sd*data_shape['y_sd'])
+                self.c = np.random.normal(loc=data_shape['y_mean'], scale=sd*np.exp(data_shape['y_sd']))
             else:
-                self.c = np.random.normal(loc=0, scale=sd*data_shape['y_sd'])
+                self.c = np.random.normal(loc=0, scale=sd*np.exp(data_shape['y_sd']))
     
     def __repr__(self):
         return 'MeanConst(c=%s)' % (self.c)
@@ -1975,6 +1975,61 @@ class LikGauss(Likelihood):
             sf, = params # N.B. - expects list input
             self.sf = sf   
 
+class LikErf(Likelihood):
+    def __init__(self, inference='EP'):
+        self.inference = inference
+
+    # Properties
+        
+    @property
+    def gpml_function(self):
+        return '{@likErf}'
+
+    @property    
+    def is_thunk(self): return True
+    
+    @property
+    def id(self): return 'Erf'
+    
+    @property
+    def param_vector(self):
+        return np.array([])
+        
+    @property
+    def latex(self): return '{\\sc ERF}' 
+    
+    @property
+    def syntax(self): return colored('Erf', self.depth)
+
+    @property
+    def effective_params(self):
+        return 0
+
+    @property
+    def gpml_inference_method(self):
+        if self.inference == 0:
+            return '@infEP'
+        elif self.inference == 1:
+            return '@infLaplace'
+        else:
+            raise RuntimeError('Unrecognised inference method code: %s' % self.inference)
+
+    # Methods
+
+    def copy(self): return LikErf(inference=self.inference)
+        
+    def initialise_params(self, sd=1, data_shape=None):
+        pass
+    
+    def __repr__(self):
+        return 'LikErf(inference=%s)' % (self.inference)
+    
+    def pretty_print(self):
+        return colored('Erf(inf=%s)' % format_if_possible('%d', self.inference), self.depth)   
+
+    def load_param_vector(self, params):
+        pass 
+
 ##############################################
 #                                            #
 #         Miscellaneous functions            #
@@ -2034,6 +2089,15 @@ def add_random_restarts_single_l(lik, n_rand, sd, data_shape):
         lik_list.append(l)
     return lik_list
 
+def add_random_restarts_single_m(a_mean, n_rand, sd, data_shape):
+    '''Returns a list of means with random restarts for default values'''
+    mean_list = []
+    for dummy in range(n_rand):
+        m = a_mean.copy()
+        m.initialise_params(sd=sd, data_shape=data_shape)
+        mean_list.append(m)
+    return mean_list
+
 def add_random_restarts_k(kernels, n_rand=1, sd=4, data_shape=None):    
     '''Augments the list to include random restarts of all default value parameters'''
     return [k_rand for kernel in kernels for k_rand in add_random_restarts_single_k(kernel, n_rand, sd, data_shape)] 
@@ -2041,11 +2105,13 @@ def add_random_restarts_k(kernels, n_rand=1, sd=4, data_shape=None):
 def add_random_restarts(models, n_rand=1, sd=4, data_shape=None):
     new_models = []
     for a_model in models:
-        for (kernel, likelihood) in zip(add_random_restarts_single_k(a_model.kernel, n_rand=n_rand, sd=sd, data_shape=data_shape), \
-                                        add_random_restarts_single_l(a_model.likelihood, n_rand=n_rand, sd=sd, data_shape=data_shape)):
+        for (kernel, likelihood, mean) in zip(add_random_restarts_single_k(a_model.kernel, n_rand=n_rand, sd=sd, data_shape=data_shape), \
+                                              add_random_restarts_single_l(a_model.likelihood, n_rand=n_rand, sd=sd, data_shape=data_shape), \
+                                              add_random_restarts_single_m(a_model.mean, n_rand=n_rand, sd=sd, data_shape=data_shape)):
             new_model = a_model.copy()
             new_model.kernel = kernel
             new_model.likelihood = likelihood
+            new_model.mean = mean
             new_models.append(new_model)
     return new_models 
 

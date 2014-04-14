@@ -1,0 +1,58 @@
+Experiment all_results for
+ datafile = ../data/debug-class/01-radio.mat
+
+ Running experiment:
+description = Classification experiment,
+data_dir = ../data/debug-class/,
+max_depth = 5,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 400,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2014-04-14-debug-class/,
+iters = 250,
+base_kernels = SE,
+additive_form = True,
+mean = ff.MeanConst(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikErf(inference="LP"),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 3,
+max_period_heuristic = 5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'})],
+score = bic,
+period_heuristic_type = min,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanConst(c=-0.802148060247), kernel=SqExpKernel(dimension=0, lengthscale=0.597390498302, sf=0.380133391831), likelihood=LikErf(inference=LP), nll=122.222822956, ndata=240)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanConst(c=-4.25971628309), kernel=SqExpKernel(dimension=0, lengthscale=-1.56667469817, sf=2.35292907171), likelihood=LikErf(inference=LP), nll=91.8648255363, ndata=240)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanConst(c=-4.26123717285), kernel=SqExpKernel(dimension=0, lengthscale=-1.56664249329, sf=2.35310058016), likelihood=LikErf(inference=LP), nll=91.8648209232, ndata=240)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanConst(c=-4.26123717285), kernel=SqExpKernel(dimension=0, lengthscale=-1.56664249329, sf=2.35310058016), likelihood=LikErf(inference=LP), nll=91.8648209232, ndata=240)
+
+%%%%% Level 4 %%%%%
+
+GPModel(mean=MeanConst(c=-4.26123717285), kernel=SqExpKernel(dimension=0, lengthscale=-1.56664249329, sf=2.35310058016), likelihood=LikErf(inference=LP), nll=91.8648209232, ndata=240)

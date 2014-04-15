@@ -83,12 +83,13 @@ def classification_accuracy(folders, data_folder):
                 error = (1 - np.sum((data['predictions'].ravel() > 0) == (data['actuals'].ravel() > 0)) * 1.0 / data['actuals'].ravel().shape[0]) * 100
                 count += 1
                 sum_error += error
-                print '%f' % error
+                print '%f %f' % (error, 100 - error)
             else:
                 print ''
         if count > 0:
             print ''
             print 'Average error: %f' % (sum_error / count)
+            print 'Average accuracy: %f' % (100 - sum_error / count)
 
 def gen_all_results(folder):
     """Look through all the files in the results directory"""

@@ -1,0 +1,56 @@
+Experiment all_results for
+ datafile = ../data/add-class/r_liver/r_liver_fold_4_of_10.mat
+
+ Running experiment:
+description = Classification experiment,
+data_dir = ../data/add-class/r_liver,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 400,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2014-04-14-class-liver/,
+iters = 250,
+base_kernels = SE,
+additive_form = True,
+mean = ff.MeanConst(),
+kernel = ff.NoneKernel(),
+lik = ff.LikErf(inference=1),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 3,
+max_period_heuristic = 5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'})],
+score = bic,
+period_heuristic_type = min,
+stopping_criteria = ['no_improvement'],
+improvement_tolerance = 0.1,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanConst(c=0.363126617375), kernel=SqExpKernel(dimension=4, lengthscale=3.24800674162, sf=-0.893198712794), likelihood=LikErf(inference=1), nll=205.181276428, ndata=310)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanConst(c=0.483781446752), kernel=ProductKernel(operands=[SqExpKernel(dimension=2, lengthscale=2.60482591363, sf=0.965709362584), SqExpKernel(dimension=4, lengthscale=2.78408649444, sf=-1.29191050814)]), likelihood=LikErf(inference=1), nll=190.587833177, ndata=310)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanConst(c=0.54734584148), kernel=ProductKernel(operands=[SqExpKernel(dimension=2, lengthscale=2.67758666911, sf=1.15416809039), SqExpKernel(dimension=3, lengthscale=2.44673717285, sf=0.0883064349556), SqExpKernel(dimension=4, lengthscale=2.91482712966, sf=-1.28725797629)]), likelihood=LikErf(inference=1), nll=183.86940682, ndata=310)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanConst(c=0.546209129219), kernel=ProductKernel(operands=[SqExpKernel(dimension=2, lengthscale=2.673217833, sf=1.96586828878), SqExpKernel(dimension=3, lengthscale=2.44568235903, sf=-0.176516960008), SqExpKernel(dimension=4, lengthscale=2.91226578906, sf=-1.83600906822)]), likelihood=LikErf(inference=1), nll=183.869349443, ndata=310)

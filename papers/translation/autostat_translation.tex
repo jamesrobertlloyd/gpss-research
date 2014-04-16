@@ -138,16 +138,12 @@ University of Cambridge\\
 
 \begin{abstract} 
 This paper presents the beginnings of an automatic statistician, focusing on regression problems.
-Our system explores an open-ended space of possible statistical models to discover a good explanation of the data, and then produces a detailed report with figures and natural-language text.
+Our system explores an open-ended space of statistical models to discover a good explanation of a data set, and then produces a detailed report with figures and natural-language text.
 
-Our approach treats unknown functions nonparametrically using Gaussian processes, which has two important consequences.
-First, Gaussian processes model functions in terms of high-level properties (e.g.\ smoothness, trends, periodicity,
-changepoints).
-Taken together with the compositional structure of our language of models, this allows us to automatically describe functions through a decomposition into additive parts.
-Second, the use of flexible nonparametric models and a rich
-language for composing them in an open-ended manner also results
-in state-of-the-art extrapolation performance evaluated over 13 real time
-series data sets from various domains.
+Our approach treats unknown regression functions nonparametrically using Gaussian processes, which has two important consequences.
+First, Gaussian processes can model functions in terms of high-level properties (e.g.\ smoothness, trends, periodicity, changepoints).
+Taken together with the compositional structure of our language of models this allows us to automatically describe functions in simple terms.
+Second, the use of flexible nonparametric models and a rich language for composing them in an open-ended manner also results in state-of-the-art extrapolation performance evaluated over 13 real time series data sets from various domains.
 
 \end{abstract} 
 
@@ -160,61 +156,40 @@ While fitting simple models (such as linear regression) is largely automated by 
 What are the ingredients required for an artificial intelligence system to be able to perform statistical modeling automatically? 
 In this paper we conjecture that the following ingredients may be useful for building an AI system for statistics, and we develop a working system which incorporates them:
 \begin{itemize}
-\item {\bf An open-ended language of models} expressive enough to
-  capture many of the modeling assumptions and model composition
-  techniques  applied by human statisticians to capture real-world phenomena
-\item {\bf A search procedure} to efficiently explore the space of
-  models spanned by the language
-\item {\bf A principled method for evaluating models} in terms of their complexity and their degree of fit to the
-  data
-\item {\bf A procedure for automatically generating reports} which
-  explain and visualize different factors underlying the data, make
-  the chosen modeling assumptions explicit, and quantify how each
-  component improves the predictive power of the model 
+\item {\bf An open-ended language of models} expressive enough to capture many of the modeling assumptions and model composition techniques  applied by human statisticians to capture real-world phenomena
+\item {\bf A search procedure} to efficiently explore the space of models spanned by the language
+\item {\bf A principled method for evaluating models} in terms of their complexity and their degree of fit to the data
+\item {\bf A procedure for automatically generating reports} which explain and visualize different factors underlying the data, make the chosen modeling assumptions explicit, and quantify how each component improves the predictive power of the model 
 \end{itemize}
 
 \begin{figure}[t]
 \centering
 \fbox{\includegraphics[trim=0cm 4.75cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/pg_0007-crop}}
-\caption{Extract from an automatically-generated report describing the model components discovered by automatic model search.  This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minimum \citep{lean1995reconstruction}.}
+\caption{
+Extract from an automatically-generated report describing the model components discovered by \procedurename{}.
+This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minimum \citep{lean1995reconstruction}.
+}
 \label{fig:periodic}
 \end{figure}
 
-In this paper,  we introduce a system for modeling time-series data
- containing the above ingredients which we call the Automatic
-Bayesian Covariance Discovery (ABCD) system. The system defines an open-ended
-language of Gaussian process models via a compositional grammar. The
-space is searched greedily, using marginal likelihood and
-the Bayesian Information Criterion (BIC) to evaluate models. The 
-compositional structure of the language allows us to develop a method
-for automatically translating components of the model into
-natural-language descriptions of patterns in the data.
+In this paper we introduce a system for modeling time-series data containing the above ingredients which we call the Automatic Bayesian Covariance Discovery (ABCD) system.
+The system defines an open-ended language of Gaussian process models via a compositional grammar.
+The space is searched greedily, using marginal likelihood and the Bayesian Information Criterion (BIC) to evaluate models.
+The  compositional structure of the language allows us to develop a method for automatically translating components of the model into natural-language descriptions of patterns in the data.
 
-We show examples of automatically generated reports which highlight
-interpretable features discovered in a variety of data sets (e.g.\
-figure~\ref{fig:periodic}).  The supplementary material to this paper
-includes 13 complete reports automatically generated by ABCD.
+We show examples of automatically generated reports which highlight interpretable features discovered in a variety of data sets (\eg figure~\ref{fig:periodic}).
+The supplementary material to this paper includes 13 complete reports automatically generated by ABCD.
 
-Good statistical modeling requires not only
-interpretability but predictive accuracy. We compare ABCD against
-existing model construction techniques in terms of predictive
-performance at extrapolation, and we find state-of-the-art performance
-on 13 time series. In the remainder of this paper we describe the
-components of ABCD in detail. 
+Good statistical modeling requires not only interpretability but also predictive accuracy.
+We compare ABCD against existing model construction techniques in terms of predictive performance at extrapolation, and we find state-of-the-art performance on 13 time series.
 
 \section{A language of regression models}
 \label{sec:improvements}
 
-The general problem of regression consists of learning a function $f$
-mapping from some input space $\mathcal{X}$ to some output space
-$\mathcal{Y}$. We would like an expressive language which can
-represent both simple parametric forms of $f$ such as linear, polynomial, \etc and also complex nonparametric functions
-specified in terms of properties such as smoothness, periodicity, \etc~
-Fortunately, Gaussian processes (\gp{}s) provide a very general
-and analytically tractable way of capturing both simple and complex
-functions. 
+Regression consists of learning a function $f$ mapping from some input space $\mathcal{X}$ to some output space $\mathcal{Y}$.
+We desire an expressive language which can represent both simple parametric forms of $f$ such as linear, polynomial, \etc and also complex nonparametric functions specified in terms of properties such as smoothness, periodicity, \etc~Gaussian processes (\gp{}s) provide a very general and analytically tractable way of capturing both simple and complex functions. 
 
-Gaussian processes are distributions over functions such that any
+\gp{}s are distributions over functions such that any
 finite subset of function evaluations, $(f(x_1), f(x_2), \ldots
 f(x_N))$, have a joint Gaussian distribution
 \citep{rasmussen38gaussian}. A \gp{} is completely specified by its
@@ -316,7 +291,7 @@ After applying these rules, the kernel can as be written as a sum of terms of th
 K \prod_m \kLin^{(m)} \prod_n \boldsymbol\sigma^{(n)},
 \label{eq:sop}
 \end{align*}
-where $K$ is one of \kWN, \kC, \kSE, $\prod_k \kPer^{(k)}$ or $\kSE \prod_k \kPer^{(k)}$
+where $K$, if present, is one of \kWN, \kC, \kSE, $\prod_k \kPer^{(k)}$ or $\kSE \prod_k \kPer^{(k)}$
 and $\prod_i\kernel^{(i)}$ denotes a product of kernels, each with different parameters.
 
 
@@ -395,7 +370,7 @@ Noun phrase descriptions of each kernel
 
 \paragraph{Refinements to the descriptions}
 
-There are a number of ways in which the descriptions of the kernels can be made more interpretable and informative.
+There are a number of ways in which the descriptions of the kernels can be made more interpretable and informative:
 \begin{itemize}
   \item Which kernel is chosen as the head noun can change the interpretability of a description.
   \item Descriptions can change qualitatively according to kernel parameters \eg `a rapidly varying smooth function'.
@@ -715,6 +690,10 @@ We evaluate the performance of the algorithms listed below on 13 real time-serie
 \paragraph{Algorithms}
 
 We compare \procedurename{} to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms: linear regression, \gp{} regression with a single $\kSE$ kernel (squared exponential), a Bayesian variant of multiple kernel learning (MKL) \citep[e.g.][]{bach2004multiple}, change point modeling \citep[e.g.][]{garnett2010sequential, saatcci2010gaussian, FoxDunson:NIPS2012}, spectral mixture kernels \citep{WilAda13} (spectral kernels) and trend-cyclical-irregular models \citep[e.g.][]{lind2006basic}.
+
+\procedurename{} is based on the work of \citet{DuvLloGroetal13}, but with a focus on producing interpretable models.
+As noted in section~\ref{sec:design}, the span of the language of kernels of these two methods are very similar.
+Consequently their predictive accuracy is nearly identical so we only include \procedurename{} in the results for brevity.
 
 We use the default mean absolute error criterion when using Eureqa.
 All other algorithms can be expressed as restrictions of our modeling language (see table~\ref{table:motifs}) so we perform inference using the same search methodology and selection criterion\footnotemark~with appropriate restrictions to the language.

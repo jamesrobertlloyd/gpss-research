@@ -1,0 +1,60 @@
+Experiment all_results for
+ datafile = ../data/add-class/r_pima/r_pima_fold_7_of_10.mat
+
+ Running experiment:
+description = Classification experiment,
+data_dir = ../data/add-class/r_pima,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 400,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2014-04-14-class-pima/,
+iters = 250,
+base_kernels = SE,
+additive_form = True,
+mean = ff.MeanConst(),
+kernel = ff.NoneKernel(),
+lik = ff.LikErf(inference=1),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 3,
+max_period_heuristic = 5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'})],
+score = bic,
+period_heuristic_type = min,
+stopping_criteria = ['no_improvement'],
+improvement_tolerance = 0.1,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanConst(c=0.0784985271368), kernel=SqExpKernel(dimension=1, lengthscale=4.25427325703, sf=0.187526383291), likelihood=LikErf(inference=1), nll=354.535211524, ndata=691)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanConst(c=-0.758419381854), kernel=ProductKernel(operands=[SqExpKernel(dimension=1, lengthscale=4.51194894616, sf=1.2526909979), SqExpKernel(dimension=7, lengthscale=3.39034835678, sf=-0.73523640462)]), likelihood=LikErf(inference=1), nll=336.199228487, ndata=691)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanConst(c=-0.513555371143), kernel=SumKernel(operands=[SqExpKernel(dimension=5, lengthscale=2.1548039975, sf=-0.279563078193), ProductKernel(operands=[SqExpKernel(dimension=1, lengthscale=4.49346848966, sf=1.26556501398), SqExpKernel(dimension=7, lengthscale=3.39633970457, sf=-0.859258823738)])]), likelihood=LikErf(inference=1), nll=324.117338887, ndata=691)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanConst(c=-0.552590663681), kernel=SumKernel(operands=[ProductKernel(operands=[SqExpKernel(dimension=1, lengthscale=4.48419296789, sf=1.14212276976), SqExpKernel(dimension=7, lengthscale=3.35839961909, sf=-0.772563588349)]), ProductKernel(operands=[SqExpKernel(dimension=5, lengthscale=1.95290986223, sf=-1.01415307385), SqExpKernel(dimension=6, lengthscale=-0.501136894916, sf=0.602564706222)])]), likelihood=LikErf(inference=1), nll=317.692726018, ndata=691)
+
+%%%%% Level 4 %%%%%
+
+GPModel(mean=MeanConst(c=-0.792520971239), kernel=SumKernel(operands=[ProductKernel(operands=[SqExpKernel(dimension=1, lengthscale=4.50785909537, sf=1.21258249725), SqExpKernel(dimension=7, lengthscale=3.38698889683, sf=-0.795771615017)]), ProductKernel(operands=[SqExpKernel(dimension=5, lengthscale=1.98695356851, sf=-0.909355194878), SqExpKernel(dimension=6, lengthscale=-0.527580416742, sf=0.521459501217)])]), likelihood=LikErf(inference=1), nll=317.673801616, ndata=691)

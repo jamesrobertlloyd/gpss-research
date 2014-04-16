@@ -489,7 +489,7 @@ Short descriptions and summary statistics for the four components of the airline
 \label{fig:exec-airline}
 \end{figure}
 
-The second component (figure~\ref{fig:lin_periodic}) is accurately described as approximately ($\kSE$) periodic ($\kPer$) with linearly growing amplitude ($\kLin$).
+The second component (figure~\ref{fig:lin_periodic}) is accurately described as approximately ($\kSE$) periodic ($\kPer$) with linearly increasing amplitude ($\kLin$).
 %
 \begin{figure}[h]
 \centering
@@ -531,8 +531,8 @@ However, the annual cycle is heavily approximated by a sinusoid and the model do
 
 \label{sec:design}
 
-The base kernels used by \procedurename{} differ from those used by \citet{DuvLloGroetal13} and \citet{kronberger2013evolution}.
-These changes do not alter the span of the language of kernels but significantly improve the interpretability of the models produced by \procedurename{} which we now discuss.
+The span of the language of kernels used by \procedurename{} is similar to those explored by \citet{DuvLloGroetal13} and \citet{kronberger2013evolution}.
+However, \procedurename{} uses a different set of base kernels which are chosen to significantly improve the interpretability of the models produced by our method which we now discuss.
 
 \paragraph{Removal of rational quadratic kernel}
 
@@ -692,7 +692,7 @@ We evaluate the performance of the algorithms listed below on 13 real time-serie
 We compare \procedurename{} to equation learning using Eureqa \citep{Eureqa} and six other regression algorithms: linear regression, \gp{} regression with a single $\kSE$ kernel (squared exponential), a Bayesian variant of multiple kernel learning (MKL) \citep[e.g.][]{bach2004multiple}, change point modeling \citep[e.g.][]{garnett2010sequential, saatcci2010gaussian, FoxDunson:NIPS2012}, spectral mixture kernels \citep{WilAda13} (spectral kernels) and trend-cyclical-irregular models \citep[e.g.][]{lind2006basic}.
 
 \procedurename{} is based on the work of \citet{DuvLloGroetal13}, but with a focus on producing interpretable models.
-As noted in section~\ref{sec:design}, the span of the language of kernels of these two methods are very similar.
+As noted in section~\ref{sec:design}, the spans of the languages of kernels of these two methods are very similar.
 Consequently their predictive accuracy is nearly identical so we only include \procedurename{} in the results for brevity.
 
 We use the default mean absolute error criterion when using Eureqa.
@@ -737,6 +737,13 @@ Towards the goal of automating statistical modeling we have presented a system w
 We have demonstrated that our procedure can discover and describe a variety of patterns on several time series.
 Our procedure's extrapolation and interpolation performance on time-series are state-of-the-art compared to existing model construction techniques.
 We believe this procedure has the potential to make powerful statistical model-building techniques accessible to non-experts.
+
+\section{Acknowledgements}
+
+\TBD{
+We thank [some people] for helpful discussions.
+This work was funded in part by NSERC, EPSRC grant [number], and Google.
+}
 
 \paragraph{Source Code}
 Source code to perform all experiments is available on github\footnotemark.

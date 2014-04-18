@@ -1,5 +1,5 @@
 \documentclass[letterpaper]{article}
-\usepackage{aaai-format/aaai}
+\usepackage{aaai}
 \usepackage{times}
 \usepackage{helvet}
 \usepackage{courier}
@@ -11,7 +11,7 @@
 /Title (Automatic Construction and Natural-Language Description of Nonparametric Regression Models)
 /Author (James Robert Lloyd, David Duvenaud, Roger Grosse, Joshua B. Tenenbaum, Zoubin Ghahramani)
 }
-\setcounter{secnumdepth}{0}  
+\setcounter{secnumdepth}{1}  
 
 % For figures
 \usepackage{graphicx} % more modern
@@ -38,12 +38,12 @@
 %    pdfview=FitH}
     
 \usepackage{amsmath, amsfonts, bm, lipsum, capt-of}
-\usepackage{natbib, xcolor, wrapfig, booktabs, multirow, caption}
+\usepackage{natbib, xcolor, wrapfig, booktabs, multirow}
 %\DeclareCaptionType{copyrightbox}
 \usepackage{float}
 \usepackage{datetime}
 
-\usepackage{include/picins}
+\usepackage{picins}
 
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric,arrows,chains,matrix,positioning,scopes,calc}
@@ -64,7 +64,7 @@
 \newcommand{\new}{\marginpar{NEW}}
 
 \setlength{\marginparwidth}{0.6in}
-\input{include/commenting.tex}
+%\input{include/commenting.tex}
 
 %% For submission, make all render blank.
 %\renewcommand{\LATER}[1]{}
@@ -132,7 +132,8 @@ In this paper we conjecture that the following ingredients may be useful for bui
 
 \begin{figure}[t]
 \centering
-\fbox{\includegraphics[trim=0cm 4.75cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/pg_0007-crop}}
+%\fbox{\includegraphics[trim=0cm 4.75cm 0cm 1.0cm, clip, width=0.98\columnwidth]{solarpages/pg_0007-crop}}
+\fbox{\includegraphics[width=0.98\columnwidth]{figure-01.pdf}}
 \caption{
 Extract from an automatically-generated report describing the model components discovered by \procedurename{}.
 This part of the report isolates and describes the approximately 11-year sunspot cycle, also noting its disappearance during the 16th century, a time known as the Maunder minimum \citep{lean1995reconstruction}.
@@ -155,11 +156,12 @@ We compare ABCD against existing model construction techniques in terms of predi
 \label{sec:improvements}
 
 Regression consists of learning a function $f$ mapping from some input space $\mathcal{X}$ to some output space $\mathcal{Y}$.
-We desire an expressive language which can represent both simple parametric forms of $f$ such as linear, polynomial, \etc and also complex nonparametric functions specified in terms of properties such as smoothness, periodicity, \etc~Gaussian processes (\gp{}s) provide a very general and analytically tractable way of capturing both simple and complex functions. 
+We desire an expressive language which can represent both simple parametric forms of $f$ such as linear or polynomial and also complex nonparametric functions specified in terms of properties such as smoothness or periodicity.
+Gaussian processes (\gp{}s) provide a very general and analytically tractable way of capturing both simple and complex functions. 
 
 \gp{}s are distributions over functions such that any
-finite subset of function evaluations, $(f(x_1), f(x_2), \ldots
-f(x_N))$, have a joint Gaussian distribution
+finite set of function evaluations, $(f(x_1), f(x_2), \ldots
+f(x_N))$, have a jointly Gaussian distribution
 \citep{rasmussen38gaussian}. A \gp{} is completely specified by its
 mean function, $\mu(x)=\mathbb{E}(f(x))$ and kernel (or covariance) function
 $\kernel(x,x') = \Cov(f(x),f(x'))$.
@@ -177,8 +179,8 @@ composition rules which combine kernels to yield other valid kernels.
 Our base kernels are white noise ($\kWN$), constant ($\kC$), linear ($\kLin$), squared exponential ($\kSE$) and periodic ($\kPer$), which on their own encode for uncorrelated noise, constant functions, linear functions, smooth functions and periodic functions respectively\footnote{Definitions of kernels are in the supplementary material.}.
 The composition rules are addition and multiplication:
 \begin{align}
-k_1 + k_2 =& \,\, k_1(x,x') + k_2(x,x')\\
-k_1 \times k_2 =& \,\, k_1(x,x') \times k_2(x,x')
+(k_1 + k_2)(x,x') =& \,\, k_1(x,x') + k_2(x,x')\\
+(k_1 \times k_2)(x,x') =& \,\, k_1(x,x') \times k_2(x,x')
 \end{align}
 
 Combining kernels using these operations can yield kernels encoding for richer structures such as approximate periodicity ($\kSE \times \kPer$) or smooth functions with linear trends ($\kSE + \kLin$).
@@ -187,13 +189,13 @@ This kernel composition framework (with different base kernels) was described by
 We extend and adapt this framework in several ways.
 In particular, we have found that incorporating changepoints into the language is essential for
 realistic models of time series (\eg figure~\ref{fig:periodic}). 
-Changepoints can be defined through addition and multiplication with sigmoidal functions:
+We define changepoints through addition and multiplication with sigmoidal functions:
 \begin{align}
 \kCP(\kernel_1, \kernel_2) = \kernel_1 \times \boldsymbol\sigma + \kernel_2 \times \boldsymbol{\bar\sigma}
 \label{eq:cp}
 \end{align}
 where $\boldsymbol\sigma = \sigma(x)\sigma(x')$ and $\boldsymbol{\bar\sigma} = (1-\sigma(x))(1-\sigma(x'))$.
-Changewindows $\kCW(\cdot,\cdot)$ can be defined similarly by replacing $\sigma(x)$ with a product of two sigmoids.
+We define changewindows $\kCW(\cdot,\cdot)$ similarly by replacing $\sigma(x)$ with a product of two sigmoids.
 
 We also expanded and reparametrised the set of base kernels so that they were more amenable to automatic description (see section~\ref{sec:design} for details) and to extend the number of common regression models included in the language.
 Table~\ref{table:motifs} lists common regression models that can be expressed by our language.
@@ -242,10 +244,10 @@ BIC trades off model fit and complexity and implements what is known as ``Bayesi
 In this section, we describe how \procedurename{} generates natural-language descriptions of the models found by the search procedure.
 There are two main features of our language of \gp{} models that allow description to be performed automatically.
 
-First, the sometimes complicated kernel expressions found can be simplified into a sum of products.
+First, the sometimes complicated kernel expressions can be simplified into a sum of products.
 A sum of kernels corresponds to a sum of functions so each product can be described separately.
 Second, each kernel in a product modifies the resulting model in a consistent way.
-Therefore, we can choose one kernel to be described as a noun, with all others described using adjectives / modifiers.
+Therefore, we can choose one kernel to be described as a noun, with all others described using adjectives or modifiers.
 
 \paragraph{Sum of products normal form} 
 
@@ -397,7 +399,8 @@ Full automatically-generated reports for 13 data sets are provided as supplement
 
 \begin{figure}[h]
 \centering
-\includegraphics[trim=0.2cm 18.0cm 8cm 2cm, clip, width=0.98\columnwidth]{solarpages/pg_0002-crop}
+%\includegraphics[trim=0.2cm 18.0cm 8cm 2cm, clip, width=0.98\columnwidth]{solarpages/pg_0002-crop}
+\includegraphics[width=0.98\columnwidth]{figure-02.pdf}
 \caption{
 Solar irradiance data.}
 \label{fig:solar}
@@ -410,7 +413,8 @@ This flat region corresponds to the Maunder minimum, a period in which sunspots 
 
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 10.8cm 0cm 6.3cm, clip, width=0.98\columnwidth]{solarpages/pg_0002-crop}}
+%\fbox{\includegraphics[trim=0cm 10.8cm 0cm 6.3cm, clip, width=0.98\columnwidth]{solarpages/pg_0002-crop}}
+\fbox{\includegraphics[width=0.98\columnwidth]{figure-03.pdf}}
 \caption{
 Automatically generated descriptions of the components discovered by \procedurename{} on the solar irradiance data set.
 The dataset has been decomposed into diverse structures with simple descriptions.}
@@ -423,14 +427,16 @@ The third component corresponds to long-term trends, as visualized in figure~\re
 
 \begin{figure}[ht]
 \centering
-\fbox{\includegraphics[trim=0cm 4.75cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/pg_0005-crop}}
+%\fbox{\includegraphics[trim=0cm 4.75cm 0cm 0.7cm, clip, width=0.98\columnwidth]{solarpages/pg_0005-crop}}
+\fbox{\includegraphics[width=0.98\columnwidth]{figure-04.pdf}}
 \caption{One of the learned components corresponds to the Maunder minimum.}
 \label{fig:maunder}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
-\fbox{\includegraphics[trim=0cm 4.75cm 0cm 1cm, clip, width=0.98\columnwidth]{solarpages/pg_0006-crop}}
+%\fbox{\includegraphics[trim=0cm 4.75cm 0cm 1cm, clip, width=0.98\columnwidth]{solarpages/pg_0006-crop}}
+\fbox{\includegraphics[width=0.98\columnwidth]{figure-05.pdf}}
 \caption{Characterizing the medium-term smoothness of solar activity levels.  By allowing other components to explain the periodicity, noise, and the Maunder minimum, \procedurename{} can isolate the part of the signal best explained by a slowly-varying trend.}
 \label{fig:smooth}
 \end{figure}
@@ -440,7 +446,8 @@ The third component corresponds to long-term trends, as visualized in figure~\re
 
 \begin{figure}[h]
 \centering
-\includegraphics[trim=0.4cm 16.8cm 8cm 2cm, clip, width=0.98\columnwidth]{airlinepages/pg_0002-crop}
+%\includegraphics[trim=0.4cm 16.8cm 8cm 2cm, clip, width=0.98\columnwidth]{airlinepages/pg_0002-crop}
+\includegraphics[width=0.98\columnwidth]{figure-06.pdf}
 \caption{
 International airline passenger monthly volume \citep[e.g.][]{box2013time}.}
 \label{fig:airline}
@@ -451,7 +458,8 @@ The model constructed by \procedurename{} has four components: $\kLin + \kSE \ti
 
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 6.8cm 0cm 6cm, clip, width=0.98\columnwidth]{airlinepages/pg_0002-crop}}
+%\fbox{\includegraphics[trim=0cm 6.8cm 0cm 6cm, clip, width=0.98\columnwidth]{airlinepages/pg_0002-crop}}
+\fbox{\includegraphics[width=0.98\columnwidth]{figure-07.pdf}}
 \caption{
 Short descriptions and summary statistics for the four components of the airline model.}
 \label{fig:exec-airline}
@@ -461,7 +469,8 @@ The second component (figure~\ref{fig:lin_periodic}) is accurately described as 
 %
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 4.75cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/pg_0004-crop}}
+%\fbox{\includegraphics[trim=0cm 4.75cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/pg_0004-crop}}
+\fbox{\includegraphics[width=0.98\columnwidth]{figure-08.pdf}}
 \caption{Capturing non-stationary periodicity in the airline data}
 \label{fig:lin_periodic}
 \end{figure}
@@ -470,7 +479,8 @@ By multiplying a white noise kernel by a linear kernel, the model is able to exp
 %
 \begin{figure}[h]
 \centering
-\fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/pg_0006-crop}}
+%\fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.98\columnwidth]{airlinepages/pg_0006-crop}}
+\fbox{\includegraphics[width=0.98\columnwidth]{figure-09.pdf}}
 \caption{Modeling heteroscedasticity}
 \label{fig:heteroscedastic}
 \end{figure}
@@ -519,7 +529,7 @@ We do not include the Mat\'ern kernel \citep[e.g.][]{rasmussen38gaussian} used b
 \begin{tikzpicture}[]
   \begin{scope}[xshift=0.0\textwidth]
     \node [mybox] (box){
-      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/old-gpss/03-mauna2003-s_3.pdf}}
+      \fbox{\includegraphics[width=0.35\columnwidth]{03-mauna2003-s_3.pdf}}
     };
   \end{scope}  
   \begin{scope}[xshift=0.25\columnwidth]
@@ -529,13 +539,13 @@ We do not include the Mat\'ern kernel \citep[e.g.][]{rasmussen38gaussian} used b
   \begin{scope}[xshift=0.5\columnwidth]
     \begin{scope}[yshift=+0.15\columnwidth]
     \node [mybox] (box){
-      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/03-mauna/03-mauna_3}}
+      \fbox{\includegraphics[width=0.35\columnwidth]{03-mauna_3.pdf}}
     };
     \end{scope}
     \node[font=\LARGE] at (0,0) {$+$};
     \begin{scope}[yshift=-0.15\columnwidth]
     \node [mybox] (box){
-      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/03-mauna/03-mauna_5}}
+      \fbox{\includegraphics[width=0.35\columnwidth]{03-mauna_5.pdf}}
     };
     \end{scope}
   \end{scope}
@@ -563,13 +573,13 @@ Second, the constant functions can result in anti-correlation between components
   \begin{scope}[xshift=0.0\textwidth]
     \begin{scope}[yshift=+0.15\columnwidth]
     \node [mybox] (box){
-      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/old-gpss/01-airline-months_1.pdf}}
+      \fbox{\includegraphics[width=0.35\columnwidth]{01-airline-months_1.pdf}}
     };
     \end{scope}
     \node[font=\LARGE] at (0,0) {$+$};
     \begin{scope}[yshift=-0.15\columnwidth]
     \node [mybox] (box){
-      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/old-gpss/01-airline-months_2.pdf}}
+      \fbox{\includegraphics[width=0.35\columnwidth]{01-airline-months_2.pdf}}
     };
     \end{scope}
   \end{scope}  
@@ -580,13 +590,13 @@ Second, the constant functions can result in anti-correlation between components
   \begin{scope}[xshift=0.5\columnwidth]
     \begin{scope}[yshift=+0.15\columnwidth]
     \node [mybox] (box){
-      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/01-airline/01-airline_1}}
+      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{01-airline_1.pdf}}
     };
     \end{scope}
     \node[font=\LARGE] at (0,0) {$+$};
     \begin{scope}[yshift=-0.15\columnwidth]
     \node [mybox] (box){
-      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{figures/01-airline/01-airline_2}}
+      \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\columnwidth]{01-airline_2.pdf}}
     };
     \end{scope}
   \end{scope}
@@ -611,7 +621,7 @@ Our procedure is based on the model construction method of \citet{DuvLloGroetal1
 
 \paragraph{Kernel Learning}
 
-Sparse spectrum \gp{}s \citep{lazaro2010sparse} approximate the spectral density of a stationary kernel function using delta functions which corresponds to kernels of the form $\sum \cos$.
+Sparse spectrum \gp{}s \citep{lazaro2010sparse} approximate the spectral density of a stationary kernel function using delta functions; this corresponds to kernels of the form $\sum \cos$.
 Similarly, \citet{WilAda13} introduce spectral mixture kernels which approximate the spectral density using a scale-location mixture of Gaussian distributions corresponding to kernels of the form $\sum \kSE \times \cos$.
 Both demonstrate, using Bochner's theorem \citep{bochner1959lectures}, that these kernels can approximate any stationary covariance function.
 Our language of kernels includes both of these kernel classes (see table~\ref{table:motifs}).
@@ -639,8 +649,7 @@ However, systems with natural language output have been built in the areas of vi
 
 \begin{figure*}[ht]
 \centering
-\includegraphics[width=\textwidth]{figures/box_extrap_wide}
-\vspace{-0.8cm}
+\includegraphics[width=\textwidth]{box_extrap_wide.pdf}
 \caption{
 Raw data, and box plot (showing median and quartiles) of standardised extrapolation RMSE (best performance = 1) on 13 time-series.
 The methods are ordered by median.
@@ -708,18 +717,14 @@ We believe this procedure has the potential to make powerful statistical model-b
 
 \section{Acknowledgements}
 
-\TBD{
-We thank [some people] for helpful discussions.
-This work was funded in part by NSERC, EPSRC grant [number], and Google.
-}
+We thank Colorado Reed, Yarin Gal and Christian Steinruecken for helpful discussions.
+This work was funded in part by NSERC and Google.
 
 \paragraph{Source Code}
 Source code to perform all experiments is available on github\footnotemark.
 \footnotetext{\url{http://www.github.com/jamesrobertlloyd/gpss-research}. All \gp{} parameter optimisation was performed by automated calls to the GPML toolbox available at \url{http://www.gaussianprocess.org/gpml/code/}.}
 
-%\newpage
-
 \bibliography{gpss}
-\bibliographystyle{format/aaai}
+\bibliographystyle{aaai}
 
 \end{document} 

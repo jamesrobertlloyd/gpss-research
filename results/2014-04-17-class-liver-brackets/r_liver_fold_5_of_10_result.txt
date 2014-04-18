@@ -1,0 +1,48 @@
+Experiment all_results for
+ datafile = ../data/add-class/r_liver/r_liver_fold_5_of_10.mat
+
+ Running experiment:
+description = Classification experiment,
+data_dir = ../data/add-class/r_liver,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 400,
+verbose = False,
+make_predictions = True,
+skip_complete = True,
+results_dir = ../results/2014-04-17-class-liver-brackets/,
+iters = 250,
+base_kernels = SE,RQ,Lin,Noise,
+additive_form = False,
+mean = ff.MeanConst(),
+kernel = ff.NoneKernel(),
+lik = ff.LikErf(inference=1),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 3,
+max_period_heuristic = 5,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'}), ('A', ('None',), {'A': 'kernel'})],
+score = bic,
+period_heuristic_type = min,
+stopping_criteria = ['no_improvement'],
+improvement_tolerance = 0.01,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanConst(c=0.23728464597), kernel=SqExpKernel(dimension=1, lengthscale=-0.724035061797, sf=-0.631301784871), likelihood=LikErf(inference=1), nll=204.467971428, ndata=310)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanConst(c=0.23728464597), kernel=SqExpKernel(dimension=1, lengthscale=-0.724035061797, sf=-0.631301784871), likelihood=LikErf(inference=1), nll=204.467971428, ndata=310)

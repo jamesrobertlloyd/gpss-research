@@ -6,11 +6,6 @@
 \frenchspacing
 \setlength{\pdfpagewidth}{8.5in}
 \setlength{\pdfpageheight}{11in}
-\pdfinfo
-{
-/Title (Automatic Construction and Natural-Language Description of Nonparametric Regression Models)
-/Author (James Robert Lloyd, David Duvenaud, Roger Grosse, Joshua B. Tenenbaum, Zoubin Ghahramani)
-}
 \setcounter{secnumdepth}{0}  
 
 % For figures
@@ -21,21 +16,21 @@
 \usepackage{color}
 \usepackage{preamble}
 
-%\usepackage{hyperref}
-%\definecolor{mydarkblue}{rgb}{0,0.08,0.45}
-%\hypersetup{ %
-%    pdftitle={},
-%    pdfauthor={},
-%    pdfsubject={},
-%    pdfkeywords={},
-%    pdfborder=0 0 0,
-%    pdfpagemode=UseNone,
-%    colorlinks=true,
-%    linkcolor=mydarkblue,
-%    citecolor=mydarkblue,
-%    filecolor=mydarkblue,
-%    urlcolor=mydarkblue,
-%    pdfview=FitH}
+\usepackage{hyperref}
+\definecolor{mydarkblue}{rgb}{0,0.08,0.45}
+\hypersetup{
+    pdftitle={Automatic Construction and Natural-Language Description of Nonparametric Regression Models},
+    pdfauthor={James Robert Lloyd, David Duvenaud, Roger Grosse, Joshua B. Tenenbaum, Zoubin Ghahramani},
+    pdfsubject={},
+    pdfkeywords={},
+    pdfborder=0 0 0,
+    pdfpagemode=UseNone,
+    colorlinks=true,
+    linkcolor=mydarkblue,
+    citecolor=mydarkblue,
+    filecolor=mydarkblue,
+    urlcolor=mydarkblue,
+    pdfview=FitH}
     
 \usepackage{amsmath, amsfonts, bm, lipsum, capt-of}
 \usepackage{natbib, xcolor, wrapfig, booktabs, multirow, caption}
@@ -155,11 +150,12 @@ We compare ABCD against existing model construction techniques in terms of predi
 \label{sec:improvements}
 
 Regression consists of learning a function $f$ mapping from some input space $\mathcal{X}$ to some output space $\mathcal{Y}$.
-We desire an expressive language which can represent both simple parametric forms of $f$ such as linear, polynomial, \etc and also complex nonparametric functions specified in terms of properties such as smoothness, periodicity, \etc~Gaussian processes (\gp{}s) provide a very general and analytically tractable way of capturing both simple and complex functions. 
+We desire an expressive language which can represent both simple parametric forms of $f$ such as linear or polynomial and also complex nonparametric functions specified in terms of properties such as smoothness or periodicity.
+Gaussian processes (\gp{}s) provide a very general and analytically tractable way of capturing both simple and complex functions. 
 
 \gp{}s are distributions over functions such that any
-finite subset of function evaluations, $(f(x_1), f(x_2), \ldots
-f(x_N))$, have a joint Gaussian distribution
+finite set of function evaluations, $(f(x_1), f(x_2), \ldots
+f(x_N))$, have a jointly Gaussian distribution
 \citep{rasmussen38gaussian}. A \gp{} is completely specified by its
 mean function, $\mu(x)=\mathbb{E}(f(x))$ and kernel (or covariance) function
 $\kernel(x,x') = \Cov(f(x),f(x'))$.
@@ -177,8 +173,8 @@ composition rules which combine kernels to yield other valid kernels.
 Our base kernels are white noise ($\kWN$), constant ($\kC$), linear ($\kLin$), squared exponential ($\kSE$) and periodic ($\kPer$), which on their own encode for uncorrelated noise, constant functions, linear functions, smooth functions and periodic functions respectively\footnote{Definitions of kernels are in the supplementary material.}.
 The composition rules are addition and multiplication:
 \begin{align}
-k_1 + k_2 =& \,\, k_1(x,x') + k_2(x,x')\\
-k_1 \times k_2 =& \,\, k_1(x,x') \times k_2(x,x')
+(k_1 + k_2)(x,x') =& \,\, k_1(x,x') + k_2(x,x')\\
+(k_1 \times k_2)(x,x') =& \,\, k_1(x,x') \times k_2(x,x')
 \end{align}
 
 Combining kernels using these operations can yield kernels encoding for richer structures such as approximate periodicity ($\kSE \times \kPer$) or smooth functions with linear trends ($\kSE + \kLin$).
@@ -187,13 +183,13 @@ This kernel composition framework (with different base kernels) was described by
 We extend and adapt this framework in several ways.
 In particular, we have found that incorporating changepoints into the language is essential for
 realistic models of time series (\eg figure~\ref{fig:periodic}). 
-Changepoints can be defined through addition and multiplication with sigmoidal functions:
+We define changepoints through addition and multiplication with sigmoidal functions:
 \begin{align}
 \kCP(\kernel_1, \kernel_2) = \kernel_1 \times \boldsymbol\sigma + \kernel_2 \times \boldsymbol{\bar\sigma}
 \label{eq:cp}
 \end{align}
 where $\boldsymbol\sigma = \sigma(x)\sigma(x')$ and $\boldsymbol{\bar\sigma} = (1-\sigma(x))(1-\sigma(x'))$.
-Changewindows $\kCW(\cdot,\cdot)$ can be defined similarly by replacing $\sigma(x)$ with a product of two sigmoids.
+We define changewindows $\kCW(\cdot,\cdot)$ similarly by replacing $\sigma(x)$ with a product of two sigmoids.
 
 We also expanded and reparametrised the set of base kernels so that they were more amenable to automatic description (see section~\ref{sec:design} for details) and to extend the number of common regression models included in the language.
 Table~\ref{table:motifs} lists common regression models that can be expressed by our language.
@@ -233,7 +229,6 @@ We evaluate each optimized model, $M$, using the Bayesian Information Criterion 
 where $|M|$ is the number of kernel parameters, $p(D|M)$ is the marginal likelihood of the data, $D$, and $n$ is the number of data points.
 BIC trades off model fit and complexity and implements what is known as ``Bayesian Occam's Razor'' \citep[e.g.][]{rasmussen2001occam,mackay2003information}.
 
-
 \section{Automatic description of regression models}
 \label{sec:description}
 
@@ -242,10 +237,10 @@ BIC trades off model fit and complexity and implements what is known as ``Bayesi
 In this section, we describe how \procedurename{} generates natural-language descriptions of the models found by the search procedure.
 There are two main features of our language of \gp{} models that allow description to be performed automatically.
 
-First, the sometimes complicated kernel expressions found can be simplified into a sum of products.
+First, the sometimes complicated kernel expressions can be simplified into a sum of products.
 A sum of kernels corresponds to a sum of functions so each product can be described separately.
 Second, each kernel in a product modifies the resulting model in a consistent way.
-Therefore, we can choose one kernel to be described as a noun, with all others described using adjectives / modifiers.
+Therefore, we can choose one kernel to be described as a noun, with all others described using adjectives or modifiers.
 
 \paragraph{Sum of products normal form} 
 
@@ -376,16 +371,9 @@ which is simplified to
 \end{align*}
 
 To describe the first component, the head noun description for $\kWN$, `uncorrelated noise', is concatenated with a modifier for $\kLin$, `with linearly increasing amplitude'.
-%
 The second component is described as `A smooth function with a lengthscale of [lengthscale] [units]', corresponding to the $\kSE$, `which applies until [changepoint]', which corresponds to the $\boldsymbol{\sigma}$.
-%
 Finally, the third component is described as `An approximately periodic function with a period of [period] [units] which applies from [changepoint]'.
 
-%Descriptions are sometimes modified depending on kernel parameters.  
-%Also, a separate description procedure is used to produce the detailed descriptions of each component, which operates on the same principles.
-
-%\fTBD{JL: We should also mention that the detailed descriptions are less modular - but not necessarily so}
-%\fTBD{JL: Talk about different templates based on parameters?}
 
 \section{Example descriptions of time series}
 \label{sec:examples}
@@ -496,7 +484,6 @@ which captures the approximately linear trend, and the periodic component with a
 However, the annual cycle is heavily approximated by a sinusoid and the model does not capture heteroscedasticity.
 
 \section{Designing kernels for interpretability}
-
 \label{sec:design}
 
 The span of the language of kernels used by \procedurename{} is similar to those explored by \citet{DuvLloGroetal13} and \citet{kronberger2013evolution}.
@@ -611,7 +598,7 @@ Our procedure is based on the model construction method of \citet{DuvLloGroetal1
 
 \paragraph{Kernel Learning}
 
-Sparse spectrum \gp{}s \citep{lazaro2010sparse} approximate the spectral density of a stationary kernel function using delta functions which corresponds to kernels of the form $\sum \cos$.
+Sparse spectrum \gp{}s \citep{lazaro2010sparse} approximate the spectral density of a stationary kernel function using delta functions; this corresponds to kernels of the form $\sum \cos$.
 Similarly, \citet{WilAda13} introduce spectral mixture kernels which approximate the spectral density using a scale-location mixture of Gaussian distributions corresponding to kernels of the form $\sum \kSE \times \cos$.
 Both demonstrate, using Bochner's theorem \citep{bochner1959lectures}, that these kernels can approximate any stationary covariance function.
 Our language of kernels includes both of these kernel classes (see table~\ref{table:motifs}).
@@ -708,10 +695,8 @@ We believe this procedure has the potential to make powerful statistical model-b
 
 \section{Acknowledgements}
 
-\TBD{
-We thank [some people] for helpful discussions.
-This work was funded in part by NSERC, EPSRC grant [number], and Google.
-}
+We thank Colorado Reed, Yarin Gal and Christian Steinruecken for helpful discussions.
+This work was funded in part by NSERC, EPSRC and Google.
 
 \paragraph{Source Code}
 Source code to perform all experiments is available on github\footnotemark.

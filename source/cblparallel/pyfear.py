@@ -56,7 +56,19 @@ class fear(object):
         #    cmd = 'ssh -i %(rsa_key)s %(username)s@fear "%(cmd)s"' % {'rsa_key' : GATE_TO_REMOTE_KEY_FILE,
         #                                                              'username' : USERNAME,
         #                                                              'cmd' : cmd}
-        output =  self._connection.execute(cmd)
+        success = False
+        fail_count = 0
+        while not success:
+            try
+                output =  self._connection.execute(cmd)
+                success = True
+            except:
+                fail_count += 1
+                if fail_count >= 10:
+                    raise RuntimeError('Failed to send command 10 times')
+                print 'Failed to excute command: %s' cmd
+                print 'Sleeping for a minute'
+                time.sleep(60)
         return output
         
     def multiple_commands(self, cmds):

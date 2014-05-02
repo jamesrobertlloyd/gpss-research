@@ -1,0 +1,28 @@
+\newcommand{\fhbig}{1.6cm}
+\newcommand{\fwbig}{1.8cm}
+\newcommand{\kernpic}[1]{\includegraphics[height=\fhbig,width=\fwbig]{figures/structure_examples/#1}}
+\newcommand{\kernpicr}[1]{\rotatebox{90}{\includegraphics[height=\fwbig,width=\fhbig]{figures/structure_examples/#1}}}
+\newcommand{\addkernpic}[1]{{\includegraphics[height=\fhbig,width=\fwbig]{figures/additive_multi_d/#1}}}
+\newcommand{\largeplus}{\tabbox{{\Large+}}}
+\newcommand{\largeeq}{\tabbox{{\Large=}}}
+\newcommand{\largetimes}{\tabbox{{\Large$\times$}}}
+\begin{figure}[ht]
+\centering
+\renewcommand{\tabularxcolumn}[1]{>{\arraybackslash}m{#1}}
+%\begin{tabular}{m{\fwbig}m{0.01\textwidth}m{\fwbig}m{0.01\textwidth}m{\fwbig}m{\fwbig}m{\fwbig}}
+%\begin{tabular}{C{\fwbig}C{\fwbig}C{\fwbig}C{\fwbig}}%{m{\fwbig}m{\fwbig}m{\fwbig}}
+\begin{tabularx}{\columnwidth}{XXcXX}
+  \kernpic{se_times_lin} & \kernpic{se_times_lin_draws_s2} & \phantom{mm}
+& \kernpic{lin_times_per} & \kernpic{lin_times_per_draws_s2}
+\\
+  {\small $\kLin \times \kSE$} & {\small increasing variation} & \phantom{mm} 
+& {\small $\kLin \times \kPer$} & {\small growing amplitude}
+\\ \\ \\
+  \addkernpic{additive_kernel} & \addkernpic{additive_kernel_draw_sum} & \phantom{mm}
+& \addkernpic{sqexp_kernel}  & \addkernpic{sqexp_draw}
+\\
+  {\small $\kSE_1 + \kSE_2$} & {\small $f_1(x_1)$ $+ f_2(x_2)$} & \phantom{mm}
+& {\small $\kSE_1 \times \kSE_2$} & {\small $f(x_1, x_2)$}
+\end{tabularx}
+\end{figure}
+

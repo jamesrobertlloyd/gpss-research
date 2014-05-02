@@ -1,0 +1,25 @@
+\newcommand{\fhbig}{1.6cm}
+\newcommand{\fwbig}{1.8cm}
+\newcommand{\kernpic}[1]{\includegraphics[height=\fhbig,width=\fwbig]{figures/structure_examples/#1}}
+\newcommand{\largeplus}{\tabbox{{\Large+}}}
+\newcommand{\largeeq}{\tabbox{{\Large=}}}
+\newcommand{\largetimes}{\tabbox{{\Large$\times$}}}
+\begin{figure}[ht]
+\centering
+\renewcommand{\tabularxcolumn}[1]{>{\arraybackslash}m{#1}}
+\begin{tabularx}{\columnwidth}{XXcXX}
+  \kernpic{lin_times_lin} & \kernpic{lin_times_lin_draws} & \phantom{mm}
+& \kernpic{longse_times_per} & \kernpic{longse_times_per_draws_s1}
+\\
+  {\small $\kLin \times \kLin$} & {\small quadratic functions} & \phantom{mm}
+& {\small $\kSE \times \kPer$} & {\small locally \newline periodic}
+\\ \\
+%\midrule 
+  \kernpic{lin_plus_per} & \kernpic{lin_plus_per_draws} & \phantom{mm} 
+& \kernpic{se_plus_per} & \kernpic{se_plus_per_draws_s7}
+\\
+  {\small $\kLin + \kPer$} & {\small periodic plus linear trend} & \phantom{mm}
+& {\small $\kSE + \kPer$ } & {\small periodic plus smooth trend}
+\end{tabularx}
+\end{figure}
+

@@ -102,8 +102,10 @@ Joshua Tenenbaum\textsuperscript{2}, Zoubin Ghahramani\textsuperscript{1}
       \item Automatic model checking / criticism
     \end{itemize}
     \vspace{\baselineskip}
-    \item Make science go faster
-    \vspace{\baselineskip}
+    \item Make science and industry go faster\dots
+    \begin{itemize}
+      \item \dots and make it more fun
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
@@ -341,38 +343,6 @@ Four additive components have been identified in the data
 		  \includegraphics[width=0.9\linewidth]{figures/multi_norm}
 		\end{center}
 		\end{minipage}
-\end{frame}
-
-\begin{frame}{Bayesian linear regression rewritten}
-      \fboxsep=0pt
-	\noindent
-		\begin{minipage}[t]{0.48\linewidth}
-		  \vspace{-5.5\baselineskip}
-			$\{y_i \,:\, i=1,\ldots,n\}$ has a multivariate normal distribution
-    \begin{itemize}
-      \item $y \sim \mathcal{N}(\mathbf{0}, \mathbf{K})$
-      \item where $k_{ij} = x_i x_j + \delta_{ij} \sigma_\varepsilon^2$
-    \end{itemize}
-		\end{minipage}
-		\hfill
-		\begin{minipage}[t]{0.48\linewidth}
-		\begin{center}
-		  \includegraphics[width=0.9\linewidth]{figures/multi_norm}
-		\end{center}
-		\end{minipage}
-  
-  \vspace{\baselineskip}
-  \pause
-  
-  The covariance can be written as a function of pairs of $x_i$
-  \begin{equation*}
-    k_{ij} = k(x_i, x_j) = x_i x_j + \delta_{x_i = x_j}\sigma_\varepsilon^2
-  \end{equation*}
-  
-  \vspace{\baselineskip}
-  \pause
-  
-  Do we define a valid probability distribution if $\{x_i\} = \mathbb{R}$?
 \end{frame}
 
 \begin{frame}{Gaussian processes}
@@ -992,28 +962,20 @@ Four additive components have been identified in the data
 
 \begin{frame}{Current and future directions}
   \begin{itemize}
-    \item Automatic statistician for:
-    \begin{itemize}
-      \item Multivariate (non)linear regression
-      \item Classification, point processes, \dots
-      \item Completing and interpreting tables and databases
-    \end{itemize}
+    \item Multivariate linear regression
     \vspace{\baselineskip}
-    \item Probabilistic programming
-    \begin{itemize}
-      \item Probabilistic models are expressed in a general (Turing complete) programming
-language (e.g. Church/Venture/Anglican)
-      \item A universal inference engine can then be used to infer unobserved variables
-given observed data
-      \item This can be used to implement seach over the model space in an automated
-statistician
-    \end{itemize}
+    \item Multivariate non-linear regression
+    \vspace{\baselineskip}
+    \item Classification, point processes, \dots
+    \vspace{\baselineskip}
+    \item Completing and interpreting tables and databases
+    \vspace{\baselineskip}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Summary}
   \begin{itemize}
-    \item We have briefly introduced Bayesian statistics and Gaussian processes
+    \item Briefly introduced Bayesian statistics and Gaussian processes
     \vspace{\baselineskip}
     \item Described the beginnings of an automatic statistician for regression
     \begin{itemize}
@@ -1095,6 +1057,38 @@ statistician
     \vspace{\baselineskip}
     \item Inference should be {\bf tractable for all models} in language
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Bayesian linear regression rewritten}
+      \fboxsep=0pt
+	\noindent
+		\begin{minipage}[t]{0.48\linewidth}
+		  \vspace{-5.5\baselineskip}
+			$\{y_i \,:\, i=1,\ldots,n\}$ has a multivariate normal distribution
+    \begin{itemize}
+      \item $y \sim \mathcal{N}(\mathbf{0}, \mathbf{K})$
+      \item where $k_{ij} = x_i x_j + \delta_{ij} \sigma_\varepsilon^2$
+    \end{itemize}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.48\linewidth}
+		\begin{center}
+		  \includegraphics[width=0.9\linewidth]{figures/multi_norm}
+		\end{center}
+		\end{minipage}
+  
+  \vspace{\baselineskip}
+  \pause
+  
+  The covariance can be written as a function of pairs of $x_i$
+  \begin{equation*}
+    k_{ij} = k(x_i, x_j) = x_i x_j + \delta_{x_i = x_j}\sigma_\varepsilon^2
+  \end{equation*}
+  
+  \vspace{\baselineskip}
+  \pause
+  
+  Do we define a valid probability distribution if $\{x_i\} = \mathbb{R}$?
 \end{frame}
 
 \begin{frame}{A language of Gaussian process kernels}

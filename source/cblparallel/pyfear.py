@@ -59,14 +59,14 @@ class fear(object):
         success = False
         fail_count = 0
         while not success:
-            try
+            try:
                 output =  self._connection.execute(cmd)
                 success = True
             except:
                 fail_count += 1
                 if fail_count >= 10:
                     raise RuntimeError('Failed to send command 10 times')
-                print 'Failed to excute command: %s' cmd
+                print 'Failed to excute command: %s' % cmd
                 print 'Sleeping for a minute'
                 time.sleep(60)
         return output

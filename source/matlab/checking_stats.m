@@ -53,13 +53,24 @@ for j = 1:numel(decomp_list)
     
     samples = 1000;
     
-    X_post = X;
-    y_post = (y - data_mean) + chol(non_singular(decomp_sigma))' * ...
+    rand_indices = randsample(length(X), length(X), true);
+    X_post = X(rand_indices);
+    y_data_post = y(rand_indices);
+    
+    decomp_sigma_post = feval(cur_cov{:}, cur_hyp, X_post);
+    
+    data_mean_post = decomp_sigma_post' / complete_sigma * y;
+    
+    y_post = (y_data_post - data_mean_post) + chol(non_singular(decomp_sigma_post))' * ...
                                randn(length(y), 1);
         
-    % Get ready for MMD test                       
+    % Get ready for MMD test     
+    
+    rand_indices = randsample(length(X), length(X), true);
+    X_data = X(rand_indices);
+    y_data = y(rand_indices);
                            
-    A = [X, y];
+    A = [X_data, y_data];
     B = [X_post, y_post];
 
     % Standardise data
@@ -133,7 +144,7 @@ for j = 1:numel(decomp_list)
     % Perform MMD test
 
     alpha = 0.05;
-    params.shuff = 1000;
+    params.shuff = samples;
     [testStat,thresh,params,p] = mmdTestBoot_jl(A,B,alpha,params);
     
     mmd_p(j) = p;

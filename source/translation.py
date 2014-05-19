@@ -1217,6 +1217,62 @@ The green line and green dashed lines are the corresponding quantities under the
                                                   'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
                                                   'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
 
+    text += '''
+\section{MMD - experimental section}
+\label{sec:mmd}
+'''
+    text += '''
+\\begin{table}[htb]
+\\begin{center}
+{\small
+\\begin{tabular}{|r|r|}
+\hline
+\\bf{\#} & {mmd}\\\\
+\hline
+'''
+
+    table_text = '''
+%d & %s\\\\
+'''
+
+    for i in range(n_components):
+        text += table_text % (i+1, translate_p_value(fit_data['mmd_p'][i]))
+        
+    text += '''
+\hline
+\end{tabular}
+\caption{
+MMD $p$-values
+}
+\label{table:mmd}
+}
+\end{center}
+\end{table}
+'''
+
+    model_check_component_text = '''
+\subsubsection{Component %(component)d : %(short_description)s}
+
+\\begin{figure}[H]
+\\newcommand{\wmgd}{0.5\columnwidth}
+\\newcommand{\hmgd}{3.0cm}
+\\newcommand{\mdrd}{%(dataset_name)s}
+\\newcommand{\mbm}{\hspace{-0.3cm}}
+\includegraphics[width=\wmgd,height=\hmgd]{\mdrd/%(dataset_name)s_mmd_%(component)d}
+\caption{
+MMD plot}
+\label{fig:mmd%(component)d}
+\end{figure}
+'''
+
+    for i in range(n_components):
+        text += model_check_component_text % {'short_description' : short_descriptions[i], 'dataset_name' : dataset_name, 'component' : i+1, 'resid_var' : fit_data['cum_resid_vars'][i],
+                                              'discussion' : translate_p_values(fit_data, i),
+                                              'prev_var' : fit_data['cum_vars'][i-1], 'var' : fit_data['cum_vars'][i], 'MAE_reduction' : np.abs(fit_data['MAE_reductions'][i]),
+                                              'MAE_orig' : fit_data['MAEs'][i-1], 'MAE_new' : fit_data['MAEs'][i],
+                                              'incdecvar' : 'increases' if fit_data['cum_vars'][i] >= fit_data['cum_vars'][i-1] else 'reduces',
+                                              'incdecmae' : 'reduces' if fit_data['MAE_reductions'][i] >= 0 else 'increases'}
+
 #     text += '''
 # \\appendix
 # '''

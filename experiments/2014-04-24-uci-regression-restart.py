@@ -5,14 +5,14 @@ Experiment(description='Multi d regression experiment',
            k=1,
            debug=False, 
            local_computation=False, 
-           n_rand=9,
+           n_rand=2,
            sd=2, 
            jitter_sd=0.1,
            max_jobs=400, 
            verbose=False,
            make_predictions=False,
            skip_complete=True,
-           results_dir='../results/2014-04-21-uci-regression/',
+           results_dir='../results/2014-04-21-uci-regression-restart/',
            iters=250,
            base_kernels='SE,Lin,Noise',
            random_seed=1,
@@ -24,8 +24,8 @@ Experiment(description='Multi d regression experiment',
            full_iters=25,
            bundle_size=5,
            additive_form=True,
-           mean='ff.MeanConst()',      # Starting mean
-           kernel='ff.NoiseKernel()', # Starting kernel
+           mean='ff.MeanConst(c=39.2970002643)',      # Starting mean
+           kernel='ff.SumKernel(operands=[ff.NoiseKernel(sf=0.992564149134), ff.ProductKernel(operands=[ff.SqExpKernel(dimension=0, lengthscale=0.446413981842, sf=-0.172270499223), ff.SqExpKernel(dimension=6, lengthscale=1.52017941082, sf=1.90808679799)]), ff.ProductKernel(operands=[ff.SqExpKernel(dimension=0, lengthscale=6.26749787392, sf=2.42023059081), ff.SqExpKernel(dimension=1, lengthscale=6.07966455123, sf=1.33536670897), ff.SqExpKernel(dimension=3, lengthscale=3.78168500021, sf=-0.521535300832)]), ff.ProductKernel(operands=[ff.SqExpKernel(dimension=1, lengthscale=4.52193307207, sf=-2.83423935993), ff.SqExpKernel(dimension=3, lengthscale=-0.475114371177, sf=-1.30799230607), ff.SqExpKernel(dimension=7, lengthscale=-4.1220083947, sf=4.83400674575)]), ff.ProductKernel(operands=[ff.SqExpKernel(dimension=1, lengthscale=6.32403778175, sf=1.55627318007), ff.SqExpKernel(dimension=3, lengthscale=4.90387746338, sf=0.141619151618), ff.SqExpKernel(dimension=6, lengthscale=6.07802289484, sf=-0.657774296862), ff.SqExpKernel(dimension=7, lengthscale=-4.17834528345, sf=1.54315353644)])])', # Starting kernel
            lik='ff.LikGauss(sf=-np.Inf)', # Starting likelihood 
            score='bic',
            stopping_criteria=['no_improvement'],

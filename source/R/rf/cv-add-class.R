@@ -4,8 +4,8 @@ err.sum <- 0
 folds <- 10
 # data.name <- 'breast'
 # data.name <- 'heart'
-# data.name <- 'ionosphere'
-data.name <- 'liver'
+data.name <- 'ionosphere'
+# data.name <- 'liver'
 # data.name <- 'pima'
 # data.name <- 'sonar'
 
@@ -34,8 +34,8 @@ for (fold in 1:folds)
   # Go random forest!
   
   set.seed(1234)
-  trees <- 1000
-  do.trace <- 1000
+  trees <- 5000
+  do.trace <- 5000
   
   rf <- randomForest(features.train, as.factor(targets.train), xtest=features.test, ytest=as.factor(targets.test), do.trace=do.trace, ntree=trees, importance=TRUE, keep.forest=FALSE)
   predictions <- rf$test$votes[,2]

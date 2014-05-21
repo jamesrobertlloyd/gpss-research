@@ -387,6 +387,39 @@ def run_experiment_file(filename):
             print 'Skipping file %s' % file
 
     os.system('reset')  # Stop terminal from going invisible.   
+
+def repeat_predictions(filename):
+    """
+    A convenience function to re run the predictions from an experiment
+    """ 
+
+    expstring = open(filename, 'r').read()
+    exp = eval(expstring)
+    print experiment_fields_to_str(exp)
+
+    if not exp.make_predictions:
+        print 'This experiment does not make predictions'
+        return None
+    
+    data_sets = list(gen_all_datasets(exp.data_dir))
+
+    for r, file in data_sets:
+        # Check if this experiment has already been done.
+        output_file = os.path.join(exp.results_dir, file + "_result.txt")
+        if os.path.isfile(output_file):
+            print 'Predictions for %s' % file
+            data_file = os.path.join(r, file + ".mat")
+
+            X, y, D, Xtest, ytest = gpml.load_mat(data_file)
+            prediction_file = os.path.join(exp.results_dir, os.path.splitext(os.path.split(data_file)[-1])[0] + "_predictions.mat")
+            best_model = parse_results(output_file)
+            predictions = jc.make_predictions(X, y, Xtest, ytest, best_model, local_computation=True,
+                                              max_jobs=exp.max_jobs, verbose=exp.verbose, random_seed=exp.random_seed)
+            scipy.io.savemat(prediction_file, predictions, appendmat=False)
+
+            print "Finished file %s" % file
+        else:
+            print 'Results not found for %s' % file
     
 def perform_experiment(data_file, output_file, exp):
     
@@ -405,7 +438,7 @@ def perform_experiment(data_file, output_file, exp):
                                           max_jobs=exp.max_jobs, verbose=exp.verbose, random_seed=exp.random_seed)
         scipy.io.savemat(prediction_file, predictions, appendmat=False)
         
-    os.system('reset')  # Stop terminal from going invisible.
+    os.system('reset')  # Stop terminal from going invisible.   
    
 
 def run_debug_kfold():

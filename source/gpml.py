@@ -153,6 +153,10 @@ y = double(y)
 Xtest = double(Xtest)
 ytest = double(ytest)
 
+if size(ytest,1)==1
+    ytest = ytest';
+end
+
 %% Load GPML
 addpath(genpath('%(gpml_path)s'));
 
@@ -171,7 +175,7 @@ inference = %(inference)s
 
 model.hypers = hyp;
 
-%% Evaluate a test points.
+%% Evaluate at test points.
 [ymu, ys2, predictions, fs2, loglik] = gp(model.hypers, inference, meanfunc, covfunc, likfunc, X, y, Xtest, ytest)
 
 actuals = ytest;
@@ -179,7 +183,7 @@ timestamp = now
 
 '%(writefile)s'
 
-save('%(writefile)s', 'loglik', 'predictions', 'actuals', 'model', 'timestamp');
+save('%(writefile)s', 'loglik', 'predictions', 'actuals', 'model', 'timestamp', 'ymu', 'ys2', 'Xtest', 'ytest', 'X', 'y');
 
 a='Supposedly finished writing file'
 

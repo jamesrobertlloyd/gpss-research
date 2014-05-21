@@ -149,6 +149,47 @@ def make_predictions(X, y, Xtest, ytest, model, local_computation=False, max_job
     cblparallel.remove_temp_file(temp_results_file, local_computation)
     cblparallel.remove_temp_file(data_file, local_computation)
     # Return dictionary of MATLAB results
+    return results     
+
+   
+def make_predictions(X, y, Xtest, ytest, model, local_computation=False, max_jobs=500, verbose=True, random_seed=0, no_noise=False):
+    # Make data into matrices in case they're unidimensional.
+    if X.ndim == 1: X = X[:, nax]
+    if y.ndim == 1: y = y[:, nax]
+    ndata = y.shape[0]
+    # Save temporary data file in standard temporary directory
+    data_file = cblparallel.create_temp_file('.mat')
+    scipy.io.savemat(data_file, {'X': X, 'y': y, 'Xtest' : Xtest, 'ytest' : ytest})
+    # Copy onto cluster server if necessary
+    if not local_computation:
+        if verbose:
+            print 'Moving data file to fear'
+        cblparallel.copy_to_remote(data_file)
+    # Create prediction code
+    parameters ={'datafile': data_file.split('/')[-1],
+                 'writefile': '%(output_file)s',
+                 'gpml_path': cblparallel.gpml_path(local_computation),
+                 'mean_syntax': model.mean.get_gpml_expression(dimensions=X.shape[1]),
+                 'mean_params': '[ %s ]' % ' '.join(str(p) for p in model.mean.param_vector),
+                 'kernel_syntax': model.kernel.get_gpml_expression(dimensions=X.shape[1]),
+                 'kernel_params': '[ %s ]' % ' '.join(str(p) for p in model.kernel.param_vector),
+                 'lik_syntax': model.likelihood.get_gpml_expression(dimensions=X.shape[1]),
+                 'lik_params': '[ %s ]' % ' '.join(str(p) for p in model.likelihood.param_vector),
+                 'inference': model.likelihood.gpml_inference_method,
+                 'iters': str(30),
+                 'seed': str(random_seed)}
+    code = gpml.PREDICT_AND_SAVE_CODE % parameters
+    code = re.sub('% ', '%% ', code) # HACK - cblparallel currently does not like % signs
+    # Evaluate code - potentially on cluster
+    if local_computation:   
+        temp_results_file = cblparallel.run_batch_locally([code], language='matlab', max_cpu=1.1, max_mem=1.1, verbose=verbose)[0]
+    else:
+        temp_results_file = cblparallel.run_batch_on_fear([code], language='matlab', max_jobs=max_jobs, verbose=verbose)[0]
+    results = scipy.io.loadmat(temp_results_file)
+    # Remove temporary files (perhaps on the cluster server)
+    cblparallel.remove_temp_file(temp_results_file, local_computation)
+    cblparallel.remove_temp_file(data_file, local_computation)
+    # Return dictionary of MATLAB results
     return results
 
 

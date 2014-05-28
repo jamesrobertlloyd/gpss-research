@@ -2,7 +2,7 @@ import collections
 import itertools
 import numpy as np
 nax = np.newaxis
-import Image
+# import Image
 import mkl_hack
 import scipy.linalg
 import scipy.stats
@@ -180,28 +180,28 @@ def my_inv(A):
 def transp(A):
     return A.swapaxes(-2, -1)
 
-def resize(arr, size):
-    assert arr.ndim in [2, 3]
-    if arr.ndim == 3:
-        #return np.concatenate([shape_to_cons('**1', resize(arr[:,:,i], size))
-        #                       for i in range(3)], axis=2)
-        ans = np.concatenate([resize(arr[:,:,i], size)[:,:,nax] for i in range(3)], axis=2)
-        return ans
-    M, N = arr.shape
-    assert arr.dtype in ['float64', 'float32']
-    dtype = arr.dtype
-    m, n = size
-    if m is None:
-        assert n is not None
-        m = int(M * (float(n)/float(N)))
-    if n is None:
-        assert m is not None
-        n = int(N * (float(m)/float(M)))
+# def resize(arr, size):
+#     assert arr.ndim in [2, 3]
+#     if arr.ndim == 3:
+#         #return np.concatenate([shape_to_cons('**1', resize(arr[:,:,i], size))
+#         #                       for i in range(3)], axis=2)
+#         ans = np.concatenate([resize(arr[:,:,i], size)[:,:,nax] for i in range(3)], axis=2)
+#         return ans
+#     M, N = arr.shape
+#     assert arr.dtype in ['float64', 'float32']
+#     dtype = arr.dtype
+#     m, n = size
+#     if m is None:
+#         assert n is not None
+#         m = int(M * (float(n)/float(N)))
+#     if n is None:
+#         assert m is not None
+#         n = int(N * (float(m)/float(M)))
 
-    result = np.array(Image.fromarray(arr.astype('float32'), 'F').resize((n, m), Image.ANTIALIAS),
-                         dtype=dtype)
+#     result = np.array(Image.fromarray(arr.astype('float32'), 'F').resize((n, m), Image.ANTIALIAS),
+#                          dtype=dtype)
 
-    return result
+#     return result
 
 # Pretty printing
 

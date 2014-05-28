@@ -23,7 +23,7 @@ from utils import gaussians, psd_matrices
 
 import numpy as np
 nax = np.newaxis
-import pylab
+# import pylab
 import scipy.io
 import sys
 import os

@@ -1,7 +1,7 @@
 Automatic Bayesian Covariance Discovery
 =====================
 
-<img src="https://raw.githubusercontent.com/jamesrobertlloyd/gpss-research/master/logo.png" width="400">
+<img src="https://raw.githubusercontent.com/jamesrobertlloyd/gpss-research/master/logo.png" width="700">
 
 This repo contains the source code to run the system described in the paper
 
@@ -10,8 +10,8 @@ by James Robert Lloyd, David Duvenaud, Roger Grosse, Joshua B. Tenenbaum and Zou
 appearing in [AAAI 2014](http://www.aaai.org/Conferences/AAAI/aaai14.php).
 
 
-Abstract:
-----------
+### Abstract
+
 This paper presents the beginnings of an automatic statistician, focusing on regression problems. Our system explores an open-ended space of statistical models to discover a good explanation of a data set, and then produces a detailed report with figures and natural-language text. Our approach treats unknown regression functions nonparametrically using Gaussian processes, which has two important consequences. First, Gaussian processes can model functions in terms of high-level properties (e.g. smoothness, trends, periodicity, changepoints). Taken together with the compositional structure of our language of models this allows us to automatically describe functions in simple terms. Second, the use of flexible nonparametric models and a rich language for composing them in an open-ended manner also results in state-of-the-art extrapolation performance evaluated over 13 real time series data sets from various domains.
 
 Feel free to email the authors with any questions:  
@@ -20,8 +20,7 @@ Feel free to email the authors with any questions:
 [Roger Grosse](http://people.csail.mit.edu/rgrosse/) (rgrosse@mit.edu)  
 
 
-Data used in the paper
-------------------
+### Data used in the paper
 
  - [Full time series](https://github.com/jamesrobertlloyd/gpss-research/tree/master/data/tsdlr-renamed)
  - [Extrapolation](https://github.com/jamesrobertlloyd/gpss-research/tree/master/data/tsdlr_9010)

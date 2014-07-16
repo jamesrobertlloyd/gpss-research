@@ -1,0 +1,56 @@
+Experiment all_results for
+ datafile = ../data/racism/prejudice.mat
+
+ Running experiment:
+description = Some data about prejudice pointed out by Emma Smith,
+data_dir = ../data/racism/,
+max_depth = 10,
+random_order = False,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 400,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2014-05-28-prejudice-simple/,
+iters = 250,
+base_kernels = SE,Lin,Const,Noise,
+additive_form = True,
+mean = ff.MeanZero(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikGauss(sf=-np.Inf),
+verbose_results = False,
+random_seed = 1,
+period_heuristic = 3,
+max_period_heuristic = 5,
+subset = False,
+subset_size = 250,
+full_iters = 0,
+bundle_size = 10,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'}), ('A', ('None',), {'A': 'kernel'})],
+score = bic,
+period_heuristic_type = min,
+stopping_criteria = ['no_improvement'],
+improvement_tolerance = 0.01,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=1.32810294495), LinearKernel(dimension=0, location=1574.04258112, sf=-1.85253694247)]), likelihood=LikGauss(sf=-inf), nll=75.9237789945, ndata=26)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=1.02292508202), SqExpKernel(dimension=0, lengthscale=1.52109165553, sf=1.10556169717), LinearKernel(dimension=0, location=1625.74409095, sf=-1.72027210137)]), likelihood=LikGauss(sf=-inf), nll=72.1077173542, ndata=26)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=1.02662755486), ConstKernel(sf=4.20048460965), SqExpKernel(dimension=0, lengthscale=1.61417395566, sf=1.28365177399)]), likelihood=LikGauss(sf=-inf), nll=72.6386081159, ndata=26)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=1.02662755486), ConstKernel(sf=4.20048460965), SqExpKernel(dimension=0, lengthscale=1.61417395566, sf=1.28365177399)]), likelihood=LikGauss(sf=-inf), nll=72.6386081159, ndata=26)

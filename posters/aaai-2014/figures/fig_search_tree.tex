@@ -1,0 +1,59 @@
+% \begin{tikzpicture}
+% [sibling distance=0.23\columnwidth,-,thick, level distance=0.1\columnwidth, transform canvas={scale = 0.9}]
+% %\footnotesize
+% \node[shape=rectangle,draw,thick,fill=camlightblue!30] {No structure}
+%   child {node {$\SE$}
+%   }
+%   child {node[shape=rectangle,draw,thick,fill=camlightblue!30] {$\RQ$}
+%     [sibling distance=0.16\columnwidth]
+%     child {node {$\SE$ + \RQ}}
+%     child {node {\ldots}}
+%     child {node[shape=rectangle,draw,thick,fill=camlightblue!30] {$\Per + \RQ$}
+%       [sibling distance=0.2\columnwidth]
+%       child {node {$\SE + \Per + \RQ$}}
+%       child {node {\ldots}}
+%       child {node[shape=rectangle,draw,thick,fill=camlightblue!30] {$\SE \times (\Per + \RQ)$}
+%         [sibling distance=0.14\columnwidth]
+%         child {node {\ldots}}
+%         child {node {\ldots}}
+%         child {node {\ldots}}
+%       }
+%       child {node {\ldots}}
+%     }
+%     %child {node {$\RQ \times \SE$}}
+%     child {node {\ldots}}
+%     child {node {$\Per \times \RQ$}}
+%   }
+%   child {node {$\Lin$}
+%   }
+%   child {node {$\Per$}
+%   };
+% \end{tikzpicture}
+\begin{tikzpicture}
+[sibling distance=0.26\columnwidth,-,thick, level distance=0.12\columnwidth]
+%\footnotesize
+\node[shape=rectangle,draw,thick,fill=red!75] {No structure}
+  child {node {$\SE$}
+  }
+  child {node[shape=rectangle,draw,thick,fill=orange!75] {$\Lin$}
+    [sibling distance=0.20\columnwidth]
+    child {node {$\Lin + \Per$}}
+    child {node[shape=rectangle,draw,thick,fill=yellow!75] {$\Lin \times \SE$}
+      [sibling distance=0.20\columnwidth]
+      child {node {$\Lin \times \SE + \SE$}}
+      child {node {\ldots}}
+      child {node[shape=rectangle,draw,thick,fill=green!75] {$\Lin \times \left( \SE + \Per \right)$}
+        [sibling distance=0.16\columnwidth]
+        child {node {\ldots}}
+        child {node {\ldots}}
+        child {node {\ldots}}
+      }
+      child {node {\ldots}}
+    }
+    %child {node {$\RQ \times \SE$}}
+    child {node {\ldots}}
+    child {node {$\Lin \times \Per$}}
+  }
+  child {node {$\Per$}};
+\end{tikzpicture}
+

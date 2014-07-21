@@ -1,3 +1,5 @@
+This is part of the [automatic statistician](http://www.automaticstatistician.com/) project
+
 Automatic Bayesian Covariance Discovery
 =====================
 

@@ -288,23 +288,6 @@ This causes the standard deviation of the model to vary linearly without affecti
   \end{block}
 \end{frame}
 
-\begin{frame}{Noun phrase and postmodifier forms}
-  \begin{center}
-    \footnotesize
-    \begin{tabular}{l|l|l}
-      Kernel & Noun phrase & Postmodifier phrase \\
-      \midrule
-      $\kWN$  & uncorrelated noise & n/a\\
-      $\kC$   & constant & n/a \\
-      $\kSE$  & smooth function & whose shape changes smoothly\\
-      $\kPer$ & periodic function & modulated by a periodic function\\
-      $\kLin$ & linear function & with linearly varying amplitude\\ 
-      $\prod_k \kLin^{(k)}$ & polynomial & with polynomially varying amplitude\\
-      $\prod_k \boldsymbol{\sigma}^{(k)}$ & n/a & which applies until / from [changepoint]
-    \end{tabular}
-  \end{center}
-\end{frame}
-
 \begin{frame}{Automatically generated reports}
   \input{figures/flow_chart_report}
 \end{frame}
@@ -379,20 +362,41 @@ This causes the standard deviation of the model to vary linearly without affecti
   \end{center}
 \end{frame}
 
-\end{document}
+\begin{frame}{Appendix}
+\end{frame}
 
-\begin{frame}{Title}
+\begin{frame}{Goals of the automatic statistician project}
   \begin{itemize}
-    \item Content
+    \item Provide a set of tools for understanding data that require minimal expert input
     \vspace{\baselineskip}
-    \item Content
-    \vspace{\baselineskip}
-    \item Content
+    \item Uncover challenging research problems in \eg
     \begin{itemize}
-       \item Content
-       \item Content
-     \end{itemize}
+      \item Automated inference
+      \item Model construction and comparison
+      \item Data visualisation and interpretation
+      \item Automatic model checking / criticism
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Make science go faster\dots
+    \begin{itemize}
+      \item \dots and make it more fun
+    \end{itemize}
   \end{itemize}
+\end{frame}
+
+\begin{frame}{The kernel determines generalisation}
+  \begin{center}
+    \only<1>{Long lengthscale SE}
+    \only<2>{Short lengthscale SE}
+    \only<3>{Long lengthscale SE + Short lengthscale SE}
+    \only<4>{SE + SE + SE + SE $\times$ Periodic}
+  \end{center}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{figures/mauna-plots/SE-long.pdf}
+    \includegraphics<2>[width=0.8\textwidth]{figures/mauna-plots/SE-short.pdf}
+    \includegraphics<3>[width=0.8\textwidth]{figures/mauna-plots/SE-SE.pdf}
+    \includegraphics<4>[width=0.8\textwidth]{figures/mauna-plots/Complex.pdf}
+  \end{center}
 \end{frame}
 
 \begin{frame}{Modeling changepoints}
@@ -415,21 +419,6 @@ We define the changepoint operator $\kernel = \kCP(\kernel_1, \kernel_2)$.
 
 \end{frame}
 
-\begin{frame}{The kernel determines generalisation}
-  \begin{center}
-    \only<1>{Long lengthscale SE}
-    \only<2>{Short lengthscale SE}
-    \only<3>{Long lengthscale SE + Short lengthscale SE}
-    \only<4>{SE + SE + SE + SE $\times$ Periodic}
-  \end{center}
-  \begin{center}
-    \includegraphics<1>[width=0.8\textwidth]{figures/mauna-plots/SE-long.pdf}
-    \includegraphics<2>[width=0.8\textwidth]{figures/mauna-plots/SE-short.pdf}
-    \includegraphics<3>[width=0.8\textwidth]{figures/mauna-plots/SE-SE.pdf}
-    \includegraphics<4>[width=0.8\textwidth]{figures/mauna-plots/Complex.pdf}
-  \end{center}
-\end{frame}
-
 \begin{frame}{An expressive language of models}
 \begin{center}
 \begin{tabular}{l|l}
@@ -447,6 +436,75 @@ Heteroscedasticity & \eg $\kSE + \kLin \times \kWN$
 \end{tabular}
 \end{center}
 Note: $\cos$ is a special case of our version of $\kPer$
+\end{frame}
+
+\begin{frame}{Example: Mauna Loa Keeling Curve}
+\hspace{-1.2cm}
+\only<1>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_0/03-mauna2003-s_all_small.pdf}}
+\only<2>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_1/03-mauna2003-s_all_small.pdf}}
+\only<3>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_2/03-mauna2003-s_all_small.pdf}}
+\only<4>{\includegraphics[width=0.4\textwidth]{figures/11-Feb-v4-03-mauna2003-s_max_level_3/03-mauna2003-s_all_small.pdf}}
+
+\vspace{-3.5cm}
+\begin{minipage}[t][14cm][t]{1.14\linewidth}
+\begin{flushleft}
+\hspace{5.5cm}
+\vspace{-8cm}
+\makebox[\textwidth][c]{
+\raisebox{10cm}{
+\vspace{-8cm}
+\begin{tikzpicture}
+[sibling distance=0.18\columnwidth,-,thick, level distance=0.13\columnwidth]
+%\footnotesize
+\node[shape=rectangle,draw,thick] {Start}
+%\pause
+  child {node {$\SE$}}
+%  fill=camlightblue!30
+  child {node[shape=rectangle,draw,thick] {$\RQ$}
+    [sibling distance=0.16\columnwidth]
+%    {\visible<2->{ child {node {\ldots}}}}
+    child [hide on=-1] {node {$\SE$ + \RQ}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node[shape=rectangle,draw,thick] {$\Per + \RQ$}
+      [sibling distance=0.23\columnwidth]
+      child [hide on=-2] {node {$\SE + \Per + \RQ$}}
+      child [hide on=-2] {node {\ldots}}
+      child [hide on=-2] {node[shape=rectangle,draw,thick] {$\SE \times (\Per + \RQ)$}
+        [sibling distance=0.14\columnwidth]
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+      }
+      child [hide on=-2] {node {\ldots}}
+    }
+    %child {node {$\RQ \times \SE$}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node {$\Per \times \RQ$}}
+  }
+  child {node {$\Lin$}}
+  child {node {$\Per$}}
+  ;
+\end{tikzpicture}}
+}\end{flushleft}
+\end{minipage}
+\only<4>{}
+\end{frame}
+
+\begin{frame}{Noun phrase and postmodifier forms}
+  \begin{center}
+    \footnotesize
+    \begin{tabular}{l|l|l}
+      Kernel & Noun phrase & Postmodifier phrase \\
+      \midrule
+      $\kWN$  & uncorrelated noise & n/a\\
+      $\kC$   & constant & n/a \\
+      $\kSE$  & smooth function & whose shape changes smoothly\\
+      $\kPer$ & periodic function & modulated by a periodic function\\
+      $\kLin$ & linear function & with linearly varying amplitude\\ 
+      $\prod_k \kLin^{(k)}$ & polynomial & with polynomially varying amplitude\\
+      $\prod_k \boldsymbol{\sigma}^{(k)}$ & n/a & which applies until / from [changepoint]
+    \end{tabular}
+  \end{center}
 \end{frame}
 
 \begin{frame}{Challenges}
@@ -477,5 +535,21 @@ Note: $\cos$ is a special case of our version of $\kPer$
     \vspace{\baselineskip}
     \item Completing and interpreting tables and databases
     \vspace{\baselineskip}
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
+\begin{frame}{Title}
+  \begin{itemize}
+    \item Content
+    \vspace{\baselineskip}
+    \item Content
+    \vspace{\baselineskip}
+    \item Content
+    \begin{itemize}
+       \item Content
+       \item Content
+     \end{itemize}
   \end{itemize}
 \end{frame}

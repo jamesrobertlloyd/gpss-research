@@ -22,7 +22,7 @@ function samples_density_plot( xdata, ydata, xrange, forecast_mu, forecast_K, da
         end  
         hold on;   
         % Plot samples
-        for n_sample = 1:10
+        for n_sample = 1:5
             %cur_ixs = sort(randperm(numel(xrange), 2));
             %cur_range = cur_ixs(1):cur_ixs(2);
             cur_range = 1:numel(xrange);

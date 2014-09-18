@@ -42,7 +42,7 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title{The automatic statistician project}
+\title{The Automatic Statistician Project}
 
 \author{
 \includegraphics[height=0.16\textwidth]{../figures/JamesLloyd4}
@@ -94,15 +94,14 @@ Joshua Tenenbaum\textsuperscript{4}, Zoubin Ghahramani\textsuperscript{1}
   \begin{itemize}
     \item Provide a set of tools for understanding data that require minimal expert input
     \vspace{\baselineskip}
+    \vspace{\baselineskip}
     \item Uncover challenging research problems in \eg
     \begin{itemize}
       \item Automated inference
       \item Model construction and comparison
       \item Data visualisation and interpretation
+      \item Model checking
     \end{itemize}
-    \vspace{\baselineskip}
-    \item Advance the fields of machine learning and statistics in general
-    \vspace{\baselineskip}
   \end{itemize}
 \end{frame}
 
@@ -146,19 +145,31 @@ Joshua Tenenbaum\textsuperscript{4}, Zoubin Ghahramani\textsuperscript{1}
   \end{center}
 \end{frame}
 
-\begin{frame}{Agenda}
+\begin{frame}{Defining a language of models}
+  \input{../figures/flow_chart_language}
+\end{frame}
+
+\begin{frame}{A language of Gaussian processes}
   \begin{itemize}
-    \item Quick introduction to Gaussian processes for regression
+    \item A Gaussian process is collection of random variables, any finite number of which have a joint Gaussian distribution
+    \pause
     \vspace{\baselineskip}
-    \item A compositional language of regression models
+    \item We can write this collection of random variables as $\{f(x) : x \in \mathcal{X}\}$ \ie a function $f$ evaluated at inputs $x$
+    \pause
     \vspace{\baselineskip}
-    \item Searching through this space
+    \item A \gp{} is completely specified by
+    \begin{itemize}
+      \item Mean function, $\mu(x)=\mathbb{E}(f(x))$
+      \item Covariance / kernel function, $\kernel(x,x') = \Cov(f(x),f(x'))$
+      \item Denoted $f \,\sim\, \gp{}(\mu,\kernel)$
+    \end{itemize}
     \vspace{\baselineskip}
-    \item Automatically describing any model in natural language
-    \vspace{\baselineskip}
-    \item Examples of automatically generated output and model checking
-    \vspace{\baselineskip}
-    \item Future directions and challenges
+    \pause
+    \item Two important facts for this talk
+    \begin{itemize}
+      \item Can be used to perform Bayesian (nonlinear) regression
+      \item High level properties determined by kernel
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
@@ -179,60 +190,16 @@ Joshua Tenenbaum\textsuperscript{4}, Zoubin Ghahramani\textsuperscript{1}
   \end{center}
 \end{frame}
 
-\begin{frame}{Gaussian processes}
+\begin{frame}{Properties specified by kernel}
   \begin{itemize}
-    \item A Gaussian process is collection of random variables, any finite number of which have a joint Gaussian distribution
-    \pause
-    \vspace{\baselineskip}
-    \item We can write this collection of random variables as $\{f(x) : x \in \mathcal{X}\}$ \ie a function $f$ evaluated at inputs $x$
-    \pause
-    \vspace{\baselineskip}
-    \item A \gp{} is completely specified by
-    \begin{itemize}
-      \item Mean function, $\mu(x)=\mathbb{E}(f(x))$
-      \item Covariance / kernel function, $\kernel(x,x') = \Cov(f(x),f(x'))$
-      \item Denoted $f \,\sim\, \gp{}(\mu,\kernel)$
-    \end{itemize}
-    \vspace{\baselineskip}
-    \pause
-    \item Can be thought of as a probability distribution on functions
+    \only<1>{\item The periodic kernel encodes for a probability distribution over periodic functions}
+    \only<2>{\item The linear kernel results in a probability distribution over linear functions}
   \end{itemize}
-\end{frame}
-
-\begin{frame}{Zero mean Gaussian processes}
-  \begin{itemize}
-    \item It is common practice to use a zero mean function since the mean can be marginalised out
-  \begin{itemize}
-    \item Suppose, ${f(x) \,|\, a \,\sim\, \gp{}(a \times \mu(x), \kernel(x,x'))}$ where $a \,\sim\, \mathcal{N}(0,1)$
-    \item Then equivalently, $f(x) \,\sim\, \gp{}(0, \mu(x)\mu(x') + \kernel(x,x'))$
-  \end{itemize}
-  \vspace{\baselineskip}
-  \pause
-  \item We therefore define a language of \gp{} regression models by
-specifying a {\bf language of kernels}
-  \vspace{\baselineskip}
-  \pause
-  \item The choice of kernel has a large impact on the inductive bias
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Kernel strongly affects extrapolation}
+  %\vspace{\baselineskip}
   \begin{center}
-    \only<1>{Long lengthscale SE \\ Slowly varying and smooth}
-    \only<2>{Short lengthscale SE \\ Quickly varying and smooth}
-    \only<3>{Long lengthscale SE + Short lengthscale SE \\ Sum of slowly and quickly varying smooth functions}
-    \only<4>{SE + SE + SE + SE $\times$ Periodic \\ Sum of smooth and approximately periodic functions}
+    \includegraphics<1>[width=0.8\textwidth]{../figures/quad/periodic_prior}
+    \includegraphics<2>[width=0.8\textwidth]{../figures/quad/new_lin_prior}
   \end{center}
-  \begin{center}
-    \includegraphics<1>[width=0.8\textwidth]{../figures/mauna-plots/SE-long.pdf}
-    \includegraphics<2>[width=0.8\textwidth]{../figures/mauna-plots/SE-short.pdf}
-    \includegraphics<3>[width=0.8\textwidth]{../figures/mauna-plots/SE-SE.pdf}
-    \includegraphics<4>[width=0.8\textwidth]{../figures/mauna-plots/Complex.pdf}
-  \end{center}
-\end{frame}
-
-\begin{frame}{Defining a language of models}
-  \input{../figures/flow_chart_language}
 \end{frame}
 
 \begin{frame}{The atoms of our language}  
@@ -474,8 +441,9 @@ We can therefore describe each component separately
 
 \begin{frame}{Products of kernels}
   \begin{align*}
-    \phantom{\underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times }
-    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
+    \hspace*{-6mm}
+    \underbrace{\kPer}_{\textnormal{\scriptsize a periodic function}} \phantom{\times 
+    \underbrace{\kSE}_{\textnormal{\scriptsize whose shape changes smoothly}} \times
     \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
     \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
   \end{align*}
@@ -498,8 +466,9 @@ We can therefore describe each component separately
 
 \begin{frame}{Products of kernels - $\kSE$}
   \begin{align*}
-    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
-    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
+    \hspace*{-6mm}
+    \underbrace{\kPer}_{\textnormal{\scriptsize a periodic function}} \times 
+    \underbrace{\kSE}_{\textnormal{\scriptsize whose shape changes smoothly}} \phantom{\times
     \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
     \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
   \end{align*}
@@ -522,8 +491,9 @@ We can therefore describe each component separately
 
 \begin{frame}{Products of kernels - $\kLin$}
   \begin{align*}
-    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
-    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
+    \hspace*{-6mm}
+    \underbrace{\kPer}_{\textnormal{\scriptsize a periodic function}} \times 
+    \underbrace{\kSE}_{\textnormal{\scriptsize whose shape changes smoothly}} \times
     \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \phantom{\times 
     \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
   \end{align*}
@@ -548,8 +518,9 @@ This causes the standard deviation of the model to vary linearly without affecti
 
 \begin{frame}{Products of kernels - changepoints}
   \begin{align*}
-    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
-    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
+    \hspace*{-6mm}
+    \underbrace{\kPer}_{\textnormal{\scriptsize a periodic function}} \times 
+    \underbrace{\kSE}_{\textnormal{\scriptsize whose shape changes smoothly}} \times
     \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
     \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}
   \end{align*}
@@ -759,6 +730,84 @@ Four additive components have been identified in the data
   \end{block}
 \end{frame}
 
+\begin{frame}{What next?}
+ \begin{itemize}
+   \item Plenty of ways to extend this line of work \eg
+   \begin{itemize}
+     \item Reducing the computational cost of model search
+     \item Increasing the expressivity of the modelling language (\eg monotonicity, positive functions)
+     \item Extending descriptions to multi-dimensional functions
+     \item Different likelihoods (\eg outlier models)
+     \item Different types of data (\eg collections of exchangeable arrays)
+     \item Missing data
+     \item Building causal models of multivariate data with complex functional relationships
+     \item \dots
+   \end{itemize}
+   \vspace{\baselineskip}
+   \item How can we tie all of this together?
+ \end{itemize}
+\end{frame}
+
+\begin{frame}{An API for statistical modelling}
+  \begin{itemize}
+    \item APIs for prediction implemented by \eg  Google prediction API, auto-WEKA, \dots
+    \begin{itemize}
+      \item Essentially implement the functions train and predict
+      \item Highly modular
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item We have started implementing some additional functions
+    \begin{itemize}
+      \item describe
+      \item criticise / check
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item What else is needed and how can we keep it modular?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Thanks}
+  \begin{center}
+  \Huge
+  Thanks
+  \end{center}
+\end{frame}
+
+\begin{frame}{Appendix}
+\end{frame}
+
+\begin{frame}{Zero mean Gaussian processes}
+  \begin{itemize}
+    \item It is common practice to use a zero mean function since the mean can be marginalised out
+  \begin{itemize}
+    \item Suppose, ${f(x) \,|\, a \,\sim\, \gp{}(a \times \mu(x), \kernel(x,x'))}$ where $a \,\sim\, \mathcal{N}(0,1)$
+    \item Then equivalently, $f(x) \,\sim\, \gp{}(0, \mu(x)\mu(x') + \kernel(x,x'))$
+  \end{itemize}
+  \vspace{\baselineskip}
+  \pause
+  \item We therefore define a language of \gp{} regression models by
+specifying a {\bf language of kernels}
+  \vspace{\baselineskip}
+  \pause
+  \item The choice of kernel has a large impact on the inductive bias
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Kernel strongly affects extrapolation}
+  \begin{center}
+    \only<1>{Long lengthscale SE \\ Slowly varying and smooth}
+    \only<2>{Short lengthscale SE \\ Quickly varying and smooth}
+    \only<3>{Long lengthscale SE + Short lengthscale SE \\ Sum of slowly and quickly varying smooth functions}
+    \only<4>{SE + SE + SE + SE $\times$ Periodic \\ Sum of smooth and approximately periodic functions}
+  \end{center}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{../figures/mauna-plots/SE-long.pdf}
+    \includegraphics<2>[width=0.8\textwidth]{../figures/mauna-plots/SE-short.pdf}
+    \includegraphics<3>[width=0.8\textwidth]{../figures/mauna-plots/SE-SE.pdf}
+    \includegraphics<4>[width=0.8\textwidth]{../figures/mauna-plots/Complex.pdf}
+  \end{center}
+\end{frame}
+
 \begin{frame}{Model checking / criticism}
   \input{../figures/flow_chart_check}
 \end{frame}
@@ -854,58 +903,8 @@ The following discrepancies between the prior and posterior distributions for th
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/11-unemployment_2} & 
 \mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/11-unemployment_qq_bands_2}
 \end{tabular}
-\end{frame}
-
-\begin{frame}{What next?}
- \begin{itemize}
-   \item Plenty of ways to extend this line of work \eg
-   \begin{itemize}
-     \item Reducing the computational cost of model search
-     \item Increasing the expressivity of the modelling language (\eg monotonicity, positive functions)
-     \item Extending descriptions to multi-dimensional functions
-     \item Different likelihoods (\eg outlier models)
-     \item Different types of data (\eg collections of exchangeable arrays)
-     \item Missing data
-     \item Building causal models of multivariate data with complex functional relationships
-     \item \dots
-   \end{itemize}
-   \vspace{\baselineskip}
-   \item How can we tie all of this together?
- \end{itemize}
-\end{frame}
-
-\begin{frame}{An API for statistical modelling}
-  \begin{itemize}
-    \item Many automatic / standardised tools for machine learning
-    \begin{itemize}
-      \item Goole prediction API, scikit-learn, auto-WEKA, \dots
-    \end{itemize}
-    \vspace{\baselineskip}
-    \item Focused on prediction, essentially implementing the following functions
-    \begin{itemize}
-      \item train
-      \item predict
-    \end{itemize}
-    \vspace{\baselineskip}
-    \item Let's implement some more functions
-    \begin{itemize}
-      \item describe
-      \item criticise (check)
-      \item answer question
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Thanks}
-  \begin{center}
-  \Huge
-  Thanks
-  \end{center}
-\end{frame}
-
-\begin{frame}{Appendix}
-\end{frame}
-
+\end{frame} 
+  
 \end{document}
 
 \begin{frame}{Title}
@@ -919,5 +918,21 @@ The following discrepancies between the prior and posterior distributions for th
        \item Content
        \item Content
      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Agenda}
+  \begin{itemize}
+    \item Quick introduction to Gaussian processes for regression
+    \vspace{\baselineskip}
+    \item A compositional language of regression models
+    \vspace{\baselineskip}
+    \item Searching through this space
+    \vspace{\baselineskip}
+    \item Automatically describing any model in natural language
+    \vspace{\baselineskip}
+    \item Examples of automatically generated output and model checking
+    \vspace{\baselineskip}
+    \item Future directions and challenges
   \end{itemize}
 \end{frame}

@@ -251,6 +251,48 @@ for i = 1:numel(x_data)
     save2pdf([ 'quad/' 'sq_exp_' int2str(i) '.pdf'], gcf, 600, true);
 end
 
+%% Periodic prior
+    
+cov_all = {@covSum, {@covPeriodicNoDC, @covNoise}};
+cov_fn = {@covPeriodicNoDC};
+hyp.cov = [-0.5,-1.2,-0.2,log(0.1)];
+
+K = feval(cov_fn{:}, hyp.cov, xrange);
+%prior_var = diag(K);
+
+figure(fig_count);
+fig_count = fig_count + 1;
+
+%mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+samples_density_plot(x_data, y, xrange, zeros(size(xrange)), K, false, true);
+xlim([0,1]);
+ylim([-2,2]);
+
+pause(0.5);
+drawnow;
+save2pdf([ 'quad/' 'periodic_prior' '.pdf'], gcf, 600, true);
+
+%% Linear prior
+    
+cov_all = {@covSum, {@covLINscaleshift, @covNoise}};
+cov_fn = {@covLINscaleshift};
+hyp.cov = [0,0,log(0.1)];
+
+K = feval(cov_fn{:}, hyp.cov, xrange);
+%prior_var = diag(K);
+
+figure(fig_count);
+fig_count = fig_count + 1;
+
+%mean_var_plot(x_data, y, xrange, zeros(size(xrange)), 2*sqrt(prior_var), false, true);
+samples_density_plot(x_data, y, xrange, zeros(size(xrange)), K, false, true);
+xlim([0,1]);
+ylim([-2,2]);
+
+pause(0.5);
+drawnow;
+save2pdf([ 'quad/' 'new_lin_prior' '.pdf'], gcf, 600, true);
+
 %% Close all
 
 close all;

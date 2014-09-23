@@ -1,0 +1,33 @@
+\begin{tikzpicture}[]
+  \begin{scope}[yshift=+0.35\textwidth]
+    \node (quote) [text width=0.7\textwidth, align=center] at (0.25\textwidth,0)
+    {``If you can't explain it simply, you don't understand it well enough''};
+  \end{scope}
+  \pause
+  \begin{scope}[yshift=0\textwidth]
+    \begin{scope}[xshift=0.0\textwidth]
+      \node [mybox] (box){
+        \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\textwidth]{../figures/old-gpss/03-mauna2003-s_3.pdf}}
+      };
+    \end{scope}
+    \pause  
+    \begin{scope}[xshift=0.25\textwidth]
+    \draw[->,thick] (-0.04\textwidth,0.05\textwidth) -- (0.04\textwidth,0.11\textwidth); 
+    \draw[->,thick] (-0.04\textwidth,-0.05\textwidth) -- (0.04\textwidth,-0.11\textwidth); 
+    \end{scope}
+    \begin{scope}[xshift=0.5\textwidth]
+      \begin{scope}[yshift=+0.15\textwidth]
+      \node [mybox] (box){
+        \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\textwidth]{../figures/03-mauna2003_3}}
+      };
+      \end{scope}
+      \node[font=\LARGE] at (0,0) {$+$};
+      \begin{scope}[yshift=-0.15\textwidth]
+      \node [mybox] (box){
+        \fbox{\includegraphics[trim=0cm 0cm 0cm 0cm, clip, width=0.35\textwidth]{../figures/03-mauna2003_4}}
+      };
+      \end{scope}
+    \end{scope}
+  \end{scope}
+\end{tikzpicture}
+

@@ -227,7 +227,7 @@ def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp
                                      reverse=True)
 
                 # Subset hack
-                new_results = new_results[int(np.floor(len(new_results) * 9 / 10.0)):]
+                new_results = new_results[int(np.floor(len(new_results) * 0.5)):]
                 current_models = new_results
 
             # Update user
@@ -452,7 +452,7 @@ def exp_param_defaults(exp_params):
                     stopping_criteria=['no_improvement'], # Other reasons to stop the search
                     improvement_tolerance=0.1, # Minimum improvement for no_improvement stopping criterion
                     n_processes=None,             # Number of processes in multiprocessing.pool - None means max
-                    max_tasks_per_process=2,      # This is set to one (or a small #) whilst there is a GPy memory leak
+                    max_tasks_per_process=1,      # This is set to one (or a small #) whilst there is a GPy memory leak
                     search_operators=[('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),
                                       ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
                                       #('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),

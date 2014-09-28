@@ -8,10 +8,10 @@ This file quickly demonstrates some of the capabilities of the project.
 Created April 2013          
 """
 
-import experiment
+import experiment_old
 import postprocessing
 
-experiment.run_experiment_file('../examples/fast_example.py')
+experiment_old.run_experiment_file('../examples/fast_example.py')
 
 # To see the outcome of this experiment, look in examples/01-airline_result.txt
 

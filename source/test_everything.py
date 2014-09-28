@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-import experiment
+import experiment_old
 import flexible_function as ff
 import grammar
 #import translation
@@ -435,7 +435,7 @@ class experiment_testcase(unittest.TestCase):
         k = ff.SqExpKernel(dimension=0, lengthscale=0, sf=0)
         m1 = ff.GPModel(kernel=k, nll=np.nan, ndata=100)
         m2 = ff.GPModel(kernel=k.copy(), nll=0, ndata=100)
-        (not_nan, eq_nan) = experiment.remove_nan_scored_models([m1,m2], score='bic')
+        (not_nan, eq_nan) = experiment_old.remove_nan_scored_models([m1,m2], score='bic')
         assert (len(not_nan) == 1) and (len(eq_nan) == 1)
 
 class misc_testcase(unittest.TestCase):

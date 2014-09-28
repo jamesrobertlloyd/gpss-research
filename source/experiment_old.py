@@ -155,7 +155,8 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
         new_results = jc.evaluate_models(current_models, X, y, verbose=exp.verbose, local_computation=exp.local_computation,
                                           zip_files=True, max_jobs=exp.max_jobs, iters=exp.iters, random_seed=exp.random_seed,
                                           subset=exp.subset, subset_size=exp.subset_size, full_iters=exp.full_iters, bundle_size=exp.bundle_size)
-            
+                                          subset=exp.subset, subset_size=exp.subset_size, full_iters=exp.full_iters, bundle_size=exp.bundle_size)
+
         # Remove models that were optimised to be out of bounds (this is similar to a 0-1 prior)
         new_results = [a_model for a_model in new_results if not a_model.out_of_bounds(data_shape)]
         oob_results = [a_model for a_model in new_results if a_model.out_of_bounds(data_shape)]

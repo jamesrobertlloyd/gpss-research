@@ -14,13 +14,21 @@ from __future__ import division
 import itertools
 from numpy import nan, inf
 import numpy as np
-import re
+# import re
 
-import operator
-from utils import psd_matrices
+# import operator
+# from utils import psd_matrices
 import utils.misc
 from utils.misc import colored, format_if_possible
-from scipy.special import i0 # 0th order Bessel function of the first kind
+# from scipy.special import i0 # 0th order Bessel function of the first kind
+
+import GPy
+from GPy.util.misc import param_to_array
+
+import time
+import gc
+
+# TODO - operator classes should derive from an abstract class that declares it has operands etc.
 
 ##############################################
 #                                            #
@@ -32,32 +40,45 @@ from scipy.special import i0 # 0th order Bessel function of the first kind
 class FunctionWrapper:
     """Base class for mean / kernel / likelihood functions."""
 
+    def __init__(self):
+        pass
+
     # Properties - these are read-only and immutable
 
     # e.g. @covSEiso
     @property
-    def gpml_function(self): raise RuntimeError('This property must be overriden')
+    def gpml_function(self):
+        raise RuntimeError('This property must be overridden')
        
     @property    
-    def is_operator(self): return False
+    def is_operator(self):
+        return False
        
     @property    
     def is_abelian(self):
         if not self.is_operator:
-            return None # Not applicable
+            return None  # Not applicable
         else:
             raise RuntimeError('Operators must override this property')
 
     # Identification used internally
     @property
-    def id(self): raise RuntimeError('This property must be overriden')
+    def id(self):
+        raise RuntimeError('This property must be overridden')
     
     # Parameters in the order defined by GPML
     @property
-    def param_vector(self): raise RuntimeError('This property must be overriden')
+    def param_vector(self):
+        raise RuntimeError('This property must be overridden')
+
+    # Parameters in the order defined by GPy
+    @property
+    def gpy_param_vector(self):
+        raise RuntimeError('This property must be overridden')
     
     @property
-    def num_params(self): return len(self.param_vector)
+    def num_params(self):
+        return len(self.param_vector)
 
     # Used by information criteria that count optimised parameters
     @property
@@ -70,7 +91,8 @@ class FunctionWrapper:
 
     # LaTeX representation of function
     @property
-    def latex(self): raise RuntimeError('This property must be overriden') 
+    def latex(self):
+        raise RuntimeError('This property must be overridden') 
 
     # Depth up the expression tree - leaves = 0
     @property
@@ -82,47 +104,66 @@ class FunctionWrapper:
 
     # String representation of function without any parameters
     @property
-    def syntax(self): raise RuntimeError('This property must be overriden') 
+    def syntax(self):
+        raise RuntimeError('This property must be overridden') 
 
     # Hidden methods
 
-    def __repr__(self): return 'FunctionWrapper()'
+    def __repr__(self):
+        return 'FunctionWrapper()'
             
     # NOTE : This hash is defined for convenience but must be used with caution since this class is mutable
-    def __hash__(self): return hash(self.__repr__())
+    def __hash__(self):
+        return hash(self.__repr__())
 
     def __cmp__(self, other):
         if cmp(self.__class__, other.__class__):
             return cmp(self.__class__, other.__class__)
         else:
-            # QUESTION : Is comparing strings very slow?
-            # If so this should be overidden for speed
+            # TODO - QUESTION : Is comparing strings very slow?
+            # If so this should be overridden for speed
             return cmp(self.__repr__(), other.__repr__())
 
     # Methods returning objects of the same type as self
 
-    def copy(self): raise RuntimeError('This method must be overriden')
+    def copy(self):
+        raise RuntimeError('This method must be overridden')
 
     # Returns a function with any syntactic redundancy removed (e.g. idempotency, zero elements...)
-    def simplified(self): return self.copy()
+    def simplified(self):
+        return self.copy()
 
     # Returns the canonical form of an object
-    def canonical(self): return self.copy()
+    def canonical(self):
+        return self.copy()
 
-    def additive_form(self): return self.copy()
+    def additive_form(self):
+        return self.copy()
 
     # Returns a list of summands
-    def break_into_summands(self): return [self.copy()]
+    def break_into_summands(self):
+        return [self.copy()]
 
     # Methods returning different types
 
-    def initialise_params(self, sd=1, data_shape=None): raise RuntimeError('This method must be overriden')
+    def initialise_params(self, sd=1, data_shape=None):
+        raise RuntimeError('This method must be overridden')
     
-    def pretty_print(self): return RuntimeError('This method must be overriden')
+    def pretty_print(self):
+        return RuntimeError('This method must be overridden')
         
-    def out_of_bounds(self, constraints): return False
+    def out_of_bounds(self, constraints):
+        return False
 
-    def load_param_vector(self, params): return RuntimeError('This method must be overriden')
+    def load_param_vector(self, params):
+        return RuntimeError('This method must be overridden')
+
+    @property
+    def gpy_object(self):
+        raise RuntimeError('This function must be overridden')
+
+    def load_gpy_param_vector(self, params):
+        return RuntimeError('This method must be overridden')
 
 
 class MeanFunction(FunctionWrapper):
@@ -163,7 +204,8 @@ class MeanFunction(FunctionWrapper):
     # Properties
        
     @property    
-    def is_thunk(self): return False
+    def is_thunk(self):
+        return False
 
     # Methods
 
@@ -181,7 +223,8 @@ class MeanFunction(FunctionWrapper):
         else:
             raise RuntimeError('Operators must override this method')
 
-    def __repr__(self): return 'MeanFunction()'
+    def __repr__(self):
+        return 'MeanFunction()'
 
 
 class Kernel(FunctionWrapper):
@@ -222,10 +265,8 @@ class Kernel(FunctionWrapper):
     # Properties
        
     @property    
-    def is_stationary(self): return True
-       
-    @property    
-    def sf(self): raise RuntimeError('This must be overriden')
+    def is_stationary(self):
+        return True
        
     #### TODO - this only happens when a kernel is dimensionless?
     @property    
@@ -252,7 +293,7 @@ class Kernel(FunctionWrapper):
             if hasattr(self, 'sf'):
                 self.sf += sf
             else:
-                raise RuntimeError('Kernels without a scale factor must overide this method')
+                raise RuntimeError('Kernels without a scale factor must override this method')
         else:
             raise RuntimeError('Operators must override this method')
 
@@ -268,10 +309,11 @@ class Kernel(FunctionWrapper):
             k = k.canonical()
         return k
 
-    def __repr__(self): return 'Kernel()'
+    def __repr__(self):
+        return 'Kernel()'
 
     def canonical(self):
-        '''Sorts a kernel tree into a canonical form.'''
+        """Sorts a kernel tree into a canonical form."""
         #### TODO - This can be abstracted to mean functions and likelihood functions by defining a None wrapper
         if not self.is_operator:
             return self.copy()
@@ -279,7 +321,7 @@ class Kernel(FunctionWrapper):
             new_ops = []
             for op in self.operands:
                 op_canon = op.canonical()
-                if isinstance(op_canon, self.__class__) and (self.arity=='n'):
+                if isinstance(op_canon, self.__class__) and (self.arity == 'n'):
                     new_ops += op_canon.operands
                 elif not isinstance(op_canon, NoneKernel):
                     new_ops.append(op_canon)
@@ -296,11 +338,12 @@ class Kernel(FunctionWrapper):
                 return canon
 
     def additive_form(self):
-        '''
+        """
         Converts a kernel into a sum of products and with changepoints percolating to the top
         Output is always in canonical form
-        '''
-        #### TODO - currently implemented for a subset of changepoint operators - to be extended or operators to be abstracted
+        """
+        # TODO - currently implemented for a subset of changepoint operators -
+        # TODO - to be extended or operators to be abstracted
         k = self.canonical()
         if isinstance(k, ProductKernel):
             # Convert operands into additive form
@@ -311,20 +354,24 @@ class Kernel(FunctionWrapper):
             for additive_op in additive_ops[1:]:
                 if isinstance(new_kernel, ChangePointKernel) or isinstance(new_kernel, ChangeWindowKernel):
                     # Changepoints take priority - nest the products within this operator
-                    new_kernel.operands = [(op*additive_op.copy()).canonical().additive_form() for op in new_kernel.operands]
+                    new_kernel.operands = [(op*additive_op.copy()).canonical().additive_form()
+                                           for op in new_kernel.operands]
                 elif isinstance(additive_op, ChangePointKernel) or isinstance(additive_op, ChangeWindowKernel):
                     # Nest within the next operator
                     old_kernel = new_kernel.copy()
                     new_kernel = additive_op
-                    new_kernel.operands = [(op*old_kernel.copy()).canonical().additive_form() for op in new_kernel.operands]
+                    new_kernel.operands = [(op*old_kernel.copy()).canonical().additive_form()
+                                           for op in new_kernel.operands]
                 elif isinstance(new_kernel, SumKernel):
                     # Nest the products within this sum
-                    new_kernel.operands = [(op*additive_op.copy()).canonical().additive_form() for op in new_kernel.operands]
+                    new_kernel.operands = [(op*additive_op.copy()).canonical().additive_form()
+                                           for op in new_kernel.operands]
                 elif isinstance(additive_op, SumKernel):
                     # Nest within the next operator
                     old_kernel = new_kernel.copy()
                     new_kernel = additive_op
-                    new_kernel.operands = [(op*old_kernel.copy()).canonical().additive_form() for op in new_kernel.operands]
+                    new_kernel.operands = [(op*old_kernel.copy()).canonical().additive_form()
+                                           for op in new_kernel.operands]
                 else:
                     # Both base kernels - just multiply
                     new_kernel = new_kernel*additive_op
@@ -339,15 +386,15 @@ class Kernel(FunctionWrapper):
         else:
             #### TODO - Place a check here that the kernel is not a binary or higher operator
             # Base case - return self
-            return k.canonical() # Just to make it clear that the output is always canonical
+            return k.canonical()  # Just to make it clear that the output is always canonical
 
     #### TODO - this can be abstracted to function wrapper level
     def break_into_summands(self):
-        '''Takes a kernel, expands it into a polynomial, and breaks terms up into a list.
+        """Takes a kernel, expands it into a polynomial, and breaks terms up into a list.
         
         Mutually Recursive with distribute_products_k().
         Always returns a list.
-        '''    
+        """
         k = self.copy()
         # First, recursively distribute all products within the kernel.
         k_dist = k.distribute_products()
@@ -370,7 +417,7 @@ class Kernel(FunctionWrapper):
             distributed_ops = [op.break_into_summands() for op in k.operands]
             
             # Now produce a sum of all combinations of terms in the products. Itertools is awesome.
-            new_prod_ks = [ProductKernel( operands=prod ) for prod in itertools.product(*distributed_ops)]
+            new_prod_ks = [ProductKernel(operands=prod) for prod in itertools.product(*distributed_ops)]
             return SumKernel(operands=new_prod_ks)
         
         elif isinstance(k, SumKernel):
@@ -428,7 +475,7 @@ class Kernel(FunctionWrapper):
                 else:
                     not_const_ops.append(op)
              # Compactify if necessary
-            if (const_count > 0):
+            if const_count > 0:
                 ops = not_const_ops + [ConstKernel(sf=0.5*np.log(sf))]
             # Finish
             k.operands = ops
@@ -457,7 +504,8 @@ class Kernel(FunctionWrapper):
                     if not lengthscales.has_key(op.dimension):
                         lengthscales[op.dimension] = np.Inf
                         sfs[op.dimension] = 0
-                    lengthscales[op.dimension] = -0.5 * np.log(np.exp(-2*lengthscales[op.dimension]) + np.exp(-2*op.lengthscale))
+                    lengthscales[op.dimension] = -0.5 * np.log(np.exp(-2*lengthscales[op.dimension]) +
+                                                               np.exp(-2*op.lengthscale))
                     sfs[op.dimension] += op.sf
                 else:
                     not_SE_ops.append(op)
@@ -632,7 +680,8 @@ class Likelihood(FunctionWrapper):
         else:
             raise RuntimeError('Operators must override this method')
 
-    def __repr__(self): return 'Likelihood()'
+    def __repr__(self):
+        return 'Likelihood()'
 
 
 class GPModel:
@@ -648,8 +697,10 @@ class GPModel:
         self.likelihood = likelihood
         self.nll = nll
         self.ndata = ndata
+        self.gpy_model = None
             
-    def __hash__(self): return hash(self.__repr__())
+    def __hash__(self):
+        return hash(self.__repr__())
 
     def __repr__(self):
         # Remember all the various scoring criteria
@@ -666,15 +717,18 @@ class GPModel:
         m = self.mean.copy() if not self.mean is None else None
         k = self.kernel.copy() if not self.kernel is None else None
         l = self.likelihood.copy() if not self.likelihood is None else None
-        return GPModel(mean=m, kernel=k, likelihood=l, nll=self.nll, ndata=self.ndata)
+        model = GPModel(mean=m, kernel=k, likelihood=l, nll=self.nll, ndata=self.ndata)
+        if not self.gpy_model is None:
+            model.gpy_model = self.gpy_model.copy()
+        return model
 
     def pretty_print(self):
         return 'GPModel(mean=%s, kernel=%s, likelihood=%s)' % \
-                (self.mean.pretty_print(), self.kernel.pretty_print(), self.likelihood.pretty_print())
+               (self.mean.pretty_print(), self.kernel.pretty_print(), self.likelihood.pretty_print())
         
     def out_of_bounds(self, constraints):
-        return any([self.mean.out_of_bounds(constraints), \
-                    self.kernel.out_of_bounds(constraints), \
+        return any([self.mean.out_of_bounds(constraints),
+                    self.kernel.out_of_bounds(constraints),
                     self.likelihood.out_of_bounds(constraints)])
 
     @property
@@ -739,9 +793,52 @@ class GPModel:
             model_list.append(GPModel(mean=MeanZero(), kernel=a_kernel, likelihood=LikGauss(sf=-np.Inf)))
         for a_likelihood in likelihood_list:
             model_list.append(GPModel(mean=MeanZero(), kernel=ZeroKernel(), likelihood=a_likelihood))
-        null_model = GPModel(ean=MeanZero(), kernel=ZeroKernel(), likelihood=LikGauss(sf=-np.Inf))
+        null_model = GPModel(mean=MeanZero(), kernel=ZeroKernel(), likelihood=LikGauss(sf=-np.Inf))
         model_list = [model for model in model_list if not model == null_model]
         return model_list
+
+    def gpy_optimize(self, X, Y, inference='exact', num_inducing=50, max_iters=100, messages=True,
+                     keep_gpy_object=False):
+        """Convert into a GPy object, optimise and record results. Returns self for convenience"""
+        self.ndata = X.shape[0]
+        num_data, input_dim = X.shape
+        k = self.kernel.gpy_object
+        l = self.likelihood.gpy_object
+        inference = inference.lower()
+
+        try:
+
+            if isinstance(self.likelihood, LikGauss):
+                if inference == 'exact':
+                    # gpy_model = GPy.models.GPRegression(X=X, Y=Y, kernel=k)
+                    gpy_model = GPy.core.GP(X=X, Y=Y, kernel=k, likelihood=l, name='GP regression')
+                elif inference == 'sparse':
+                    # gpy_model = GPy.models.SparseGPRegression(X=X, Y=Y, kernel=k, num_inducing=num_inducing)
+                    i = np.random.permutation(num_data)[:min(num_inducing, num_data)]
+                    Z = param_to_array(X)[i].copy()
+                    gpy_model = GPy.core.SparseGP(X=X, Y=Y, Z=Z, kernel=k, likelihood=l)
+                else:
+                    RuntimeError('Sorry, I have not implemented that type of inference yet')
+                # if self.likelihood.sf == -np.inf:
+                #     self.gpy_model.likelihood.variance.constrain_fixed(0)
+            else:
+                raise RuntimeError('Sorry, I do not know how to deal with this likelihood yet')
+
+            gpy_model.optimize(max_iters=max_iters, messages=messages)
+            self.kernel.load_gpy_param_vector(gpy_model.kern.param_array)
+            self.likelihood.load_gpy_param_vector(gpy_model.likelihood.param_array)
+            self.nll = -gpy_model.log_likelihood()
+            if keep_gpy_object:
+                self.gpy_model = gpy_model
+            else:
+                del gpy_model
+        # FIXME - I am too broad an exception - I mask the RuntimeErrors above!
+        except:
+            self.nll = np.inf
+            if 'gpy_model' in locals():
+                del gpy_model
+
+        return self
 
 ##############################################
 #                                            #
@@ -749,9 +846,10 @@ class GPModel:
 #                                            #
 ##############################################
 
+
 class MeanZero(MeanFunction):
     def __init__(self):
-        pass
+        MeanFunction.__init__(self)
 
     # Properties
         
@@ -789,36 +887,45 @@ class MeanZero(MeanFunction):
     def load_param_vector(self, params):
         assert len(params) == 0
 
+
 class MeanConst(MeanFunction):
     def __init__(self, c=None):
+        MeanFunction.__init__(self)
         self.c = c
 
     # Properties
         
     @property
-    def gpml_function(self): return '{@meanConst}'
+    def gpml_function(self):
+        return '{@meanConst}'
 
     @property    
-    def is_thunk(self): return True
+    def is_thunk(self):
+        return True
     
     @property
-    def id(self): return 'Const'
+    def id(self):
+        return 'Const'
     
     @property
-    def param_vector(self): return np.array([self.c])
+    def param_vector(self):
+        return np.array([self.c])
         
     @property
-    def latex(self): return '{\\sc C}' 
+    def latex(self):
+        return '{\\sc C}'
     
     @property
-    def syntax(self): return colored('C', self.depth)
+    def syntax(self):
+        return colored('C', self.depth)
 
     # Methods
 
-    def copy(self): return MeanConst(c=self.c)
+    def copy(self):
+        return MeanConst(c=self.c)
         
     def initialise_params(self, sd=1, data_shape=None):
-        if self.c == None:
+        if self.c is None:
             # Set offset with data
             if np.random.rand() < 0.5:
                 self.c = np.random.normal(loc=data_shape['y_mean'], scale=sd*np.exp(data_shape['y_sd']))
@@ -826,14 +933,28 @@ class MeanConst(MeanFunction):
                 self.c = np.random.normal(loc=0, scale=sd*np.exp(data_shape['y_sd']))
     
     def __repr__(self):
-        return 'MeanConst(c=%s)' % (self.c)
+        return 'MeanConst(c=%s)' % self.c
     
     def pretty_print(self):
         return colored('C(c=%s)' % (format_if_possible('%1.1f', self.c)), self.depth)    
 
     def load_param_vector(self, params):
         c, = params # N.B. - expects list input
-        self.c = c   
+        self.c = c
+
+##############################################
+#                                            #
+#              Mean operators                #
+#                                            #
+##############################################
+
+
+class SumFunction(MeanFunction):
+    pass
+
+
+class ProductFunction(MeanFunction):
+    pass
 
 ##############################################
 #                                            #
@@ -841,10 +962,11 @@ class MeanConst(MeanFunction):
 #                                            #
 ##############################################
 
-# I hope this class can be deleted one day
+
+# TODO - I hope this class can be deleted one day
 class NoneKernel(Kernel):
     def __init__(self):
-        pass
+        Kernel.__init__(self)
 
     def copy(self): return NoneKernel()
     
@@ -855,35 +977,44 @@ class NoneKernel(Kernel):
         pass
 
     @property
-    def param_vector(self): return np.array([])
+    def param_vector(self):
+        return np.array([])
+
 
 class ZeroKernel(Kernel):
     def __init__(self):
-        pass
+        Kernel.__init__(self)
 
     # Properties
         
     @property
-    def gpml_function(self): return '{@covZero}'
+    def gpml_function(self):
+        return '{@covZero}'
 
     @property    
-    def is_thunk(self): return True
+    def is_thunk(self):
+        return True
     
     @property
-    def id(self): return 'Zero'
+    def id(self):
+        return 'Zero'
     
     @property
-    def param_vector(self): return np.array([])
+    def param_vector(self):
+        return np.array([])
         
     @property
-    def latex(self): return '{\\sc Z}' 
+    def latex(self):
+        return '{\\sc Z}'
     
     @property
-    def syntax(self): return colored('Z', self.depth)
+    def syntax(self):
+        return colored('Z', self.depth)
 
     # Methods
 
-    def copy(self): return ZeroKernel()
+    def copy(self):
+        return ZeroKernel()
         
     def initialise_params(self, sd=1, data_shape=None):
         pass
@@ -903,21 +1034,26 @@ class ZeroKernel(Kernel):
 
 class NoiseKernel(Kernel):
     def __init__(self, sf=None):
+        Kernel.__init__(self)
         self.sf = sf
 
     # Properties
         
     @property
-    def gpml_function(self): return '{@covNoise}'
+    def gpml_function(self):
+        return '{@covNoise}'
 
     @property    
-    def is_thunk(self): return True
+    def is_thunk(self):
+        return True
     
     @property
-    def id(self): return 'Noise'
+    def id(self):
+        return 'Noise'
     
     @property
-    def param_vector(self): return np.array([self.sf])
+    def param_vector(self):
+        return np.array([self.sf])
         
     @property
     def latex(self): return '{\\sc WN}' 
@@ -930,7 +1066,7 @@ class NoiseKernel(Kernel):
     def copy(self): return NoiseKernel(sf=self.sf)
         
     def initialise_params(self, sd=1, data_shape=None):
-        if self.sf == None:
+        if self.sf is None:
             # Set scale factor with 1/10 data std or neutrally
             if np.random.rand() < 0.5:
                 self.sf = np.random.normal(loc=data_shape['y_sd']-np.log(10), scale=sd)
@@ -938,46 +1074,61 @@ class NoiseKernel(Kernel):
                 self.sf = np.random.normal(loc=0, scale=sd)
     
     def __repr__(self):
-        return 'NoiseKernel(sf=%s)' % (self.sf)
+        return 'NoiseKernel(sf=%s)' % self.sf
     
     def pretty_print(self):
-        return colored('WN(sf=%s)' % (format_if_possible('%1.1f', self.sf)), self.depth)   
+        return colored('WN(sf=%s)' % (format_if_possible('%1.1f', self.sf)), self.depth)
 
     def load_param_vector(self, params):
-        sf, = params # N.B. - expects list input
-        self.sf = sf  
+        sf, = params  # N.B. - expects tuple input
+        self.sf = sf
+
+    @property
+    def gpy_object(self):
+        return GPy.kern.White(input_dim=1, variance=np.exp(self.sf) ** 2)
+
+    def load_gpy_param_vector(self, params):
+        variance, = params  # N.B. - expects list input
+        self.sf = np.log(np.sqrt(variance))
 
 
 class ConstKernel(Kernel):
     def __init__(self, sf=None):
+        Kernel.__init__(self)
         self.sf = sf
 
     # Properties
         
     @property
-    def gpml_function(self): return '{@covConst}'
+    def gpml_function(self):
+        return '{@covConst}'
 
     @property    
-    def is_thunk(self): return True
+    def is_thunk(self):
+        return True
     
     @property
-    def id(self): return 'Const'
+    def id(self):
+        return 'Const'
     
     @property
-    def param_vector(self): return np.array([self.sf])
+    def param_vector(self):
+        return np.array([self.sf])
         
     @property
-    def latex(self): return '{\\sc C}' 
+    def latex(self):
+        return '{\\sc C}'
     
     @property
-    def syntax(self): return colored('C', self.depth)
+    def syntax(self):
+        return colored('C', self.depth)
 
     # Methods
 
     def copy(self): return ConstKernel(sf=self.sf)
         
     def initialise_params(self, sd=1, data_shape=None):
-        if self.sf == None:
+        if self.sf is None:
             # Set scale factor with output location, scale or neutrally
             if np.random.rand() < 1.0 / 3:
                 self.sf = np.random.normal(loc=np.log(np.abs(data_shape['y_mean'])), scale=sd)
@@ -994,10 +1145,12 @@ class ConstKernel(Kernel):
 
     def load_param_vector(self, params):
         sf, = params # N.B. - expects list input
-        self.sf = sf  
+        self.sf = sf
+    
 
 class SqExpKernel(Kernel):
     def __init__(self, dimension=None, lengthscale=None, sf=None):
+        Kernel.__init__(self)
         self.dimension = dimension
         self.lengthscale = lengthscale
         self.sf = sf
@@ -1005,33 +1158,41 @@ class SqExpKernel(Kernel):
     # Properties
         
     @property
-    def gpml_function(self): return '{@covSEiso}'
+    def gpml_function(self):
+        return '{@covSEiso}'
     
     @property
-    def id(self): return 'SE'
+    def id(self):
+        return 'SE'
     
     @property
-    def param_vector(self): return np.array([self.lengthscale, self.sf])
+    def param_vector(self):
+        return np.array([self.lengthscale, self.sf])
         
     @property
-    def latex(self): return '{\\sc SE}' 
+    def latex(self):
+        return '{\\sc SE}'
     
     @property
-    def syntax(self): return colored('SE_%s' % self.dimension, self.depth)
+    def syntax(self):
+        return colored('SE_%s' % self.dimension, self.depth)
 
     # Methods
 
-    def copy(self): return SqExpKernel(dimension=self.dimension, lengthscale=self.lengthscale, sf=self.sf)
+    def copy(self):
+        return SqExpKernel(dimension=self.dimension, lengthscale=self.lengthscale, sf=self.sf)
         
     def initialise_params(self, sd=1, data_shape=None):
-        if self.lengthscale == None:
+        if self.lengthscale is None:
             # Set lengthscale with input scale or neutrally
             if np.random.rand() < 0.5:
                 self.lengthscale = np.random.normal(loc=data_shape['x_sd'][self.dimension], scale=sd)
             else:
                 # Long lengthscale ~ infty = neutral
-                self.lengthscale = np.random.normal(loc=np.log(2*(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])), scale=sd)
-        if self.sf == None:
+                self.lengthscale = np.random.normal(loc=np.log(2*(data_shape['x_max'][self.dimension] -
+                                                                  data_shape['x_min'][self.dimension])),
+                                                    scale=sd)
+        if self.sf is None:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:
                 self.sf = np.random.normal(loc=data_shape['y_sd'], scale=sd)
@@ -1043,16 +1204,27 @@ class SqExpKernel(Kernel):
                (self.dimension, self.lengthscale, self.sf)
     
     def pretty_print(self):
-        return colored('SE(dim=%s, ell=%s, sf=%s)' % \
-               (self.dimension, \
-                format_if_possible('%1.1f', self.lengthscale), \
-                format_if_possible('%1.1f', self.sf)), \
-               self.depth)   
+        return colored('SE(dim=%s, ell=%s, sf=%s)' %
+                       (self.dimension,
+                        format_if_possible('%1.1f', self.lengthscale),
+                        format_if_possible('%1.1f', self.sf)),
+                       self.depth)
 
     def load_param_vector(self, params):
-        lengthscale, sf = params # N.B. - expects list input
+        lengthscale, sf = params  # N.B. - expects list input
         self.lengthscale = lengthscale  
-        self.sf = sf  
+        self.sf = sf
+
+    @property
+    def gpy_object(self):
+        return GPy.kern.RBF(input_dim=1, active_dims=[self.dimension],
+                            lengthscale=np.exp(self.lengthscale), variance=np.exp(self.sf) ** 2)
+
+    def load_gpy_param_vector(self, params):
+        variance, lengthscale = params
+        self.sf = np.log(np.sqrt(variance))
+        self.lengthscale = np.log(lengthscale)
+
 
 class RQKernel(Kernel):
     def __init__(self, dimension=None, lengthscale=None, sf=None, alpha=None):
@@ -1116,7 +1288,12 @@ class RQKernel(Kernel):
         lengthscale, sf, alpha = params # N.B. - expects list input
         self.lengthscale = lengthscale  
         self.sf = sf  
-        self.alpha = alpha  
+        self.alpha = alpha
+
+    
+    
+    
+    
 
 class PeriodicKernel(Kernel):
     def __init__(self, dimension=None, lengthscale=None, period=None, sf=None):
@@ -1193,6 +1370,11 @@ class PeriodicKernel(Kernel):
         return (self.period < constraints['min_period'][self.dimension]) or \
                (self.period > constraints['max_period'][self.dimension])
 
+    
+    
+    
+    
+
 class PeriodicKernelOLD(Kernel):
     def __init__(self, dimension=None, lengthscale=None, period=None, sf=None):
         self.dimension = dimension
@@ -1268,6 +1450,11 @@ class PeriodicKernelOLD(Kernel):
         return (self.period < constraints['min_period'][self.dimension]) or \
                (self.period > constraints['max_period'][self.dimension])
 
+    
+    
+    
+    
+
 class LinearKernel(Kernel):
     def __init__(self, dimension=None, location=None, sf=None):
         self.dimension = dimension
@@ -1327,7 +1514,13 @@ class LinearKernel(Kernel):
     def load_param_vector(self, params):
         sf, location = params # N.B. - expects list input
         self.location = location 
-        self.sf = sf  
+        self.sf = sf
+
+    
+    
+    
+    
+    
 
 class LinearKernelOLD(Kernel):
     def __init__(self, dimension=None, location=None, invsf=None, offset=None):
@@ -1484,12 +1677,14 @@ class SpectralKernel(Kernel):
 #                                            #
 ##############################################
 
+
 class SumKernel(Kernel):
     def __init__(self, operands=None):
+        Kernel.__init__(self)
         if operands is None:
             self.operands = []
         else:
-            self.operands  = operands
+            self.operands = operands
 
     # Properties
 
@@ -1573,6 +1768,20 @@ class SumKernel(Kernel):
     def get_gpml_expression(self, dimensions):
         return '{@covSum, {%s}}' % ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands)
 
+    def load_gpy_param_vector(self, params):
+        start = 0
+        for o in self.operands:
+            end = start + o.num_params
+            o.load_gpy_param_vector(params[start:end])
+            start = end
+
+    @property
+    def gpy_object(self):
+        k = self.operands[0].gpy_object
+        for o in self.operands[1:]:
+            k += o.gpy_object
+        return k
+
     def multiply_by_const(self, sf):
         for o in self.operands:
             o.multiply_by_const(sf=sf)
@@ -1580,12 +1789,14 @@ class SumKernel(Kernel):
     def out_of_bounds(self, constraints):
         return any([o.out_of_bounds(constraints=constraints) for o in self.operands])
 
+
 class ProductKernel(Kernel):
     def __init__(self, operands=None):
+        Kernel.__init__(self)
         if operands is None:
             self.operands = []
         else:
-            self.operands  = operands
+            self.operands = operands
 
     # Properties
 
@@ -1665,6 +1876,20 @@ class ProductKernel(Kernel):
 
     def get_gpml_expression(self, dimensions):
         return '{@covProd, {%s}}' % ', '.join(o.get_gpml_expression(dimensions=dimensions) for o in self.operands)
+
+    def load_gpy_param_vector(self, params):
+        start = 0
+        for o in self.operands:
+            end = start + o.num_params
+            o.load_gpy_param_vector(params[start:end])
+            start = end
+
+    @property
+    def gpy_object(self):
+        k = self.operands[0].gpy_object
+        for o in self.operands[1:]:
+            k *= o.gpy_object
+        return k
 
     def multiply_by_const(self, sf):
         self.operands[0].multiply_by_const(sf=sf)
@@ -1903,8 +2128,10 @@ class ChangeWindowKernel(Kernel):
 #                                            #
 ##############################################
 
+
 class LikGauss(Likelihood):
     def __init__(self, sf=None):
+        Likelihood.__init__(self)
         self.sf = sf
 
     # Properties
@@ -1918,10 +2145,12 @@ class LikGauss(Likelihood):
             return '{@likDelta}'
 
     @property    
-    def is_thunk(self): return True
+    def is_thunk(self):
+        return True
     
     @property
-    def id(self): return 'Gauss'
+    def id(self):
+        return 'Gauss'
     
     @property
     def param_vector(self):
@@ -1931,10 +2160,12 @@ class LikGauss(Likelihood):
             return np.array([])
         
     @property
-    def latex(self): return '{\\sc GS}' 
+    def latex(self):
+        return '{\\sc GS}'
     
     @property
-    def syntax(self): return colored('GS', self.depth)
+    def syntax(self):
+        return colored('GS', self.depth)
 
     @property
     def effective_params(self):
@@ -1955,7 +2186,7 @@ class LikGauss(Likelihood):
     def copy(self): return LikGauss(sf=self.sf)
         
     def initialise_params(self, sd=1, data_shape=None):
-        if self.sf == None:
+        if self.sf is None:
             # Set scale factor with 1/10 data std or neutrally
             if np.random.rand() < 0.5:
                 self.sf = np.random.normal(loc=data_shape['y_sd']-np.log(10), scale=sd)
@@ -1963,7 +2194,7 @@ class LikGauss(Likelihood):
                 self.sf = np.random.normal(loc=0, scale=sd)
     
     def __repr__(self):
-        return 'LikGauss(sf=%s)' % (self.sf)
+        return 'LikGauss(sf=%s)' % self.sf
     
     def pretty_print(self):
         return colored('GS(sf=%s)' % (format_if_possible('%1.1f', self.sf)), self.depth)   
@@ -1972,8 +2203,22 @@ class LikGauss(Likelihood):
         if len(params) == 0:
             self.sf = -np.Inf
         else:
-            sf, = params # N.B. - expects list input
-            self.sf = sf   
+            sf, = params  # N.B. - expects list input
+            self.sf = sf
+
+    def load_gpy_param_vector(self, params):
+        variance, = params
+        if variance == 0:
+            self.sf = -np.Inf
+        else:
+            self.sf = np.log(np.sqrt(variance))
+
+    @property
+    def gpy_object(self):
+        obj = GPy.likelihoods.Gaussian(variance=np.exp(self.sf) ** 2)
+        if self.sf == -np.inf:
+            obj.variance.constrain_fixed(0)
+        return obj
 
 class LikErf(Likelihood):
     def __init__(self, inference='EP'):
@@ -2028,7 +2273,21 @@ class LikErf(Likelihood):
         return colored('Erf(inf=%s)' % format_if_possible('%d', self.inference), self.depth)   
 
     def load_param_vector(self, params):
-        pass 
+        pass
+
+##############################################
+#                                            #
+#           Likelihood operators             #
+#                                            #
+##############################################
+
+
+class SumLikelihood(Likelihood):
+    pass
+
+
+class ProductLikelihood(Likelihood):
+    pass
 
 ##############################################
 #                                            #
@@ -2115,11 +2374,13 @@ def add_random_restarts(models, n_rand=1, sd=4, data_shape=None):
             new_models.append(new_model)
     return new_models 
 
+
 def add_jitter_k(kernels, sd=0.1):    
     '''Adds random noise to all parameters - empirically observed to help when optimiser gets stuck'''
     for k in kernels:
         k.load_param_vector(k.param_vector + np.random.normal(loc=0., scale=sd, size=k.param_vector.size))
     return kernels     
+
 
 def add_jitter(models, sd=0.1):
     for a_model in models:

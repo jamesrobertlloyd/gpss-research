@@ -1,4 +1,4 @@
-Experiment(description='For debugging all',
+dict(description='For debugging all',
            data_dir='../data/debug/',
            max_depth=4, 
            random_order=False,

@@ -16,7 +16,7 @@ import scipy.io
 import subprocess
 
 import config
-import experiment as exp
+import experiment_old as exp
 import flexible_function as ff
 import gpml
 import utils.latex

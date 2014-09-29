@@ -13,6 +13,7 @@ import os
 import random
 import re
 import warnings
+import time
 
 import flexible_function as ff
 from flexible_function import GPModel
@@ -186,30 +187,20 @@ def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp
                 for model in current_models:
                     print(model.pretty_print())
 
-            # Optimise models and score
-            # new_results = [model.gpy_optimize(X=X, Y=Y,
-            #                                   inference='exact',
-            #                                   messages=exp['verbose'],
-            #                                   max_iters=exp['iters'])
-            #                for model in current_models]
-
-            # A quick separate process hack
-            # new_results = [optimize_separate_process(model, X, Y,
-            #                                          inference='exact',
-            #                                          messages=exp['verbose'],
-            #                                          max_iters=exp['iters'])
-            #                for model in current_models]
-
-            for subset_percent in [13, 26, 52, 100]:
-                subset_n = int(np.floor(X.shape[0] * subset_percent / 100.0))
+            subset_n = min(exp['starting_subset'], X.shape[0])
+            while subset_n <= X.shape[0]:
+                # Subset data
                 X_subset = X[:subset_n]
                 Y_subset = Y[:subset_n]
+
+                # Use multiprocessing pool to optimise models
                 kwargs = dict(inference='exact',
                               messages=exp['verbose'],
                               max_iters=exp['iters'])
                 new_results = processing_pool.map(optimise_single_model,
                                                   ((model, X_subset, Y_subset, kwargs)
                                                    for model in current_models))
+
                 # Remove models that were optimised to be out of bounds (this is similar to a 0-1 prior)
                 # TODO - put priors on hyperparameters
                 new_results = [a_model for a_model in new_results if not a_model.out_of_bounds(data_shape)]
@@ -226,9 +217,16 @@ def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp
                 new_results = sorted(new_results, key=lambda a_model: GPModel.score(a_model, exp['score']),
                                      reverse=True)
 
-                # Subset hack
+                # Keep only the top 50% of models - FIXME this is not principled and a magic number!
                 new_results = new_results[int(np.floor(len(new_results) * 0.5)):]
                 current_models = new_results
+
+                # Double the subset size, or exit loop if finished
+                if subset_n == X.shape[0]:
+                    break
+                else:
+                    subset_n = min(subset_n * 2, X.shape[0])
+
 
             # Update user
             print('\nAll new results\n')
@@ -453,6 +451,7 @@ def exp_param_defaults(exp_params):
                     improvement_tolerance=0.1, # Minimum improvement for no_improvement stopping criterion
                     n_processes=None,             # Number of processes in multiprocessing.pool - None means max
                     max_tasks_per_process=1,      # This is set to one (or a small #) whilst there is a GPy memory leak
+                    starting_subset=100,          # How many data points do we start scoring on?
                     search_operators=[('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),
                                       ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
                                       #('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
@@ -494,8 +493,13 @@ def gen_all_datasets(dir_name):
    
 
 def run_debug():
-    """This is a quick debugging function."""
-    run_experiment_file(os.path.join('..', 'experiments', 'debug', 'debug_example.py'))
+    """Run a quick experiment"""
+    print('Running the first experiment')
+    time.sleep(3)
+    run_experiment_file(os.path.join('..', 'experiments', 'debug', 'example_pedro_1.py'))
+    print('Running the second experiment')
+    time.sleep(3)
+    run_experiment_file(os.path.join('..', 'experiments', 'debug', 'example_pedro_2.py'))
 
 
 if __name__ == "__main__":

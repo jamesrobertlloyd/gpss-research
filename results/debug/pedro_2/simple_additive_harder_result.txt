@@ -1,0 +1,53 @@
+Experiment all_results for
+ datafile = ../data/debug/simple_additive_harder.npz
+
+ Running experiment:
+subset = False,
+kernel = ff.NoiseKernel(),
+verbose = False,
+base_kernels = SE,Noise,
+n_rand = 4,
+max_period_heuristic = 5,
+period_heuristic = 10,
+description = For debugging,
+subset_size = 250,
+n_processes = None,
+additive_form = True,
+improvement_tolerance = 0.1,
+results_dir = ../results/debug/pedro_2,
+lik = ff.LikGauss(sf=-np.Inf),
+score = BIC,
+verbose_results = False,
+period_heuristic_type = both,
+random_order = False,
+max_depth = 4,
+max_tasks_per_process = 1,
+random_seed = 42,
+jitter_sd = 0.1,
+max_jobs = 500,
+iters = 100,
+debug = False,
+data_dir = ../data/debug/,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'}), ('A', ('None',), {'A': 'kernel'})],
+full_iters = 0,
+starting_subset = 500,
+stopping_criteria = ['no_improvement'],
+bundle_size = 1,
+skip_complete = False,
+sd = 2,
+k = 1,
+mean = ff.MeanZero(),
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-0.222838512578), SqExpKernel(dimension=1, lengthscale=-0.675268942465, sf=-0.253401195416)]), likelihood=LikGauss(sf=-inf), nll=617.304012614, ndata=500)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.17451963156), SqExpKernel(dimension=0, lengthscale=-0.057075637475, sf=0.128115850082), SqExpKernel(dimension=1, lengthscale=-0.582682004403, sf=-0.192553865044)]), likelihood=LikGauss(sf=-inf), nll=174.128855483, ndata=500)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=-1.17451985524), SqExpKernel(dimension=0, lengthscale=-0.0570794045405, sf=0.128116274967), SqExpKernel(dimension=1, lengthscale=-0.582682256305, sf=-0.192556465534)]), likelihood=LikGauss(sf=-inf), nll=174.128855482, ndata=500)

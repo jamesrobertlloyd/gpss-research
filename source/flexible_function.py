@@ -1153,17 +1153,25 @@ class PeriodicKernel(Kernel):
         if self.period == None:
             #### Explanation : This is centered on about 25 periods
             # Min period represents a minimum sensible scale
-            # Scale with data_scale or data range
-            if np.random.rand() < 0.5:
-                if data_shape['min_period'] is None:
-                    self.period = np.random.normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd)
-                else:
-                    self.period = utils.misc.sample_truncated_normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+            # Scale with data_scale or data range or 25 * distance between data points (this is a quick hack)
+            if np.random.rand() < 0.33:
+                # if data_shape['min_period'] is None:
+                #     self.period = np.random.normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd)
+                # else:
+                #     self.period = utils.misc.sample_truncated_normal(loc=data_shape['x_sd'][self.dimension]-2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+                self.period = np.random.normal(loc=0, scale=sd)
+            elif np.random.rand() < 0.5:
+                # if data_shape['min_period'] is None:
+                #     self.period = np.random.normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd)
+                # else:
+                #     self.period = utils.misc.sample_truncated_normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+                self.period = np.random.normal(loc=-3.95, scale=sd)
             else:
-                if data_shape['min_period'] is None:
-                    self.period = np.random.normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd)
-                else:
-                    self.period = utils.misc.sample_truncated_normal(loc=np.log(data_shape['x_max'][self.dimension]-data_shape['x_min'][self.dimension])-3.2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+                # if data_shape['min_period'] is None:
+                #     self.period = np.random.normal(loc=np.log(data_shape['x_min_abs_diff'][self.dimension]) + 3.2, scale=sd)
+                # else:
+                #     self.period = utils.misc.sample_truncated_normal(loc=np.log(data_shape['x_min_abs_diff'][self.dimension]) + 3.2, scale=sd, min_value=data_shape['min_period'][self.dimension])
+                self.period = np.random.normal(loc=-5.9, scale=sd)
         if self.sf == None:
             # Set scale factor with output scale or neutrally
             if np.random.rand() < 0.5:

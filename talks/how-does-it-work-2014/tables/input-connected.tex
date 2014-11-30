@@ -1,0 +1,83 @@
+\def\layersep{1.33cm}
+\def\nodeseptwo{1.8cm}
+\def\nodesize{.35cm}
+
+\newcommand{\numdims}[0]{3}
+\newcommand{\numhidden}[0]{4}
+\newcommand{\upnodedist}[0]{0.6cm}
+\newcommand{\bardist}[0]{\hspace{-0.2cm}}
+
+\begin{tabular}{c}
+\bardist
+\begin{tikzpicture}[draw=black!80]
+    \tikzstyle{neuron}=[circle,minimum size=17pt, draw = black!80, fill = white, thick]
+    \tikzstyle{input neuron}=[neuron, fill=green!50];
+    \tikzstyle{output neuron}=[neuron, fill=red!50];
+    \tikzstyle{hidden neuron}=[neuron, fill=blue!50];
+    \tikzstyle{pile} =[thick, ->, >=stealth', shorten <=7pt, shorten >=8pt];
+
+    % Define the input layer node
+    \coordinate (I) at (0, 0);
+
+
+    % Define the hidden layer nodes
+    \foreach \name / \y in {1,...,\numhidden}
+    {
+        \coordinate (H-\name) at (\nodeseptwo*\y, 0);
+    }
+
+    % Connect every node            
+    \foreach \name in {1,...,\numhidden}
+    {
+	 \path[pile] (I) edge (H-\name) {};
+         %\path[pile] (I) edge [bend left] (H-\name) {};
+    }
+
+    \draw (I) node[neuron] {};
+    \draw (I) node[below = 0.5cm]  {$\vx$};
+
+    % Draw the hidden layer nodes
+    \foreach \name / \y in {1,...,\numhidden}
+    {
+	\draw (H-\name) node[neuron]  {};
+        \draw (H-\name) node[below = 0.34cm] {$\vf^{(\y)}(\vx)$};
+    }
+\end{tikzpicture} \\
+a) standard MLP architecture. \\
+\bardist
+\begin{tikzpicture}[draw=black!80]
+    \tikzstyle{neuron}=[circle,minimum size=17pt, draw = black!80, fill = white, thick]
+    \tikzstyle{input neuron}=[neuron, fill=green!50];
+    \tikzstyle{output neuron}=[neuron, fill=red!50];
+    \tikzstyle{hidden neuron}=[neuron, fill=blue!50];
+    \tikzstyle{pile} =[thick, ->, >=stealth', shorten <=7pt, shorten >=8pt];
+
+    % Define the input layer node
+    \coordinate (I) at (0, 0);
+
+
+    % Define the hidden layer nodes
+    \foreach \name / \y in {1,...,\numhidden}
+    {
+        \coordinate (H-\name) at (\nodeseptwo*\y, 0);
+    }
+
+    % Connect every node            
+    \foreach \name in {1,...,\numhidden}
+    {
+	 \path[pile] (I) edge (H-\name) {};
+         \path[pile] (I) edge [bend left] (H-\name) {};
+    }
+
+    \draw (I) node[neuron] {};
+    \draw (I) node[below = 0.5cm]  {$\vx$};
+
+    % Draw the hidden layer nodes
+    \foreach \name / \y in {1,...,\numhidden}
+    {
+	\draw (H-\name) node[neuron]  {};
+        \draw (H-\name) node[below = 0.34cm] {$\vf^{(\y)}(\vx)$};
+    }
+\end{tikzpicture} \\
+b) Input-connected architecture.
+\end{tabular}

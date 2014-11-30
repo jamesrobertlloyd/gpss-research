@@ -1,0 +1,64 @@
+Experiment all_results for
+ datafile = ../data/alexa/mystery-outliers-removed-v2.mat
+
+ Running experiment:
+description = Re-analysis of GEFCOM data for purposes of thesis,
+data_dir = ../data/alexa,
+max_depth = 10,
+random_order = True,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 400,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2014-11-12-alexa-v1/,
+iters = 250,
+base_kernels = SE,Const,Noise,Lin,
+additive_form = True,
+mean = ff.MeanZero(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikGauss(sf=-np.Inf),
+verbose_results = False,
+random_seed = 9001,
+period_heuristic = 3,
+max_period_heuristic = 3,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'}), ('A', ('CP', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('CW', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('B', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('BL', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('None',), {'A': 'kernel'})],
+score = bic,
+period_heuristic_type = min,
+stopping_criteria = ['no_improvement'],
+improvement_tolerance = 0.1,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=2.16650485966), ConstKernel(sf=4.31637023426)]), likelihood=LikGauss(sf=-inf), nll=68.1334092724, ndata=18)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[ConstKernel(sf=4.32121109802), ProductKernel(operands=[NoiseKernel(sf=0.205908555786), LinearKernel(dimension=0, location=9.96438284077, sf=-1.46464607773)])]), likelihood=LikGauss(sf=-inf), nll=65.6687563942, ndata=18)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[ConstKernel(sf=4.36677949119), ChangeWindowKernel(dimension=2, location=95.2698177147, steepness=2.12551048821, width=1.48352155788, operands=[ ProductKernel(operands=[NoiseKernel(sf=0.360868201647), LinearKernel(dimension=0, location=9.96855838757, sf=-1.66410549326)]), ConstKernel(sf=1.78097064134) ])]), likelihood=LikGauss(sf=-inf), nll=50.1239805086, ndata=18)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[ConstKernel(sf=4.21651575665), ChangeWindowKernel(dimension=2, location=95.3443342515, steepness=2.38551114386, width=1.49377275555, operands=[ ProductKernel(operands=[NoiseKernel(sf=0.351662481043), LinearKernel(dimension=0, location=9.93765292672, sf=-1.54882459301)]), ConstKernel(sf=1.77230363417) ])]), likelihood=LikGauss(sf=-inf), nll=49.2530300885, ndata=18)
+
+%%%%% Level 4 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[ConstKernel(sf=4.12268554752), ChangeWindowKernel(dimension=2, location=95.5146492461, steepness=2.44163173097, width=1.55305699266, operands=[ ProductKernel(operands=[NoiseKernel(sf=0.320106764553), LinearKernel(dimension=0, location=9.96398838081, sf=-1.62031538504)]), ConstKernel(sf=2.48388212543) ])]), likelihood=LikGauss(sf=-inf), nll=49.1690367314, ndata=18)
+
+%%%%% Level 5 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[ConstKernel(sf=4.12268554752), ChangeWindowKernel(dimension=2, location=95.5146492461, steepness=2.44163173097, width=1.55305699266, operands=[ ProductKernel(operands=[NoiseKernel(sf=0.320106764553), LinearKernel(dimension=0, location=9.96398838081, sf=-1.62031538504)]), ConstKernel(sf=2.48388212543) ])]), likelihood=LikGauss(sf=-inf), nll=49.1690367314, ndata=18)

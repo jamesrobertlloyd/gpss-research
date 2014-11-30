@@ -1,0 +1,32 @@
+  % Define block styles
+  \tikzstyle{block} = [rectangle, draw, fill=blue!20, 
+                       text width=4.4em, text centered, rounded corners, minimum height=3em]
+  \tikzstyle{line} = [draw, -latex']
+  \tikzstyle{cloud} = [draw, ellipse,fill=red!20,minimum height=2em]
+    
+  \begin{tikzpicture}[node distance = 2.3cm]
+    \footnotesize
+    % Place nodes
+    \node [cloud] (data) {Data};
+    \node [block, right of=data] (search) {Search};
+    \node [cloud, above of=search] (language) {Language of models};
+    \node [block, below of=search] (eval) {Evaluation};
+    \node [cloud, right of=search] (model) {Model};
+    \node [block, right of=model] (pred) {Prediction};
+    \node [block, above of=pred] (trans) {Description};
+    \node [block, below of=pred] (checking) {Checking};
+    \node [cloud, right of=pred] (report) {Report};
+    % Draw edges
+    \path [line] (data) -- (search);
+    \path [line] (language) -- (search);
+    \path [line] (search) -- (model);
+    \path [line] (search) -- (model);
+    \path [line] (model.north east) -- (trans.south west);
+    \path [line] (model.east) -- (pred.west);
+    \path [line] (model.south east) -- (checking.north west);
+    \path [line] (trans.south east) -- (report.north west);
+    \path [line] (pred.east) -- (report.west);
+    \path [line] (checking.north east) -- (report.south west);
+    \draw[->,] (search.south east) .. controls (3.45,-1.15) .. (eval.north east);
+    \draw[->,] (eval.north west) .. controls (1.15,-1.15) .. (search.south west);
+  \end{tikzpicture}

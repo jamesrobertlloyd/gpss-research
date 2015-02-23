@@ -201,7 +201,7 @@ max(max(abs(K2 - K1)))
 
 x = linspace(-10, 10, 1000)';
 
-delta = 0.00000000001;
+delta = 0.000000000001;
 i = 2;
 
 cov_func = {@covPeriodicNoDC};
@@ -213,6 +213,7 @@ diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / de
 deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
 
 max(max(abs(diff - deriv)))
+imagesc(diff - deriv)
 
 %% Centered periodic draw
 
@@ -267,7 +268,7 @@ plot(x, y);
 
 x = linspace(-5, 5, 1000)';
 
-delta = 0.000001;
+delta = 0.00000000000001;
 i = 2;
 
 cov_func = {@covFourier};
@@ -279,6 +280,7 @@ diff = -(feval(cov_func{:}, hyp1.cov, x) - feval(cov_func{:}, hyp2.cov, x)) / de
 deriv = feval(cov_func{:}, hyp1.cov, x, x, i);
 
 max(max(abs(diff - deriv)))
+imagesc(diff - deriv)
 
 %% periodic draw
 

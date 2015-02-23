@@ -2217,7 +2217,7 @@ class LikGauss(Likelihood):
     def gpy_object(self):
         obj = GPy.likelihoods.Gaussian(variance=np.exp(self.sf) ** 2)
         if self.sf == -np.inf:
-            obj.variance.constrain_fixed(0)
+            obj.variance.constrain_fixed(0, warning=False)
         return obj
 
 class LikErf(Likelihood):

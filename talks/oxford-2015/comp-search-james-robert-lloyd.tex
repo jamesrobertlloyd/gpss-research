@@ -98,7 +98,6 @@ Joshua Tenenbaum\textsuperscript{4}, Zoubin Ghahramani\textsuperscript{1}
     \begin{itemize}
       \item Aiming to speed up mechanistic parts of data analysis
       \item The meticulous behaviour of a machine can sometimes identify patterns that might otherwise be overlooked
-      \item Not trying to replace humans any time soon!
     \end{itemize}
     \vspace{\baselineskip}
     \item Uncover challenging research problems in \eg
@@ -129,9 +128,11 @@ Joshua Tenenbaum\textsuperscript{4}, Zoubin Ghahramani\textsuperscript{1}
 \end{frame}
 
 \begin{frame}{Many probabilistic models for matrices}
-Insert Roger pictures
+  \begin{center}
+	  \includegraphics[width=1.0\textwidth]{../figures/matrix_figures/many_models}
+  \end{center}
   \begin{itemize}
-    \item Which one to use?
+    \item Which one should we use and when?
     \item When do we need to invent new models?
   \end{itemize}
 \end{frame}
@@ -183,6 +184,16 @@ Insert Roger pictures
 \end{frame}
 
 \begin{frame}{Can we do the same for regression?}
+  \begin{itemize}
+    \pause
+    \item Yes
+    \vspace{\baselineskip}
+    \pause
+    \item Initial results suggested that learned models were often quite interpretable
+    \vspace{\baselineskip}
+    \pause
+    \item With a careful choice of modelling language it is trivial to produce natural language descriptions of data
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{A system for exploratory data analysis}
@@ -654,12 +665,6 @@ This causes the standard deviation of the model to vary linearly without affecti
   \end{center}
 \end{frame}
 
-\begin{frame}{Why are pictures not enough?}
-  \begin{center}
-    \input{../figures/words_are_good}
-  \end{center}
-\end{frame}
-
 \begin{frame}{Automatically generated reports}
   \input{../figures/flow_chart_report}
 \end{frame}
@@ -759,10 +764,6 @@ This causes the standard deviation of the model to vary linearly without affecti
    \vspace{\baselineskip}
    \item Currently researching methods for rational use of computational resources\dots
  \end{itemize}
-\end{frame}
-
-\begin{frame}{An example of intelligent computation}
-Freeze thaw picture
 \end{frame}
 
 \begin{frame}{Thanks}
@@ -1005,49 +1006,9 @@ The following discrepancies between the prior and posterior distributions for th
 \end{tabular}
 \end{frame}
 
-\begin{frame}{What next?}
- \begin{itemize}
-   \item Plenty of ways to extend this line of work \eg
-   \begin{itemize}
-     \item Reducing the computational cost of model search
-     \item Increasing the expressivity of the modelling language (\eg monotonicity, positive functions)
-     \item Extending descriptions to multi-dimensional functions
-     \item Different likelihoods (\eg outlier models)
-     \item Different types of data (\eg collections of exchangeable arrays)
-     \item Missing data
-     \item Building causal models of multivariate data with complex functional relationships
-     \item \dots
-   \end{itemize}
-   \vspace{\baselineskip}
-   \item How can we tie all of this together?
- \end{itemize}
-\end{frame}
-
-\begin{frame}{An API for statistical modelling}
-  \begin{itemize}
-    \item APIs for prediction implemented by \eg  Google prediction API, auto-WEKA, \dots
-    \begin{itemize}
-      \item Essentially implement the functions train and predict
-      \item Highly modular
-    \end{itemize}
-    \vspace{\baselineskip}
-    \item We have started implementing some additional functions
-    \begin{itemize}
-      \item describe
-      \item criticise / check
-    \end{itemize}
-    \vspace{\baselineskip}
-    \item What else is needed and how can we keep it modular?
-    \begin{itemize}
-      \item How will this interact with recent advances in probabilistic programming?
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{What next?}
+\begin{frame}{Why are pictures not enough?}
   \begin{center}
-  \large
-  Where could an extension of this system be applied?
+    \input{../figures/words_are_good}
   \end{center}
 \end{frame}
   

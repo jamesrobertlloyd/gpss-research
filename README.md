@@ -17,10 +17,10 @@ appearing in [AAAI 2014](http://www.aaai.org/Conferences/AAAI/aaai14.php).
 
 This paper presents the beginnings of an automatic statistician, focusing on regression problems. Our system explores an open-ended space of statistical models to discover a good explanation of a data set, and then produces a detailed report with figures and natural-language text. Our approach treats unknown regression functions nonparametrically using Gaussian processes, which has two important consequences. First, Gaussian processes can model functions in terms of high-level properties (e.g. smoothness, trends, periodicity, changepoints). Taken together with the compositional structure of our language of models this allows us to automatically describe functions in simple terms. Second, the use of flexible nonparametric models and a rich language for composing them in an open-ended manner also results in state-of-the-art extrapolation performance evaluated over 13 real time series data sets from various domains.
 
-Feel free to email the authors with any questions:  
-[James Lloyd](http://mlg.eng.cam.ac.uk/Lloyd/) (jrl44@cam.ac.uk)  
-[David Duvenaud](http://mlg.eng.cam.ac.uk/duvenaud/) (dkd23@cam.ac.uk)  
-[Roger Grosse](http://people.csail.mit.edu/rgrosse/) (rgrosse@mit.edu)  
+Feel free to email the authors with any questions:
+[James Lloyd](http://mlg.eng.cam.ac.uk/Lloyd/) (jrl44@cam.ac.uk)
+[David Duvenaud](http://people.seas.harvard.edu/~dduvenaud/) (dduvenaud@seas.harvard.edu)
+[Roger Grosse](http://www.cs.toronto.edu/~rgrosse/) (rgrosse@cs.toronto.edu)
 
 
 ### Data used in the paper

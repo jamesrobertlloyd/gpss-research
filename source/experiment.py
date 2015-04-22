@@ -48,7 +48,7 @@ def optimise_single_model(params):
 #     return optimised_model
 
 
-def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp):
+def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp, single_step=False):
     """Search for the best kernel"""
     
     # Initialise random seeds - randomness may be used in e.g. data subsetting
@@ -94,9 +94,18 @@ def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp
 
     # Initialise mean, kernel and likelihood
 
-    m = eval(exp['mean'])
-    k = eval(exp['kernel'])
-    l = eval(exp['lik'])
+    if isinstance(exp['mean'], str):
+        m = eval(exp['mean'])
+    else:
+        m = exp['mean']
+    if isinstance(exp['kernel'], str):
+        k = eval(exp['kernel'])
+    else:
+        k = exp['kernel']
+    if isinstance(exp['lik'], str):
+        l = eval(exp['lik'])
+    else:
+        l = exp['lik']
     current_models = [ff.GPModel(mean=m, kernel=k, likelihood=l, ndata=Y.size)]
 
     print('\n\nStarting search with this model:\n')
@@ -280,35 +289,38 @@ def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp
 
             # Write all_results to a temporary file at each level.
             all_results = sorted(all_results, key=lambda a_model: GPModel.score(a_model, exp['score']), reverse=True)
-            with open(results_filename + '.unfinished', 'w') as outfile:
-                outfile.write('Experiment all_results for\n datafile = %s\n\n %s \n\n'
-                              % (experiment_data_file_name, exp_params_to_str(exp)))
-                for (i, all_results) in enumerate(results_sequence):
-                    outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
-                    if exp['verbose_results']:
-                        for result in all_results:
+
+            if not single_step:
+
+                with open(results_filename + '.unfinished', 'w') as outfile:
+                    outfile.write('Experiment all_results for\n datafile = %s\n\n %s \n\n'
+                                  % (experiment_data_file_name, exp_params_to_str(exp)))
+                    for (i, all_results) in enumerate(results_sequence):
+                        outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
+                        if exp['verbose_results']:
+                            for result in all_results:
+                                print >> outfile, result
+                        else:
+                            # Only print top k kernels - i.e. those used to seed the next level of the search
+                            for result in sorted(all_results,
+                                                 key=lambda a_model: GPModel.score(a_model, exp['score']))[0:exp['k']]:
+                                print >> outfile, result
+                # Write nan scored kernels to a log file
+                with open(results_filename + '.nans', 'w') as outfile:
+                    outfile.write('Experiment nan results for\n datafile = %s\n\n %s \n\n'
+                                  % (experiment_data_file_name, exp_params_to_str(exp)))
+                    for (i, nan_results) in enumerate(nan_sequence):
+                        outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
+                        for result in nan_results:
                             print >> outfile, result
-                    else:
-                        # Only print top k kernels - i.e. those used to seed the next level of the search
-                        for result in sorted(all_results,
-                                             key=lambda a_model: GPModel.score(a_model, exp['score']))[0:exp['k']]:
+                # Write oob kernels to a log file
+                with open(results_filename + '.oob', 'w') as outfile:
+                    outfile.write('Experiment oob results for\n datafile = %s\n\n %s \n\n'
+                                  % (experiment_data_file_name, exp_params_to_str(exp)))
+                    for (i, nan_results) in enumerate(oob_sequence):
+                        outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
+                        for result in nan_results:
                             print >> outfile, result
-            # Write nan scored kernels to a log file
-            with open(results_filename + '.nans', 'w') as outfile:
-                outfile.write('Experiment nan results for\n datafile = %s\n\n %s \n\n'
-                              % (experiment_data_file_name, exp_params_to_str(exp)))
-                for (i, nan_results) in enumerate(nan_sequence):
-                    outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
-                    for result in nan_results:
-                        print >> outfile, result
-            # Write oob kernels to a log file
-            with open(results_filename + '.oob', 'w') as outfile:
-                outfile.write('Experiment oob results for\n datafile = %s\n\n %s \n\n'
-                              % (experiment_data_file_name, exp_params_to_str(exp)))
-                for (i, nan_results) in enumerate(oob_sequence):
-                    outfile.write('\n%%%%%%%%%% Level %d %%%%%%%%%%\n\n' % i)
-                    for result in nan_results:
-                        print >> outfile, result
 
             # Have we hit a stopping criterion?
             if 'no_improvement' in exp['stopping_criteria']:
@@ -319,14 +331,46 @@ def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp
                     # Insufficient improvement
                     print 'Insufficient improvement to score - stopping search'
                     break
+            # Were we destined to stop?
+            if single_step:
+                break
 
-        # Rename temporary results file to actual results file
-        os.rename(results_filename + '.unfinished', results_filename)
+        if not single_step:
+            # Rename temporary results file to actual results file
+            os.rename(results_filename + '.unfinished', results_filename)
 
     finally:
         processing_pool.close()
         processing_pool.join()
 
+    # Return summary of results
+    return dict(all_models=all_results)
+
+
+def kernel_search_single_step(X, Y, exp):
+    return perform_kernel_search(X, Y, None, None, exp, True)
+
+
+def load_experiment_details(filename):
+    """Just loads the exp dictionary"""
+    exp_string = open(filename, 'r').read()
+    exp = eval(exp_string)
+    exp = exp_param_defaults(exp)
+    return exp
+
+
+def load_data(filename):
+    """Loads the exp dictionary and loads relevant data"""
+    exp_string = open(filename, 'r').read()
+    exp = eval(exp_string)
+    exp = exp_param_defaults(exp)
+    data_sets = list(gen_all_datasets(exp['data_dir']))
+    data_list = []
+    for r, a_file in data_sets:
+        data_file = os.path.join(r, a_file + ".npz")
+        data = np.load(data_file)
+        data_list.append(data)
+    return data_list
 
 def run_experiment_file(filename):
     """
@@ -451,7 +495,7 @@ def exp_param_defaults(exp_params):
                     improvement_tolerance=0.1, # Minimum improvement for no_improvement stopping criterion
                     n_processes=None,             # Number of processes in multiprocessing.pool - None means max
                     max_tasks_per_process=1,      # This is set to one (or a small #) whilst there is a GPy memory leak
-                    starting_subset=100,          # How many data points do we start scoring on?
+                    starting_subset=500,          # How many data points do we start scoring on?
                     search_operators=[('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),
                                       ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
                                       #('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),

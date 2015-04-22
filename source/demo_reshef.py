@@ -21,6 +21,10 @@ print(exp_params['mean'])
 print(exp_params['kernel'])
 print(exp_params['lik'])
 
+#...and a parameter that controls a subsetting pruning strategy for speed - setting this value larger than the total number
+# of data points runs the algorithm without any pruning
+print(exp_params['starting_subset'])
+
 # We now load some data
 
 data = experiment.load_data('../experiments/debug/example_pedro_1.py')[0]

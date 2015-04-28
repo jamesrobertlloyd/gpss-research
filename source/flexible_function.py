@@ -840,6 +840,21 @@ class GPModel:
 
         return self
 
+    def create_gpy_model(self, X, Y, inference='exact', num_inducing=50):
+        num_data, input_dim = X.shape
+        k = self.kernel.gpy_object
+        l = self.likelihood.gpy_object
+        inference = inference.lower()
+        if inference == 'exact':
+            self.gpy_model = GPy.core.GP(X=X, Y=Y, kernel=k, likelihood=l, name='GP regression')
+        elif inference == 'sparse':
+            i = np.random.permutation(num_data)[:min(num_inducing, num_data)]
+            Z = param_to_array(X)[i].copy()
+            self.gpy_model = GPy.core.SparseGP(X=X, Y=Y, Z=Z, kernel=k, likelihood=l)
+        else:
+            RuntimeError('Sorry, I have not implemented that type of inference yet')
+
+
 ##############################################
 #                                            #
 #              Mean functions                #

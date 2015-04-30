@@ -9,6 +9,7 @@ Created Jan 2013
 """
 
 import numpy as np
+from numpy import inf
 import os
 import random
 import re
@@ -196,8 +197,9 @@ def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp
                 for model in current_models:
                     print(model.pretty_print())
 
-            subset_n = min(exp['starting_subset'], X.shape[0])
-            while subset_n <= X.shape[0]:
+            for iters, subset_n in exp['iter_and_subset_schedule']:
+                if subset_n > X.shape[0]:
+                    subset_n = X.shape[0]
                 # Subset data
                 X_subset = X[:subset_n]
                 Y_subset = Y[:subset_n]
@@ -205,7 +207,7 @@ def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp
                 # Use multiprocessing pool to optimise models
                 kwargs = dict(inference='exact',
                               messages=exp['verbose'],
-                              max_iters=exp['iters'])
+                              max_iters=iters)
                 new_results = processing_pool.map(optimise_single_model,
                                                   ((model, X_subset, Y_subset, kwargs)
                                                    for model in current_models))
@@ -222,29 +224,14 @@ def perform_kernel_search(X, Y, experiment_data_file_name, results_filename, exp
                 nan_sequence.append(nan_results)
                 assert(len(new_results) > 0) # FIXME - Need correct control flow if this happens
 
-                # Sort the new results
-                new_results = sorted(new_results, key=lambda a_model: GPModel.score(a_model, exp['score']),
-                                     reverse=True)
-
-                # Keep only the top 50% of models - FIXME this is not principled and a magic number!
-                new_results = new_results[int(np.floor(len(new_results) * 0.5)):]
-                current_models = new_results
-
-                # Double the subset size, or exit loop if finished
-                if subset_n == X.shape[0]:
-                    break
-                else:
-                    subset_n = min(subset_n * 2, X.shape[0])
-
+            # Sort the new results
+            new_results = sorted(new_results, key=lambda a_model: GPModel.score(a_model, exp['score']),
+                                 reverse=True)
 
             # Update user
             print('\nAll new results\n')
             for model in new_results:
-                print('BIC=%0.1f' % model.bic,
-                      # 'NLL=%0.1f' % model.nll,
-                      # 'AIC=%0.1f' % model.aic,
-                      # 'PL2=%0.3f' % model.pl2,
-                      model.pretty_print())
+                print('BIC=%0.1f, Model = %s' % (model.bic, model.pretty_print()))
 
             all_results = all_results + new_results
             all_results = sorted(all_results, key=lambda a_model: GPModel.score(a_model, exp['score']), reverse=True)
@@ -475,7 +462,7 @@ def exp_param_defaults(exp_params):
                     max_jobs=500,                 # Maximum number of jobs to run at once on cluster.
                     verbose=True,                 # Talkative?
                     skip_complete=True,           # Whether to re-run already completed experiments.
-                    iters=100,                    # How long to optimize hyperparameters for.
+                    iter_and_subset_schedule=[(100, inf)], # How long to optimize hyperparameters for on what subset of data
                     base_kernels='SE,Noise',      # Base kernels of language
                     additive_form=True,           # Restrict kernels to be in an additive form?
                     mean='ff.MeanZero()',         # Starting mean - zero
@@ -486,16 +473,14 @@ def exp_param_defaults(exp_params):
                     period_heuristic=10,          # The minimum number of data points per period (roughly)
                     max_period_heuristic=5,       # Min number of periods that must be observed to declare periodicity
                     subset=False,                 # Optimise on a subset of the data?
-                    subset_size=250,              # Size of data subset
                     full_iters=0,                 # Number of iters to perform on full data after subset optimisation
                     bundle_size=1,                # Number of kernel evaluations per job sent to cluster
                     score='BIC',                  # Search criterion
                     period_heuristic_type='both', # Related to minimum distance between data or something else
                     stopping_criteria=['no_improvement'], # Other reasons to stop the search
-                    improvement_tolerance=0.1, # Minimum improvement for no_improvement stopping criterion
+                    improvement_tolerance=0.1,    # Minimum improvement for no_improvement stopping criterion
                     n_processes=None,             # Number of processes in multiprocessing.pool - None means max
                     max_tasks_per_process=1,      # This is set to one (or a small #) whilst there is a GPy memory leak
-                    starting_subset=500,          # How many data points do we start scoring on?
                     search_operators=[('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}),
                                       ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),
                                       #('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}),

@@ -797,49 +797,6 @@ class GPModel:
         model_list = [model for model in model_list if not model == null_model]
         return model_list
 
-    def gpy_optimize(self, X, Y, inference='exact', num_inducing=50, max_iters=100, messages=True,
-                     keep_gpy_object=False):
-        """Convert into a GPy object, optimise and record results. Returns self for convenience"""
-        self.ndata = X.shape[0]
-        num_data, input_dim = X.shape
-        k = self.kernel.gpy_object
-        l = self.likelihood.gpy_object
-        inference = inference.lower()
-
-        try:
-
-            if isinstance(self.likelihood, LikGauss):
-                if inference == 'exact':
-                    # gpy_model = GPy.models.GPRegression(X=X, Y=Y, kernel=k)
-                    gpy_model = GPy.core.GP(X=X, Y=Y, kernel=k, likelihood=l, name='GP regression')
-                elif inference == 'sparse':
-                    # gpy_model = GPy.models.SparseGPRegression(X=X, Y=Y, kernel=k, num_inducing=num_inducing)
-                    i = np.random.permutation(num_data)[:min(num_inducing, num_data)]
-                    Z = param_to_array(X)[i].copy()
-                    gpy_model = GPy.core.SparseGP(X=X, Y=Y, Z=Z, kernel=k, likelihood=l)
-                else:
-                    RuntimeError('Sorry, I have not implemented that type of inference yet')
-                # if self.likelihood.sf == -np.inf:
-                #     self.gpy_model.likelihood.variance.constrain_fixed(0)
-            else:
-                raise RuntimeError('Sorry, I do not know how to deal with this likelihood yet')
-
-            gpy_model.optimize(max_iters=max_iters, messages=messages)
-            self.kernel.load_gpy_param_vector(gpy_model.kern.param_array)
-            self.likelihood.load_gpy_param_vector(gpy_model.likelihood.param_array)
-            self.nll = -gpy_model.log_likelihood()
-            if keep_gpy_object:
-                self.gpy_model = gpy_model
-            else:
-                del gpy_model
-        # FIXME - I am too broad an exception - I mask the RuntimeErrors above!
-        except:
-            self.nll = np.inf
-            if 'gpy_model' in locals():
-                del gpy_model
-
-        return self
-
     def create_gpy_model(self, X, Y, inference='exact', num_inducing=50):
         num_data, input_dim = X.shape
         k = self.kernel.gpy_object
@@ -853,6 +810,36 @@ class GPModel:
             self.gpy_model = GPy.core.SparseGP(X=X, Y=Y, Z=Z, kernel=k, likelihood=l)
         else:
             RuntimeError('Sorry, I have not implemented that type of inference yet')
+
+    def gpy_optimize(self, X, Y, inference='exact', num_inducing=50, max_iters=100, messages=True,
+                     keep_gpy_object=False):
+        """Convert into a GPy object, optimise and record results. Returns self for convenience"""
+        self.ndata = X.shape[0]
+
+        try:
+
+            self.create_gpy_model(X, Y, inference, num_inducing)
+
+            self.gpy_model.optimize(max_iters=max_iters, messages=messages)
+            self.kernel.load_gpy_param_vector(self.gpy_model.kern.param_array)
+            self.likelihood.load_gpy_param_vector(self.gpy_model.likelihood.param_array)
+            self.nll = -self.gpy_model.log_likelihood()
+            if not keep_gpy_object:
+                self.gpy_model = None
+        # FIXME - I am too broad an exception - I mask the RuntimeErrors above!
+        except:
+            self.nll = np.inf
+            if hasattr(self, 'gyp_model'):
+                self.gpy_model = None
+
+        return self
+
+    def gpy_predict(self, X_train, Y_train, X_test, inference='exact', num_inducing=50, keep_gpy_object=False):
+        self.create_gpy_model(X_train, Y_train, inference, num_inducing)
+        mean, var, = self.gpy_model.predict(X_test)
+        if not keep_gpy_object:
+            self.gpy_model = None
+        return dict(mean=mean, var=var)
 
 
 ##############################################

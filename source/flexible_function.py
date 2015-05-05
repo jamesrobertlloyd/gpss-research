@@ -16,6 +16,8 @@ from numpy import nan, inf
 import numpy as np
 # import re
 
+from multiprocessing import Pool
+
 # import operator
 # from utils import psd_matrices
 import utils.misc
@@ -684,6 +686,11 @@ class Likelihood(FunctionWrapper):
         return 'Likelihood()'
 
 
+def gpy_predict_in_separate_process(params):
+    model, X_train, Y_train, X_test, inference, num_inducing, keep_gpy_object = params
+    return model._gpy_predict(X_train, Y_train, X_test, inference, num_inducing, keep_gpy_object)
+
+
 class GPModel:
     """Model class - keeps track of a mean function, kernel, likelihood function,
        and optionally a score."""
@@ -803,11 +810,11 @@ class GPModel:
         l = self.likelihood.gpy_object
         inference = inference.lower()
         if inference == 'exact':
-            self.gpy_model = GPy.core.GP(X=X, Y=Y, kernel=k, likelihood=l, name='GP regression')
+            return GPy.core.GP(X=X, Y=Y, kernel=k, likelihood=l, name='GP regression')
         elif inference == 'sparse':
             i = np.random.permutation(num_data)[:min(num_inducing, num_data)]
             Z = param_to_array(X)[i].copy()
-            self.gpy_model = GPy.core.SparseGP(X=X, Y=Y, Z=Z, kernel=k, likelihood=l)
+            return GPy.core.SparseGP(X=X, Y=Y, Z=Z, kernel=k, likelihood=l)
         else:
             RuntimeError('Sorry, I have not implemented that type of inference yet')
 
@@ -818,27 +825,41 @@ class GPModel:
 
         try:
 
-            self.create_gpy_model(X, Y, inference, num_inducing)
+            gpy_model = self.create_gpy_model(X, Y, inference, num_inducing)
 
-            self.gpy_model.optimize(max_iters=max_iters, messages=messages)
-            self.kernel.load_gpy_param_vector(self.gpy_model.kern.param_array)
-            self.likelihood.load_gpy_param_vector(self.gpy_model.likelihood.param_array)
-            self.nll = -self.gpy_model.log_likelihood()
-            if not keep_gpy_object:
-                self.gpy_model = None
+            gpy_model.optimize(max_iters=max_iters, messages=messages)
+            self.kernel.load_gpy_param_vector(gpy_model.kern.param_array)
+            self.likelihood.load_gpy_param_vector(gpy_model.likelihood.param_array)
+            self.nll = -gpy_model.log_likelihood()
+            # if not keep_gpy_object:
+            #     self.gpy_model = None
         # FIXME - I am too broad an exception - I mask the RuntimeErrors above!
         except:
             self.nll = np.inf
-            if hasattr(self, 'gyp_model'):
-                self.gpy_model = None
+            # if hasattr(self, 'g_model'):
+            #     self.gpy_model = None
 
         return self
 
     def gpy_predict(self, X_train, Y_train, X_test, inference='exact', num_inducing=50, keep_gpy_object=False):
-        self.create_gpy_model(X_train, Y_train, inference, num_inducing)
-        mean, var, = self.gpy_model.predict(X_test)
-        if not keep_gpy_object:
-            self.gpy_model = None
+        # gpy_model = self.create_gpy_model(X_train, Y_train, inference, num_inducing)
+        # mean, var, = gpy_model.predict(X_test)
+        # # if not keep_gpy_object:
+        # #     self.gpy_model = None
+        # return dict(mean=mean, var=var)
+        # GPy is making OSX unhappy - let's only use gpy objects behind the protection of a separate process
+        pool = Pool(processes=1, maxtasksperchild=1)
+        result = pool.map(gpy_predict_in_separate_process, [(self, X_train, Y_train, X_test, inference, num_inducing,
+                                                             keep_gpy_object)])[0]
+        pool.close()
+        pool.join()
+        return result
+
+    def _gpy_predict(self, X_train, Y_train, X_test, inference='exact', num_inducing=50, keep_gpy_object=False):
+        gpy_model = self.create_gpy_model(X_train, Y_train, inference, num_inducing)
+        mean, var, = gpy_model.predict(X_test)
+        # if not keep_gpy_object:
+        #     self.gpy_model = None
         return dict(mean=mean, var=var)
 
 

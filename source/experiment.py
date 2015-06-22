@@ -50,6 +50,7 @@ def perform_kernel_search(X, y, D, experiment_data_file_name, results_filename, 
     data_shape['y_max'] = np.max(y)
     data_shape['x_min'] = [np.min(X[:,dim]) for dim in range(X.shape[1])]
     data_shape['x_max'] = [np.max(X[:,dim]) for dim in range(X.shape[1])]
+    data_shape['x_min_abs_diff'] = np.log([utils.misc.min_abs_diff(X[:,i]) for i in range(X.shape[1])])
 
     # Initialise period at a multiple of the shortest / average distance between points, to prevent Nyquist problems.
 

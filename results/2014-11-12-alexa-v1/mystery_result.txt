@@ -1,0 +1,60 @@
+Experiment all_results for
+ datafile = ../data/alexa/mystery.mat
+
+ Running experiment:
+description = Re-analysis of GEFCOM data for purposes of thesis,
+data_dir = ../data/alexa,
+max_depth = 10,
+random_order = True,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 400,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2014-11-12-alexa-v1/,
+iters = 250,
+base_kernels = SE,Const,Noise,Lin,
+additive_form = True,
+mean = ff.MeanZero(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikGauss(sf=-np.Inf),
+verbose_results = False,
+random_seed = 9001,
+period_heuristic = 3,
+max_period_heuristic = 3,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'}), ('A', ('CP', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('CW', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('B', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('BL', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('None',), {'A': 'kernel'})],
+score = bic,
+period_heuristic_type = min,
+stopping_criteria = ['no_improvement'],
+improvement_tolerance = 0.1,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=2.21664334291), LinearKernel(dimension=1, location=-16.3101416546, sf=0.880848635463)]), likelihood=LikGauss(sf=-inf), nll=91.0054046253, ndata=24)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ChangePointKernel(dimension=3, location=20.204997326, steepness=5.27428206842, operands=[ SumKernel(operands=[NoiseKernel(sf=2.26837368559), LinearKernel(dimension=1, location=-29.8258976691, sf=1.95629830912)]), SumKernel(operands=[NoiseKernel(sf=-12.6774805767), LinearKernel(dimension=1, location=-6.37209300067, sf=1.07816886277)]) ]), likelihood=LikGauss(sf=-inf), nll=79.4821426371, ndata=24)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ChangePointKernel(dimension=3, location=20.3683062746, steepness=5.32511475418, operands=[ SumKernel(operands=[NoiseKernel(sf=2.30205900336), LinearKernel(dimension=1, location=-29.5663726607, sf=1.03216342423)]), SumKernel(operands=[NoiseKernel(sf=-12.4421180504), LinearKernel(dimension=1, location=-6.37209302326, sf=1.67839737142)]) ]), likelihood=LikGauss(sf=-inf), nll=79.1469287451, ndata=24)
+
+%%%%% Level 3 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ChangePointKernel(dimension=3, location=20.3775692139, steepness=5.15604657977, operands=[ SumKernel(operands=[NoiseKernel(sf=2.25471001589), LinearKernel(dimension=1, location=-29.3368619532, sf=0.974557906335)]), SumKernel(operands=[ConstKernel(sf=-13.3746357304), LinearKernel(dimension=1, location=-6.37209299486, sf=1.26482697524)]) ]), likelihood=LikGauss(sf=-inf), nll=77.2597666451, ndata=24)
+
+%%%%% Level 4 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ChangePointKernel(dimension=3, location=20.3775692139, steepness=5.15604657977, operands=[ SumKernel(operands=[NoiseKernel(sf=2.25471001589), LinearKernel(dimension=1, location=-29.3368619532, sf=0.974557906335)]), SumKernel(operands=[ConstKernel(sf=-13.3746357304), LinearKernel(dimension=1, location=-6.37209299486, sf=1.26482697524)]) ]), likelihood=LikGauss(sf=-inf), nll=77.2597666451, ndata=24)

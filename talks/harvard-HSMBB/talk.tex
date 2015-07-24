@@ -1,0 +1,908 @@
+\input{../include/header_beamer}
+\usepackage{etex}
+
+\usepackage{tabularx}
+\usepackage{../include/picins}
+\usepackage{../include/preamble}
+\usepackage{setspace}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+\usetikzlibrary{shapes.geometric,arrows,chains,matrix,positioning,scopes,calc,shapes.arrows}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Some look and feel definitions
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setlength{\columnsep}{0.03\textwidth}
+\setlength{\columnseprule}{0.0018\textwidth}
+\setlength{\parindent}{0.0cm}
+  
+\tikzstyle{mybox} = [draw=white, rectangle]
+\tikzset{hide on/.code={\only<#1>{\color{white}}}}
+
+\definecolor{camlightblue}{rgb}{0.601 , 0.8, 1}
+\definecolor{camdarkblue}{rgb}{0, 0.203, 0.402}
+\definecolor{camred}{rgb}{1, 0.203, 0}
+\definecolor{camyellow}{rgb}{1, 0.8, 0}
+\definecolor{lightblue}{rgb}{0, 0, 0.80}
+\definecolor{white}{rgb}{1, 1, 1}
+\definecolor{whiteblue}{rgb}{0.80, 0.80, 1}
+
+\newcolumntype{x}[1]{>{\centering\arraybackslash\hspace{0pt}}m{#1}}
+\newcommand{\tabbox}[1]{#1}
+
+\hypersetup{colorlinks=true,citecolor=blue}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The talk
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Automatically constructing models, and automatically explaining them, too}
+
+\author{
+\includegraphics[height=0.16\textwidth, trim=20mm 25mm 0mm 25mm, clip]{../figures/david2}
+\qquad
+\includegraphics[height=0.16\textwidth]{../figures/JamesLloyd4}
+\qquad
+\includegraphics[height=0.16\textwidth]{../figures/roger-photo}
+\\
+David Duvenaud\textsuperscript{1}, James Robert Lloyd\textsuperscript{2}, Roger Grosse\textsuperscript{3},\\
+\includegraphics[height=0.16\textwidth, trim=0mm 7mm 0mm 0mm, clip]{../figures/josh2}
+\qquad
+\includegraphics[height=0.16\textwidth]{../figures/zg2}\\
+Joshua Tenenbaum\textsuperscript{4}, Zoubin Ghahramani\textsuperscript{2}
+}
+
+\institute{
+2: University of Cambridge,
+1: Harvard University\\
+3: University of Toronto,
+4: Massachusetts Institute of Technology
+}
+
+\begin{document}
+
+\frame[plain] {\titlepage}
+
+\frame[plain]{
+\frametitle{Typical statistical modelling}
+\begin{itemize} 
+	\item Models typically built by hand, or chosen from a fixed set
+	\begin{center}
+		\includegraphics[width=9cm, trim=1.39cm 15cm 35cm 0cm, clip]{../figures/plot_classifier_comparison_1}\\
+		\includegraphics[width=9cm, trim=35cm 15cm 1.35cm 0cm, clip]{../figures/plot_classifier_comparison_1}
+\end{center}
+%	\begin{itemize} 
+%	  \vspace{\baselineskip}
+%		\item Example: Scikit-learn
+			\item Building by hand requires considerable expertise% and understanding of the dataset 
+%	\begin{itemize}
+%	  \item Can become an entire research project
+%	\end{itemize}
+%	\end{itemize}
+%	\vspace{\baselineskip}
+	\item Just being nonparametric isn't good enough
+	\begin{itemize}
+	  \item Nonparametric does not mean assumption-free!
+	\end{itemize}
+%	\vspace{\baselineskip}
+	\item Can silently fail
+	\begin{itemize}
+	  \item How to tell if none of the models fit the data well?
+	\end{itemize}
+\end{itemize}
+}
+
+
+\frame[plain]{
+\frametitle{Can we do better?}
+	\begin{itemize} 
+	\item How could an AI do modeling, forecasting, and statistics?
+	\vspace{\baselineskip}
+	\item An artificial statistician would need:
+			\begin{itemize} 
+			\item a language that could describe arbitrarily complicated models
+			\item a method of searching over those models
+			\item a procedure to check model fit
+		\end{itemize}
+	\vspace{\baselineskip}
+	\item We construct such a language over regression models, a procedure to search over it, and a method to describe in natural language the properties of the resulting models
+%	\begin{itemize}
+%		\item Working on automatic model-checking\ldots
+%	\end{itemize}
+\end{itemize}
+}
+
+
+\begin{frame}{An entirely automatic analysis}
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{scope}[yshift=0\textwidth]
+        \node (raw_data) at (-0.25\textwidth, 0) {\includegraphics[width=0.45\textwidth]{../figures/01-airline/01-airline_raw_data}};
+        \node (posterior) at (+0.25\textwidth, 0)  {\includegraphics[width=0.45\textwidth]{../figures/01-airline/01-airline_all}};
+      \end{scope}
+      \begin{scope}[yshift=-0.18\textwidth]
+        \node (description) at (0, +0.03\textwidth) {\small Four additive components have been identified in the data};
+        \node (component_1) at (-0.20\textwidth, -0.09\textwidth) 
+              {\includegraphics[width=0.25\textwidth]{../figures/01-airline/01-airline_1}};
+        \node [text width=0.4\textwidth, align=center] (component_1_text) at (-0.20\textwidth, -0.193\textwidth) 
+              {\scriptsize A linearly increasing function};
+        \node (component_2) at (+0.20\textwidth, -0.09\textwidth) 
+              {\includegraphics[width=0.25\textwidth]{../figures/01-airline/01-airline_2}};
+        \node [text width=0.4\textwidth, align=center] (component_2_text) at (+0.20\textwidth, -0.166\textwidth) 
+              {\scriptsize An approximately periodic function};
+        \node [text width=0.4\textwidth, align=center] (component_2_text) at (+0.20\textwidth, -0.193\textwidth) 
+              {\scriptsize with a period of 1.0 years with};
+        \node [text width=0.4\textwidth, align=center] (component_2_text) at (+0.20\textwidth, -0.220\textwidth) 
+              {\scriptsize linearly increasing amplitude};
+        \node (component_3) at (-0.20\textwidth, -0.3\textwidth) 
+              {\includegraphics[width=0.25\textwidth]{../figures/01-airline/01-airline_3}};
+        \node [text width=0.4\textwidth, align=center] (component_3_text) at (-0.20\textwidth, -0.393\textwidth) 
+              {\scriptsize A smooth function};
+        \node (component_4) at (+0.20\textwidth, -0.3\textwidth) 
+              {\includegraphics[width=0.25\textwidth]{../figures/01-airline/01-airline_4}};
+        \node [text width=0.4\textwidth, align=center] (component_4_text) at (+0.20\textwidth, -0.3795\textwidth) 
+              {\scriptsize Uncorelated noise with linearly};
+        \node [text width=0.4\textwidth, align=center] (component_4_text) at (+0.20\textwidth, -0.4065\textwidth) 
+              {\scriptsize increasing standard deviation};
+      \end{scope}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+
+
+
+\begin{frame}{Agenda}
+  \begin{itemize}
+    \item Introduction to Bayesian models and Gaussian processes
+    \vspace{\baselineskip}
+    \item Description of automatic statistician
+    \vspace{\baselineskip}
+    \item Examples of automatically generated models and descriptions
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{How to do linear regression} 
+  \only<1>{
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{../figures/lin_reg/all_data}
+  \end{center}
+  \begin{itemize}
+    \item Linear regression: $y_i = m x_i + \varepsilon_i$ where $x$ are inputs, and $y$ outputs, and $\varepsilon$ are errors or noise
+  \end{itemize}
+  }
+  \only<2>{
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{../figures/lin_reg/least_squares}
+  \end{center}
+  \begin{itemize}
+    \item Common approach: Estimate $m$ by least squares
+  \end{itemize}
+  }
+\end{frame}
+
+\begin{frame}{How to do Bayesian linear regression} 
+  \only<1>{
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{../figures/lin_reg/prior}
+  \end{center}
+  \begin{itemize}
+    \item Bayesian approach:
+    \begin{itemize}
+      \item Specify beliefs about $m$ using probability distributions
+    \end{itemize}
+  \end{itemize}
+  }
+  \only<2>{
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{../figures/lin_reg/bayes_15}
+  \end{center}
+  \begin{itemize}
+    \item Bayesian approach:
+    \begin{itemize}
+      \item Specify prior beliefs about $m$ using probability distributions
+      \item Follow rules of probability to update beliefs after observing data
+    \end{itemize}
+  \end{itemize}
+  }
+\end{frame}
+
+
+
+\begin{frame}{Bayes rule}
+  \begin{itemize}
+      \item Suppose we wish to fit a model $M$ with parameters $\theta$ to data $D$
+      \begin{itemize}
+        \item $M$ defined by $\textcolor{blue}{p(D\,|\,\theta,M)}$ - the likelihood
+      \end{itemize}
+      \vspace{\baselineskip}
+      \item We represent our uncertainty about $\theta$ with a probability distribution
+      \begin{itemize}
+        \item $\textcolor{red}{p(\theta\,|\,M)}$ - the prior
+      \end{itemize}
+      \vspace{\baselineskip}
+      \item We then derive $\textcolor{green}{p(\theta\,|\,D,M)}$ - the posterior
+      \begin{equation*}
+       \underbrace{\textcolor{green}{p(\theta \,|\, D, M)}}_{\textnormal{posterior}} = \frac{\overbrace{\textcolor{blue}{p(D \,|\, \theta, M)}}^{\textnormal{likelihood}}\overbrace{\textcolor{red}{p(\theta \,|\, M)}}^{\textnormal{prior}}}{\underbrace{\textcolor{purple}{\int p(D \,|\, \theta, M)p(\theta \,|\, M)\textrm{d}\theta}}_{\textnormal{marginal likelihood}}}
+      \end{equation*}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Bayesian linear regression}
+%  \only<1>{
+    \vspace{\baselineskip}
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{../figures/lin_reg/all_data}
+  \end{center}
+    \vspace{2\baselineskip}
+  %}
+  \begin{itemize}
+   % \uncover<1->{
+    \item Linear regression starts by assuming a model of the form $y_i = m x_i + \varepsilon_i$ where $x$ and $y$ are inputs and outputs respectively and $\varepsilon$ are errors or noise
+    \vspace{\baselineskip}
+    %}
+    %\uncover<2->{
+    \item Represent prior beliefs about $m$ using a probability distribution
+    %}
+    %\only<3>{
+    \begin{itemize}
+      \item \eg $m \sim \textrm{Normal}(\textrm{mean} = 0,\textrm{variance} = 1)$
+    \end{itemize}
+    %}
+    %\only<4,5,6>{
+    \begin{itemize}
+      \item \eg $m \sim \mathcal{N}(0,1)$
+    \end{itemize}
+    %}
+    %\uncover<5->{
+    \vspace{\baselineskip}
+    \item Define likelihood by representing prior beliefs about $\varepsilon$ using a probability distribution
+    \begin{itemize}
+      \item \eg $\varepsilon_i \sim \mathcal{N}(0,\sigma_\varepsilon^2)$ independently for all $i$
+    \end{itemize}
+    %}
+    %\uncover<6->{
+    \vspace{\baselineskip}
+    \item Apply Bayes' rule
+    %}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Bayes rule applied to linear regression}
+  \begin{eqnarray*}
+    p(m\,|\,y,x) &=& \frac{p(y\,|\,m,x)\,p(m)}{\int p(y\,|\,m,x)p(m)\,\textrm{d}m} \\
+%    \pause
+    &\propto& p(y\,|\,m,x)\,p(m) \\
+  %  \pause
+    &\propto& \bigg(\prod_i\frac{1}{2\pi\sigma_\varepsilon}e^{-(y_i-mx_i)^2/(2\sigma_\varepsilon^2)}\bigg)\frac{1}{2\pi}e^{-m^2/2}\\
+    %\pause
+    & = & \mathcal{N}\bigg(\frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2}, \frac{\sigma_\varepsilon^2}{\sum_i x_i^2 + \sigma_\varepsilon^2}\bigg)
+    \end{eqnarray*}
+\end{frame}
+
+\begin{frame}{Bayesian linear regression}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{../figures/lin_reg/bayes_1}
+    \includegraphics<2>[width=0.8\textwidth]{../figures/lin_reg/bayes_2}
+    \includegraphics<3>[width=0.8\textwidth]{../figures/lin_reg/bayes_3}
+    \includegraphics<4>[width=0.8\textwidth]{../figures/lin_reg/bayes_5}
+    \includegraphics<5>[width=0.8\textwidth]{../figures/lin_reg/bayes_10}
+    \includegraphics<6>[width=0.8\textwidth]{../figures/lin_reg/bayes_15}
+  \end{center}
+  \begin{align*}
+    p(m\,|\,y,x) = \mathcal{N}\bigg(\frac{\sum_i x_i y_i}{\sum_i x_i^2 + \sigma_\varepsilon^2}, \frac{\sigma_\varepsilon^2}{\sum_i x_i^2 + \sigma_\varepsilon^2}\bigg)
+  \end{align*}
+\end{frame}
+
+\begin{frame}{Bayesian linear regression rewritten}
+  \begin{itemize}
+    \item We defined a Bayesian linear regression model by specifying priors on $m$ and $\varepsilon_i$
+    %\pause
+    \begin{itemize}
+      \item $m \sim \mathcal{N}(0, 1)$, $\varepsilon_i \simiid \mathcal{N}(0, \sigma_\varepsilon^2)$
+      %\pause
+      \item $y_i \,|\, m, \varepsilon_i = mx_i + \varepsilon_i$
+    \end{itemize}
+    \vspace{\baselineskip}
+    %\pause
+    \item This implicitly defined a joint prior on $\{y_i \,:\, i=1,\ldots,n\}$
+    %\pause
+    \begin{itemize}
+      \item $y_i \sim \mathcal{N}(0, x_i^2 + \sigma_\varepsilon^2)$ (sum of two normals)
+      %\pause
+      \item $\textrm{cov}(y_i, y_j) = x_i x_j \quad \forall\,i\neq j$
+    \end{itemize}
+  \end{itemize}
+    %\pause
+      \fboxsep=0pt
+	\noindent
+		\begin{minipage}[t]{0.48\linewidth}
+		  \vspace{-5.5\baselineskip}
+			$\{y_i \,:\, i=1,\ldots,n\}$ has a multivariate normal distribution
+    \begin{itemize}
+      \item $y \sim \mathcal{N}(\mathbf{0}, \mathbf{K})$
+      \item where $k_{ij} = x_i x_j + \delta_{ij} \sigma_\varepsilon^2$
+    \end{itemize}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.48\linewidth}
+		\begin{center}
+		  \includegraphics[width=0.9\linewidth]{../figures/multi_norm}
+		\end{center}
+		\end{minipage}
+\end{frame}
+
+\begin{frame}{Gaussian processes}
+  \begin{itemize}
+    \item A Gaussian process is collection of random variables, any finite number of which have a joint Gaussian distribution
+%    \pause
+    \vspace{\baselineskip}
+    \item We can write this collection of random variables as $\{f(x) : x \in \mathcal{X}\}$ \ie a function $f$ evaluated at inputs $x$
+  %  \pause
+    \vspace{\baselineskip}
+    \item A \gp{} is completely specified by
+    \begin{itemize}
+      \item Mean function, $\mu(x)=\mathbb{E}(f(x))$
+      \item Covariance / kernel function, $\kernel(x,x') = \Cov(f(x),f(x'))$
+      \item Denoted $f \,\sim\, \gp{}(\mu,\kernel)$
+    \end{itemize}
+    \vspace{\baselineskip}
+   % \pause
+    \item Can be thought of as a probability distribution on functions
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Linear kernel = linear functions}
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{../figures/lin_reg/prior}
+  \end{center}
+  \begin{equation*}
+    k(x, x') = xx'
+  \end{equation*}
+\end{frame}
+
+\begin{frame}{What about other kernels?}
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{../figures/lin_reg/sq_exp_prior}
+  \end{center}
+  \begin{equation*}
+    k(x, x') = e^{-(x-x')^2}
+  \end{equation*}
+\end{frame}
+
+\begin{frame}{Bayesian non-linear regression}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{../figures/lin_reg/sq_exp_1}
+    \includegraphics<2>[width=0.8\textwidth]{../figures/lin_reg/sq_exp_2}
+    \includegraphics<3>[width=0.8\textwidth]{../figures/lin_reg/sq_exp_3}
+    \includegraphics<4>[width=0.8\textwidth]{../figures/lin_reg/sq_exp_5}
+    \includegraphics<5>[width=0.8\textwidth]{../figures/lin_reg/sq_exp_10}
+    \includegraphics<6>[width=0.8\textwidth]{../figures/lin_reg/sq_exp_15}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Bayesian linear regression gone wrong}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{../figures/quad/bayes_1}
+    \includegraphics<2>[width=0.8\textwidth]{../figures/quad/bayes_2}
+    \includegraphics<3>[width=0.8\textwidth]{../figures/quad/bayes_3}
+    \includegraphics<4>[width=0.8\textwidth]{../figures/quad/bayes_5}
+    \includegraphics<5>[width=0.8\textwidth]{../figures/quad/bayes_10}
+    \includegraphics<6>[width=0.8\textwidth]{../figures/quad/bayes_15}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Non-linearity to the rescue}
+  \begin{center}
+    \includegraphics<1>[width=0.8\textwidth]{../figures/quad/sq_exp_1}
+    \includegraphics<2>[width=0.8\textwidth]{../figures/quad/sq_exp_2}
+    \includegraphics<3>[width=0.8\textwidth]{../figures/quad/sq_exp_3}
+    \includegraphics<4>[width=0.8\textwidth]{../figures/quad/sq_exp_5}
+    \includegraphics<5>[width=0.8\textwidth]{../figures/quad/sq_exp_10}
+    \includegraphics<6>[width=0.8\textwidth]{../figures/quad/sq_exp_15}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Which kernel function?}
+  How far can we go with kernel functions?
+\end{frame}
+
+\begin{frame}{Defining a language of models}
+  \input{../figures/flow_chart_language}
+\end{frame}
+
+\begin{frame}{The atoms of our language}  
+  \input{../figures/simple_kernels_table}
+\end{frame}
+
+\begin{frame}{The composition rules of our language}
+\begin{itemize} 
+	\item Two main operations: addition, multiplication
+\end{itemize}
+\input{../figures/comp}
+\end{frame}
+
+
+
+\begin{frame}{Discovering a good model via search}
+  \input{../figures/flow_chart_search}
+\end{frame}
+
+\begin{frame}{Discovering a good model via search}
+  \begin{itemize}
+    \item Language defined as the arbitrary composition of five base kernels ($\kWN, \kC, \kLin, \kSE, \kPer$) via three operators ($+, \times, \kCP$). 
+    \vspace{\baselineskip}
+    \item The space spanned by this language is open-ended
+    \vspace{\baselineskip}
+    \item We use a greedy search - simple and similar to human model-building
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Example: Mauna Loa CO$_2$ Curve}
+\hspace{-1.2cm}
+\only<1>{\includegraphics[width=0.4\textwidth]{../figures/11-Feb-v4-03-mauna2003-s_max_level_0/03-mauna2003-s_all_small.pdf}}
+\only<2>{\includegraphics[width=0.4\textwidth]{../figures/11-Feb-v4-03-mauna2003-s_max_level_1/03-mauna2003-s_all_small.pdf}}
+\only<3>{\includegraphics[width=0.4\textwidth]{../figures/11-Feb-v4-03-mauna2003-s_max_level_2/03-mauna2003-s_all_small.pdf}}
+\only<4>{\includegraphics[width=0.4\textwidth]{../figures/11-Feb-v4-03-mauna2003-s_max_level_3/03-mauna2003-s_all_small.pdf}}
+
+\vspace{-3.5cm}
+\begin{minipage}[t][14cm][t]{1.14\linewidth}
+\begin{flushleft}
+\hspace{5.5cm}
+\vspace{-8cm}
+\makebox[\textwidth][c]{
+\raisebox{10cm}{
+\vspace{-8cm}
+\begin{tikzpicture}
+[sibling distance=0.18\columnwidth,-,thick, level distance=0.13\columnwidth]
+%\footnotesize
+\node[shape=rectangle,draw,thick] {Start}
+%\pause
+  child {node {$\SE$}}
+%  fill=camlightblue!30
+  child {node[shape=rectangle,draw,thick] {$\RQ$}
+    [sibling distance=0.16\columnwidth]
+%    {\visible<2->{ child {node {\ldots}}}}
+    child [hide on=-1] {node {$\SE$ + \RQ}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node[shape=rectangle,draw,thick] {$\Per + \RQ$}
+      [sibling distance=0.23\columnwidth]
+      child [hide on=-2] {node {$\SE + \Per + \RQ$}}
+      child [hide on=-2] {node {\ldots}}
+      child [hide on=-2] {node[shape=rectangle,draw,thick] {$\SE \times (\Per + \RQ)$}
+        [sibling distance=0.14\columnwidth]
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+        child [hide on=-3] {node {\ldots}}
+      }
+      child [hide on=-2] {node {\ldots}}
+    }
+    %child {node {$\RQ \times \SE$}}
+    child [hide on=-1] {node {\ldots}}
+    child [hide on=-1] {node {$\Per \times \RQ$}}
+  }
+  child {node {$\Lin$}}
+  child {node {$\Per$}}
+  ;
+\end{tikzpicture}}
+}\end{flushleft}
+\end{minipage}
+\only<4>{}
+\end{frame}
+
+\begin{frame}{Model evaluation}
+  \input{../figures/flow_chart_eval}
+\end{frame}
+
+\begin{frame}{Bayesian model selection}
+%  \uncover<1->{
+    Suppose we have a collection of models $\{M_i\}$ and some data $D$
+    
+    \vspace{\baselineskip}
+    
+  %}
+  %\uncover<2->{
+    Bayes rule tells us
+    \begin{equation*}
+      p(M_i\,|\,D) = \frac{p(D\,|\,M_i)p(M_i)}{p(D)}
+    \end{equation*}
+  %}
+  %\uncover<3->{
+    If $p(M_i)$ is equal for all $i$ (prior ignorance) then
+    \begin{equation*}
+      p(M_i\,|\,D) \propto p(D\,|\,M_i) = \int p(D\,|\,\theta_i,M_i)p(\theta_i\,|\,M_i)\textrm{d}\theta_i
+    \end{equation*}
+  %}
+  %\uncover<4->{
+    \ie The most likely model has the highest \textcolor{purple}{marginal likelihood}
+  %}
+\end{frame}
+
+\begin{frame}{Automatic translation of models}
+  \input{../figures/flow_chart_trans}
+\end{frame}
+
+\begin{frame}{Automatic translation of models}
+  \begin{itemize}
+    \item Search can produce arbitrarily complicated models from open-ended language but two main properties allow description to be automated
+    \vspace{\baselineskip}
+    \item Kernels can be decomposed into a sum of products
+    \begin{itemize}
+      \item A sum of kernels corresponds to a sum of functions
+      \item Therefore, we can describe each product of kernels separately
+    \end{itemize}
+    \vspace{\baselineskip}
+    \item Each kernel in a product modifies a model in a consistent way
+    \begin{itemize}
+      \item Each kernel roughly corresponds to an adjective
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Simplifying kernels}
+  %\begin{center}
+  Suppose the search finds the following kernel
+  \begin{align*}
+    \kSE \times ( \kPer + \kRQ)
+  \end{align*}
+  %\pause
+  Multiplication can be distributed over addition
+  \begin{align*}
+    \kSE \! \times \! \kPer +     \kSE \! \times \! \kRQ
+  \end{align*}
+%  \pause
+  %\end{center}
+\end{frame}
+
+\begin{frame}{Sums of kernels are sums of functions}
+  If ${\textcolor{red}{f_1} \,\sim\, \gp{}(0, \textcolor{red}{\kernel_1})}$ and independently ${\textcolor{blue}{f_2} \,\sim\, \gp{}(0, \textcolor{blue}{\kernel_2})}$ then
+  \begin{align*}
+  \textcolor{red}{f_1} + \textcolor{blue}{f_2} \,\sim\, \gp{}(0, \textcolor{red}{\kernel_1} + \textcolor{blue}{\kernel_2})
+  \end{align*}
+  
+\vspace{\baselineskip}
+
+\begin{tabular}{ccccccc}
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{../figures/03-mauna2003_all} &
+\raisebox{0.4cm}{$=$} &
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{../figures/03-mauna2003_1} &
+\raisebox{0.4cm}{$+$} &
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{../figures/03-mauna2003_2} &
+\raisebox{0.4cm}{$+$} &
+\includegraphics[trim=30 0 62 25, clip, width=0.15\textwidth]{../figures/03-mauna2003_3}
+\end{tabular}
+
+
+
+\vspace{\baselineskip}
+
+We can therefore describe each component in a sum separately
+
+\end{frame}
+
+\begin{frame}{Products of kernels}
+  \begin{align*}
+    \phantom{\underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times }
+    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
+  \end{align*}
+  
+  \vspace{\baselineskip}
+  
+  On their own, each kernel is described by a standard noun phrase
+  
+  \vspace{\baselineskip}
+  
+  \begin{block}{}
+    \begin{tabular}{cccc}
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_11} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_12} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_13} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_14}
+    \end{tabular}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Products of kernels - $\kSE$}
+  \begin{align*}
+    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
+    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \phantom{\times 
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
+  \end{align*}
+  
+  \vspace{\baselineskip}
+  
+  {\bf Multiplication by $\kSE$} removes long range correlations from a model since $\kSE(x,x')$ decreases monotonically to 0 as $|x - x'|$ increases.
+  
+  \vspace{\baselineskip}
+  
+  \begin{block}{}
+    \begin{tabular}{cccc}
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_21} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_22} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_23} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_24}
+    \end{tabular}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Products of kernels - $\kLin$}
+  \begin{align*}
+    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
+    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \phantom{\times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}}
+  \end{align*}
+  
+  \vspace{\baselineskip}
+  
+  {\bf Multiplication by $\kLin$} is equivalent to multiplying the function being modeled by a linear function.
+If $f(x) \,\sim\, \gp{}(0, \kernel)$, then $x\,f(x) \,\sim\, \gp{}\left(0, k \times \kLin \right)$.
+This causes the standard deviation of the model to vary linearly without affecting the correlation.
+  
+  \vspace{\baselineskip}
+  
+  \begin{block}{}
+    \begin{tabular}{cccc}
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_31} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_32} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_33} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_34}
+    \end{tabular}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Products of kernels - changepoints}
+  \begin{align*}
+    \underbrace{\kSE}_{\textnormal{\scriptsize approximately}} \times
+    \underbrace{\kPer}_{\textnormal{\scriptsize periodic function}} \times 
+    \underbrace{\kLin}_{\textnormal{\scriptsize with linearly growing amplitude}} \times 
+    \underbrace{\boldsymbol{\sigma}}_{\textnormal{\scriptsize until 1700}}
+  \end{align*}
+  
+  \vspace{\baselineskip}
+  
+  {\bf Multiplication by $\boldsymbol\sigma$} is equivalent to multiplying the function being modeled by a sigmoid.
+  
+  \vspace{\baselineskip}
+  
+  \begin{block}{}
+    \begin{tabular}{cccc}
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_41} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_42} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_43} &
+      \includegraphics[width=0.2\textwidth]{../figures/trans_samples/draw_44}
+    \end{tabular}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Noun phrase forms of kernels}
+  \begin{center}
+    \begin{tabular}{l|l}
+      Kernel & Noun phrase \\
+      \midrule
+      $\kWN$  & uncorrelated noise \\
+      $\kC$   & constant \\
+      $\kSE$  & smooth function \\
+      $\kPer$ & periodic function \\
+      $\kLin$ & linear function \\
+      $\prod_k \kLin^{(k)}$ & polynomial \\
+    \end{tabular}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Postmodifier form of kernels}
+  \begin{center}
+    \begin{tabular}{l|l}
+      Kernel & Postmodifier phrase \\
+      \midrule
+      $\kSE$  & whose shape changes smoothly \\
+      $\kPer$ & modulated by a periodic function \\
+      $\kLin$ & with linearly varying amplitude \\
+      $\prod_k \kLin^{(k)}$ & with polynomially varying amplitude \\
+      $\prod_k \boldsymbol{\sigma}^{(k)}$ & which applies until / from [changepoint] \\
+    \end{tabular}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Automatically generated reports}
+  \input{../figures/flow_chart_report}
+\end{frame}
+
+\begin{frame}{Example: Airline passenger volume}
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{../figures/01-airline}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_raw_data} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_all}
+\end{tabular}
+
+{\footnotesize
+Four additive components have been identified in the data
+\begin{itemize}
+
+  \item \input{\mdrd/01-airline_1_short_description.tex} 
+
+  \item \input{\mdrd/01-airline_2_short_description.tex} 
+
+  \item \input{\mdrd/01-airline_3_short_description.tex} 
+
+  \item \input{\mdrd/01-airline_4_short_description.tex} 
+
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Example: Airline passenger volume}
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{../figures/01-airline}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+{\footnotesize
+\input{\mdrd/01-airline_1_description.tex}
+}
+
+\vspace{\baselineskip}
+
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_1} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_1_cum}
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Example: Airline passenger volume}
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{../figures/01-airline}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+{\footnotesize
+\input{\mdrd/01-airline_2_description.tex}
+}
+
+\vspace{\baselineskip}
+
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_2} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_2_cum}
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Example: Airline passenger volume}
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{../figures/01-airline}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+{\footnotesize
+\input{\mdrd/01-airline_3_description.tex}
+}
+
+\vspace{\baselineskip}
+
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_3} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_3_cum}
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Example: Airline passenger volume}
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{../figures/01-airline}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+{\footnotesize
+\input{\mdrd/01-airline_4_description.tex}
+}
+
+\vspace{\baselineskip}
+
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_4} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/01-airline_4_cum}
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Example: Solar irradiance}
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{../figures/02-solar}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+{\footnotesize
+\input{\mdrd/02-solar_1_description.tex}
+}
+
+\vspace{\baselineskip}
+
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/02-solar_1} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/02-solar_1_cum}
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Example: Solar irradiance}
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{../figures/02-solar}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+{\footnotesize
+\input{\mdrd/02-solar_2_description.tex}
+}
+
+\vspace{\baselineskip}
+
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/02-solar_2} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/02-solar_2_cum}
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Example: Solar irradiance}
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{../figures/02-solar}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+{\footnotesize
+\input{\mdrd/02-solar_3_description.tex}
+}
+
+\vspace{\baselineskip}
+
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/02-solar_3} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/02-solar_3_cum}
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Example: Solar irradiance}
+\newcommand{\wmgd}{0.5\columnwidth}
+\newcommand{\hmgd}{3.0cm}
+\newcommand{\mdrd}{../figures/02-solar}
+\newcommand{\mbm}{\hspace{-0.3cm}}
+{\footnotesize
+\input{\mdrd/02-solar_4_description.tex}
+}
+
+\vspace{\baselineskip}
+
+\begin{tabular}{cc}
+\mbm \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/02-solar_4} & \includegraphics[width=\wmgd,height=\hmgd]{\mdrd/02-solar_4_cum}
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Example: Full report}
+  See pdf
+\end{frame}
+
+\begin{frame}{Good predictive performance as well}
+  \begin{block}{Standardised RMSE over 13 data sets}
+  \includegraphics[width=0.99\textwidth]{../figures/box_extrap_wide}\\
+  \begin{itemize}
+    \item This method is slow but contains most common methods as a special case
+  \end{itemize}
+  \end{block}
+\end{frame}
+
+
+\frame[plain]{
+\frametitle{Summary}
+
+ How could an AI do statistics?
+	\begin{itemize}
+%		\item Model-building is currently done mostly by hand.
+		\item Grammars over composite structures are a simple way to specify open-ended model classes.
+		\item Composite structures sometimes give interpretable decompositions.
+		\item Searching over these model classes is a step towards automating statistical analysis.
+	\end{itemize}
+}
+
+
+\begin{frame}{Thanks}
+  \begin{center}
+  \Huge
+  Thanks
+  \end{center}
+\end{frame}
+
+
+\end{document}

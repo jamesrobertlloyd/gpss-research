@@ -1,0 +1,52 @@
+Experiment all_results for
+ datafile = ../data/alexa/mystery-outliers-removed-v1.mat
+
+ Running experiment:
+description = Re-analysis of GEFCOM data for purposes of thesis,
+data_dir = ../data/alexa,
+max_depth = 10,
+random_order = True,
+k = 1,
+debug = False,
+local_computation = False,
+n_rand = 9,
+sd = 2,
+jitter_sd = 0.1,
+max_jobs = 400,
+verbose = False,
+make_predictions = False,
+skip_complete = True,
+results_dir = ../results/2014-11-12-alexa-v1/,
+iters = 250,
+base_kernels = SE,Const,Noise,Lin,
+additive_form = True,
+mean = ff.MeanZero(),
+kernel = ff.NoiseKernel(),
+lik = ff.LikGauss(sf=-np.Inf),
+verbose_results = False,
+random_seed = 9001,
+period_heuristic = 3,
+max_period_heuristic = 3,
+subset = True,
+subset_size = 250,
+full_iters = 10,
+bundle_size = 5,
+search_operators = [('A', ('+', 'A', 'B'), {'A': 'kernel', 'B': 'base'}), ('A', ('*', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', ('*-const', 'A', 'B'), {'A': 'kernel', 'B': 'base-not-const'}), ('A', 'B', {'A': 'kernel', 'B': 'base'}), ('A', ('CP', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('CW', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('B', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('BL', 'd', 'A'), {'A': 'kernel', 'd': 'dimension'}), ('A', ('None',), {'A': 'kernel'})],
+score = bic,
+period_heuristic_type = min,
+stopping_criteria = ['no_improvement'],
+improvement_tolerance = 0.1,
+ 
+
+
+%%%%% Level 0 %%%%%
+
+GPModel(mean=MeanZero(), kernel=SumKernel(operands=[NoiseKernel(sf=2.22898571322), LinearKernel(dimension=1, location=-24.5845034009, sf=0.650423682099)]), likelihood=LikGauss(sf=-inf), nll=83.9268353692, ndata=22)
+
+%%%%% Level 1 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ChangeWindowKernel(dimension=2, location=95.5811668879, steepness=3.46461517163, width=1.40927235593, operands=[ SumKernel(operands=[NoiseKernel(sf=2.24188598396), LinearKernel(dimension=1, location=-24.651718554, sf=0.621747369661)]), ConstKernel(sf=4.6535009613) ]), likelihood=LikGauss(sf=-inf), nll=70.3352768344, ndata=22)
+
+%%%%% Level 2 %%%%%
+
+GPModel(mean=MeanZero(), kernel=ChangeWindowKernel(dimension=2, location=95.5811668879, steepness=3.46461517163, width=1.40927235593, operands=[ SumKernel(operands=[NoiseKernel(sf=2.24188598396), LinearKernel(dimension=1, location=-24.651718554, sf=0.621747369661)]), ConstKernel(sf=4.6535009613) ]), likelihood=LikGauss(sf=-inf), nll=70.3352768344, ndata=22)

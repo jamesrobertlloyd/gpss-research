@@ -1,7 +1,7 @@
 Experiment(description='Re-analysis of GEFCOM data for purposes of thesis',
            data_dir='../data/gefcom_temp',
            max_depth=10, 
-           random_order=False,
+           random_order=True,
            k=1,
            debug=False, 
            local_computation=False, 
